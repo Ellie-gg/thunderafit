@@ -1,0 +1,145 @@
+// ============================================================
+// Prisma Schema — ThunderAfit SaaS Fitness MVP
+// Versão: Prisma 5.x (schema único com seções por domínio)
+//
+// Estrutura futura multi-file (quando migrar para Prisma 6+):
+//   prisma/schema/auth.prisma
+//   prisma/schema/fitness.prisma    (Fase 3)
+//   prisma/schema/billing.prisma    (Fase 2)
+//   prisma/schema/progress.prisma   (Fase 4)
+// ============================================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================================
+// --- domain: auth ---
+// Módulo de autenticação e gestão de usuários
+// Implementado na Fase 1
+// ============================================================
+
+model User {
+  id               String          @id @default(uuid())
+  email            String          @unique
+  passwordHash     String
+  role             Role
+  refreshTokenHash String?
+  planoAssinatura  PlanoAssinatura @default(FREE)
+  limiteAlunos     Int             @default(3)
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+
+  @@map("users")
+}
+
+enum Role {
+  PERSONAL
+  ALUNO
+}
+
+enum PlanoAssinatura {
+  FREE
+  PAGO
+}
+
+// ============================================================
+// --- domain: billing --- (Fase 2 — não implementado)
+// Gestão de assinaturas e pagamentos
+// ============================================================
+
+// ============================================================
+// --- domain: fitness ---
+// Catálogo de exercícios, prescrição e execução de treinos
+// ============================================================
+
+model ClientRelation {
+  id                String            @id @default(uuid())
+  personalId        String
+  alunoId           String
+  professionalType  ProfessionalType  @default(PERSONAL)
+  createdAt         DateTime          @default(now())
+
+  @@unique([personalId, alunoId])
+}
+
+enum ProfessionalType {
+  PERSONAL
+  NUTRICIONISTA
+}
+
+// ============================================================
+// --- domain: fitness ---
+// Exercícios, treinos e relação de treino
+// ============================================================
+
+model Exercise {
+  id           String            @id @default(uuid())
+  name         String            @unique
+  muscleGroup  String
+  equipment    String
+  mediaUrl     String?
+  description  String
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+  workoutItems WorkoutExercise[]
+}
+
+model Workout {
+  id          String            @id @default(uuid())
+  personalId  String
+  alunoId     String
+  name        String
+  letter      String
+  exercises   WorkoutExercise[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model WorkoutExercise {
+  id           String   @id @default(uuid())
+  workoutId    String
+  workout      Workout  @relation(fields: [workoutId], references: [id])
+  exerciseId   String
+  exercise     Exercise @relation(fields: [exerciseId], references: [id])
+  sets         Int
+  repsRange    String
+  restSeconds  Int
+  order        Int
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  setLogs      SetLog[]
+}
+
+model SetLog {
+  id                 String          @id @default(uuid())
+  workoutExerciseId  String
+  workoutExercise    WorkoutExercise @relation(fields: [workoutExerciseId], references: [id])
+  setNumber          Int
+  repsDone           Int
+  weightKg           Float
+  loggedAt           DateTime        @default(now())
+}
+
+
+// ============================================================
+// --- domain: progress --- (Fase 4 — não implementado)
+// Registro de carga e progresso dos alunos
+// ============================================================
+
+// ============================================================
+// --- domain: anamnesis --- (Fase futura — não implementado)
+// ============================================================
+
+// ============================================================
+// --- domain: nutrition --- (Fase futura — não implementado)
+// ============================================================
+
+// ============================================================
+// --- domain: notifications --- (Fase futura — não implementado)
+// ============================================================

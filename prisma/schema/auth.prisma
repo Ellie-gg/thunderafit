@@ -1,0 +1,36 @@
+// ============================================================
+// auth.prisma — Domain: Auth
+// Este arquivo é a fonte da verdade para o domínio de autenticação.
+//
+// IMPORTANTE: Este arquivo existe como referência para futura migração
+// para multi-file schema (Prisma 6+). Atualmente o schema ativo é
+// prisma/schema.prisma (arquivo único).
+//
+// Para migrar para multi-file:
+//   1. Atualizar o generator client no schema.prisma para apontar para este dir
+//   2. Remover os models auth do schema.prisma e usar este arquivo
+// ============================================================
+
+model User {
+  id               String          @id @default(uuid())
+  email            String          @unique
+  passwordHash     String
+  role             Role
+  refreshTokenHash String?
+  planoAssinatura  PlanoAssinatura @default(FREE)
+  limiteAlunos     Int             @default(3)
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+
+  @@map("users")
+}
+
+enum Role {
+  PERSONAL
+  ALUNO
+}
+
+enum PlanoAssinatura {
+  FREE
+  PAGO
+}

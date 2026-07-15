@@ -1,0 +1,66 @@
+import { workoutsRepository } from "../repository/workouts.repository";
+import { relationsRepository } from "../repository/relations.repository";
+import { exercisesRepository } from "../repository/exercises.repository";
+
+export const workoutsService = {
+  async listWorkoutsForUser(userId: string, role: "PERSONAL" | "ALUNO") {
+    if (role === "ALUNO") {
+      return workoutsRepository.findAllByAluno(userId);
+    }
+    return workoutsRepository.findAllByPersonal(userId);
+  },
+
+  async createWorkout(personalId: string, alunoId: string, name: string, letter: string) {
+    const relation = await relationsRepository.findByPersonalAndAluno(personalId, alunoId);
+    if (!relation) {
+      const err = new Error("Aluno não vinculado a este Personal Trainer.");
+      (err as any).statusCode = 403;
+      throw err;
+    }
+
+    return workoutsRepository.create(personalId, alunoId, name, letter);
+  },
+
+  async addExercise(
+    workoutId: string,
+    personalId: string,
+    exerciseId: string,
+    sets: number,
+    repsRange: string,
+    restSeconds: number,
+    order: number
+  ) {
+    const workout = await workoutsRepository.findById(workoutId);
+    if (!workout || workout.personalId !== personalId) {
+      const err = new Error("Treino não encontrado.");
+      (err as any).statusCode = 404;
+      throw err;
+    }
+
+    const exercise = await exercisesRepository.findById(exerciseId);
+    if (!exercise) {
+      const err = new Error("Exercício não encontrado.");
+      (err as any).statusCode = 404;
+      throw err;
+    }
+
+    return workoutsRepository.addExercise(workoutId, exerciseId, sets, repsRange, restSeconds, order);
+  },
+
+  async getWorkout(workoutId: string, userId: string) {
+    const workout = await workoutsRepository.findByIdWithExercises(workoutId);
+    if (!workout) {
+      const err = new Error("Treino não encontrado.");
+      (err as any).statusCode = 404;
+      throw err;
+    }
+
+    if (workout.alunoId !== userId && workout.personalId !== userId) {
+      const err = new Error("Você não tem permissão para acessar este treino.");
+      (err as any).statusCode = 403;
+      throw err;
+    }
+
+    return workout;
+  },
+};

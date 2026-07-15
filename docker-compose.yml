@@ -1,0 +1,23 @@
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: thunderafit_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-thunderafit}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-thunderafit_secret}
+      POSTGRES_DB: ${POSTGRES_DB:-thunderafit_db}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - thunderafit_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-thunderafit}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  thunderafit_pgdata:
+    driver: local

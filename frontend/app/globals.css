@@ -1,0 +1,88 @@
+@import "tailwindcss";
+
+:root {
+  --ink-950: #0b0e17;
+  --slate-850: #161b26;
+  --slate-800: #1d2330;
+  --fog-500: #7c8797;
+  --fog-300: #aab2bf;
+  --volt-400: #ffc93c;
+  --volt-500: #f2ba1f;
+  --static-450: #3fd0c9;
+  --signal-green: #4ade80;
+  --signal-red: #f2545b;
+
+  --background: var(--ink-950);
+  --surface: var(--slate-850);
+  --surface-raised: var(--slate-800);
+  --foreground: #eef1f6;
+  --muted: var(--fog-500);
+  --accent: var(--volt-400);
+  --accent-strong: var(--volt-500);
+  --accent-secondary: var(--static-450);
+  --success: var(--signal-green);
+  --danger: var(--signal-red);
+  --border: #262d3d;
+}
+
+:root[data-theme="light"] {
+  --background: #f5f3ee;
+  --surface: #ffffff;
+  --surface-raised: #ffffff;
+  --foreground: #14171f;
+  --muted: #5b6472;
+  --border: #e3e1da;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-surface: var(--surface);
+  --color-surface-raised: var(--surface-raised);
+  --color-foreground: var(--foreground);
+  --color-muted: var(--muted);
+  --color-accent: var(--accent);
+  --color-accent-strong: var(--accent-strong);
+  --color-accent-secondary: var(--accent-secondary);
+  --color-success: var(--success);
+  --color-danger: var(--danger);
+  --color-border: var(--border);
+  --font-display: var(--font-unbounded);
+  --font-sans: var(--font-manrope);
+  --font-mono: var(--font-plex-mono);
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans);
+}
+
+.font-display {
+  font-family: var(--font-display);
+}
+
+.font-mono-nums {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Barra de Voltagem — elemento de assinatura do design system */
+.voltage-bar {
+  display: flex;
+  gap: 4px;
+}
+
+.voltage-segment {
+  flex: 1;
+  height: 8px;
+  border-radius: 2px;
+  border: 1px solid var(--fog-500);
+  background: transparent;
+  transition: background-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.voltage-segment[data-filled="true"] {
+  background: var(--volt-400);
+  border-color: var(--volt-500);
+  box-shadow: 0 0 8px 0 color-mix(in srgb, var(--volt-400) 60%, transparent);
+}

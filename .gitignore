@@ -1,0 +1,33 @@
+# Dependências
+node_modules/
+dist/
+
+# Ambiente
+.env
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# Prisma
+prisma/*.db
+prisma/*.db-journal
+
+# Credenciais de teste geradas por dev.sh/dev.ps1 — nunca commitar
+TEST_CREDENTIALS.txt
+
+# Artefatos runtime do dev.sh/dev.ps1
+.dev-pids/
+.dev-pids.json
+.dev-backend.log
+.dev-backend.err.log
+.dev-frontend.log
+.dev-frontend.err.log

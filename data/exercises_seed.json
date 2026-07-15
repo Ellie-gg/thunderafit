@@ -1,0 +1,205 @@
+[
+  {
+    "name": "Supino Reto com Barra",
+    "muscleGroup": "Peito",
+    "equipment": "Barra",
+    "mediaUrl": "https://www.youtube.com/watch?v=rT7DgCr-3pg",
+    "description": "Deite-se no banco reto com os pés firmes no chão. Segure a barra com pegada pouco mais larga que os ombros, desça controladamente até tocar o peito e empurre de volta à posição inicial."
+  },
+  {
+    "name": "Supino Inclinado com Halteres",
+    "muscleGroup": "Peito",
+    "equipment": "Halteres",
+    "mediaUrl": "https://www.youtube.com/watch?v=8iPEnn-ltC8",
+    "description": "Ajuste o banco a 30-45 graus. Empurre os halteres para cima até quase encostar entre si, controlando a descida até a altura do peito."
+  },
+  {
+    "name": "Crucifixo Reto com Halteres",
+    "muscleGroup": "Peito",
+    "equipment": "Halteres",
+    "mediaUrl": "https://www.youtube.com/watch?v=eozdVDA78K0",
+    "description": "Deitado no banco reto, abra os braços levemente flexionados em arco até sentir alongamento no peitoral, depois retorne juntando os halteres acima do peito."
+  },
+  {
+    "name": "Crossover no Cabo",
+    "muscleGroup": "Peito",
+    "equipment": "Cabo",
+    "mediaUrl": "https://www.youtube.com/watch?v=taI4XduLpTk",
+    "description": "Com os cabos ajustados na parte superior, puxe as alças em direção ao centro do corpo em movimento de arco, contraindo o peitoral."
+  },
+  {
+    "name": "Puxada Frontal na Polia",
+    "muscleGroup": "Costas",
+    "equipment": "Máquina",
+    "mediaUrl": "https://www.youtube.com/watch?v=CAwf7n6Luuc",
+    "description": "Sentado, segure a barra com pegada aberta e puxe até a altura do queixo/peito, contraindo as escápulas, retornando controladamente."
+  },
+  {
+    "name": "Remada Curvada com Barra",
+    "muscleGroup": "Costas",
+    "equipment": "Barra",
+    "mediaUrl": "https://www.youtube.com/watch?v=vT2GjY_Umpw",
+    "description": "Incline o tronco para frente mantendo a coluna neutra, puxe a barra em direção ao abdômen contraindo as costas, desça controladamente."
+  },
+  {
+    "name": "Remada Baixa no Cabo",
+    "muscleGroup": "Costas",
+    "equipment": "Cabo",
+    "mediaUrl": "https://www.youtube.com/watch?v=GZbfZ033f74",
+    "description": "Sentado com joelhos levemente flexionados, puxe o triângulo em direção ao abdômen mantendo o tronco ereto, retorne controlando o alongamento."
+  },
+  {
+    "name": "Levantamento Terra",
+    "muscleGroup": "Costas",
+    "equipment": "Barra",
+    "mediaUrl": "https://www.youtube.com/watch?v=1ZXobu7JvvE",
+    "description": "Com a barra próxima às canelas, quadril para trás e coluna neutra, levante estendendo quadril e joelhos simultaneamente até a extensão completa."
+  },
+  {
+    "name": "Puxada Alta com Triângulo",
+    "muscleGroup": "Costas",
+    "equipment": "Máquina",
+    "mediaUrl": "https://www.youtube.com/watch?v=EcSSXWyz3TU",
+    "description": "Puxe a barra em triângulo em direção ao peito mantendo cotovelos próximos ao corpo, controle a volta até a extensão dos braços."
+  },
+  {
+    "name": "Agachamento Livre",
+    "muscleGroup": "Pernas",
+    "equipment": "Barra",
+    "mediaUrl": "https://www.youtube.com/watch?v=ultWZbUMPL8",
+    "description": "Barra apoiada nas costas, pés na largura dos ombros, desça flexionando quadril e joelhos até coxas paralelas ao chão, suba controladamente."
+  },
+  {
+    "name": "Leg Press 45",
+    "muscleGroup": "Pernas",
+    "equipment": "Máquina",
+    "mediaUrl": "https://www.youtube.com/watch?v=IZxyjW7MPJQ",
+    "description": "Sentado na máquina, pés na plataforma na largura dos ombros, flexione os joelhos até 90 graus e empurre de volta sem travar totalmente."
+  },
+  {
+    "name": "Cadeira Extensora",
+    "muscleGroup": "Pernas",
+    "equipment": "Máquina",
+    "mediaUrl": "https://www.youtube.com/watch?v=YyvSfVjQeL0",
+    "description": "Sentado na máquina, estenda os joelhos até quase a extensão completa, contraindo o quadríceps, e retorne controladamente."
+  },
+  {
+    "name": "Mesa Flexora",
+    "muscleGroup": "Pernas",
+    "equipment": "Máquina",
+    "mediaUrl": "https://www.youtube.com/watch?v=1Tq3QdYUuHs",
+    "description": "Deitado de bruços na máquina, flexione os joelhos trazendo o calcanhar em direção ao glúteo, controle a volta à posição inicial."
+  },
+  {
+    "name": "Afundo com Halteres",
+    "muscleGroup": "Pernas",
+    "equipment": "Halteres",
+    "mediaUrl": "https://www.youtube.com/watch?v=QOVaHwm-Q6U",
+    "description": "Dê um passo à frente e desça até ambos os joelhos formarem 90 graus, mantendo o tronco ereto, retorne à posição inicial."
+  },
+  {
+    "name": "Elevação Pélvica com Barra",
+    "muscleGroup": "Pernas",
+    "equipment": "Barra",
+    "mediaUrl": "https://www.youtube.com/watch?v=xDmFkJxPzeM",
+    "description": "Costas superiores apoiadas em banco, barra sobre o quadril, eleve o quadril contraindo os glúteos até o corpo formar linha reta, desça controladamente."
+  },
+  {
+    "name": "Panturrilha em Pé",
+    "muscleGroup": "Pernas",
+    "equipment": "Máquina",
+    "mediaUrl": "https://www.youtube.com/watch?v=-M4-G8p8fmc",
+    "description": "Em pé na máquina, eleve os calcanhares o máximo possível contraindo a panturrilha, desça até alongar completamente."
+  },
+  {
+    "name": "Desenvolvimento com Halteres",
+    "muscleGroup": "Ombro",
+    "equipment": "Halteres",
+    "mediaUrl": "https://www.youtube.com/watch?v=qEwKCR5JCog",
+    "description": "Sentado ou em pé, empurre os halteres para cima até quase a extensão total dos cotovelos, desça controladamente até a altura dos ombros."
+  },
+  {
+    "name": "Elevação Lateral com Halteres",
+    "muscleGroup": "Ombro",
+    "equipment": "Halteres",
+    "mediaUrl": "https://www.youtube.com/watch?v=3VcKaXpzqRo",
+    "description": "Em pé, eleve os halteres lateralmente até a altura dos ombros com leve flexão de cotovelo, desça controladamente."
+  },
+  {
+    "name": "Elevação Frontal com Halteres",
+    "muscleGroup": "Ombro",
+    "equipment": "Halteres",
+    "mediaUrl": "https://www.youtube.com/watch?v=sxeqiszaWao",
+    "description": "Em pé, eleve os halteres à frente do corpo até a altura dos ombros, controlando a descida sem balançar o tronco."
+  },
+  {
+    "name": "Remada Alta com Barra",
+    "muscleGroup": "Ombro",
+    "equipment": "Barra",
+    "mediaUrl": "https://www.youtube.com/watch?v=GKvpKkbMWtw",
+    "description": "Segure a barra com pegada fechada e puxe verticalmente até a altura do peito, cotovelos acima das mãos, desça controladamente."
+  },
+  {
+    "name": "Rosca Direta com Barra",
+    "muscleGroup": "Bíceps",
+    "equipment": "Barra",
+    "mediaUrl": "https://www.youtube.com/watch?v=kwG2ipFRgfo",
+    "description": "Em pé, cotovelos fixos ao lado do corpo, flexione os braços elevando a barra até a altura do peito, desça controladamente."
+  },
+  {
+    "name": "Rosca Alternada com Halteres",
+    "muscleGroup": "Bíceps",
+    "equipment": "Halteres",
+    "mediaUrl": "https://www.youtube.com/watch?v=sAq_ocpRh_I",
+    "description": "Em pé, flexione um braço por vez elevando o halter até a altura do ombro com rotação do punho, alternando os lados."
+  },
+  {
+    "name": "Rosca Martelo",
+    "muscleGroup": "Bíceps",
+    "equipment": "Halteres",
+    "mediaUrl": "https://www.youtube.com/watch?v=zC3nLlEvin4",
+    "description": "Em pé, com pegada neutra (palmas voltadas uma para outra), flexione os cotovelos elevando os halteres, desça controladamente."
+  },
+  {
+    "name": "Tríceps Pulley com Corda",
+    "muscleGroup": "Tríceps",
+    "equipment": "Cabo",
+    "mediaUrl": "https://www.youtube.com/watch?v=vB5OHsJ3EME",
+    "description": "Em pé, cotovelos fixos ao lado do corpo, estenda os braços empurrando a corda para baixo e abrindo levemente ao final, retorne controladamente."
+  },
+  {
+    "name": "Tríceps Testa com Barra",
+    "muscleGroup": "Tríceps",
+    "equipment": "Barra",
+    "mediaUrl": "https://www.youtube.com/watch?v=d_KZxkY_0cM",
+    "description": "Deitado no banco, braços perpendiculares ao corpo, flexione os cotovelos descendo a barra em direção à testa, estenda controladamente."
+  },
+  {
+    "name": "Mergulho no Banco",
+    "muscleGroup": "Tríceps",
+    "equipment": "Peso Corporal",
+    "mediaUrl": "https://www.youtube.com/watch?v=6kALZikXxLc",
+    "description": "Mãos apoiadas na borda do banco atrás do corpo, desça flexionando os cotovelos até 90 graus e empurre de volta à posição inicial."
+  },
+  {
+    "name": "Abdominal Supra no Solo",
+    "muscleGroup": "Abdômen",
+    "equipment": "Peso Corporal",
+    "mediaUrl": "https://www.youtube.com/watch?v=jDwoBqPH0jk",
+    "description": "Deitado com joelhos flexionados, eleve o tronco em direção aos joelhos contraindo o abdômen, retorne controladamente sem tocar totalmente o chão."
+  },
+  {
+    "name": "Prancha Isométrica",
+    "muscleGroup": "Abdômen",
+    "equipment": "Peso Corporal",
+    "mediaUrl": "https://www.youtube.com/watch?v=pSHjTRCQxIw",
+    "description": "Apoiado nos antebraços e pontas dos pés, mantenha o corpo em linha reta contraindo o abdômen pelo tempo determinado."
+  },
+  {
+    "name": "Elevação de Pernas na Barra Fixa",
+    "muscleGroup": "Abdômen",
+    "equipment": "Barra Fixa",
+    "mediaUrl": "https://www.youtube.com/watch?v=JB2oyawG9KI",
+    "description": "Pendurado na barra, eleve as pernas estendidas ou flexionadas até a altura do quadril, controlando a descida sem balançar o corpo."
+  }
+]
