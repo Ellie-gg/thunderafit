@@ -1,8 +1,9 @@
 import { apiFetch } from "./client";
 import type { Exercise, SetLog, Workout } from "../types";
 
-export function listExercises() {
-  return apiFetch<{ exercises: Exercise[] }>("/api/exercises");
+export function listExercises(muscleGroup?: string) {
+  const qs = muscleGroup ? `?muscleGroup=${encodeURIComponent(muscleGroup)}` : "";
+  return apiFetch<{ exercises: Exercise[] }>(`/api/exercises${qs}`);
 }
 
 export function listMyWorkouts() {

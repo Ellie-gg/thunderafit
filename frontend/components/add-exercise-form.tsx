@@ -8,6 +8,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { QueryError } from "@/components/query-error";
+import { DifficultyBadge } from "@/components/difficulty-badge";
+
+const ALL_GROUPS = "Todos";
 
 export function AddExerciseForm({
   workoutId,
@@ -17,22 +20,33 @@ export function AddExerciseForm({
   nextOrder: number;
 }) {
   const queryClient = useQueryClient();
-  const exercisesQuery = useQuery({ queryKey: ["exercises"], queryFn: listExercises });
+  // Carrega o catálogo inteiro uma vez e filtra no cliente. O backend também
+  // aceita ?muscleGroup= (usado por outros clientes/testes), mas com ~150
+  // itens carregar tudo uma vez e alternar grupos sem refetch é mais fluido.
+  const exercisesQuery = useQuery({ queryKey: ["exercises"], queryFn: () => listExercises() });
 
+  const [group, setGroup] = useState(ALL_GROUPS);
   const [filter, setFilter] = useState("");
   const [exerciseId, setExerciseId] = useState("");
   const [sets, setSets] = useState("3");
   const [repsRange, setRepsRange] = useState("8-12");
   const [restSeconds, setRestSeconds] = useState("60");
 
+  const all = exercisesQuery.data?.exercises ?? [];
+
+  const groups = useMemo(() => {
+    const set = new Set(all.map((e) => e.muscleGroup));
+    return [ALL_GROUPS, ...[...set].sort((a, b) => a.localeCompare(b, "pt-BR"))];
+  }, [all]);
+
   const filtered = useMemo(() => {
-    const all = exercisesQuery.data?.exercises ?? [];
     const q = filter.trim().toLowerCase();
-    if (!q) return all;
-    return all.filter(
-      (e) => e.name.toLowerCase().includes(q) || e.muscleGroup.toLowerCase().includes(q)
-    );
-  }, [exercisesQuery.data, filter]);
+    return all.filter((e) => {
+      if (group !== ALL_GROUPS && e.muscleGroup !== group) return false;
+      if (!q) return true;
+      return e.name.toLowerCase().includes(q) || e.muscleGroup.toLowerCase().includes(q);
+    });
+  }, [all, group, filter]);
 
   const mutation = useMutation({
     mutationFn: () =>
@@ -63,34 +77,78 @@ export function AddExerciseForm({
         <QueryError error={exercisesQuery.error} onRetry={() => exercisesQuery.refetch()} />
       )}
 
+      {/* Filtro por grupo muscular (tabs roláveis) — 150 itens num dropdown único
+          seria ruim de navegar (Fase 15). */}
       <div className="flex flex-col gap-1.5">
-        <Label htmlFor="filter">Buscar exercício (nome ou grupo muscular)</Label>
+        <Label>Grupo muscular</Label>
+        <div className="flex flex-wrap gap-2">
+          {groups.map((g) => {
+            const active = g === group;
+            return (
+              <button
+                key={g}
+                type="button"
+                onClick={() => setGroup(g)}
+                aria-pressed={active}
+                className={
+                  active
+                    ? "rounded-full border border-accent bg-accent/10 px-3 py-1 text-xs font-semibold text-accent"
+                    : "rounded-full border border-border px-3 py-1 text-xs text-muted hover:border-accent"
+                }
+              >
+                {g}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      <div className="flex flex-col gap-1.5">
+        <Label htmlFor="filter">Buscar por nome</Label>
         <Input
           id="filter"
           value={filter}
           onChange={(e) => setFilter(e.target.value)}
-          placeholder="Ex: supino, peito..."
+          placeholder="Ex: supino, agachamento..."
         />
       </div>
 
       <div className="flex flex-col gap-1.5">
-        <Label htmlFor="exercise">Exercício</Label>
-        <select
-          id="exercise"
-          required
-          value={exerciseId}
-          onChange={(e) => setExerciseId(e.target.value)}
-          className="h-11 rounded-md border border-border bg-surface px-3.5 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+        <Label>Exercício ({filtered.length})</Label>
+        <div
+          className="flex max-h-72 flex-col gap-1.5 overflow-y-auto rounded-md border border-border p-2"
+          role="listbox"
+          aria-label="Exercícios"
         >
-          <option value="" disabled>
-            {filtered.length} exercício(s) — selecione
-          </option>
-          {filtered.map((ex) => (
-            <option key={ex.id} value={ex.id}>
-              {ex.name} ({ex.muscleGroup})
-            </option>
-          ))}
-        </select>
+          {filtered.map((ex) => {
+            const selected = ex.id === exerciseId;
+            return (
+              <button
+                key={ex.id}
+                type="button"
+                role="option"
+                aria-selected={selected}
+                onClick={() => setExerciseId(ex.id)}
+                className={
+                  selected
+                    ? "flex items-center justify-between gap-2 rounded-md border border-accent bg-accent/10 px-3 py-2 text-left"
+                    : "flex items-center justify-between gap-2 rounded-md border border-transparent px-3 py-2 text-left hover:border-border"
+                }
+              >
+                <span className="flex flex-col">
+                  <span className="text-sm font-semibold">{ex.name}</span>
+                  <span className="text-xs text-muted">
+                    {ex.muscleGroup} · {ex.equipment}
+                  </span>
+                </span>
+                <DifficultyBadge level={ex.difficultyLevel} />
+              </button>
+            );
+          })}
+          {exercisesQuery.isSuccess && filtered.length === 0 && (
+            <p className="px-2 py-3 text-sm text-muted">Nenhum exercício neste filtro.</p>
+          )}
+        </div>
       </div>
 
       <div className="grid grid-cols-3 gap-2">

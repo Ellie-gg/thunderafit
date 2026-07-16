@@ -68,6 +68,32 @@ describe("GET /api/exercises", () => {
     expect(r.status).toBe(200);
     expect(r.body.exercises).toHaveLength(exercisesSeed.length);
   });
+
+  it("todo exercício traz difficultyLevel válido (Fase 15)", async () => {
+    const r = await supertest(server.server)
+      .get("/api/exercises")
+      .set("Authorization", `Bearer ${accessToken}`);
+    const validos = ["INICIANTE", "INTERMEDIARIO", "AVANCADO"];
+    expect(r.body.exercises.every((e: any) => validos.includes(e.difficultyLevel))).toBe(true);
+  });
+
+  it("?muscleGroup=Peito retorna só exercícios de Peito (filtro aditivo, Fase 15)", async () => {
+    const esperado = exercisesSeed.filter((e: any) => e.muscleGroup === "Peito").length;
+    const r = await supertest(server.server)
+      .get("/api/exercises?muscleGroup=Peito")
+      .set("Authorization", `Bearer ${accessToken}`);
+    expect(r.status).toBe(200);
+    expect(r.body.exercises).toHaveLength(esperado);
+    expect(r.body.exercises.every((e: any) => e.muscleGroup === "Peito")).toBe(true);
+  });
+
+  it("?muscleGroup inexistente retorna lista vazia, sem erro", async () => {
+    const r = await supertest(server.server)
+      .get("/api/exercises?muscleGroup=NaoExiste")
+      .set("Authorization", `Bearer ${accessToken}`);
+    expect(r.status).toBe(200);
+    expect(r.body.exercises).toHaveLength(0);
+  });
 });
 
 describe("POST /api/workouts", () => {

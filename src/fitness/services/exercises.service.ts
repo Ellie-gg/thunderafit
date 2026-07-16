@@ -1,7 +1,7 @@
 import { exercisesRepository } from "../repository/exercises.repository";
 
 export const exercisesService = {
-  async listExercises() {
-    return exercisesRepository.findAll();
+  async listExercises(muscleGroup?: string) {
+    return exercisesRepository.findAll(muscleGroup);
   },
 };

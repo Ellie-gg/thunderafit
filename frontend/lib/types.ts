@@ -10,6 +10,8 @@ export interface User {
   updatedAt: string;
 }
 
+export type DifficultyLevel = "INICIANTE" | "INTERMEDIARIO" | "AVANCADO";
+
 export interface Exercise {
   id: string;
   name: string;
@@ -17,6 +19,7 @@ export interface Exercise {
   equipment: string;
   mediaUrl: string | null;
   description: string;
+  difficultyLevel: DifficultyLevel;
   createdAt: string;
   updatedAt: string;
 }

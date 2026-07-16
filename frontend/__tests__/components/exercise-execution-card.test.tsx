@@ -27,6 +27,7 @@ const baseWorkoutExercise: WorkoutExercise = {
     equipment: "Barra",
     mediaUrl: null,
     description: "Deite-se no banco...",
+    difficultyLevel: "INTERMEDIARIO",
     createdAt: "",
     updatedAt: "",
   },

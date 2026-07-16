@@ -1,8 +1,11 @@
 import prisma from "../../lib/prisma";
 
 export const exercisesRepository = {
-  async findAll() {
-    return prisma.exercise.findMany({ orderBy: { name: "asc" } });
+  async findAll(muscleGroup?: string) {
+    return prisma.exercise.findMany({
+      where: muscleGroup ? { muscleGroup } : undefined,
+      orderBy: { name: "asc" },
+    });
   },
 
   async findById(id: string) {

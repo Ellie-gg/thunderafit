@@ -89,15 +89,25 @@ enum ProfessionalType {
 // ============================================================
 
 model Exercise {
-  id           String            @id @default(uuid())
-  name         String            @unique
-  muscleGroup  String
-  equipment    String
-  mediaUrl     String?
-  description  String
-  createdAt    DateTime          @default(now())
-  updatedAt    DateTime          @updatedAt
-  workoutItems WorkoutExercise[]
+  id              String            @id @default(uuid())
+  name            String            @unique
+  muscleGroup     String
+  equipment       String
+  mediaUrl        String?
+  description     String
+  // Fase 15: nível informativo (não usado em filtro nesta fase). Default
+  // INTERMEDIARIO para os 29 exercícios pré-existentes que não declaravam
+  // dificuldade — mantém a migration aditiva sem exigir backfill manual.
+  difficultyLevel DifficultyLevel   @default(INTERMEDIARIO)
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+  workoutItems    WorkoutExercise[]
+}
+
+enum DifficultyLevel {
+  INICIANTE
+  INTERMEDIARIO
+  AVANCADO
 }
 
 model Workout {
