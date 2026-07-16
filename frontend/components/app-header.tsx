@@ -7,13 +7,23 @@ import { logoutRequest } from "@/lib/api/auth";
 import { dashboardPathForRole } from "@/lib/auth/redirect";
 import { Button } from "@/components/ui/button";
 import { NotificationBell } from "@/components/notification-bell";
+import type { Role } from "@/lib/types";
+
+const ROLE_ACCENT_VAR: Record<Role, string> = {
+  PERSONAL: "var(--role-personal)",
+  ALUNO: "var(--role-aluno)",
+  NUTRICIONISTA: "var(--role-nutricionista)",
+};
 
 export function AppHeader() {
   const router = useRouter();
   const { user, clearSession } = useAuthStore();
 
   return (
-    <header className="flex items-center justify-between gap-2 border-b border-border px-4 py-4 sm:px-6">
+    <header
+      className="flex items-center justify-between gap-2 border-b-2 px-4 py-4 sm:px-6"
+      style={{ borderBottomColor: user ? ROLE_ACCENT_VAR[user.role] : "var(--border)" }}
+    >
       <Link
         href={user ? dashboardPathForRole(user.role) : "/login"}
         className="flex shrink-0 items-center gap-2"
@@ -24,6 +34,16 @@ export function AppHeader() {
         <span className="hidden font-display text-sm font-bold tracking-tight sm:inline">
           ThunderaFit
         </span>
+        {/* Bolinha de acento por papel — o emoji ⚡ acima usa fonte de emoji
+            colorida (ignora `color` do CSS), então o acento vive aqui em vez
+            de tentar (sem efeito) tingir o glifo. */}
+        {user && (
+          <span
+            className="h-2 w-2 shrink-0 rounded-full"
+            aria-hidden
+            style={{ backgroundColor: ROLE_ACCENT_VAR[user.role] }}
+          />
+        )}
       </Link>
 
       <div className="flex items-center gap-3">

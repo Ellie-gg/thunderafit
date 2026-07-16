@@ -80,7 +80,10 @@ test("login → /evolucao → gráfico de carga e frequência com dados reais", 
   await expect(page).toHaveURL(/\/dashboard$/);
 
   // --- 2. Navegar para /evolucao via o link do AppHeader ---
-  await page.getByRole("link", { name: "Evolução" }).click();
+  // Fase 12 (Item 4): o dashboard também ganhou um teaser com link para
+  // /evolucao, então "Evolução" sozinho agora casa com 2 elementos — usar o
+  // link exato do header em vez do teaser.
+  await page.getByRole("link", { name: "Evolução", exact: true }).click();
   await expect(page).toHaveURL(/\/evolucao$/);
 
   // --- 3. Selecionar o exercício e ver o gráfico de carga renderizado ---

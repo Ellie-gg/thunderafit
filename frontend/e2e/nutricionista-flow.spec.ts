@@ -29,11 +29,13 @@ test("Nutricionista se cadastra, vincula aluno e cria plano de dieta com 2 refei
     body: JSON.stringify({ email: alunoEmail, password, role: "ALUNO" }),
   });
 
-  // --- 1. Cadastro do Nutricionista pela UI ---
-  await page.goto("/register");
+  // --- 1. Cadastro do Nutricionista pela UI — a partir da Fase 12, o papel
+  // é escolhido na tela inicial (/), não mais dentro do form de /register ---
+  await page.goto("/");
+  await page.getByRole("link", { name: /^Nutricionista/ }).click();
+  await expect(page).toHaveURL(/\/register\?role=NUTRICIONISTA$/);
   await page.locator("#email").fill(nutriEmail);
   await page.locator("#password").fill(password);
-  await page.getByRole("button", { name: "Nutricionista" }).click();
   await page.getByRole("button", { name: "Criar conta" }).click();
   await expect(page).toHaveURL(/\/nutricionista\/dashboard$/);
   await expect(page.getByText("0/3")).toBeVisible();

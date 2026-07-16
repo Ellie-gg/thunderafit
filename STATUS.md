@@ -1072,6 +1072,132 @@
   ```
 - **Pendências conhecidas:** (1) `DietPlan` não tem conceito de data/dia — "plano alimentar de hoje" no dashboard do aluno usa o mesmo tipo de simplificação documentada desde a Fase 5 para "próximo treino" (primeiro item da lista, sem noção real de "hoje" no backend); se o produto precisar de múltiplos planos por período, isso precisará de um campo de data ou vigência. (2) O gap de autorização em `POST /api/relations` (qualquer autenticado podia chamar, incluindo `ALUNO`) já existia desde a Fase 2 e não fazia parte do escopo original desta fase — foi corrigido de passagem por estar exatamente no código que o Bloco 1 já precisava tocar, não por uma varredura de segurança dedicada; outros endpoints não tocados nesta fase não foram reauditados. (3) Dúvidas/Anamnese continuam exclusivas do vínculo com Personal — não foram estendidas para o relacionamento com Nutricionista nesta fase, por não estar no escopo dos 4 blocos pedidos (ficaria como extensão natural futura do domínio `support`/`anamnesis`, fora do módulo de nutrição). (4) `DietFood.quantity` aceita qualquer número positivo pelo formulário (min 0.5, step 0.5) mas não há validação de limite superior no backend — aceitável para o MVP, mas um valor absurdo (ex: 1000 porções) não é rejeitado.
 
+## 2026-07-16 - Executado por Claude Code (Sonnet 5)
+- **O que foi feito:** Fase 12 — Polish Visual & Usabilidade, 4 itens independentes, nenhum deles exigiu tocar `/src/auth` ou mudar contrato de API de forma não-aditiva (backend não foi tocado nesta fase — confirmado via `git status src/` vazio antes de escrever o STATUS).
+  **Item 1 (Tela Inicial com Seleção de Perfil):** `/` deixou de redirecionar direto para `/login` — agora mostra 3 boxes grandes (Personal/Aluno/Nutricionista), cada um com copy contextualizada, levando para `/register?role=X`. A escolha de papel saiu de dentro do form de `/register` (3º botão de role, da Fase 11) — `/register` agora só lê `role` da query string; se vier ausente/inválido (link antigo, acesso direto), redireciona de volta para `/` em vez de mostrar um form quebrado. Sessão já ativa em `/` continua pulando a seleção e indo direto pro dashboard certo (comportamento antigo preservado). Criado `frontend/lib/roles.ts` com os metadados de cada papel (label, tagline, cor de acento), fonte única reaproveitada tanto por `/` quanto por `/register`.
+  **Item 2 (Acento de Cor por Papel):** 3 novas variáveis CSS (`--role-personal`, `--role-aluno`, `--role-nutricionista`), tratadas como extensão da paleta Voltagem existente, não uma paleta nova:
+  - **Personal → `#FFC93C`** (o dourado `--volt-400` que já era o acento padrão do produto desde a Fase 5) — mantém a identidade "energia do treino" que o Personal já carregava implicitamente.
+  - **Aluno → `#3FD0C9`** (o ciano `--static-450` que já identificava Evolução/progresso pessoal desde a Fase 8) — reforça a narrativa "seu crescimento" que já era do aluno.
+  - **Nutricionista → `#B98CFF`** (violeta, cor genuinamente nova) — comunica cuidado/vitalidade sem reutilizar verde/vermelho (reservados para success/danger); testado no validador de paleta da skill de dataviz — CVD/contraste/distinção normal-vision todos PASS (a única checagem que falhou, "lightness band", é calibrada para séries categóricas de gráfico contra superfície escura, não para chips de acento de UI — os acentos já existentes no produto, gold/ciano, têm exatamente o mesmo perfil de luminosidade e nunca foram um problema real).
+  Aplicado em 2 lugares deliberadamente pequenos (não repintou a interface): a `VoltageBar` (novo prop `role`, tinge os segmentos preenchidos via `--voltage-accent`) nos 3 dashboards + execução de treino; e o `AppHeader` (borda inferior de 2px + uma bolinha de 8px ao lado do wordmark). **Bug descoberto durante a validação visual:** a primeira tentativa tingia a cor do próprio emoji ⚡ via `color` CSS — não teve nenhum efeito, porque emojis coloridos (fonte de emoji do sistema) ignoram a propriedade `color`/`currentColor`, sempre renderizando com a cor própria da fonte. Corrigido substituindo por elementos que realmente respeitam `color`/`background-color` (borda superior nos boxes da tela inicial, borda inferior + bolinha no header) — confirmado via screenshot antes/depois.
+  **Item 3 (Erro Acionável ao Vincular Aluno):** `VincularAlunoForm` (compartilhado desde a Fase 11 entre Personal e Nutricionista) trata 404 separadamente dos outros erros — em vez de texto genérico, mostra "Esse e-mail ainda não tem conta no ThunderaFit. Peça para seu aluno se cadastrar primeiro." com um botão "Copiar convite para compartilhar" que copia (`navigator.clipboard.writeText`) um texto de convite pronto, incluindo o link `/register?role=ALUNO` e o nome do profissional que convidou ("Personal Trainer" ou "Nutricionista", novo prop `professionalLabel`). Validado com clique real de navegador (não só o teste unitário com clipboard mockado) — texto copiado conferido via `navigator.clipboard.readText()`.
+  **Item 4 (Teaser de Evolução):** novo componente `EvolucaoTeaser` no dashboard do aluno, usando os endpoints já existentes (`GET /api/progress/exercises` + `/load-history`) — pega o primeiro exercício com séries registradas (mesma simplificação de "primeiro item da lista" já documentada para "próximo treino"/"plano de hoje"), mostra `{exercício}: {+/-X.X}% na última sessão` quando há `percentChangeVsPrevious` calculável, ou um estado vazio convidativo ("Registre suas primeiras séries para ver sua evolução aqui.") quando ainda não há 2 dias distintos de dado — nunca esconde o card nem quebra. Validado nos dois estados (vazio e populado, este último manipulando `loggedAt` via Prisma para simular 2 dias, mesma técnica de teste já usada na Fase 8).
+  **Bug de ambiente descoberto e corrigido durante a validação (não é da Fase 12, mas bloqueava testá-la):** a suíte de E2E começou a falhar com "Can't reach database server at localhost:5432" mesmo com o Postgres saudável e uma conexão TCP crua funcionando via `localhost`. Isolado ao Prisma especificamente (uma conexão TCP simples via Node funcionava instantaneamente); forçar `127.0.0.1` em vez de `localhost` no `DATABASE_URL` resolveu — o mesmo tipo de bug de resolução IPv6-primeiro já documentado no `Invoke-WebRequest` do `dev.ps1` na Fase 5.5, agora afetando a engine do Prisma. Corrigido em `.env` e documentado em `.env.example` para não se repetir em setups futuros.
+  Ao final: suíte completa reexecutada (backend intacto, 84/84; frontend unidade/integração 22/22; E2E — todos os 5 já existentes mais 3 novos, 8/8), e validação visual real via Playwright com screenshots dos 4 itens (login→dashboard aluno/Personal/Nutricionista, tela de vincular com 404, landing de seleção).
+- **Arquivos Criados/Modificados:**
+  - Design system: `frontend/app/globals.css` (3 variáveis `--role-*`, mapeamento `@theme inline`, `.voltage-segment` aceita `--voltage-accent`)
+  - Item 1: `frontend/lib/roles.ts` (novo), `frontend/app/page.tsx` (reescrito — landing com 3 boxes), `frontend/app/register/page.tsx` (reescrito — lê `role` da query, sem picker, `Suspense` para `useSearchParams`)
+  - Item 2: `frontend/components/voltage-bar.tsx` (prop `role`), `frontend/components/app-header.tsx` (borda + bolinha por papel), `frontend/app/dashboard/page.tsx`, `frontend/app/personal/dashboard/page.tsx`, `frontend/app/nutricionista/dashboard/page.tsx`, `frontend/app/treinos/[id]/page.tsx`, `frontend/components/exercise-execution-card.tsx` (todos: `role` passado ao `VoltageBar`)
+  - Item 3: `frontend/components/vincular-aluno-form.tsx` (404 tratado à parte + `AlunoNaoEncontrado` com botão de copiar convite, novo prop `professionalLabel`), `frontend/app/personal/alunos/novo/page.tsx`, `frontend/app/nutricionista/alunos/novo/page.tsx` (passam `professionalLabel`)
+  - Item 4: `frontend/components/evolucao-teaser.tsx` (novo), `frontend/app/dashboard/page.tsx` (usa o teaser)
+  - Testes: `frontend/__tests__/components/vincular-aluno.test.tsx` (teste do 404 atualizado para a nova mensagem + botão de copiar), `frontend/e2e/selecao-perfil-flow.spec.ts` (novo), `frontend/e2e/nutricionista-flow.spec.ts` (fluxo de registro atualizado para passar por `/` primeiro), `frontend/e2e/evolucao-flow.spec.ts` (locator do link "Evolução" desambiguado do novo teaser)
+  - Ambiente: `.env` e `.env.example` (`DATABASE_URL` usa `127.0.0.1`, não `localhost`)
+- **Evidência / Status dos Testes:**
+  ```
+  Validação da paleta de acento (Item 2) — node scripts/validate_palette.js "#FFC93C,#3FD0C9,#B98CFF" --mode dark
+
+  [FAIL] Lightness band         outside band (esperado — ver justificativa no corpo da entrada)
+  [PASS] Chroma floor           all 3 >= 0.1
+  [PASS] CVD separation         worst adjacent ΔE 12.6 (deutan) · tritan 16.9
+  [PASS] Normal-vision floor    worst adjacent ΔE 23.5 (normal)
+  [PASS] Contrast vs surface    all 3 >= 3:1
+  ```
+  ```
+  Bug de ambiente encontrado e corrigido — Prisma não alcançava o Postgres via "localhost"
+
+  ERR Invalid `prisma.user.count()` invocation: Can't reach database server at `localhost:5432`
+  (conexão TCP crua via Node, mesma máquina, mesmo host "localhost": CONNECTED — confirma que não é rede/firewall)
+
+  Após forçar 127.0.0.1 no DATABASE_URL:
+  > node -e "... DATABASE_URL=...127.0.0.1... prisma.user.count()"
+  user count 3
+  ```
+  ```
+  Frontend — > npx tsc --noEmit && npx eslint . (ambos limpos, sem erros/warnings)
+  ```
+  ```
+  Backend — suíte completa (não tocado nesta fase, checando que nada regrediu) — > npm test
+
+  Test Suites: 10 passed, 10 total
+  Tests:       84 passed, 84 total
+  Ran all test suites.
+  ```
+  ```
+  Frontend — unidade/integração, incluindo o teste do 404 acionável reescrito (Item 3) — > npm test
+
+  Test Suites: 5 passed, 5 total
+  Tests:       22 passed, 22 total
+  Ran all test suites.
+  ```
+  ```
+  Frontend — E2E completo (5 já existentes + 3 novos do Item 1) — > npx playwright test
+
+  Running 8 tests using 1 worker
+    ok 1 [chrome] › e2e\critical-flow.spec.ts:27:5 › login → dashboard → treino → registrar série (3.1s)
+    ok 2 [chrome] › e2e\duvidas-flow.spec.ts:26:5 › aluno pergunta → Personal responde → aluno vê resposta e notificação (6.1s)
+    ok 3 [chrome] › e2e\evolucao-flow.spec.ts:26:5 › login → /evolucao → gráfico de carga e frequência com dados reais (3.3s)
+    ok 4 [chrome] › e2e\multi-profissional-flow.spec.ts:25:5 › aluno com Personal E Nutricionista simultâneos vê os dois cards no dashboard (3.2s)
+    ok 5 [chrome] › e2e\nutricionista-flow.spec.ts:20:5 › Nutricionista se cadastra, vincula aluno e cria plano de dieta com 2 refeições (3.7s)
+    ok 6 [chrome] › e2e\selecao-perfil-flow.spec.ts:12:5 › `/` mostra os 3 perfis e o registro chega pré-contextualizado (1.8s)
+    ok 7 [chrome] › e2e\selecao-perfil-flow.spec.ts:37:5 › /register sem `role` na URL volta para a seleção de perfil (568ms)
+    ok 8 [chrome] › e2e\selecao-perfil-flow.spec.ts:42:5 › registro real via backend confirma o role correto quando vindo do fluxo de seleção (1.9s)
+  8 passed (25.1s)
+  ```
+  ```
+  Validação manual real do texto de convite copiado (Item 3) — clique de verdade no navegador, não mock:
+
+  CLIPBOARD_TEXT: Oi! Te convidei pra usar o ThunderaFit comigo como seu(sua) Personal Trainer.
+  Cria sua conta de aluno aqui: http://localhost:3001/register?role=ALUNO
+  ```
+  ```
+  Validação visual real via screenshots (Playwright), todos os 4 itens conferidos:
+
+  1. `/` — 3 boxes com borda superior dourada/ciano/violeta distintas, copy contextualizada por papel.
+  2. `/register?role=PERSONAL` — heading "Cadastro — Personal Trainer" + tagline, sem seletor de role, com
+     "Não é personal trainer? Escolher outro perfil" e "Já tem conta? Entrar".
+  3. Dashboard do aluno — header com borda/bolinha ciano, VoltageBar ciano no card de treino, card de plano
+     alimentar, teaser de Evolução no estado vazio ("Registre suas primeiras séries...").
+  4. Dashboard do Personal — header com borda/bolinha dourada, VoltageBar dourada no limite de alunos.
+  5. Tela de vincular aluno, e-mail inexistente — mensagem acionável + botão "Copiar convite para
+     compartilhar", com feedback "Convite copiado!" após o clique real.
+  6. Dashboard do Nutricionista — header com borda/bolinha violeta, VoltageBar violeta no limite de alunos.
+  7. Teaser de Evolução populado (2 dias distintos de carga simulados) — "Abdominal Supra no Solo: +22.2%
+     na última sessão", batendo exatamente com (55-45)/45×100 = 22.2%.
+  ```
+  ```
+  Frontend — > npm run build (final)
+
+  ✓ Compiled successfully in 4.3s
+    Running TypeScript ...
+    Finished TypeScript in 5.4s ...
+
+  Route (app)
+  ┌ ○ /
+  ├ ○ /_not-found
+  ├ ○ /anamnese
+  ├ ○ /dashboard
+  ├ ƒ /dieta/[id]
+  ├ ○ /duvidas
+  ├ ƒ /duvidas/[id]
+  ├ ○ /evolucao
+  ├ ○ /login
+  ├ ○ /nutricionista/alunos/novo
+  ├ ○ /nutricionista/dashboard
+  ├ ƒ /nutricionista/planos/[id]
+  ├ ○ /nutricionista/planos/novo
+  ├ ƒ /personal/alunos/[alunoId]/anamnese
+  ├ ○ /personal/alunos/novo
+  ├ ○ /personal/dashboard
+  ├ ○ /personal/duvidas
+  ├ ƒ /personal/duvidas/[id]
+  ├ ƒ /personal/treinos/[id]
+  ├ ○ /personal/treinos/novo
+  ├ ○ /register
+  ├ ○ /treinos
+  └ ƒ /treinos/[id]
+  ```
+- **Pendências conhecidas:** (1) O acento por papel (Item 2) só aparece na `VoltageBar` e na borda/bolinha do header — botões, links e outros elementos permanecem no dourado/ciano padrão de sempre, por decisão explícita de não repintar a interface inteira; se o fundador quiser um acento mais presente no futuro, dá pra estender o mesmo padrão (`role` prop + `--voltage-accent`-like var) a outros componentes. (2) O teaser de Evolução (Item 4) sempre olha o primeiro exercício com séries registradas, não necessariamente o mais relevante/recente — mesma simplificação já aceita em outros lugares do dashboard; se o aluno tiver muitos exercícios distintos, o teaser pode não mostrar o que ele mais quer ver. (3) O texto do convite copiável (Item 3) é fixo em português e não é customizável pelo profissional antes de copiar — atende ao pedido do prompt (texto pronto), mas não permite personalização. (4) O fix do `DATABASE_URL` (127.0.0.1 vs localhost) resolve o sintoma neste ambiente específico; a causa raiz (por que a engine do Prisma resolve "localhost" de um jeito que trava, diferente de conexões TCP puras do Node) não foi investigada a fundo — não era o escopo desta fase, só um bloqueio real para conseguir validar o resto.
+
 ## Progresso Geral das Fases
 - [x] Fase 1: Fundação Core, Auth e Estrutura Modular
 - [x] Fase 2: Vínculo Personal↔Aluno e Limite Freemium
@@ -1085,3 +1211,4 @@
 - [x] Fase 9: Consolidação (Polish + Stub de Billing + Preparação Mobile)
 - [x] Fase 10: Anamnese + Dúvidas + Notificações
 - [x] Fase 11: Módulo de Nutrição & Multi-Profissional
+- [x] Fase 12: Polish Visual & Usabilidade

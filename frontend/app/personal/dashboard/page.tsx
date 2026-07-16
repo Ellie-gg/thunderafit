@@ -49,7 +49,7 @@ function PersonalDashboardContent() {
               {alunos.length}/{limite}
             </span>
           </div>
-          <VoltageBar total={limite} filled={alunos.length} />
+          <VoltageBar total={limite} filled={alunos.length} role="PERSONAL" />
 
           {noLimite && (
             <p className="rounded-md border border-danger/40 bg-danger/10 px-3 py-2 text-sm text-danger">

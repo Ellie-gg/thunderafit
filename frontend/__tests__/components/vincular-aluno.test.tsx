@@ -59,16 +59,34 @@ describe("Tela de vincular novo aluno", () => {
     await waitFor(() => expect(push).toHaveBeenCalledWith("/personal/dashboard"));
   });
 
-  it("404: mostra mensagem específica de aluno não encontrado", async () => {
+  it("404: mostra mensagem acionável com botão de copiar convite (Fase 12)", async () => {
     mockedLookup.mockRejectedValue(new ApiError(404, "Aluno não encontrado com este e-mail."));
 
     renderPage();
     await submit("naoexiste@x.com");
 
     expect(
-      await screen.findByText("Não existe nenhum aluno cadastrado com esse e-mail.")
+      await screen.findByText(
+        "Esse e-mail ainda não tem conta no ThunderaFit. Peça para seu aluno se cadastrar primeiro."
+      )
     ).toBeInTheDocument();
     expect(push).not.toHaveBeenCalled();
+
+    const user = userEvent.setup();
+
+    // userEvent.setup() instala seu próprio stub de clipboard — por isso o
+    // mock só pode ser definido DEPOIS da última chamada a setup(), ou ele é
+    // sobrescrito antes do clique acontecer.
+    const writeText = jest.fn().mockResolvedValue(undefined);
+    Object.defineProperty(navigator, "clipboard", {
+      value: { writeText },
+      configurable: true,
+    });
+
+    await user.click(screen.getByRole("button", { name: "Copiar convite para compartilhar" }));
+
+    expect(writeText).toHaveBeenCalledWith(expect.stringContaining("/register?role=ALUNO"));
+    expect(await screen.findByText("Convite copiado!")).toBeInTheDocument();
   });
 
   it("409: mostra mensagem específica de vínculo já existente", async () => {

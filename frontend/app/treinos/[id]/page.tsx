@@ -56,7 +56,7 @@ function ExecucaoContent() {
         </span>
         <h1 className="font-display text-2xl font-bold tracking-tight">{workout.name}</h1>
         <div className="mt-2 flex items-center gap-3">
-          <VoltageBar total={totalSets} filled={doneSets} className="max-w-xs" />
+          <VoltageBar total={totalSets} filled={doneSets} role="ALUNO" className="max-w-xs" />
           <span className="font-mono-nums text-xs text-muted">
             {doneSets}/{totalSets}
           </span>

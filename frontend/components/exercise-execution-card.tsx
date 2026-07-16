@@ -53,7 +53,7 @@ export function ExerciseExecutionCard({
         </span>
       </div>
 
-      <VoltageBar total={workoutExercise.sets} filled={setLogs.length} />
+      <VoltageBar total={workoutExercise.sets} filled={setLogs.length} role="ALUNO" />
 
       {embedUrl && (
         <div className="aspect-video w-full overflow-hidden rounded-lg border border-border">

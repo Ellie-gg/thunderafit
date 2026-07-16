@@ -23,6 +23,18 @@
   --success: var(--signal-green);
   --danger: var(--signal-red);
   --border: #262d3d;
+
+  /* Fase 12 — acento sutil por papel (Item 2). Estende a paleta existente em
+     vez de introduzir cores novas do zero: Personal herda o dourado que já
+     era o acento padrão do produto desde a Fase 5 (energia do treino);
+     Aluno herda o ciano que já identificava a Evolução/progresso pessoal
+     desde a Fase 8; Nutricionista ganha o único tom realmente novo, um
+     violeta que comunica cuidado/vitalidade sem reutilizar verde/vermelho
+     (reservados para success/danger). Os 3 permanecem no mesmo registro
+     "storm + neon" da paleta original. */
+  --role-personal: var(--volt-400);
+  --role-aluno: var(--static-450);
+  --role-nutricionista: #b98cff;
 }
 
 :root[data-theme="light"] {
@@ -46,6 +58,9 @@
   --color-success: var(--success);
   --color-danger: var(--danger);
   --color-border: var(--border);
+  --color-role-personal: var(--role-personal);
+  --color-role-aluno: var(--role-aluno);
+  --color-role-nutricionista: var(--role-nutricionista);
   --font-display: var(--font-unbounded);
   --font-sans: var(--font-manrope);
   --font-mono: var(--font-plex-mono);
@@ -82,7 +97,9 @@ body {
 }
 
 .voltage-segment[data-filled="true"] {
-  background: var(--volt-400);
-  border-color: var(--volt-500);
-  box-shadow: 0 0 8px 0 color-mix(in srgb, var(--volt-400) 60%, transparent);
+  /* --voltage-accent (opcional, setado pelo componente VoltageBar via prop
+     `role`) permite o acento por papel da Fase 12 sem mudar o padrão. */
+  background: var(--voltage-accent, var(--volt-400));
+  border-color: var(--voltage-accent, var(--volt-500));
+  box-shadow: 0 0 8px 0 color-mix(in srgb, var(--voltage-accent, var(--volt-400)) 60%, transparent);
 }

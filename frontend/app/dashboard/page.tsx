@@ -11,6 +11,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { VoltageBar } from "@/components/voltage-bar";
 import { QueryError } from "@/components/query-error";
+import { EvolucaoTeaser } from "@/components/evolucao-teaser";
 
 function DashboardContent() {
   const user = useAuthStore((s) => s.user);
@@ -93,7 +94,7 @@ function DashboardContent() {
             <h2 className="font-display text-xl font-bold">
               Treino {workout.letter} — {workout.name}
             </h2>
-            <VoltageBar total={totalSets} filled={doneSets} />
+            <VoltageBar total={totalSets} filled={doneSets} role="ALUNO" />
             <Button asChild>
               <Link href={`/treinos/${workout.id}`}>Começar treino</Link>
             </Button>
@@ -131,6 +132,8 @@ function DashboardContent() {
             </Button>
           </Card>
         )}
+
+        <EvolucaoTeaser />
 
         {/* Atalhos visíveis também aqui (não só no AppHeader) — no celular,
             os links de texto do header ficam escondidos por falta de espaço. */}

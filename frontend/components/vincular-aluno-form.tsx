@@ -10,7 +10,46 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 
-export function VincularAlunoForm({ dashboardPath }: { dashboardPath: string }) {
+function buildInviteText(professionalLabel: string) {
+  const registerUrl =
+    typeof window !== "undefined"
+      ? `${window.location.origin}/register?role=ALUNO`
+      : "/register?role=ALUNO";
+  return `Oi! Te convidei pra usar o ThunderaFit comigo como seu(sua) ${professionalLabel}. Cria sua conta de aluno aqui: ${registerUrl}`;
+}
+
+function AlunoNaoEncontrado({ professionalLabel }: { professionalLabel: string }) {
+  const [copied, setCopied] = useState(false);
+
+  return (
+    <div className="flex flex-col gap-2 rounded-md border border-danger/40 bg-danger/10 px-3 py-2.5">
+      <p className="text-sm text-danger">
+        Esse e-mail ainda não tem conta no ThunderaFit. Peça para seu aluno se cadastrar primeiro.
+      </p>
+      <Button
+        type="button"
+        variant="secondary"
+        size="sm"
+        onClick={async () => {
+          await navigator.clipboard.writeText(buildInviteText(professionalLabel));
+          setCopied(true);
+          setTimeout(() => setCopied(false), 2000);
+        }}
+      >
+        {copied ? "Convite copiado!" : "Copiar convite para compartilhar"}
+      </Button>
+    </div>
+  );
+}
+
+export function VincularAlunoForm({
+  dashboardPath,
+  professionalLabel,
+}: {
+  dashboardPath: string;
+  /** Fase 12 (Item 3): usado no texto do convite copiável ("Personal Trainer" / "Nutricionista"). */
+  professionalLabel: string;
+}) {
   const router = useRouter();
   const queryClient = useQueryClient();
   const [email, setEmail] = useState("");
@@ -26,13 +65,13 @@ export function VincularAlunoForm({ dashboardPath }: { dashboardPath: string }) 
     },
   });
 
+  const isAlunoNotFound = mutation.error instanceof ApiError && mutation.error.status === 404;
+
   function errorMessage(): string {
     if (!(mutation.error instanceof ApiError)) {
       return "Não foi possível conectar ao servidor.";
     }
     switch (mutation.error.status) {
-      case 404:
-        return "Não existe nenhum aluno cadastrado com esse e-mail.";
       case 409:
         return "Esse aluno já está vinculado a você.";
       case 403:
@@ -64,7 +103,12 @@ export function VincularAlunoForm({ dashboardPath }: { dashboardPath: string }) 
           />
         </div>
 
-        {mutation.isError && <p className="text-sm text-danger">{errorMessage()}</p>}
+        {mutation.isError && isAlunoNotFound && (
+          <AlunoNaoEncontrado professionalLabel={professionalLabel} />
+        )}
+        {mutation.isError && !isAlunoNotFound && (
+          <p className="text-sm text-danger">{errorMessage()}</p>
+        )}
 
         <Button type="submit" disabled={mutation.isPending}>
           {mutation.isPending ? "Vinculando..." : "Vincular aluno"}

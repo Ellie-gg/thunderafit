@@ -9,7 +9,7 @@ function VincularAlunoContent() {
     <>
       <AppHeader />
       <main className="flex flex-1 flex-col items-center justify-center px-6 py-12">
-        <VincularAlunoForm dashboardPath="/nutricionista/dashboard" />
+        <VincularAlunoForm dashboardPath="/nutricionista/dashboard" professionalLabel="Nutricionista" />
       </main>
     </>
   );
