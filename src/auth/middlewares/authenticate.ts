@@ -23,7 +23,16 @@ const authPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
       const cookieToken = (request as FastifyRequest & { cookies: Record<string, string | undefined> })
         .cookies?.access_token;
 
-      const token = authHeader?.startsWith("Bearer ") ? authHeader.slice(7) : cookieToken;
+      // Cookie tem prioridade sobre o header Authorization: em produção, o
+      // proxy do frontend (Cloud Run com invocação restrita por IAM) injeta
+      // seu próprio `Authorization: Bearer <ID token do Google>` em TODA
+      // requisição — se o header tivesse prioridade, esse ID token seria
+      // validado como se fosse o JWT da aplicação e sempre falharia (bug real
+      // encontrado ao popular o banco de produção: toda rota protegida
+      // retornava 401, mesmo com o cookie de sessão presente e válido).
+      // Bearer via header continua funcionando para clients sem cookie
+      // (curl/Postman/dev local direto no backend).
+      const token = cookieToken ?? (authHeader?.startsWith("Bearer ") ? authHeader.slice(7) : undefined);
 
       if (!token) {
         return reply.status(401).send({ error: "Token de acesso não fornecido." });
