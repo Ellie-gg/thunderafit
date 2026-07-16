@@ -1,0 +1,270 @@
+import supertest from "supertest";
+import { buildApp } from "../../app";
+import prisma from "../../lib/prisma";
+import { computeSuggestedSessionId } from "../services/workout-programs.service";
+
+let server: import("fastify").FastifyInstance;
+let personalToken: string;
+let personalId: string;
+let aluno1Id: string;
+let aluno2Id: string;
+let aluno1Token: string;
+let exerciseIds: string[];
+
+const pw = "SenhaSegura@123";
+
+beforeAll(async () => {
+  server = await buildApp();
+  await server.ready();
+  await prisma.$connect();
+
+  const regP = await supertest(server.server)
+    .post("/api/auth/register")
+    .send({ email: "wp_personal@thunderafit.test", password: pw, role: "PERSONAL" });
+  personalId = regP.body.user.id;
+  const regA1 = await supertest(server.server)
+    .post("/api/auth/register")
+    .send({ email: "wp_aluno1@thunderafit.test", password: pw, role: "ALUNO" });
+  aluno1Id = regA1.body.user.id;
+  const regA2 = await supertest(server.server)
+    .post("/api/auth/register")
+    .send({ email: "wp_aluno2@thunderafit.test", password: pw, role: "ALUNO" });
+  aluno2Id = regA2.body.user.id;
+
+  personalToken = (
+    await supertest(server.server).post("/api/auth/login").send({ email: "wp_personal@thunderafit.test", password: pw })
+  ).body.accessToken;
+  aluno1Token = (
+    await supertest(server.server).post("/api/auth/login").send({ email: "wp_aluno1@thunderafit.test", password: pw })
+  ).body.accessToken;
+
+  for (const alunoId of [aluno1Id, aluno2Id]) {
+    await supertest(server.server)
+      .post("/api/relations")
+      .set("Authorization", `Bearer ${personalToken}`)
+      .send({ alunoId });
+  }
+
+  const exs = await prisma.exercise.findMany({ take: 3, orderBy: { name: "asc" } });
+  exerciseIds = exs.map((e) => e.id);
+});
+
+afterAll(async () => {
+  // Limpa em ordem de dependência (setlog -> workoutExercise -> workout -> program).
+  const progs = await prisma.workoutProgram.findMany({ where: { personalId }, select: { id: true } });
+  const progIds = progs.map((p) => p.id);
+  const workouts = await prisma.workout.findMany({ where: { programId: { in: progIds } }, select: { id: true } });
+  const wIds = workouts.map((w) => w.id);
+  const wes = await prisma.workoutExercise.findMany({ where: { workoutId: { in: wIds } }, select: { id: true } });
+  await prisma.setLog.deleteMany({ where: { workoutExerciseId: { in: wes.map((w) => w.id) } } });
+  await prisma.workoutExercise.deleteMany({ where: { workoutId: { in: wIds } } });
+  await prisma.workout.deleteMany({ where: { programId: { in: progIds } } });
+  await prisma.workoutProgram.deleteMany({ where: { personalId } });
+  await prisma.clientRelation.deleteMany({ where: { personalId } });
+  await prisma.user.deleteMany({ where: { email: { contains: "wp_" } } });
+  await prisma.$disconnect();
+  await server.close();
+});
+
+describe("Fase 16 — cálculo de suggestedNext (regra unitária)", () => {
+  it("sugere a de MENOR letra nunca feita", () => {
+    const id = computeSuggestedSessionId([
+      { id: "A", letter: "A", lastCompletedAt: new Date("2026-01-01") },
+      { id: "B", letter: "B", lastCompletedAt: null },
+      { id: "C", letter: "C", lastCompletedAt: null },
+    ]);
+    expect(id).toBe("B");
+  });
+
+  it("todas feitas: sugere a de conclusão mais antiga", () => {
+    const id = computeSuggestedSessionId([
+      { id: "A", letter: "A", lastCompletedAt: new Date("2026-03-10") },
+      { id: "B", letter: "B", lastCompletedAt: new Date("2026-01-05") },
+      { id: "C", letter: "C", lastCompletedAt: new Date("2026-02-20") },
+    ]);
+    expect(id).toBe("B");
+  });
+
+  it("programa sem sessões: null", () => {
+    expect(computeSuggestedSessionId([])).toBeNull();
+  });
+});
+
+describe("Fase 16 BLOCO 2 — template, sessões e aplicação (cópia)", () => {
+  let templateId: string;
+
+  it("cria template (isTemplate=true, sem alunoId)", async () => {
+    const r = await supertest(server.server)
+      .post("/api/workout-programs")
+      .set("Authorization", `Bearer ${personalToken}`)
+      .send({ name: "Masculino Avançado ABC" });
+    expect(r.status).toBe(201);
+    expect(r.body.program.isTemplate).toBe(true);
+    expect(r.body.program.alunoId).toBeNull();
+    templateId = r.body.program.id;
+  });
+
+  it("adiciona 3 sessões (A, B, C) com exercícios", async () => {
+    for (const letter of ["A", "B", "C"]) {
+      const s = await supertest(server.server)
+        .post(`/api/workout-programs/${templateId}/sessions`)
+        .set("Authorization", `Bearer ${personalToken}`)
+        .send({ letter, name: `Sessão ${letter}` });
+      expect(s.status).toBe(201);
+      // adiciona 1 exercício em cada sessão (reutiliza POST /api/workouts/:id/exercises)
+      await supertest(server.server)
+        .post(`/api/workouts/${s.body.session.id}/exercises`)
+        .set("Authorization", `Bearer ${personalToken}`)
+        .send({ exerciseId: exerciseIds[0], sets: 3, repsRange: "8-12", restSeconds: 60, order: 1 });
+    }
+  });
+
+  it("rejeita 4ª sessão repetida (letra A já existe) com 409", async () => {
+    const r = await supertest(server.server)
+      .post(`/api/workout-programs/${templateId}/sessions`)
+      .set("Authorization", `Bearer ${personalToken}`)
+      .send({ letter: "A" });
+    expect(r.status).toBe(409);
+  });
+
+  it("aplica o template a 2 alunos → cria cópias independentes com alunoId preenchido", async () => {
+    for (const alunoId of [aluno1Id, aluno2Id]) {
+      const r = await supertest(server.server)
+        .post(`/api/workout-programs/${templateId}/apply`)
+        .set("Authorization", `Bearer ${personalToken}`)
+        .send({ alunoId });
+      expect(r.status).toBe(201);
+      expect(r.body.program.isTemplate).toBe(false);
+      expect(r.body.program.alunoId).toBe(alunoId);
+      expect(r.body.program.id).not.toBe(templateId);
+      expect(r.body.program.workouts).toHaveLength(3);
+    }
+  });
+
+  it("aplicar a um aluno NÃO vinculado retorna 403", async () => {
+    const outro = await supertest(server.server)
+      .post("/api/auth/register")
+      .send({ email: "wp_naovinc@thunderafit.test", password: pw, role: "ALUNO" });
+    const r = await supertest(server.server)
+      .post(`/api/workout-programs/${templateId}/apply`)
+      .set("Authorization", `Bearer ${personalToken}`)
+      .send({ alunoId: outro.body.user.id });
+    expect(r.status).toBe(403);
+    await prisma.user.deleteMany({ where: { email: "wp_naovinc@thunderafit.test" } });
+  });
+
+  it("CÓPIA, não referência: editar o template depois NÃO altera as instâncias já aplicadas", async () => {
+    // Estado das instâncias ANTES da edição: cada aluno tem 3 sessões.
+    const instAntes = await prisma.workoutProgram.findMany({
+      where: { personalId, isTemplate: false, alunoId: { in: [aluno1Id, aluno2Id] } },
+      include: { workouts: true },
+    });
+    expect(instAntes).toHaveLength(2);
+    expect(instAntes.every((p) => p.workouts.length === 3)).toBe(true);
+
+    // Edita o TEMPLATE: adiciona uma 4ª sessão (D).
+    const add = await supertest(server.server)
+      .post(`/api/workout-programs/${templateId}/sessions`)
+      .set("Authorization", `Bearer ${personalToken}`)
+      .send({ letter: "D", name: "Sessão D nova" });
+    expect(add.status).toBe(201);
+
+    // Template agora tem 4 sessões...
+    const tpl = await prisma.workoutProgram.findUnique({
+      where: { id: templateId },
+      include: { workouts: true },
+    });
+    expect(tpl!.workouts).toHaveLength(4);
+
+    // ...mas as instâncias dos 2 alunos CONTINUAM com 3 (não retroagiu).
+    const instDepois = await prisma.workoutProgram.findMany({
+      where: { personalId, isTemplate: false, alunoId: { in: [aluno1Id, aluno2Id] } },
+      include: { workouts: true },
+    });
+    expect(instDepois.every((p) => p.workouts.length === 3)).toBe(true);
+  });
+
+  it("GET /api/workout-programs?type=template lista só templates", async () => {
+    const r = await supertest(server.server)
+      .get("/api/workout-programs?type=template")
+      .set("Authorization", `Bearer ${personalToken}`);
+    expect(r.status).toBe(200);
+    expect(r.body.programs.every((p: any) => p.isTemplate === true)).toBe(true);
+    expect(r.body.programs.some((p: any) => p.id === templateId)).toBe(true);
+  });
+});
+
+describe("Fase 16 BLOCO 3 — concluir sessão + suggestedNext ponta a ponta", () => {
+  let programId: string;
+  let sessions: any[];
+
+  beforeAll(async () => {
+    // Cria um template fresco de 3 sessões e aplica ao aluno1.
+    const tpl = await supertest(server.server)
+      .post("/api/workout-programs")
+      .set("Authorization", `Bearer ${personalToken}`)
+      .send({ name: "Programa Progresso" });
+    for (const letter of ["A", "B", "C"]) {
+      await supertest(server.server)
+        .post(`/api/workout-programs/${tpl.body.program.id}/sessions`)
+        .set("Authorization", `Bearer ${personalToken}`)
+        .send({ letter });
+    }
+    const applied = await supertest(server.server)
+      .post(`/api/workout-programs/${tpl.body.program.id}/apply`)
+      .set("Authorization", `Bearer ${personalToken}`)
+      .send({ alunoId: aluno1Id });
+    programId = applied.body.program.id;
+    sessions = applied.body.program.workouts.sort((a: any, b: any) => a.letter.localeCompare(b.letter));
+  });
+
+  it("sem nenhuma conclusão, sugere a sessão A", async () => {
+    const r = await supertest(server.server)
+      .get(`/api/workout-programs/${programId}`)
+      .set("Authorization", `Bearer ${aluno1Token}`);
+    expect(r.status).toBe(200);
+    const suggested = r.body.program.workouts.filter((w: any) => w.suggestedNext);
+    expect(suggested).toHaveLength(1);
+    expect(suggested[0].letter).toBe("A");
+  });
+
+  it("aluno conclui a sessão B (fora de ordem) → sugestão passa a ser A (menor nunca feita)", async () => {
+    const sessionB = sessions.find((s: any) => s.letter === "B");
+    const c = await supertest(server.server)
+      .post(`/api/workouts/${sessionB.id}/complete`)
+      .set("Authorization", `Bearer ${aluno1Token}`);
+    expect(c.status).toBe(200);
+    expect(c.body.workout.lastCompletedAt).not.toBeNull();
+
+    const r = await supertest(server.server)
+      .get(`/api/workout-programs/${programId}`)
+      .set("Authorization", `Bearer ${aluno1Token}`);
+    const suggested = r.body.program.workouts.filter((w: any) => w.suggestedNext);
+    expect(suggested).toHaveLength(1);
+    // A e C nunca feitas; a de menor letra é A.
+    expect(suggested[0].letter).toBe("A");
+  });
+
+  it("após concluir A e C também, sugere a de conclusão mais antiga (B foi a primeira)", async () => {
+    for (const letter of ["A", "C"]) {
+      const s = sessions.find((x: any) => x.letter === letter);
+      await supertest(server.server)
+        .post(`/api/workouts/${s.id}/complete`)
+        .set("Authorization", `Bearer ${aluno1Token}`);
+    }
+    const r = await supertest(server.server)
+      .get(`/api/workout-programs/${programId}`)
+      .set("Authorization", `Bearer ${aluno1Token}`);
+    const suggested = r.body.program.workouts.filter((w: any) => w.suggestedNext);
+    expect(suggested).toHaveLength(1);
+    expect(suggested[0].letter).toBe("B");
+  });
+
+  it("Personal não pode concluir sessão do aluno (403)", async () => {
+    const sessionA = sessions.find((s: any) => s.letter === "A");
+    const r = await supertest(server.server)
+      .post(`/api/workouts/${sessionA.id}/complete`)
+      .set("Authorization", `Bearer ${personalToken}`);
+    expect(r.status).toBe(403);
+  });
+});

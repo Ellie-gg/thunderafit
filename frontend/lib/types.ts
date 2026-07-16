@@ -47,13 +47,28 @@ export interface WorkoutExercise {
 
 export interface Workout {
   id: string;
+  programId: string;
   personalId: string;
-  alunoId: string;
+  alunoId: string | null;
   name: string;
   letter: string;
+  lastCompletedAt: string | null;
   createdAt: string;
   updatedAt: string;
   exercises?: WorkoutExercise[];
+  /** Presente na visão de programa do aluno (GET /api/workout-programs/:id). */
+  suggestedNext?: boolean;
+}
+
+export interface WorkoutProgram {
+  id: string;
+  personalId: string;
+  name: string;
+  isTemplate: boolean;
+  alunoId: string | null;
+  createdAt: string;
+  updatedAt: string;
+  workouts?: Workout[];
 }
 
 export interface LoggedExercise {

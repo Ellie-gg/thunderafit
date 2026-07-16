@@ -110,15 +110,62 @@ enum DifficultyLevel {
   AVANCADO
 }
 
+// ============================================================
+// --- domain: fitness (Fase 16) — Programas de Treino ---
+//
+// WorkoutProgram agrupa de 1 a 5 sessões (Workout, letra A-E). Dois papéis
+// no mesmo model, distinguidos por `isTemplate`/`alunoId`:
+//   - Template puro: isTemplate=true, alunoId=null — pertence ao Personal,
+//     reaplicável a qualquer aluno seu.
+//   - Instância aplicada: isTemplate=false, alunoId preenchido — a cópia
+//     independente que um aluno recebeu.
+//
+// Decisão CÓPIA vs REFERÊNCIA (documentada): aplicar um template a um aluno
+// COPIA a estrutura (programa + sessões + exercícios), não referencia o
+// template vivo. Assim, editar o template depois NÃO retroage nos alunos que
+// já o receberam — que é o comportamento seguro exigido pelo fundador.
+//
+// Compatibilidade: cada Workout pré-Fase-16 vira, na migration de dados, um
+// WorkoutProgram de 1 sessão (isTemplate=false, alunoId = o do Workout). Por
+// isso Workout MANTÉM personalId/alunoId/name/letter — nada é removido, e
+// todos os consumidores existentes (progress agrega SetLog por
+// workout.alunoId; admin lê via HTTP; frontend lê letter/name/exercises)
+// seguem funcionando sem mudança.
+// ============================================================
+
+model WorkoutProgram {
+  id         String    @id @default(uuid())
+  personalId String
+  name       String
+  isTemplate Boolean   @default(false)
+  alunoId    String?
+  workouts   Workout[]
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+}
+
 model Workout {
-  id          String            @id @default(uuid())
-  personalId  String
-  alunoId     String
-  name        String
-  letter      String
-  exercises   WorkoutExercise[]
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id              String            @id @default(uuid())
+  // programId é NOT NULL após a migration de dados (backfill preenche todo
+  // Workout pré-existente). A migration adiciona a coluna como nullable,
+  // popula, e só então aplica o NOT NULL — ver migration hand-editada.
+  programId       String
+  program         WorkoutProgram    @relation(fields: [programId], references: [id])
+  personalId      String
+  // alunoId é nulo quando a sessão pertence a um TEMPLATE (ainda não aplicado
+  // a nenhum aluno). Quando o template é aplicado, a cópia tem alunoId
+  // preenchido. Consumidores que filtram por alunoId real (progress, posse do
+  // aluno) naturalmente ignoram sessões de template — comportamento correto.
+  alunoId         String?
+  name            String
+  letter          String
+  // Fase 16: marca a última vez que o aluno concluiu esta sessão. Base para
+  // o cálculo de `suggestedNext` (a sessão sugerida é a nunca feita de menor
+  // letra; se todas já foram feitas, a de conclusão mais antiga).
+  lastCompletedAt DateTime?
+  exercises       WorkoutExercise[]
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
 }
 
 model WorkoutExercise {

@@ -82,3 +82,19 @@ export async function getWorkoutHandler(
     return reply.status(status).send({ error: err.message });
   }
 }
+
+export async function completeWorkoutHandler(
+  request: FastifyRequest<{ Params: { id: string } }>,
+  reply: FastifyReply
+) {
+  const userId = (request as any).user.sub;
+  const { id } = request.params;
+
+  try {
+    const workout = await workoutsService.completeWorkout(id, userId);
+    return reply.status(200).send({ workout });
+  } catch (err: any) {
+    const status = (err as any).statusCode ?? 500;
+    return reply.status(status).send({ error: err.message });
+  }
+}

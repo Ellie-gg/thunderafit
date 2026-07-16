@@ -1,14 +1,28 @@
 import prisma from "../../lib/prisma";
 
 export const workoutsRepository = {
+  // Criar um treino "avulso" (fluxo legado da Fase 3, ainda usado pela UI e
+  // pelos testes) cria, de forma transparente, um WorkoutProgram de 1 sessão
+  // para aquele aluno — assim todo Workout sempre pertence a um programa
+  // (invariante da Fase 16) sem quebrar o contrato de POST /api/workouts.
   async create(personalId: string, alunoId: string, name: string, letter: string) {
+    const program = await prisma.workoutProgram.create({
+      data: { personalId, alunoId, name, isTemplate: false },
+    });
     return prisma.workout.create({
-      data: { personalId, alunoId, name, letter },
+      data: { personalId, alunoId, name, letter, programId: program.id },
     });
   },
 
   async findById(id: string) {
     return prisma.workout.findUnique({ where: { id } });
+  },
+
+  async markCompleted(id: string, when: Date) {
+    return prisma.workout.update({
+      where: { id },
+      data: { lastCompletedAt: when },
+    });
   },
 
   async findAllByAluno(alunoId: string) {

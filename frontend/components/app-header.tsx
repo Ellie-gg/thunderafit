@@ -54,6 +54,12 @@ export function AppHeader() {
         {user?.role === "ALUNO" && (
           <>
             <Link
+              href="/programas"
+              className="hidden text-sm font-semibold text-accent-secondary hover:underline sm:inline"
+            >
+              Programas
+            </Link>
+            <Link
               href="/evolucao"
               className="hidden text-sm font-semibold text-accent-secondary hover:underline sm:inline"
             >
@@ -74,12 +80,20 @@ export function AppHeader() {
           </>
         )}
         {user?.role === "PERSONAL" && (
-          <Link
-            href="/personal/duvidas"
-            className="hidden text-sm font-semibold text-accent-secondary hover:underline sm:inline"
-          >
-            Dúvidas
-          </Link>
+          <>
+            <Link
+              href="/personal/programas"
+              className="hidden text-sm font-semibold text-accent-secondary hover:underline sm:inline"
+            >
+              Programas
+            </Link>
+            <Link
+              href="/personal/duvidas"
+              className="hidden text-sm font-semibold text-accent-secondary hover:underline sm:inline"
+            >
+              Dúvidas
+            </Link>
+          </>
         )}
         {user?.role === "ADMIN" && (
           <>

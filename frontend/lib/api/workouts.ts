@@ -1,5 +1,5 @@
 import { apiFetch } from "./client";
-import type { Exercise, SetLog, Workout } from "../types";
+import type { Exercise, SetLog, Workout, WorkoutProgram } from "../types";
 
 export function listExercises(muscleGroup?: string) {
   const qs = muscleGroup ? `?muscleGroup=${encodeURIComponent(muscleGroup)}` : "";
@@ -36,5 +36,40 @@ export function addWorkoutExercise(
   return apiFetch<{ workoutExercise: unknown }>(`/api/workouts/${workoutId}/exercises`, {
     method: "POST",
     body: input,
+  });
+}
+
+// Fase 16 — Programas de Treino
+export function completeWorkout(workoutId: string) {
+  return apiFetch<{ workout: Workout }>(`/api/workouts/${workoutId}/complete`, { method: "POST" });
+}
+
+export function listWorkoutPrograms(type?: "template" | "instance") {
+  const qs = type ? `?type=${type}` : "";
+  return apiFetch<{ programs: WorkoutProgram[] }>(`/api/workout-programs${qs}`);
+}
+
+export function getWorkoutProgram(programId: string) {
+  return apiFetch<{ program: WorkoutProgram }>(`/api/workout-programs/${programId}`);
+}
+
+export function createWorkoutProgram(name: string) {
+  return apiFetch<{ program: WorkoutProgram }>("/api/workout-programs", {
+    method: "POST",
+    body: { name },
+  });
+}
+
+export function addProgramSession(programId: string, input: { letter: string; name?: string }) {
+  return apiFetch<{ session: Workout }>(`/api/workout-programs/${programId}/sessions`, {
+    method: "POST",
+    body: input,
+  });
+}
+
+export function applyProgram(programId: string, alunoId: string) {
+  return apiFetch<{ program: WorkoutProgram }>(`/api/workout-programs/${programId}/apply`, {
+    method: "POST",
+    body: { alunoId },
   });
 }

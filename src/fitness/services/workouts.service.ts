@@ -78,4 +78,22 @@ export const workoutsService = {
 
     return workout;
   },
+
+  // Fase 16: o aluno marca a sessão como concluída. Só o próprio aluno dono da
+  // sessão pode concluir (nem Personal, nem admin — concluir é um ato de
+  // execução do aluno). Idempotente: só atualiza lastCompletedAt.
+  async completeWorkout(workoutId: string, userId: string) {
+    const workout = await workoutsRepository.findById(workoutId);
+    if (!workout) {
+      const err = new Error("Treino não encontrado.");
+      (err as any).statusCode = 404;
+      throw err;
+    }
+    if (workout.alunoId !== userId) {
+      const err = new Error("Apenas o aluno dono da sessão pode concluí-la.");
+      (err as any).statusCode = 403;
+      throw err;
+    }
+    return workoutsRepository.markCompleted(workoutId, new Date());
+  },
 };

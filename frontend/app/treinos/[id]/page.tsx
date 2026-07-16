@@ -1,12 +1,13 @@
 "use client";
 
 import { useParams } from "next/navigation";
-import { useQuery } from "@tanstack/react-query";
-import { getWorkout } from "@/lib/api/workouts";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { getWorkout, completeWorkout } from "@/lib/api/workouts";
 import { ApiError } from "@/lib/api/client";
 import { AuthGuard } from "@/components/auth-guard";
 import { AppHeader } from "@/components/app-header";
 import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { VoltageBar } from "@/components/voltage-bar";
 import { ExerciseExecutionCard } from "@/components/exercise-execution-card";
 
@@ -14,9 +15,19 @@ function ExecucaoContent() {
   const params = useParams<{ id: string }>();
   const workoutId = params.id;
 
+  const queryClient = useQueryClient();
   const workoutQuery = useQuery({
     queryKey: ["workout", workoutId],
     queryFn: () => getWorkout(workoutId),
+  });
+
+  const completeMutation = useMutation({
+    mutationFn: () => completeWorkout(workoutId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["workout", workoutId] });
+      // A sugestão de próxima sessão no programa depende do lastCompletedAt.
+      queryClient.invalidateQueries({ queryKey: ["workout-program"] });
+    },
   });
 
   if (workoutQuery.isLoading) {
@@ -47,6 +58,7 @@ function ExecucaoContent() {
   const exercises = workout.exercises ?? [];
   const totalSets = exercises.reduce((acc, ex) => acc + ex.sets, 0);
   const doneSets = exercises.reduce((acc, ex) => acc + (ex.setLogs?.length ?? 0), 0);
+  const allSetsDone = totalSets > 0 && doneSets >= totalSets;
 
   return (
     <main className="flex flex-1 flex-col gap-6 px-6 py-8">
@@ -70,6 +82,31 @@ function ExecucaoContent() {
             <ExerciseExecutionCard key={ex.id} workoutId={workoutId} workoutExercise={ex} />
           ))}
       </div>
+
+      {/* Concluir sessão: disponível a qualquer momento (não exige todas as
+          séries registradas — sem ordem/obrigação forçada, decisão da Fase 16),
+          mas destacamos quando todas as séries já foram feitas. */}
+      <Card className="flex flex-col gap-2">
+        {workout.lastCompletedAt && (
+          <p className="text-xs text-muted">
+            Última conclusão: {new Date(workout.lastCompletedAt).toLocaleString("pt-BR")}
+          </p>
+        )}
+        <Button
+          onClick={() => completeMutation.mutate()}
+          disabled={completeMutation.isPending}
+          variant={allSetsDone ? "default" : "secondary"}
+        >
+          {completeMutation.isPending
+            ? "Concluindo..."
+            : completeMutation.isSuccess
+              ? "Sessão concluída ✓"
+              : "Concluir sessão"}
+        </Button>
+        {completeMutation.isError && (
+          <p className="text-sm text-danger">Não foi possível concluir a sessão.</p>
+        )}
+      </Card>
     </main>
   );
 }

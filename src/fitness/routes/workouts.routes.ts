@@ -4,6 +4,7 @@ import {
   createWorkoutHandler,
   addExerciseHandler,
   getWorkoutHandler,
+  completeWorkoutHandler,
 } from "../controllers/workouts.controller";
 
 export async function workoutsRoutes(fastify: FastifyInstance) {
@@ -37,5 +38,13 @@ export async function workoutsRoutes(fastify: FastifyInstance) {
       preHandler: [(fastify as any).authenticate],
     },
     getWorkoutHandler
+  );
+
+  fastify.post(
+    "/api/workouts/:id/complete",
+    {
+      preHandler: [(fastify as any).authenticate],
+    },
+    completeWorkoutHandler
   );
 }

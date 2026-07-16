@@ -5,6 +5,7 @@ import authPlugin from "./auth/middlewares/authenticate";
 import { authRoutes } from "./auth/routes/auth.routes"; import { relationsRoutes } from "./fitness/routes/relations.routes";
 import { exercisesRoutes } from "./fitness/routes/exercises.routes";
 import { workoutsRoutes } from "./fitness/routes/workouts.routes";
+import { workoutProgramsRoutes } from "./fitness/routes/workout-programs.routes";
 import { setlogsRoutes } from "./fitness/routes/setlogs.routes";
 import { usersRoutes } from "./fitness/routes/users.routes";
 import { progressRoutes } from "./progress/routes/progress.routes";
@@ -50,6 +51,7 @@ export async function buildApp(): Promise<FastifyInstance> {
   await fastify.register(authRoutes); await fastify.register(relationsRoutes);
   await fastify.register(exercisesRoutes);
   await fastify.register(workoutsRoutes);
+  await fastify.register(workoutProgramsRoutes);
   await fastify.register(setlogsRoutes);
   await fastify.register(usersRoutes);
   await fastify.register(progressRoutes);
