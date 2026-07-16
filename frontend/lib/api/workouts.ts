@@ -23,3 +23,17 @@ export function createSetLog(
     { method: "POST", body: input }
   );
 }
+
+export function createWorkout(input: { alunoId: string; name: string; letter: string }) {
+  return apiFetch<{ workout: Workout }>("/api/workouts", { method: "POST", body: input });
+}
+
+export function addWorkoutExercise(
+  workoutId: string,
+  input: { exerciseId: string; sets: number; repsRange: string; restSeconds: number; order: number }
+) {
+  return apiFetch<{ workoutExercise: unknown }>(`/api/workouts/${workoutId}/exercises`, {
+    method: "POST",
+    body: input,
+  });
+}

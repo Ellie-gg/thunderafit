@@ -6,6 +6,7 @@ import { listMyWorkouts } from "@/lib/api/workouts";
 import { AuthGuard } from "@/components/auth-guard";
 import { AppHeader } from "@/components/app-header";
 import { Card } from "@/components/ui/card";
+import { QueryError } from "@/components/query-error";
 
 function TreinosContent() {
   const workoutsQuery = useQuery({
@@ -20,6 +21,10 @@ function TreinosContent() {
         <h1 className="font-display text-2xl font-bold tracking-tight">Meus Treinos</h1>
 
         {workoutsQuery.isLoading && <p className="text-sm text-muted">Carregando...</p>}
+
+        {workoutsQuery.isError && (
+          <QueryError error={workoutsQuery.error} onRetry={() => workoutsQuery.refetch()} />
+        )}
 
         {workoutsQuery.isSuccess && workoutsQuery.data.workouts.length === 0 && (
           <Card>
@@ -47,7 +52,7 @@ function TreinosContent() {
 
 export default function TreinosPage() {
   return (
-    <AuthGuard>
+    <AuthGuard allowedRoles={["ALUNO"]}>
       <TreinosContent />
     </AuthGuard>
   );

@@ -58,10 +58,51 @@ down() {
   echo "Tudo parado."
 }
 
+check_not_wsl() {
+  # Este script assume Git Bash rodando direto no Windows (node_modules é
+  # instalado com o npm do Windows, então os binários nativos como
+  # node_modules/bcrypt são .node compilados para Windows/PE32+). Rodar este
+  # mesmo dev.sh de dentro do WSL usa o node do Linux, que não consegue
+  # carregar esse binário ("invalid ELF header") — além de netstat/taskkill
+  # abaixo serem specificamente Windows. Falha cedo com uma mensagem clara em
+  # vez de deixar o erro cair só depois de o servidor tentar subir.
+  if grep -qi microsoft /proc/version 2>/dev/null; then
+    echo "Este terminal parece ser WSL, não Git Bash do Windows." >&2
+    echo "Este projeto instala dependências (ex: bcrypt) com o npm do Windows," >&2
+    echo "então os binários nativos só funcionam com o node do Windows." >&2
+    echo "Rode este script a partir do Git Bash (MINGW64), ou use .\\dev.ps1 no PowerShell." >&2
+    exit 1
+  fi
+}
+
+check_docker() {
+  if ! docker info > /dev/null 2>&1; then
+    echo "Docker não parece estar rodando (docker info falhou). Abra o Docker Desktop e tente de novo." >&2
+    exit 1
+  fi
+}
+
+check_port_free() {
+  local port="$1"
+  local label="$2"
+  local pids
+  pids=$(netstat -ano 2>/dev/null | grep -E "LISTENING" | grep ":$port " | awk '{print $NF}' | sort -u)
+  if [ -n "$pids" ]; then
+    echo "$label: a porta $port já está em uso (PID $(echo "$pids" | tr '\n' ' ')). Rode './dev.sh down' primeiro, ou libere a porta manualmente." >&2
+    exit 1
+  fi
+}
+
 if [ "${1:-up}" = "down" ]; then
   down
   exit 0
 fi
+
+echo "==> Pré-checagem (ambiente + Docker + portas livres)..."
+check_not_wsl
+check_docker
+check_port_free "$BACKEND_PORT" "Backend"
+check_port_free "$FRONTEND_PORT" "Frontend"
 
 mkdir -p "$PID_DIR"
 

@@ -7,6 +7,7 @@ import { useMutation } from "@tanstack/react-query";
 import { registerRequest, loginRequest } from "@/lib/api/auth";
 import { ApiError } from "@/lib/api/client";
 import { useAuthStore } from "@/lib/store/auth-store";
+import { dashboardPathForRole } from "@/lib/auth/redirect";
 import type { Role } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -27,7 +28,7 @@ export default function RegisterPage() {
     },
     onSuccess: (data) => {
       setSession(data.user);
-      router.push("/dashboard");
+      router.push(dashboardPathForRole(data.user.role));
     },
   });
 
@@ -93,6 +94,14 @@ export default function RegisterPage() {
                 onClick={() => setRole("PERSONAL")}
               >
                 Personal Trainer
+              </Button>
+              <Button
+                type="button"
+                variant={role === "NUTRICIONISTA" ? "default" : "secondary"}
+                className="flex-1"
+                onClick={() => setRole("NUTRICIONISTA")}
+              >
+                Nutricionista
               </Button>
             </div>
           </div>

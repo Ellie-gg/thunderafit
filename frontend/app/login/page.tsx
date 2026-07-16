@@ -7,6 +7,7 @@ import { useMutation } from "@tanstack/react-query";
 import { loginRequest } from "@/lib/api/auth";
 import { ApiError } from "@/lib/api/client";
 import { useAuthStore } from "@/lib/store/auth-store";
+import { dashboardPathForRole } from "@/lib/auth/redirect";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -22,7 +23,7 @@ export default function LoginPage() {
     mutationFn: () => loginRequest(email, password),
     onSuccess: (data) => {
       setSession(data.user);
-      router.push("/dashboard");
+      router.push(dashboardPathForRole(data.user.role));
     },
   });
 

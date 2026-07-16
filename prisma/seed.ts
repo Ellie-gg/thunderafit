@@ -1,4 +1,5 @@
 import exercises from "../data/exercises_seed.json";
+import foods from "../data/foods_seed.json";
 import prisma from "../src/lib/prisma";
 
 async function main() {
@@ -10,6 +11,16 @@ async function main() {
       create: ex,
     });
   }
+
+  console.log(`Seeding ${foods.length} foods...`);
+  for (const food of foods) {
+    await prisma.food.upsert({
+      where: { name: food.name },
+      update: food,
+      create: food,
+    });
+  }
+
   console.log("Seeding complete.");
 }
 

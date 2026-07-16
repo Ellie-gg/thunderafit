@@ -55,10 +55,15 @@ export async function apiFetch<T>(path: string, options: RequestOptions = {}): P
   const { method = "GET", body } = options;
 
   const doFetch = async (): Promise<Response> => {
+    // Bug real encontrado na Fase 10: mandar `Content-Type: application/json`
+    // num POST sem corpo (ex: logout, marcar notificação como lida) faz o
+    // parser de JSON do Fastify rejeitar o corpo vazio com 400 — o header só
+    // pode ir junto quando existe body de verdade.
+    const hasBody = body !== undefined;
     return fetch(path, {
       method,
-      headers: { "Content-Type": "application/json" },
-      body: body !== undefined ? JSON.stringify(body) : undefined,
+      headers: hasBody ? { "Content-Type": "application/json" } : {},
+      body: hasBody ? JSON.stringify(body) : undefined,
     });
   };
 

@@ -41,6 +41,7 @@ model User {
 enum Role {
   PERSONAL
   ALUNO
+  NUTRICIONISTA
 }
 
 enum PlanoAssinatura {
@@ -128,18 +129,132 @@ model SetLog {
 
 
 // ============================================================
-// --- domain: progress --- (Fase 4 — não implementado)
-// Registro de carga e progresso dos alunos
+// --- domain: progress --- (Fase 8 — implementado)
+// Agregação sobre SetLog, sem tabela própria.
 // ============================================================
 
 // ============================================================
-// --- domain: anamnesis --- (Fase futura — não implementado)
+// --- domain: anamnesis --- (Fase 10)
+// Questionário de saúde/histórico do aluno, 1:1 com o aluno.
 // ============================================================
 
-// ============================================================
-// --- domain: nutrition --- (Fase futura — não implementado)
-// ============================================================
+model Anamnesis {
+  id                  String    @id @default(uuid())
+  alunoId             String    @unique
+  fullName            String?
+  birthDate           DateTime?
+  heightCm            Int?
+  weightKg            Float?
+  goals               String?
+  healthConditions    String?
+  medications         String?
+  activityLevel       String?
+  pastExperience      String?
+  trainingPreferences String?
+  injuries            String?
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+}
 
 // ============================================================
-// --- domain: notifications --- (Fase futura — não implementado)
+// --- domain: support --- (Fase 10)
+// Chat simples de dúvidas aluno ↔ Personal (não é tempo real).
 // ============================================================
+
+model SupportThread {
+  id         String               @id @default(uuid())
+  alunoId    String
+  personalId String
+  subject    String
+  status     SupportThreadStatus  @default(ABERTO)
+  createdAt  DateTime             @default(now())
+  updatedAt  DateTime             @updatedAt
+  messages   SupportMessage[]
+}
+
+enum SupportThreadStatus {
+  ABERTO
+  RESPONDIDO
+}
+
+model SupportMessage {
+  id        String        @id @default(uuid())
+  threadId  String
+  thread    SupportThread @relation(fields: [threadId], references: [id])
+  authorId  String
+  text      String
+  createdAt DateTime      @default(now())
+}
+
+// ============================================================
+// --- domain: nutrition --- (Fase 11)
+// Catálogo de alimentos e planos de dieta prescritos pelo Nutricionista.
+//
+// Decisão de granularidade (documentada, Fase 11): `DietFood.quantity` é um
+// multiplicador da porção-base do `Food` (ex: `Food.portionDescription` =
+// "100g", `quantity = 1.5` => 150g), não um valor absoluto em gramas — evita
+// duplicar a lógica de conversão porção↔grama em cada refeição, mesma ideia
+// de "backend calcula, frontend só exibe" já usada na Fase 8 (Evolução).
+// `DietPlan` representa um dia de plano alimentar (mesmo escopo de "1
+// treino = 1 sessão" da Fase 3), com `DietMeal` como as refeições do dia.
+// ============================================================
+
+model Food {
+  id                 String     @id @default(uuid())
+  name               String     @unique
+  portionDescription String
+  proteinG           Float
+  carbsG             Float
+  fatG               Float
+  kcal               Float
+  createdAt          DateTime   @default(now())
+  updatedAt          DateTime   @updatedAt
+  dietFoods          DietFood[]
+}
+
+model DietPlan {
+  id             String     @id @default(uuid())
+  nutricionistaId String
+  alunoId        String
+  name           String
+  meals          DietMeal[]
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+}
+
+model DietMeal {
+  id         String     @id @default(uuid())
+  dietPlanId String
+  dietPlan   DietPlan   @relation(fields: [dietPlanId], references: [id])
+  name       String
+  time       String
+  order      Int
+  foods      DietFood[]
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+}
+
+model DietFood {
+  id         String   @id @default(uuid())
+  dietMealId String
+  dietMeal   DietMeal @relation(fields: [dietMealId], references: [id])
+  foodId     String
+  food       Food     @relation(fields: [foodId], references: [id])
+  quantity   Float
+  createdAt  DateTime @default(now())
+}
+
+// ============================================================
+// --- domain: notifications --- (Fase 10)
+// Notificação in-app (sino). Sem push real (APNs/FCM) nesta fase
+// — decisão documentada no STATUS.md, não implementada aqui.
+// ============================================================
+
+model Notification {
+  id        String   @id @default(uuid())
+  userId    String
+  type      String
+  message   String
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+}

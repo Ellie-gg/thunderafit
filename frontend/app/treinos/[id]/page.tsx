@@ -76,7 +76,7 @@ function ExecucaoContent() {
 
 export default function ExecucaoPage() {
   return (
-    <AuthGuard>
+    <AuthGuard allowedRoles={["ALUNO"]}>
       <AppHeader />
       <ExecucaoContent />
     </AuthGuard>

@@ -2,6 +2,15 @@
 
 SaaS de gestão de treinos para Personal Trainers. Backend (Fastify + Prisma + PostgreSQL) e frontend (Next.js) rodam como dois projetos separados.
 
+## Subir o ambiente (modo rápido)
+
+- **Windows (PowerShell):** `.\dev.ps1`
+- **Windows (Git Bash):** `./dev.sh`
+
+Sobe Postgres, roda migrations/seed e inicia backend + frontend. Para derrubar tudo: `.\dev.ps1 down` ou `./dev.sh down`. Credenciais de teste ficam em `TEST_CREDENTIALS.txt`.
+
+> Os dois scripts assumem Windows (usam `netstat`/`taskkill`, e os módulos nativos do `node_modules` são compilados para Windows). Não há suporte a WSL/Linux nativo hoje — rodar `./dev.sh` de dentro do WSL falha (`bcrypt` com binário Windows, ELF inválido no Linux); o script detecta isso e avisa.
+
 ## Pré-requisitos
 
 - Node.js 18+

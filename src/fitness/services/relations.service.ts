@@ -2,7 +2,11 @@ import prisma from "../../lib/prisma";
 import { relationsRepository } from "../repository/relations.repository";
 
 export const relationsService = {
-  async createRelation(personalId: string, alunoId: string) {
+  async createRelation(
+    personalId: string,
+    alunoId: string,
+    professionalType: "PERSONAL" | "NUTRICIONISTA"
+  ) {
     // 1. Validate aluno exists and is ALUNO
     const aluno = await prisma.user.findUnique({ where: { id: alunoId } });
     if (!aluno || aluno.role !== "ALUNO") {
@@ -19,10 +23,14 @@ export const relationsService = {
       throw err;
     }
 
-    // 3. Check limit
+    // 3. Check limit — a contagem já era filtrada por personalId específico
+    // (o campo guarda o id do profissional autenticado, seja Personal ou
+    // Nutricionista), então o limite Freemium já é por profissional, não
+    // global sobre o aluno. Auditado na Fase 11, nenhuma mudança necessária
+    // aqui além de aceitar professionalType.
     const user = await prisma.user.findUnique({ where: { id: personalId } });
     if (!user) {
-      const err = new Error("Personal não encontrado.");
+      const err = new Error("Profissional não encontrado.");
       (err as any).statusCode = 404;
       throw err;
     }
@@ -34,7 +42,7 @@ export const relationsService = {
     }
 
     // 4. Create relation
-    const relation = await relationsRepository.create(personalId, alunoId);
+    const relation = await relationsRepository.create(personalId, alunoId, professionalType);
     return relation;
   },
 

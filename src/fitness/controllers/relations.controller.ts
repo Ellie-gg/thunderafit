@@ -8,10 +8,18 @@ export async function createRelationHandler(
   reply: FastifyReply
 ) {
   const personalId = (request as any).user.sub;
+  const role = (request as any).user.role;
   const { alunoId } = request.body;
 
+  // professionalType é inferido do role de quem está autenticado, nunca
+  // aceito do cliente — evita que um aluno (ou um Nutricionista se passando
+  // por Personal) vincule um professionalType arbitrário.
+  if (role !== "PERSONAL" && role !== "NUTRICIONISTA") {
+    return reply.status(403).send({ error: "Apenas Personal Trainers ou Nutricionistas podem vincular alunos." });
+  }
+
   try {
-    const relation = await relationsService.createRelation(personalId, alunoId);
+    const relation = await relationsService.createRelation(personalId, alunoId, role);
     return reply.status(201).send({ relation });
   } catch (err: any) {
     const status = (err as any).statusCode ?? 500;

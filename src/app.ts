@@ -6,6 +6,14 @@ import { authRoutes } from "./auth/routes/auth.routes"; import { relationsRoutes
 import { exercisesRoutes } from "./fitness/routes/exercises.routes";
 import { workoutsRoutes } from "./fitness/routes/workouts.routes";
 import { setlogsRoutes } from "./fitness/routes/setlogs.routes";
+import { usersRoutes } from "./fitness/routes/users.routes";
+import { progressRoutes } from "./progress/routes/progress.routes";
+import { billingRoutes } from "./billing/routes/billing.routes";
+import { anamnesisRoutes } from "./anamnesis/routes/anamnesis.routes";
+import { supportRoutes } from "./support/routes/support.routes";
+import { notificationsRoutes } from "./notifications/routes/notifications.routes";
+import { foodsRoutes } from "./nutrition/routes/foods.routes";
+import { dietPlansRoutes } from "./nutrition/routes/diet-plans.routes";
 
 export async function buildApp(): Promise<FastifyInstance> {
   const fastify = Fastify({
@@ -33,6 +41,14 @@ export async function buildApp(): Promise<FastifyInstance> {
   await fastify.register(exercisesRoutes);
   await fastify.register(workoutsRoutes);
   await fastify.register(setlogsRoutes);
+  await fastify.register(usersRoutes);
+  await fastify.register(progressRoutes);
+  await fastify.register(billingRoutes);
+  await fastify.register(anamnesisRoutes);
+  await fastify.register(supportRoutes);
+  await fastify.register(notificationsRoutes);
+  await fastify.register(foodsRoutes);
+  await fastify.register(dietPlansRoutes);
 
   // Health check
   fastify.get("/health", async (_request, reply) => {

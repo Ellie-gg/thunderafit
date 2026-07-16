@@ -22,11 +22,13 @@ $TestPassword = "SenhaSegura@123"
 
 function Wait-ForHttp {
     param([string]$Url, [string]$Label)
-    # 120x1s: iniciar via cmd.exe /c "npm run dev" tem overhead maior que
-    # rodar o comando direto (resolução do wrapper do npm + compilação do
-    # ts-node-dev/next na primeira vez), e variou bastante entre execuções
-    # neste ambiente — 30s e depois 60s ainda não bastaram algumas vezes.
-    for ($i = 0; $i -lt 120; $i++) {
+    # IMPORTANTE: usar 127.0.0.1, nunca "localhost", nas URLs passadas aqui.
+    # Descoberto na validação real desta fase: Invoke-WebRequest, contra
+    # "localhost", tenta primeiro IPv6 (::1) via WinHTTP e trava no timeout
+    # inteiro antes de cair para IPv4 — mesmo com o servidor (0.0.0.0) já de
+    # pé e respondendo instantaneamente por 127.0.0.1. Com o host correto,
+    # 45x1s é folga de sobra para o cmd.exe/npm/ts-node-dev subir a frio.
+    for ($i = 0; $i -lt 45; $i++) {
         try {
             $r = Invoke-WebRequest -UseBasicParsing -Uri $Url -TimeoutSec 2
             if ($r.StatusCode -eq 200) {
@@ -40,16 +42,31 @@ function Wait-ForHttp {
     return $false
 }
 
-function Stop-Dev {
-    if (Test-Path $PidFile) {
-        $pidData = Get-Content $PidFile | ConvertFrom-Json
-        foreach ($procId in @($pidData.backend, $pidData.frontend)) {
-            if ($procId) {
-                try { Stop-Process -Id $procId -Force -ErrorAction SilentlyContinue } catch {}
-            }
-        }
-        Remove-Item $PidFile -Force -ErrorAction SilentlyContinue
+function Stop-Port {
+    param([int]$Port, [string]$Label)
+    # Start-Process -PassThru devolve o PID do cmd.exe /c "npm run dev", não
+    # o node/next real que escuta a porta (npm/cmd encadeiam processos
+    # filhos). Matar só esse PID deixa o processo real vivo e a porta
+    # continua respondendo — descoberto na validação real desta fase. Achar
+    # o PID de verdade pela porta via netstat e derrubar com /T (árvore
+    # inteira) é o que realmente funciona aqui.
+    $lines = netstat -ano | Select-String "LISTENING" | Select-String ":$Port "
+    $procIds = $lines | ForEach-Object { ($_ -split '\s+')[-1] } | Sort-Object -Unique
+    if (-not $procIds) {
+        Write-Host "$Label`: nada escutando na porta $Port."
+        return
     }
+    foreach ($procId in $procIds) {
+        taskkill /F /T /PID $procId 2>$null | Out-Null
+    }
+    Write-Host "$Label`: processo(s) na porta $Port derrubado(s)."
+}
+
+function Stop-Dev {
+    Write-Host "==> Parando backend e frontend..."
+    Stop-Port -Port $BackendPort -Label "Backend"
+    Stop-Port -Port $FrontendPort -Label "Frontend"
+    Remove-Item $PidFile -Force -ErrorAction SilentlyContinue
     Write-Host "==> Derrubando containers Docker..."
     Push-Location $RootDir
     docker-compose down
@@ -57,10 +74,29 @@ function Stop-Dev {
     Write-Host "Tudo parado."
 }
 
+function Test-PortFree {
+    param([int]$Port, [string]$Label)
+    $lines = netstat -ano | Select-String "LISTENING" | Select-String ":$Port "
+    if ($lines) {
+        $procIds = ($lines | ForEach-Object { ($_ -split '\s+')[-1] } | Sort-Object -Unique) -join ", "
+        Write-Host "$Label`: a porta $Port ja esta em uso (PID $procIds). Rode '.\dev.ps1 down' primeiro, ou libere a porta manualmente." -ForegroundColor Red
+        exit 1
+    }
+}
+
 if ($Action -eq "down") {
     Stop-Dev
     exit 0
 }
+
+Write-Host "==> Pre-checagem (Docker + portas livres)..."
+docker info > $null 2>&1
+if ($LASTEXITCODE -ne 0) {
+    Write-Host "Docker nao parece estar rodando (docker info falhou). Abra o Docker Desktop e tente de novo." -ForegroundColor Red
+    exit 1
+}
+Test-PortFree -Port $BackendPort -Label "Backend"
+Test-PortFree -Port $FrontendPort -Label "Frontend"
 
 Write-Host "==> Subindo PostgreSQL (docker-compose up -d)..."
 Push-Location $RootDir
@@ -97,7 +133,7 @@ $backendProc = Start-Process -FilePath "cmd.exe" `
     -RedirectStandardOutput (Join-Path $RootDir ".dev-backend.log") `
     -RedirectStandardError (Join-Path $RootDir ".dev-backend.err.log")
 
-if (-not (Wait-ForHttp "http://localhost:$BackendPort/health" "Backend")) {
+if (-not (Wait-ForHttp "http://127.0.0.1:$BackendPort/health" "Backend")) {
     Write-Host "Veja $RootDir\.dev-backend.log e .dev-backend.err.log"
     exit 1
 }
@@ -110,7 +146,7 @@ $frontendProc = Start-Process -FilePath "cmd.exe" `
     -RedirectStandardOutput (Join-Path $RootDir ".dev-frontend.log") `
     -RedirectStandardError (Join-Path $RootDir ".dev-frontend.err.log")
 
-if (-not (Wait-ForHttp "http://localhost:$FrontendPort/login" "Frontend")) {
+if (-not (Wait-ForHttp "http://127.0.0.1:$FrontendPort/login" "Frontend")) {
     Write-Host "Veja $RootDir\.dev-frontend.log e .dev-frontend.err.log"
     exit 1
 }
@@ -119,21 +155,21 @@ if (-not (Wait-ForHttp "http://localhost:$FrontendPort/login" "Frontend")) {
 
 Write-Host "==> Garantindo usuario de teste (Personal + Aluno ja vinculados)..."
 try {
-    Invoke-RestMethod -Uri "http://localhost:$BackendPort/api/auth/register" -Method Post -ContentType "application/json" `
+    Invoke-RestMethod -Uri "http://127.0.0.1:$BackendPort/api/auth/register" -Method Post -ContentType "application/json" `
         -Body (@{ email = $TestEmailPersonal; password = $TestPassword; role = "PERSONAL" } | ConvertTo-Json) -ErrorAction SilentlyContinue | Out-Null
 } catch {}
 try {
-    Invoke-RestMethod -Uri "http://localhost:$BackendPort/api/auth/register" -Method Post -ContentType "application/json" `
+    Invoke-RestMethod -Uri "http://127.0.0.1:$BackendPort/api/auth/register" -Method Post -ContentType "application/json" `
         -Body (@{ email = $TestEmailAluno; password = $TestPassword; role = "ALUNO" } | ConvertTo-Json) -ErrorAction SilentlyContinue | Out-Null
 } catch {}
 
-$personalLogin = Invoke-RestMethod -Uri "http://localhost:$BackendPort/api/auth/login" -Method Post -ContentType "application/json" `
+$personalLogin = Invoke-RestMethod -Uri "http://127.0.0.1:$BackendPort/api/auth/login" -Method Post -ContentType "application/json" `
     -Body (@{ email = $TestEmailPersonal; password = $TestPassword } | ConvertTo-Json)
-$alunoLogin = Invoke-RestMethod -Uri "http://localhost:$BackendPort/api/auth/login" -Method Post -ContentType "application/json" `
+$alunoLogin = Invoke-RestMethod -Uri "http://127.0.0.1:$BackendPort/api/auth/login" -Method Post -ContentType "application/json" `
     -Body (@{ email = $TestEmailAluno; password = $TestPassword } | ConvertTo-Json)
 
 try {
-    Invoke-RestMethod -Uri "http://localhost:$BackendPort/api/relations" -Method Post -ContentType "application/json" `
+    Invoke-RestMethod -Uri "http://127.0.0.1:$BackendPort/api/relations" -Method Post -ContentType "application/json" `
         -Headers @{ Authorization = "Bearer $($personalLogin.accessToken)" } `
         -Body (@{ alunoId = $alunoLogin.user.id } | ConvertTo-Json) -ErrorAction SilentlyContinue | Out-Null
 } catch {}

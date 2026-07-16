@@ -39,6 +39,10 @@
   "jest": {
     "preset": "ts-jest",
     "testEnvironment": "node",
+    "roots": [
+      "<rootDir>/src",
+      "<rootDir>/prisma"
+    ],
     "testMatch": [
       "**/__tests__/**/*.test.ts"
     ],

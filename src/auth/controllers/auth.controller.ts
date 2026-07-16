@@ -45,8 +45,8 @@ export async function registerHandler(
     return reply.status(400).send({ error: "email, password e role são obrigatórios." });
   }
 
-  if (!["PERSONAL", "ALUNO"].includes(role)) {
-    return reply.status(400).send({ error: "role deve ser PERSONAL ou ALUNO." });
+  if (!["PERSONAL", "ALUNO", "NUTRICIONISTA"].includes(role)) {
+    return reply.status(400).send({ error: "role deve ser PERSONAL, ALUNO ou NUTRICIONISTA." });
   }
 
   try {
