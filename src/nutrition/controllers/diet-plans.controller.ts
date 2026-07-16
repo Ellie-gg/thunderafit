@@ -2,14 +2,17 @@ import { FastifyRequest, FastifyReply } from "fastify";
 import { dietPlansService } from "../services/diet-plans.service";
 
 export async function listDietPlansHandler(
-  request: FastifyRequest,
+  request: FastifyRequest<{ Querystring: { alunoId?: string; nutricionistaId?: string } }>,
   reply: FastifyReply
 ) {
   const userId = (request as any).user.sub;
   const role = (request as any).user.role;
 
   try {
-    const plans = await dietPlansService.listPlansForUser(userId, role);
+    const plans = await dietPlansService.listPlansForUser(userId, role, {
+      alunoId: request.query.alunoId,
+      nutricionistaId: request.query.nutricionistaId,
+    });
     return reply.status(200).send({ plans });
   } catch (err: any) {
     const status = (err as any).statusCode ?? 500;
@@ -85,10 +88,11 @@ export async function getDietPlanHandler(
   reply: FastifyReply
 ) {
   const userId = (request as any).user.sub;
+  const role = (request as any).user.role;
   const { id } = request.params;
 
   try {
-    const plan = await dietPlansService.getDietPlan(id, userId);
+    const plan = await dietPlansService.getDietPlan(id, userId, role);
     return reply.status(200).send({ plan });
   } catch (err: any) {
     const status = (err as any).statusCode ?? 500;

@@ -1,7 +1,12 @@
 import { setlogsRepository } from "../repository/setlogs.repository";
 import { workoutsRepository } from "../repository/workouts.repository";
 
-async function assertOwnerAluno(workoutId: string, workoutExerciseId: string, alunoId: string) {
+async function assertOwnerAluno(
+  workoutId: string,
+  workoutExerciseId: string,
+  alunoId: string,
+  role?: string
+) {
   const workout = await workoutsRepository.findById(workoutId);
   if (!workout) {
     const err = new Error("Treino não encontrado.");
@@ -9,7 +14,7 @@ async function assertOwnerAluno(workoutId: string, workoutExerciseId: string, al
     throw err;
   }
 
-  if (workout.alunoId !== alunoId) {
+  if (role !== "ADMIN" && workout.alunoId !== alunoId) {
     const err = new Error("Você não tem permissão para acessar este treino.");
     (err as any).statusCode = 403;
     throw err;
@@ -38,8 +43,8 @@ export const setlogsService = {
     return setlogsRepository.create(workoutExerciseId, setNumber, repsDone, weightKg);
   },
 
-  async listSetLogs(workoutId: string, workoutExerciseId: string, alunoId: string) {
-    await assertOwnerAluno(workoutId, workoutExerciseId, alunoId);
+  async listSetLogs(workoutId: string, workoutExerciseId: string, alunoId: string, role?: string) {
+    await assertOwnerAluno(workoutId, workoutExerciseId, alunoId, role);
     return setlogsRepository.findAllByWorkoutExercise(workoutExerciseId);
   },
 };

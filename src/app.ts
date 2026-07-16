@@ -14,10 +14,20 @@ import { supportRoutes } from "./support/routes/support.routes";
 import { notificationsRoutes } from "./notifications/routes/notifications.routes";
 import { foodsRoutes } from "./nutrition/routes/foods.routes";
 import { dietPlansRoutes } from "./nutrition/routes/diet-plans.routes";
+import { adminRoutes } from "./admin/routes/admin.routes";
 
 export async function buildApp(): Promise<FastifyInstance> {
   const fastify = Fastify({
     logger: process.env.NODE_ENV !== "test",
+    // Necessário para o rate limiting de login (Fase 14) enxergar o IP real
+    // do usuário: em produção o backend só recebe tráfego do proxy do
+    // próprio frontend (Cloud Run com invocação restrita por IAM), então
+    // `request.ip` sem isso seria sempre o IP interno do frontend, não o do
+    // cliente final. O Cloud Run já injeta X-Forwarded-For em cada hop, e o
+    // proxy do frontend repassa os headers da requisição original sem
+    // alterá-los — `trustProxy` faz o Fastify usar o IP mais à esquerda
+    // dessa cadeia (o real).
+    trustProxy: true,
   });
 
   // CORS: em produção, frontend e backend provavelmente estarão em domínios
@@ -49,6 +59,7 @@ export async function buildApp(): Promise<FastifyInstance> {
   await fastify.register(notificationsRoutes);
   await fastify.register(foodsRoutes);
   await fastify.register(dietPlansRoutes);
+  await fastify.register(adminRoutes);
 
   // Health check
   fastify.get("/health", async (_request, reply) => {

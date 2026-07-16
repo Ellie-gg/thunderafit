@@ -1,8 +1,19 @@
 import { FastifyRequest, FastifyReply } from "fastify";
 import { progressService } from "../services/progress.service";
 
-function assertAluno(request: FastifyRequest): string {
+// ADMIN não tem histórico próprio de treino — passa ?alunoId= para ver a
+// evolução de um aluno específico (visão ampliada, Fase 14), sem assumir a
+// identidade do aluno.
+function assertAluno(request: FastifyRequest<{ Querystring: { alunoId?: string } }>): string {
   const user = (request as any).user;
+  if (user.role === "ADMIN") {
+    if (!request.query.alunoId) {
+      const err = new Error("alunoId é obrigatório para consulta administrativa.");
+      (err as any).statusCode = 400;
+      throw err;
+    }
+    return request.query.alunoId;
+  }
   if (user.role !== "ALUNO") {
     const err = new Error("Apenas alunos podem acessar o histórico de evolução.");
     (err as any).statusCode = 403;
@@ -12,7 +23,7 @@ function assertAluno(request: FastifyRequest): string {
 }
 
 export async function loadHistoryHandler(
-  request: FastifyRequest<{ Querystring: { exerciseId?: string } }>,
+  request: FastifyRequest<{ Querystring: { exerciseId?: string; alunoId?: string } }>,
   reply: FastifyReply
 ) {
   try {
@@ -32,7 +43,7 @@ export async function loadHistoryHandler(
 }
 
 export async function frequencyHandler(
-  request: FastifyRequest<{ Querystring: { period?: string } }>,
+  request: FastifyRequest<{ Querystring: { period?: string; alunoId?: string } }>,
   reply: FastifyReply
 ) {
   try {
@@ -47,7 +58,10 @@ export async function frequencyHandler(
   }
 }
 
-export async function listLoggedExercisesHandler(request: FastifyRequest, reply: FastifyReply) {
+export async function listLoggedExercisesHandler(
+  request: FastifyRequest<{ Querystring: { alunoId?: string } }>,
+  reply: FastifyReply
+) {
   try {
     const alunoId = assertAluno(request);
     const exercises = await progressService.getLoggedExercises(alunoId);

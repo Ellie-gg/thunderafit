@@ -27,10 +27,22 @@ export const ROLE_META: Record<Role, RoleMeta> = {
     tagline: "Entre para gerenciar seus planos alimentares.",
     accentVar: "var(--role-nutricionista)",
   },
+  ADMIN: {
+    role: "ADMIN",
+    label: "Admin",
+    tagline: "Painel administrativo.",
+    accentVar: "var(--role-admin)",
+  },
 };
 
+// ADMIN não entra aqui de propósito: não existe auto-cadastro nem seleção
+// pública de perfil admin na tela inicial (Fase 12) — só PERSONAL/ALUNO/
+// NUTRICIONISTA aparecem como opção de login. ROLE_META.ADMIN existe só
+// para o acento de cor ser reaproveitado dentro do próprio painel admin.
 export const ROLE_ORDER: Role[] = ["PERSONAL", "ALUNO", "NUTRICIONISTA"];
 
 export function isRole(value: string | null): value is Role {
-  return value === "PERSONAL" || value === "ALUNO" || value === "NUTRICIONISTA";
+  return (
+    value === "PERSONAL" || value === "ALUNO" || value === "NUTRICIONISTA" || value === "ADMIN"
+  );
 }

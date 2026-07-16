@@ -39,7 +39,22 @@ export const dietPlansService = {
     return dietPlansRepository.create(nutricionistaId, alunoId, name);
   },
 
-  async listPlansForUser(userId: string, role: "ALUNO" | "NUTRICIONISTA" | "PERSONAL") {
+  async listPlansForUser(
+    userId: string,
+    role: "ALUNO" | "NUTRICIONISTA" | "PERSONAL" | "ADMIN",
+    adminTarget?: { alunoId?: string; nutricionistaId?: string }
+  ) {
+    if (role === "ADMIN") {
+      // Admin não tem planos próprios — visão ampliada de um aluno ou
+      // Nutricionista específico, sem assumir a identidade de nenhum dos dois.
+      if (adminTarget?.alunoId) {
+        return dietPlansRepository.findAllByAluno(adminTarget.alunoId);
+      }
+      if (adminTarget?.nutricionistaId) {
+        return dietPlansRepository.findAllByNutricionista(adminTarget.nutricionistaId);
+      }
+      return [];
+    }
     if (role === "ALUNO") {
       return dietPlansRepository.findAllByAluno(userId);
     }
@@ -80,14 +95,14 @@ export const dietPlansService = {
     return dietPlansRepository.addFood(dietMealId, foodId, quantity);
   },
 
-  async getDietPlan(dietPlanId: string, userId: string) {
+  async getDietPlan(dietPlanId: string, userId: string, role?: string) {
     const plan = await dietPlansRepository.findByIdWithMeals(dietPlanId);
     if (!plan) {
       const err = new Error("Plano de dieta não encontrado.");
       (err as any).statusCode = 404;
       throw err;
     }
-    if (plan.alunoId !== userId && plan.nutricionistaId !== userId) {
+    if (role !== "ADMIN" && plan.alunoId !== userId && plan.nutricionistaId !== userId) {
       const err = new Error("Você não tem permissão para acessar este plano de dieta.");
       (err as any).statusCode = 403;
       throw err;

@@ -48,7 +48,7 @@ export async function getThreadHandler(
 ) {
   const user = (request as any).user;
   try {
-    const thread = await supportService.getThread(request.params.id, user.sub);
+    const thread = await supportService.getThread(request.params.id, user.sub, user.role);
     return reply.status(200).send({ thread });
   } catch (err: any) {
     return handleError(err, reply);

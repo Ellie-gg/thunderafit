@@ -35,6 +35,10 @@
   --role-personal: var(--volt-400);
   --role-aluno: var(--static-450);
   --role-nutricionista: #b98cff;
+  /* Fase 14 — admin ganha um azul frio, fora do registro quente (dourado)
+     e do violeta/ciano já usados: remete a "vigilância/oversight" sem
+     reaproveitar as cores de status (success/danger). */
+  --role-admin: #5b9dff;
 }
 
 :root[data-theme="light"] {
@@ -61,6 +65,7 @@
   --color-role-personal: var(--role-personal);
   --color-role-aluno: var(--role-aluno);
   --color-role-nutricionista: var(--role-nutricionista);
+  --color-role-admin: var(--role-admin);
   --font-display: var(--font-unbounded);
   --font-sans: var(--font-manrope);
   --font-mono: var(--font-plex-mono);

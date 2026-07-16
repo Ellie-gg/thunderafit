@@ -2,14 +2,17 @@ import { FastifyRequest, FastifyReply } from "fastify";
 import { workoutsService } from "../services/workouts.service";
 
 export async function listWorkoutsHandler(
-  request: FastifyRequest,
+  request: FastifyRequest<{ Querystring: { alunoId?: string; personalId?: string } }>,
   reply: FastifyReply
 ) {
   const userId = (request as any).user.sub;
   const role = (request as any).user.role;
 
   try {
-    const workouts = await workoutsService.listWorkoutsForUser(userId, role);
+    const workouts = await workoutsService.listWorkoutsForUser(userId, role, {
+      alunoId: request.query.alunoId,
+      personalId: request.query.personalId,
+    });
     return reply.status(200).send({ workouts });
   } catch (err: any) {
     const status = (err as any).statusCode ?? 500;
@@ -68,10 +71,11 @@ export async function getWorkoutHandler(
   reply: FastifyReply
 ) {
   const userId = (request as any).user.sub;
+  const role = (request as any).user.role;
   const { id } = request.params;
 
   try {
-    const workout = await workoutsService.getWorkout(id, userId);
+    const workout = await workoutsService.getWorkout(id, userId, role);
     return reply.status(200).send({ workout });
   } catch (err: any) {
     const status = (err as any).statusCode ?? 500;

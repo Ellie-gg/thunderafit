@@ -53,10 +53,10 @@ export const supportService = {
     return supportRepository.findThreadsForUser(userId, role);
   },
 
-  async getThread(threadId: string, userId: string) {
+  async getThread(threadId: string, userId: string, role?: string) {
     const thread = await supportRepository.findThreadById(threadId);
     if (!thread) notFound("Dúvida não encontrada.");
-    if (thread.alunoId !== userId && thread.personalId !== userId) {
+    if (role !== "ADMIN" && thread.alunoId !== userId && thread.personalId !== userId) {
       forbidden("Você não tem permissão para acessar esta dúvida.");
     }
     return thread;

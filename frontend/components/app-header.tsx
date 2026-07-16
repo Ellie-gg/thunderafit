@@ -13,6 +13,7 @@ const ROLE_ACCENT_VAR: Record<Role, string> = {
   PERSONAL: "var(--role-personal)",
   ALUNO: "var(--role-aluno)",
   NUTRICIONISTA: "var(--role-nutricionista)",
+  ADMIN: "var(--role-admin)",
 };
 
 export function AppHeader() {
@@ -79,6 +80,34 @@ export function AppHeader() {
           >
             Dúvidas
           </Link>
+        )}
+        {user?.role === "ADMIN" && (
+          <>
+            <Link
+              href="/nimbus/usuarios"
+              className="hidden text-sm font-semibold text-accent-secondary hover:underline sm:inline"
+            >
+              Usuários
+            </Link>
+            <Link
+              href="/nimbus/logins"
+              className="hidden text-sm font-semibold text-accent-secondary hover:underline sm:inline"
+            >
+              Logins
+            </Link>
+            <Link
+              href="/nimbus/suporte"
+              className="hidden text-sm font-semibold text-accent-secondary hover:underline sm:inline"
+            >
+              Suporte
+            </Link>
+            <Link
+              href="/nimbus/logs-acesso"
+              className="hidden text-sm font-semibold text-accent-secondary hover:underline sm:inline"
+            >
+              Logs de acesso
+            </Link>
+          </>
         )}
         {user && <NotificationBell />}
         <span className="hidden text-sm text-muted sm:inline">{user?.email}</span>

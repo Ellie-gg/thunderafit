@@ -39,6 +39,7 @@ model User {
   refreshTokenHash String?
   planoAssinatura  PlanoAssinatura @default(FREE)
   limiteAlunos     Int             @default(3)
+  lastLoginAt      DateTime?
   createdAt        DateTime        @default(now())
   updatedAt        DateTime        @updatedAt
 
@@ -49,6 +50,7 @@ enum Role {
   PERSONAL
   ALUNO
   NUTRICIONISTA
+  ADMIN
 }
 
 enum PlanoAssinatura {
@@ -264,4 +266,37 @@ model Notification {
   message   String
   read      Boolean  @default(false)
   createdAt DateTime @default(now())
+}
+
+// ============================================================
+// --- domain: admin --- (Fase 14)
+// Painel administrativo: histórico de logins e auditoria de acesso a
+// dado sensível (anamnese) por admins.
+//
+// Granularidade decidida (documentada, Fase 14): `User.lastLoginAt` é a
+// fonte rápida para "quando foi o último login" (usada na lista paginada
+// de usuários, sem precisar agregar). `LoginLog` é um histórico
+// append-only apenas de logins BEM-SUCEDIDOS (não de tentativas falhas —
+// essas alimentam só o rate limiting, em memória, propositalmente
+// efêmero, e nunca viram registro persistido/auditável, já que são ruído
+// de segurança, não um evento de produto). Isso cobre o requisito de
+// "histórico completo, não só o último" sem duplicar dado.
+// ============================================================
+
+model LoginLog {
+  id        String   @id @default(uuid())
+  userId    String
+  ipAddress String?
+  createdAt DateTime @default(now())
+}
+
+// AdminAccessLog audita especificamente o acesso de um ADMIN a dado de
+// saúde (anamnese) — requisito explícito da Fase 14, não um log genérico
+// de toda ação administrativa.
+model AdminAccessLog {
+  id           String   @id @default(uuid())
+  adminId      String
+  resourceType String
+  alunoId      String
+  createdAt    DateTime @default(now())
 }

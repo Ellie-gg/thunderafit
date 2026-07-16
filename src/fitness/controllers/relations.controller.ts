@@ -28,10 +28,18 @@ export async function createRelationHandler(
 }
 
 export async function listRelationsHandler(
-  request: FastifyRequest,
+  request: FastifyRequest<{ Querystring: { personalId?: string } }>,
   reply: FastifyReply
 ) {
-  const personalId = (request as any).user.sub;
+  const role = (request as any).user.role;
+  // ADMIN não tem vínculos próprios — vê os de um profissional específico
+  // via ?personalId=, visão ampliada da Fase 14, não impersonation (o admin
+  // nunca assume a identidade do profissional consultado).
+  const personalId =
+    role === "ADMIN" && request.query.personalId
+      ? request.query.personalId
+      : (request as any).user.sub;
+
   try {
     const relations = await relationsService.listRelations(personalId);
     return reply.status(200).send({ relations });

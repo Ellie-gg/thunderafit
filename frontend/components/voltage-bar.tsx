@@ -14,6 +14,7 @@ const ROLE_ACCENT_VAR: Record<Role, string> = {
   PERSONAL: "var(--role-personal)",
   ALUNO: "var(--role-aluno)",
   NUTRICIONISTA: "var(--role-nutricionista)",
+  ADMIN: "var(--role-admin)",
 };
 
 /**

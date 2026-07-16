@@ -1,6 +1,7 @@
 import { FastifyRequest, FastifyReply } from "fastify";
 import { Role } from "@prisma/client";
 import * as authService from "../services/auth.service";
+import * as loginRateLimiter from "../services/login-rate-limiter";
 
 const ACCESS_TOKEN_MAX_AGE_SECONDS = 15 * 60; // 15min, espelha ACCESS_TOKEN_EXPIRY
 const REFRESH_TOKEN_MAX_AGE_SECONDS = 7 * 24 * 60 * 60; // 7d, espelha REFRESH_TOKEN_EXPIRY
@@ -68,11 +69,21 @@ export async function loginHandler(
     return reply.status(400).send({ error: "email e password são obrigatórios." });
   }
 
+  const ip = request.ip;
+  const blockStatus = loginRateLimiter.isBlocked(ip, email);
+  if (blockStatus.blocked) {
+    return reply.status(429).send({
+      error: `Muitas tentativas de login inválidas. Tente novamente em ${blockStatus.retryAfterSeconds}s.`,
+    });
+  }
+
   try {
-    const result = await authService.login({ email, password });
+    const result = await authService.login({ email, password }, ip);
+    loginRateLimiter.recordSuccessfulAttempt(ip, email);
     setAuthCookies(reply, result.accessToken, result.refreshToken);
     return reply.status(200).send(result);
   } catch (err) {
+    loginRateLimiter.recordFailedAttempt(ip, email);
     const error = err as Error & { statusCode?: number };
     return reply.status(error.statusCode ?? 500).send({ error: error.message });
   }

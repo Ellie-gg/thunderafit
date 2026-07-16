@@ -35,10 +35,11 @@ export async function listSetLogsHandler(
   reply: FastifyReply
 ) {
   const alunoId = (request as any).user.sub;
+  const role = (request as any).user.role;
   const { workoutId, workoutExerciseId } = request.params;
 
   try {
-    const setLogs = await setlogsService.listSetLogs(workoutId, workoutExerciseId, alunoId);
+    const setLogs = await setlogsService.listSetLogs(workoutId, workoutExerciseId, alunoId, role);
     return reply.status(200).send({ setLogs });
   } catch (err: any) {
     const status = (err as any).statusCode ?? 500;

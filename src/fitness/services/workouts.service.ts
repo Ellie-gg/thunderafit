@@ -3,7 +3,22 @@ import { relationsRepository } from "../repository/relations.repository";
 import { exercisesRepository } from "../repository/exercises.repository";
 
 export const workoutsService = {
-  async listWorkoutsForUser(userId: string, role: "PERSONAL" | "ALUNO") {
+  async listWorkoutsForUser(
+    userId: string,
+    role: "PERSONAL" | "ALUNO" | "NUTRICIONISTA" | "ADMIN",
+    adminTarget?: { alunoId?: string; personalId?: string }
+  ) {
+    if (role === "ADMIN") {
+      // Admin não tem treinos próprios — visão ampliada de um aluno ou
+      // Personal específico, sem assumir a identidade de nenhum dos dois.
+      if (adminTarget?.alunoId) {
+        return workoutsRepository.findAllByAluno(adminTarget.alunoId);
+      }
+      if (adminTarget?.personalId) {
+        return workoutsRepository.findAllByPersonal(adminTarget.personalId);
+      }
+      return [];
+    }
     if (role === "ALUNO") {
       return workoutsRepository.findAllByAluno(userId);
     }
@@ -47,7 +62,7 @@ export const workoutsService = {
     return workoutsRepository.addExercise(workoutId, exerciseId, sets, repsRange, restSeconds, order);
   },
 
-  async getWorkout(workoutId: string, userId: string) {
+  async getWorkout(workoutId: string, userId: string, role?: string) {
     const workout = await workoutsRepository.findByIdWithExercises(workoutId);
     if (!workout) {
       const err = new Error("Treino não encontrado.");
@@ -55,7 +70,7 @@ export const workoutsService = {
       throw err;
     }
 
-    if (workout.alunoId !== userId && workout.personalId !== userId) {
+    if (role !== "ADMIN" && workout.alunoId !== userId && workout.personalId !== userId) {
       const err = new Error("Você não tem permissão para acessar este treino.");
       (err as any).statusCode = 403;
       throw err;

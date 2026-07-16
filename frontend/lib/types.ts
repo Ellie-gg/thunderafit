@@ -1,4 +1,4 @@
-export type Role = "PERSONAL" | "ALUNO" | "NUTRICIONISTA";
+export type Role = "PERSONAL" | "ALUNO" | "NUTRICIONISTA" | "ADMIN";
 
 export interface User {
   id: string;
@@ -184,4 +184,54 @@ export interface DietMealDetail {
 export interface DietPlanDetail extends DietPlan {
   meals: DietMealDetail[];
   totalMacros: Macros;
+}
+
+export interface AdminOverview {
+  usersByRole: Record<string, number>;
+  newUsersByDay: Array<{ day: string; count: number }>;
+  professionalsAtFreemiumLimit: number;
+  totalProfessionals: number;
+}
+
+export interface AdminUser {
+  id: string;
+  email: string;
+  role: Role;
+  planoAssinatura: "FREE" | "PAGO";
+  limiteAlunos: number;
+  lastLoginAt: string | null;
+  createdAt: string;
+  isOrphanAluno?: boolean;
+}
+
+export interface AdminUsersResponse {
+  users: AdminUser[];
+  total: number;
+  page: number;
+  pageSize: number;
+}
+
+export interface AdminLoginLogEntry {
+  id: string;
+  userId: string;
+  email: string;
+  ipAddress: string | null;
+  createdAt: string;
+}
+
+export interface AdminSupportSlaThread {
+  id: string;
+  subject: string;
+  alunoId: string;
+  personalId: string;
+  openedAt: string;
+  hoursOpen: number;
+}
+
+export interface AdminAccessLogEntry {
+  id: string;
+  adminId: string;
+  resourceType: string;
+  alunoId: string;
+  createdAt: string;
 }

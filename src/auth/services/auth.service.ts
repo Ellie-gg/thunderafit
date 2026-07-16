@@ -82,7 +82,7 @@ export async function register(input: RegisterInput) {
  * Autentica um usuário.
  * Retorna accessToken, refreshToken e o usuário (sem campos sensíveis).
  */
-export async function login(input: LoginInput) {
+export async function login(input: LoginInput, ipAddress: string | null = null) {
   const user = await authRepository.findByEmail(input.email);
 
   if (!user) {
@@ -109,6 +109,7 @@ export async function login(input: LoginInput) {
   // Salvar apenas o HASH do refresh token no banco (nunca o token em texto plano)
   const refreshTokenHash = await bcrypt.hash(refreshToken, BCRYPT_SALT_ROUNDS);
   await authRepository.updateRefreshTokenHash(user.id, refreshTokenHash);
+  await authRepository.recordLogin(user.id, ipAddress);
 
   const { passwordHash: _ph, refreshTokenHash: _rth, ...safeUser } = user;
   return { accessToken, refreshToken, user: safeUser };

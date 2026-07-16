@@ -14,6 +14,7 @@
     "db:migrate": "npx prisma migrate dev --name init",
     "db:migrate:deploy": "prisma migrate deploy",
     "db:seed": "ts-node prisma/seed.ts",
+    "db:seed:admin": "ts-node prisma/seed-admin.ts",
     "test": "jest --runInBand --forceExit"
   },
   "dependencies": {

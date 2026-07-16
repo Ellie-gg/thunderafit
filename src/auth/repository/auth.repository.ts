@@ -52,4 +52,22 @@ export const authRepository = {
       where: { id },
     });
   },
+
+  /**
+   * Registra um login bem-sucedido: atualiza `lastLoginAt` (consulta rápida
+   * para a listagem de usuários do admin) e grava uma linha em `LoginLog`
+   * (histórico completo, append-only — só de logins que deram certo;
+   * tentativas falhas alimentam apenas o rate limiter em memória).
+   */
+  async recordLogin(userId: string, ipAddress: string | null) {
+    await prisma.$transaction([
+      prisma.user.update({
+        where: { id: userId },
+        data: { lastLoginAt: new Date() },
+      }),
+      prisma.loginLog.create({
+        data: { userId, ipAddress },
+      }),
+    ]);
+  },
 };

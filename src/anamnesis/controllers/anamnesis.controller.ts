@@ -16,6 +16,11 @@ export async function getAnamnesisHandler(
 
   try {
     if (alunoId) {
+      if (user.role === "ADMIN") {
+        // Acesso administrativo: auditado em AdminAccessLog (Bloco 3, Fase 14).
+        const anamnesis = await anamnesisService.getForAdmin(user.sub, alunoId);
+        return reply.status(200).send({ anamnesis });
+      }
       // Visão do Personal sobre o aluno vinculado.
       if (user.role !== "PERSONAL") {
         return reply.status(403).send({ error: "Apenas o Personal pode consultar por alunoId." });
