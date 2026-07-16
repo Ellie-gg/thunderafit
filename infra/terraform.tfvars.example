@@ -1,0 +1,21 @@
+# Copie para terraform.tfvars (gitignored) e preencha com valores reais.
+# Nenhum valor aqui é secreto — segredos de verdade (JWT, DATABASE_URL)
+# nunca vão num arquivo .tfvars, ver infra/README.md.
+
+project_id = "thunderafit-prod"
+region     = "us-central1"
+
+github_owner = "Ellie-gg"
+github_repo  = "thunderafit"
+
+# Origem real do frontend em produção (URL do Cloud Run do frontend, ou o
+# domínio customizado se houver um).
+allowed_origin = "https://thunderafit-frontend-xxxxx.a.run.app"
+
+# Opcional — deixe billing_account_id em branco para pular o alerta de
+# orçamento. budget_currency_code PRECISA bater com a moeda real da conta
+# (`gcloud billing accounts describe <ID>` mostra currencyCode) — usar a
+# moeda errada falha com um 400 genérico na API de orçamento.
+billing_account_id   = ""
+budget_amount         = 10
+budget_currency_code = "USD"

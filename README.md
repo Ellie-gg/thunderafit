@@ -59,9 +59,9 @@ npm install
 npm run dev
 ```
 
-O frontend sobe em `http://localhost:3001` (porta fixa, pois o backend já usa a 3000). Acesse `http://localhost:3001` no navegador — a tela inicial redireciona para login/registro automaticamente.
+O frontend sobe em `http://localhost:3001` (porta fixa, pois o backend já usa a 3000). Acesse `http://localhost:3001` no navegador — a tela inicial mostra os 3 perfis (Personal/Aluno/Nutricionista) para login/cadastro.
 
-A URL do backend é configurada em `frontend/.env.local` (`NEXT_PUBLIC_API_URL`). O `next.config.ts` do frontend repassa chamadas `/api/*` para essa URL do lado do servidor, então o navegador nunca fala diretamente com o backend (evita problemas de CORS).
+A URL do backend é configurada em `frontend/.env.local` (`BACKEND_URL`). O proxy server-side em `frontend/app/api/[...path]/route.ts` repassa chamadas `/api/*` para essa URL do lado do servidor, então o navegador nunca fala diretamente com o backend (evita problemas de CORS, e em produção anexa o token de identidade exigido pelo backend com invocação restrita por IAM no Cloud Run).
 
 ## 5. Rodar os testes do backend
 
@@ -84,5 +84,14 @@ npm test
 /src            backend (Fastify) — auth, fitness (exercícios, treinos, séries)
 /prisma         schema, migrations e seed do banco
 /frontend       frontend (Next.js) — telas do aluno
+/infra          Terraform (GCP: Cloud Run, Artifact Registry, Cloud Build, Secret Manager)
+/docker         scripts usados dentro dos Dockerfiles (ex: migration na subida do backend)
 STATUS.md       histórico de progresso do projeto por fase
 ```
+
+## Branches e deploy
+
+- **`main`** é produção. Todo push em `main` dispara build+deploy automático no Cloud Run (via Cloud Build, configurado no Terraform em `infra/` — sem pipeline YAML nenhum, é nativo do Cloud Run).
+- **`dev`** é onde o trabalho do dia a dia acontece antes de virar PR para `main`. Não tem deploy automático — só existe o ambiente de produção.
+- `dev.sh`/`dev.ps1` existem nas duas branches (são inertes em produção, nada no pipeline os executa — não há necessidade de removê-los de `main`).
+- Ver `infra/README.md` para o bootstrap da infraestrutura (GCP, Neon, Terraform) e `infra/RUNBOOK.md` para rollback e operação.

@@ -24,6 +24,10 @@ prisma/*.db-journal
 # Credenciais de teste geradas por dev.sh/dev.ps1 — nunca commitar
 TEST_CREDENTIALS.txt
 
+# Arquivo temporário usado para colar a connection string do Neon durante o
+# bootstrap do Terraform (infra/) — nunca commitar
+NEON_DATABASE_URL.txt
+
 # Artefatos runtime do dev.sh/dev.ps1
 .dev-pids/
 .dev-pids.json

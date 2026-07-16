@@ -4,18 +4,14 @@ const nextConfig: NextConfig = {
   turbopack: {
     root: __dirname,
   },
-  // O backend (Fases 1-4) não emite cabeçalhos CORS e está fora do escopo
-  // de arquivos desta fase. Em vez de alterar `/src`, o navegador só fala
-  // com a própria origem do Next (same-origin) e este rewrite repassa
-  // `/api/*` para NEXT_PUBLIC_API_URL no servidor, onde CORS não se aplica.
-  async rewrites() {
-    return [
-      {
-        source: "/api/:path*",
-        destination: `${process.env.NEXT_PUBLIC_API_URL}/api/:path*`,
-      },
-    ];
-  },
+  // Necessário para um Docker image enxuto (deploy em produção) — sem isso
+  // a imagem carrega node_modules inteiro + cache de build do .next.
+  output: "standalone",
+  // O rewrite simples de /api/* foi substituído por um proxy server-side de
+  // verdade em app/api/[...path]/route.ts — em produção o backend do Cloud
+  // Run fica com invocação restrita por IAM (não aceita chamada anônima), e
+  // um rewrite do next.config.ts não consegue anexar o token de identidade
+  // do Google por request. Ver o route.ts para o motivo completo.
 };
 
 export default nextConfig;

@@ -1,7 +1,9 @@
 /**
  * O fetch do navegador sempre chama a própria origem do Next (same-origin,
- * evitando CORS); é o rewrite em next.config.ts que repassa `/api/*` para
- * NEXT_PUBLIC_API_URL do lado do servidor.
+ * evitando CORS); é o proxy server-side em app/api/[...path]/route.ts que
+ * repassa `/api/*` para BACKEND_URL do lado do servidor (deploy: também
+ * anexa o token de identidade do Google exigido pelo backend com invocação
+ * restrita por IAM no Cloud Run).
  *
  * Fase 5.5: os tokens não são mais lidos/escritos pelo JS do frontend — o
  * backend seta `access_token`/`refresh_token` como cookies httpOnly nas

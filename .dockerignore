@@ -1,0 +1,16 @@
+node_modules
+frontend
+.git
+.github
+dist
+.dev-pids
+.dev-pids.json
+.dev-backend.log
+.dev-frontend.log
+TEST_CREDENTIALS.txt
+test-results
+*.md
+.env
+.env.local
+infra
+docker-compose.yml

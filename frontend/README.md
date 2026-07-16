@@ -11,7 +11,7 @@ npm run dev
 ```
 
 Sobe em `http://localhost:3001`. Requer o backend rodando em `http://localhost:3000`
-(configurável via `NEXT_PUBLIC_API_URL` em `.env.local`, ver `.env.example`).
+(configurável via `BACKEND_URL` em `.env.local`, ver `.env.example`).
 
 ## Testes
 
