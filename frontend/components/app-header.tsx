@@ -93,6 +93,12 @@ export function AppHeader() {
             >
               Dúvidas
             </Link>
+            <Link
+              href="/personal/upgrade"
+              className="hidden text-sm font-semibold text-accent-secondary hover:underline sm:inline"
+            >
+              Planos
+            </Link>
           </>
         )}
         {user?.role === "NUTRICIONISTA" && (
