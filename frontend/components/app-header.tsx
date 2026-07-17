@@ -77,6 +77,12 @@ export function AppHeader() {
             >
               Dúvidas
             </Link>
+            <Link
+              href="/profissionais"
+              className="hidden text-sm font-semibold text-accent-secondary hover:underline sm:inline"
+            >
+              Encontrar Personal
+            </Link>
           </>
         )}
         {user?.role === "PERSONAL" && (
@@ -88,10 +94,22 @@ export function AppHeader() {
               Programas
             </Link>
             <Link
+              href="/personal/solicitacoes"
+              className="hidden text-sm font-semibold text-accent-secondary hover:underline sm:inline"
+            >
+              Solicitações
+            </Link>
+            <Link
               href="/personal/duvidas"
               className="hidden text-sm font-semibold text-accent-secondary hover:underline sm:inline"
             >
               Dúvidas
+            </Link>
+            <Link
+              href="/personal/perfil"
+              className="hidden text-sm font-semibold text-accent-secondary hover:underline sm:inline"
+            >
+              Perfil
             </Link>
           </>
         )}

@@ -1,0 +1,176 @@
+"use client";
+
+import { useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  searchProfessionals,
+  listConnectionRequests,
+  createConnectionRequest,
+  type ConnectionStatus,
+} from "@/lib/api/connections";
+import { ApiError } from "@/lib/api/client";
+import { AuthGuard } from "@/components/auth-guard";
+import { AppHeader } from "@/components/app-header";
+import { Card } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
+import { QueryError } from "@/components/query-error";
+
+function StatusBadge({ status }: { status: ConnectionStatus }) {
+  const map: Record<ConnectionStatus, { label: string; cls: string }> = {
+    PENDENTE: { label: "Pendente", cls: "bg-accent/15 text-accent" },
+    ACEITA: { label: "Aceita", cls: "bg-success/15 text-success" },
+    RECUSADA: { label: "Recusada", cls: "bg-danger/15 text-danger" },
+  };
+  const m = map[status];
+  return <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${m.cls}`}>{m.label}</span>;
+}
+
+function ProfissionaisContent() {
+  const queryClient = useQueryClient();
+  const [location, setLocation] = useState("");
+  const [submitted, setSubmitted] = useState<string | undefined>(undefined);
+
+  const searchQuery = useQuery({
+    queryKey: ["professionals-search", submitted ?? ""],
+    queryFn: () => searchProfessionals(submitted),
+  });
+  const requestsQuery = useQuery({
+    queryKey: ["connection-requests"],
+    queryFn: listConnectionRequests,
+  });
+
+  const requestMutation = useMutation({
+    mutationFn: (professionalId: string) => createConnectionRequest(professionalId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["connection-requests"] });
+    },
+  });
+
+  const requests = requestsQuery.data?.requests ?? [];
+  // id do profissional -> status da minha solicitação (para rotular os resultados)
+  const statusByPro = new Map(requests.map((r) => [r.counterpart.id, r.status]));
+
+  return (
+    <>
+      <AppHeader />
+      <main className="flex flex-1 flex-col gap-6 px-6 py-8">
+        <div>
+          <span className="text-xs font-semibold uppercase tracking-wide text-accent-secondary">
+            Descobrir
+          </span>
+          <h1 className="font-display text-2xl font-bold tracking-tight">Encontrar Personal</h1>
+          <p className="text-sm text-muted">
+            Busque por cidade/estado e solicite vínculo. O profissional aprova manualmente.
+          </p>
+        </div>
+
+        <Card className="flex flex-col gap-3">
+          <form
+            className="flex items-end gap-2"
+            onSubmit={(e) => {
+              e.preventDefault();
+              setSubmitted(location.trim() || undefined);
+            }}
+          >
+            <div className="flex flex-1 flex-col gap-1.5">
+              <Label htmlFor="location">Localização (cidade/estado)</Label>
+              <Input
+                id="location"
+                value={location}
+                onChange={(e) => setLocation(e.target.value)}
+                placeholder="Ex: Palhoça, SC"
+              />
+            </div>
+            <Button type="submit">Buscar</Button>
+          </form>
+        </Card>
+
+        {searchQuery.isLoading && <p className="text-sm text-muted">Buscando...</p>}
+        {searchQuery.isError && (
+          <QueryError error={searchQuery.error} onRetry={() => searchQuery.refetch()} />
+        )}
+        {searchQuery.isSuccess && searchQuery.data.professionals.length === 0 && (
+          <Card>
+            <p className="text-sm text-muted">
+              Nenhum profissional disponível{submitted ? ` em "${submitted}"` : ""}. Tente outra
+              localização ou deixe o campo vazio para ver todos.
+            </p>
+          </Card>
+        )}
+
+        <div className="flex flex-col gap-3">
+          {searchQuery.data?.professionals.map((p) => {
+            const myStatus = statusByPro.get(p.id);
+            return (
+              <Card
+                key={p.id}
+                className="flex flex-col gap-2"
+                style={{ borderTopWidth: "3px", borderTopColor: "var(--role-personal)" }}
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="font-semibold">{p.email.split("@")[0]}</p>
+                    {p.location && <p className="text-xs text-muted">📍 {p.location}</p>}
+                  </div>
+                </div>
+                {p.bio && <p className="text-sm text-muted">{p.bio}</p>}
+                {myStatus ? (
+                  <div className="self-start">
+                    <StatusBadge status={myStatus} />
+                  </div>
+                ) : (
+                  <Button
+                    variant="secondary"
+                    className="self-start"
+                    disabled={requestMutation.isPending}
+                    onClick={() => requestMutation.mutate(p.id)}
+                  >
+                    {requestMutation.isPending && requestMutation.variables === p.id
+                      ? "Enviando..."
+                      : "Solicitar vínculo"}
+                  </Button>
+                )}
+              </Card>
+            );
+          })}
+        </div>
+
+        {requestMutation.isError && (
+          <p className="text-sm text-danger">
+            {requestMutation.error instanceof ApiError
+              ? requestMutation.error.message
+              : "Não foi possível enviar a solicitação."}
+          </p>
+        )}
+
+        <section className="flex flex-col gap-3 border-t border-border pt-6">
+          <h2 className="font-display text-lg font-bold">Minhas solicitações</h2>
+          {requestsQuery.isSuccess && requests.length === 0 && (
+            <p className="text-sm text-muted">Você ainda não enviou nenhuma solicitação.</p>
+          )}
+          {requests.map((r) => (
+            <Card key={r.id} className="flex items-center justify-between">
+              <div>
+                <p className="font-semibold">{r.counterpart.email.split("@")[0]}</p>
+                {r.counterpart.location && (
+                  <p className="text-xs text-muted">📍 {r.counterpart.location}</p>
+                )}
+              </div>
+              <StatusBadge status={r.status} />
+            </Card>
+          ))}
+        </section>
+      </main>
+    </>
+  );
+}
+
+export default function ProfissionaisPage() {
+  return (
+    <AuthGuard allowedRoles={["ALUNO"]}>
+      <ProfissionaisContent />
+    </AuthGuard>
+  );
+}

@@ -40,6 +40,13 @@ model User {
   planoAssinatura  PlanoAssinatura @default(FREE)
   limiteAlunos     Int             @default(3)
   lastLoginAt      DateTime?
+  // Fase 21 (descoberta de profissionais): perfil público mínimo. Opt-in —
+  // ninguém aparece na busca até ativar `availableForNewStudents`. location é
+  // texto livre (ex: "Palhoça, SC"), sem geolocalização. bio/especialidade
+  // texto livre. Só faz sentido para papéis profissionais (PERSONAL/NUTRI).
+  availableForNewStudents Boolean @default(false)
+  location         String?
+  bio              String?
   createdAt        DateTime        @default(now())
   updatedAt        DateTime        @updatedAt
 
@@ -81,6 +88,35 @@ model ClientRelation {
 enum ProfessionalType {
   PERSONAL
   NUTRICIONISTA
+}
+
+// ============================================================
+// --- domain: connections --- (Fase 21)
+// Descoberta de profissionais + solicitação de vínculo com aprovação manual.
+// O aluno acha um profissional (busca por localização/role) e SOLICITA; o
+// vínculo nunca nasce automático — fica PENDENTE até o profissional ACEITAR
+// (aí cria o ClientRelation real, respeitando o limite Freemium) ou RECUSAR.
+// Mesma filosofia de status do SupportThread (Fase 10).
+// ============================================================
+
+model ConnectionRequest {
+  id               String                  @id @default(uuid())
+  alunoId          String
+  professionalId   String
+  professionalType ProfessionalType        @default(PERSONAL)
+  status           ConnectionRequestStatus @default(PENDENTE)
+  createdAt        DateTime                @default(now())
+  updatedAt        DateTime                @updatedAt
+
+  // Um par aluno↔profissional tem no máximo uma solicitação (re-solicitar
+  // após recusa reusa a mesma linha, voltando a PENDENTE).
+  @@unique([alunoId, professionalId])
+}
+
+enum ConnectionRequestStatus {
+  PENDENTE
+  ACEITA
+  RECUSADA
 }
 
 // ============================================================
