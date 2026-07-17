@@ -35,11 +35,17 @@ export const ROLE_META: Record<Role, RoleMeta> = {
   },
 };
 
-// ADMIN não entra aqui de propósito: não existe auto-cadastro nem seleção
-// pública de perfil admin na tela inicial (Fase 12) — só PERSONAL/ALUNO/
-// NUTRICIONISTA aparecem como opção de login. ROLE_META.ADMIN existe só
-// para o acento de cor ser reaproveitado dentro do próprio painel admin.
-export const ROLE_ORDER: Role[] = ["PERSONAL", "ALUNO", "NUTRICIONISTA"];
+// Papéis oferecidos como porta de entrada (boxes da tela inicial + roles
+// aceitos em /register). Fase 18 (Item 3): NUTRICIONISTA foi REMOVIDO da UI
+// temporariamente — o módulo de Nutrição segue intacto no backend e as telas
+// /nutricionista/** continuam existindo, mas o cadastro/seleção pública não
+// expõe mais essa opção (modelo de negócio do Nutricionista ainda em
+// definição). Quem JÁ tem role NUTRICIONISTA no banco continua logando e
+// sendo redirecionado normalmente (ver dashboardPathForRole + ROLE_META, que
+// mantêm a entrada de Nutricionista de propósito). ADMIN nunca esteve aqui
+// (sem auto-cadastro). Para reexpor o Nutricionista no futuro, basta
+// readicioná-lo a esta lista.
+export const ROLE_ORDER: Role[] = ["PERSONAL", "ALUNO"];
 
 export function isRole(value: string | null): value is Role {
   return (

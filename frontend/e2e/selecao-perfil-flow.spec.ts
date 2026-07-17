@@ -9,7 +9,7 @@ import { test, expect } from "@playwright/test";
 
 const BACKEND_URL = process.env.E2E_BACKEND_URL ?? "http://localhost:3000";
 
-test("`/` mostra os 3 perfis e o registro chega pré-contextualizado", async ({ page }) => {
+test("`/` mostra só Personal e Aluno (Nutricionista removido — Fase 18) e o registro chega pré-contextualizado", async ({ page }) => {
   const stamp = Date.now();
   const personalEmail = `e2e_pw_role_personal_${stamp}@thunderafit.test`;
   const password = "SenhaSegura@123";
@@ -18,11 +18,15 @@ test("`/` mostra os 3 perfis e o registro chega pré-contextualizado", async ({ 
   await expect(page.getByRole("heading", { name: "ThunderaFit" })).toBeVisible();
   await expect(page.getByRole("link", { name: /^Personal Trainer/ })).toBeVisible();
   await expect(page.getByRole("link", { name: /^Aluno/ })).toBeVisible();
-  await expect(page.getByRole("link", { name: /^Nutricionista/ })).toBeVisible();
+  // Fase 18 (Item 3): Nutricionista não é mais oferecido na tela inicial.
+  await expect(page.getByRole("link", { name: /^Nutricionista/ })).toHaveCount(0);
 
   await page.getByRole("link", { name: /^Personal Trainer/ }).click();
   await expect(page).toHaveURL(/\/register\?role=PERSONAL$/);
-  await expect(page.getByRole("heading", { name: /Personal Trainer/ })).toBeVisible();
+  // Fase 18 (Item 1): heading de ação + chip "Cadastro" diferenciam do login.
+  await expect(page.getByRole("heading", { name: "Criar conta" })).toBeVisible();
+  await expect(page.getByText("Cadastro", { exact: true })).toBeVisible();
+  await expect(page.getByText(/Personal Trainer/)).toBeVisible();
 
   await page.locator("#email").fill(personalEmail);
   await page.locator("#password").fill(password);
@@ -32,6 +36,11 @@ test("`/` mostra os 3 perfis e o registro chega pré-contextualizado", async ({ 
   // Sessão já existe agora — "/" deve pular a seleção e ir direto pro dashboard.
   await page.goto("/");
   await expect(page).toHaveURL(/\/personal\/dashboard$/);
+});
+
+test("Fase 18 (Item 3): /register?role=NUTRICIONISTA não é mais alcançável — volta para /", async ({ page }) => {
+  await page.goto("/register?role=NUTRICIONISTA");
+  await expect(page).toHaveURL("http://localhost:3001/");
 });
 
 test("/register sem `role` na URL volta para a seleção de perfil", async ({ page }) => {

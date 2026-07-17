@@ -29,16 +29,24 @@ export default function LoginPage() {
 
   return (
     <main className="flex flex-1 flex-col items-center justify-center px-6 py-12">
-      <div className="mb-10 flex flex-col items-center gap-2">
+      {/* Fase 18 (Item 1): eyebrow chip + heading de ação + acento dourado
+          diferenciam esta tela do cadastro (que usa ciano). O objetivo é
+          reconhecer a tela por cor/forma, não por ler o texto do heading. */}
+      <div className="mb-10 flex flex-col items-center gap-3">
+        <span className="rounded-full border border-accent/50 bg-accent/10 px-3 py-1 text-xs font-bold uppercase tracking-widest text-accent">
+          Login
+        </span>
         <span className="text-3xl" aria-hidden>
           ⚡
         </span>
-        <h1 className="font-display text-2xl font-bold tracking-tight text-foreground">
-          ThunderaFit
-        </h1>
+        <h1 className="font-display text-2xl font-bold tracking-tight text-foreground">Entrar</h1>
+        <p className="text-sm text-muted">Bom te ver de novo no ThunderaFit.</p>
       </div>
 
-      <Card className="w-full max-w-sm">
+      <Card
+        className="w-full max-w-sm"
+        style={{ borderTopWidth: "4px", borderTopColor: "var(--accent)" }}
+      >
         <form
           className="flex flex-col gap-4"
           onSubmit={(e) => {

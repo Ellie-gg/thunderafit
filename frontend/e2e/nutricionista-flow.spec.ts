@@ -29,14 +29,18 @@ test("Nutricionista se cadastra, vincula aluno e cria plano de dieta com 2 refei
     body: JSON.stringify({ email: alunoEmail, password, role: "ALUNO" }),
   });
 
-  // --- 1. Cadastro do Nutricionista pela UI — a partir da Fase 12, o papel
-  // é escolhido na tela inicial (/), não mais dentro do form de /register ---
-  await page.goto("/");
-  await page.getByRole("link", { name: /^Nutricionista/ }).click();
-  await expect(page).toHaveURL(/\/register\?role=NUTRICIONISTA$/);
+  // --- 1. Nutricionista JÁ EXISTE no banco (Fase 18, Item 3: o cadastro de
+  // Nutricionista foi removido da UI, mas o papel continua no backend e quem
+  // já existe deve logar normalmente). Criamos via API e validamos a
+  // SALVAGUARDA: login pela UI redireciona para /nutricionista/dashboard. ---
+  await backendJson("/api/auth/register", {
+    method: "POST",
+    body: JSON.stringify({ email: nutriEmail, password, role: "NUTRICIONISTA" }),
+  });
+  await page.goto("/login");
   await page.locator("#email").fill(nutriEmail);
   await page.locator("#password").fill(password);
-  await page.getByRole("button", { name: "Criar conta" }).click();
+  await page.getByRole("button", { name: "Entrar" }).click();
   await expect(page).toHaveURL(/\/nutricionista\/dashboard$/);
   await expect(page.getByText("0/3")).toBeVisible();
 

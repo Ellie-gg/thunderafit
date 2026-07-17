@@ -13,6 +13,10 @@ const buttonVariants = cva(
         secondary: "bg-surface-raised text-foreground border border-border hover:border-accent-secondary",
         ghost: "hover:bg-surface-raised text-foreground",
         outline: "border border-border text-foreground hover:border-accent",
+        // Fase 18 (Item 1): botão ciano, para o CTA de cadastro se distinguir
+        // do botão dourado do login (mesma paleta Voltagem, ação diferente).
+        accentSecondary:
+          "bg-accent-secondary text-ink-950 hover:opacity-90 shadow-[0_0_16px_-4px_var(--accent-secondary)]",
       },
       size: {
         default: "h-11 px-5",

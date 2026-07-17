@@ -8,7 +8,7 @@ import { registerRequest, loginRequest } from "@/lib/api/auth";
 import { ApiError } from "@/lib/api/client";
 import { useAuthStore } from "@/lib/store/auth-store";
 import { dashboardPathForRole } from "@/lib/auth/redirect";
-import { ROLE_META, isRole } from "@/lib/roles";
+import { ROLE_META, isRole, ROLE_ORDER } from "@/lib/roles";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -27,8 +27,11 @@ function RegisterContent() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
+  // Fase 18 (Item 3): só papéis expostos publicamente (ROLE_ORDER) podem
+  // cadastrar. `role=NUTRICIONISTA` na URL não é mais alcançável — cai como
+  // inválido e volta para a tela inicial, igual a um role desconhecido.
   const roleParam = searchParams.get("role");
-  const role = isRole(roleParam) ? roleParam : null;
+  const role = isRole(roleParam) && ROLE_ORDER.includes(roleParam) ? roleParam : null;
 
   useEffect(() => {
     if (!role) {
@@ -55,17 +58,29 @@ function RegisterContent() {
 
   return (
     <main className="flex flex-1 flex-col items-center justify-center px-6 py-12">
-      <div className="mb-10 flex flex-col items-center gap-2">
+      {/* Fase 18 (Item 1): sinal de "cadastro" é o CIANO (chip/borda/botão),
+          fixo — NÃO a cor do papel, senão um Personal (cujo acento já é
+          dourado) ficaria idêntico à tela de login. O acento de papel da
+          Fase 12 segue só no glifo ⚡. */}
+      <div className="mb-10 flex flex-col items-center gap-3">
+        <span className="rounded-full border border-accent-secondary/50 bg-accent-secondary/10 px-3 py-1 text-xs font-bold uppercase tracking-widest text-accent-secondary">
+          Cadastro
+        </span>
         <span className="text-3xl" aria-hidden style={{ color: meta.accentVar }}>
           ⚡
         </span>
         <h1 className="font-display text-2xl font-bold tracking-tight text-foreground">
-          Cadastro — {meta.label}
+          Criar conta
         </h1>
-        <p className="text-sm text-muted">{meta.tagline}</p>
+        <p className="text-sm text-muted">
+          {meta.label} · {meta.tagline}
+        </p>
       </div>
 
-      <Card className="w-full max-w-sm">
+      <Card
+        className="w-full max-w-sm"
+        style={{ borderTopWidth: "4px", borderTopColor: "var(--accent-secondary)" }}
+      >
         <form
           className="flex flex-col gap-4"
           onSubmit={(e) => {
@@ -106,7 +121,12 @@ function RegisterContent() {
             </p>
           )}
 
-          <Button type="submit" disabled={mutation.isPending} className="mt-2">
+          <Button
+            type="submit"
+            variant="accentSecondary"
+            disabled={mutation.isPending}
+            className="mt-2"
+          >
             {mutation.isPending ? "Criando conta..." : "Criar conta"}
           </Button>
         </form>
