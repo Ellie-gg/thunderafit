@@ -32,6 +32,33 @@ export async function buildApp(): Promise<FastifyInstance> {
     trustProxy: true,
   });
 
+  // Fase 20 (billing Stripe): `stripe.webhooks.constructEvent` valida a
+  // assinatura sobre os BYTES EXATOS do corpo. O parser JSON padrão do
+  // Fastify descarta o raw body, quebrando a verificação. Este parser
+  // substitui o de application/json guardando o buffer cru em `request.rawBody`
+  // E ainda entregando o JSON parseado para as demais rotas — assim só o
+  // webhook usa `rawBody` e todo o resto do app segue igual. Corpo vazio
+  // (ex: logout, marcar notificação) continua virando `{}` (mesmo cuidado da
+  // Fase 10).
+  fastify.addContentTypeParser(
+    "application/json",
+    { parseAs: "buffer" },
+    (req, body, done) => {
+      (req as unknown as { rawBody: Buffer }).rawBody = body as Buffer;
+      const text = (body as Buffer).toString("utf8").trim();
+      if (!text) {
+        done(null, {});
+        return;
+      }
+      try {
+        done(null, JSON.parse(text));
+      } catch (err) {
+        (err as Error & { statusCode?: number }).statusCode = 400;
+        done(err as Error, undefined);
+      }
+    }
+  );
+
   // CORS: em produção, frontend e backend provavelmente estarão em domínios
   // diferentes de verdade (o rewrite do Next.js só resolve isso em dev/mesmo
   // host). ALLOWED_ORIGIN é configurável via env, sem default hardcoded de

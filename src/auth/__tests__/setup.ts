@@ -7,3 +7,12 @@ process.env.JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET ?? "test_refresh
 process.env.DATABASE_URL =
   process.env.DATABASE_URL ??
   "postgresql://thunderafit:thunderafit_secret@localhost:5432/thunderafit_db?schema=public";
+
+// Fase 20 (billing): valores dummy de teste. A verificação de assinatura do
+// webhook é cripto local (HMAC) e funciona com qualquer segredo; chamadas à
+// API do Stripe (checkout/portal) são mockadas nos testes.
+process.env.STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY ?? "sk_test_dummy_key_for_tests";
+process.env.STRIPE_WEBHOOK_SECRET =
+  process.env.STRIPE_WEBHOOK_SECRET ?? "whsec_test_secret_for_tests_only";
+process.env.STRIPE_PRICE_ID_MONTHLY = process.env.STRIPE_PRICE_ID_MONTHLY ?? "price_test_monthly";
+process.env.STRIPE_PRICE_ID_ANNUAL = process.env.STRIPE_PRICE_ID_ANNUAL ?? "price_test_annual";

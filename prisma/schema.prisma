@@ -40,6 +40,13 @@ model User {
   planoAssinatura  PlanoAssinatura @default(FREE)
   limiteAlunos     Int             @default(3)
   lastLoginAt      DateTime?
+  // Fase 20 (billing Stripe): vínculo do usuário com o Stripe. customerId é
+  // setado no checkout.session.completed e usado para mapear eventos de
+  // assinatura (updated/deleted) de volta ao usuário. Ambos nullable (usuário
+  // FREE nunca teve interação com o Stripe). @unique no customerId garante
+  // 1:1 e permite lookup reverso pelo webhook.
+  stripeCustomerId     String?     @unique
+  stripeSubscriptionId String?
   // Fase 21 (descoberta de profissionais): perfil público mínimo. Opt-in —
   // ninguém aparece na busca até ativar `availableForNewStudents`. location é
   // texto livre (ex: "Palhoça, SC"), sem geolocalização. bio/especialidade

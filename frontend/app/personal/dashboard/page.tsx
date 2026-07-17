@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import { listRelations } from "@/lib/api/relations";
 import { listMyWorkouts } from "@/lib/api/workouts";
+import { getBillingStatus } from "@/lib/api/billing";
 import { useAuthStore } from "@/lib/store/auth-store";
 import { AuthGuard } from "@/components/auth-guard";
 import { AppHeader } from "@/components/app-header";
@@ -25,8 +26,14 @@ function PersonalDashboardContent() {
     queryFn: listMyWorkouts,
   });
 
+  // Fase 20: o limite vem do backend (billing status), não do `user` do store
+  // — que fica desatualizado após um upgrade (o plano muda via webhook do
+  // Stripe, não por um novo login). Fallback ao store enquanto carrega.
+  const billingQuery = useQuery({ queryKey: ["billing-status"], queryFn: getBillingStatus });
+
   const alunos = relationsQuery.data?.relations ?? [];
-  const limite = user?.limiteAlunos ?? 0;
+  const limite = billingQuery.data?.limiteAlunos ?? user?.limiteAlunos ?? 0;
+  const isPago = billingQuery.data?.planoAssinatura === "PAGO";
   const noLimite = alunos.length >= limite;
 
   return (
@@ -52,9 +59,31 @@ function PersonalDashboardContent() {
           <VoltageBar total={limite} filled={alunos.length} role="PERSONAL" />
 
           {noLimite && (
-            <p className="rounded-md border border-danger/40 bg-danger/10 px-3 py-2 text-sm text-danger">
-              Limite de alunos atingido. Faça upgrade do plano para vincular mais alunos.
-            </p>
+            <Link
+              href="/personal/upgrade"
+              className="block rounded-md border border-danger/40 bg-danger/10 px-3 py-2 text-sm text-danger hover:border-danger"
+            >
+              Limite de alunos atingido. <span className="font-semibold underline">Faça upgrade do plano →</span>
+            </Link>
+          )}
+
+          {/* Link de upgrade sempre disponível para quem está no plano gratuito
+              (mesmo antes de bater o limite). */}
+          {!isPago && !noLimite && (
+            <Link
+              href="/personal/upgrade"
+              className="text-sm font-semibold text-accent-secondary hover:underline"
+            >
+              Precisa de mais alunos? Ver planos →
+            </Link>
+          )}
+          {isPago && (
+            <Link
+              href="/personal/upgrade"
+              className="text-sm font-semibold text-accent-secondary hover:underline"
+            >
+              Plano pago ativo · gerenciar assinatura →
+            </Link>
           )}
 
           {relationsQuery.isLoading && <p className="text-sm text-muted">Carregando...</p>}
