@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">ThunderaFit</string>
+    <string name="title_activity_main">ThunderaFit</string>
+    <string name="package_name">app.thunderafit.twa</string>
+    <string name="custom_url_scheme">app.thunderafit.twa</string>
+</resources>
