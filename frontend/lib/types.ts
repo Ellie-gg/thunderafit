@@ -144,6 +144,9 @@ export interface SupportThread {
 export interface PersonalOption {
   id: string;
   email: string;
+  // Fase 17 (Item 6): distingue Personal de Nutricionista na escolha do
+  // destinatário da dúvida.
+  professionalType: "PERSONAL" | "NUTRICIONISTA";
 }
 
 export interface Notification {
@@ -177,6 +180,7 @@ export interface DietPlan {
   nutricionistaId: string;
   alunoId: string;
   name: string;
+  isActive: boolean;
   createdAt: string;
   updatedAt: string;
 }

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
-import { listMyWorkouts, getWorkout } from "@/lib/api/workouts";
+import { listWorkoutPrograms, getWorkoutProgram } from "@/lib/api/workouts";
 import { listMyDietPlans, getDietPlan } from "@/lib/api/nutrition";
 import { useAuthStore } from "@/lib/store/auth-store";
 import { AuthGuard } from "@/components/auth-guard";
@@ -16,43 +16,49 @@ import { EvolucaoTeaser } from "@/components/evolucao-teaser";
 function DashboardContent() {
   const user = useAuthStore((s) => s.user);
 
-  const workoutsQuery = useQuery({
-    queryKey: ["workouts"],
-    queryFn: listMyWorkouts,
+  // Fase 17 (Item 1): o card de "próximo treino" passa a refletir a sessão
+  // sugerida (`suggestedNext`, regra da Fase 16) do programa ativo do aluno —
+  // não mais o treino mais antigo da lista. Programa ativo = o mais recente
+  // aplicado ao aluno (listWorkoutPrograms já vem ordenado por createdAt desc).
+  const programsQuery = useQuery({
+    queryKey: ["workout-programs", "aluno"],
+    queryFn: () => listWorkoutPrograms(),
   });
 
-  const firstWorkoutId = workoutsQuery.data?.workouts[0]?.id;
+  const activeProgramId = programsQuery.data?.programs[0]?.id;
 
-  const detailQuery = useQuery({
-    queryKey: ["workout", firstWorkoutId],
-    queryFn: () => getWorkout(firstWorkoutId!),
-    enabled: !!firstWorkoutId,
+  const programQuery = useQuery({
+    queryKey: ["workout-program", activeProgramId],
+    queryFn: () => getWorkoutProgram(activeProgramId!),
+    enabled: !!activeProgramId,
   });
 
-  const workout = detailQuery.data?.workout;
-  const totalSets = workout?.exercises?.reduce((acc, ex) => acc + ex.sets, 0) ?? 0;
+  const program = programQuery.data?.program;
+  const sessions = program?.workouts ?? [];
+  const nextSession = sessions.find((s) => s.suggestedNext) ?? sessions[0];
+  const totalSets = nextSession?.exercises?.reduce((acc, ex) => acc + ex.sets, 0) ?? 0;
   const doneSets =
-    workout?.exercises?.reduce((acc, ex) => acc + (ex.setLogs?.length ?? 0), 0) ?? 0;
+    nextSession?.exercises?.reduce((acc, ex) => acc + (ex.setLogs?.length ?? 0), 0) ?? 0;
 
-  // Fase 11 — um aluno pode ter Personal, Nutricionista, ambos ou nenhum.
-  // "Plano alimentar de hoje" segue a mesma simplificação documentada desde
-  // a Fase 5 para "próximo treino": não existe conceito de dia no backend,
-  // então usamos o primeiro plano de dieta prescrito.
+  // Fase 17 (Item 5): "plano alimentar de hoje" agora usa o plano ATIVO
+  // (isActive) em vez do primeiro da lista — a vigência substituiu a
+  // simplificação anterior. Fallback ao primeiro caso nenhum esteja marcado.
   const dietPlansQuery = useQuery({
     queryKey: ["diet-plans"],
     queryFn: listMyDietPlans,
   });
 
-  const firstPlanId = dietPlansQuery.data?.plans[0]?.id;
+  const activePlanId =
+    (dietPlansQuery.data?.plans.find((p) => p.isActive) ?? dietPlansQuery.data?.plans[0])?.id;
 
   const dietPlanDetailQuery = useQuery({
-    queryKey: ["diet-plan", firstPlanId],
-    queryFn: () => getDietPlan(firstPlanId!),
-    enabled: !!firstPlanId,
+    queryKey: ["diet-plan", activePlanId],
+    queryFn: () => getDietPlan(activePlanId!),
+    enabled: !!activePlanId,
   });
 
   const dietPlan = dietPlanDetailQuery.data?.plan;
-  const hasPersonal = workoutsQuery.isSuccess && workoutsQuery.data.workouts.length > 0;
+  const hasPersonal = programsQuery.isSuccess && programsQuery.data.programs.length > 0;
   const hasNutricionista = dietPlansQuery.isSuccess && dietPlansQuery.data.plans.length > 0;
 
   return (
@@ -66,13 +72,13 @@ function DashboardContent() {
           <p className="text-sm text-muted">Pronto para descarregar o treino de hoje?</p>
         </div>
 
-        {workoutsQuery.isLoading && <p className="text-sm text-muted">Carregando treinos...</p>}
+        {programsQuery.isLoading && <p className="text-sm text-muted">Carregando treinos...</p>}
 
-        {workoutsQuery.isError && (
-          <QueryError error={workoutsQuery.error} onRetry={() => workoutsQuery.refetch()} />
+        {programsQuery.isError && (
+          <QueryError error={programsQuery.error} onRetry={() => programsQuery.refetch()} />
         )}
 
-        {workoutsQuery.isSuccess && !hasPersonal && !hasNutricionista && (
+        {programsQuery.isSuccess && !hasPersonal && !hasNutricionista && (
           <Card>
             <p className="text-sm text-muted">
               Você ainda não tem nenhum treino ou plano de dieta prescrito. Fale com seu Personal
@@ -81,29 +87,30 @@ function DashboardContent() {
           </Card>
         )}
 
-        {workout && (
+        {nextSession && (
           <Card className="flex flex-col gap-4 border-accent/40">
             <div className="flex items-center justify-between">
               <span className="text-xs font-semibold uppercase tracking-wide text-accent-secondary">
-                Próximo treino
+                Sessão sugerida
               </span>
               <span className="font-mono-nums text-xs text-muted">
                 {doneSets}/{totalSets} séries
               </span>
             </div>
             <h2 className="font-display text-xl font-bold">
-              Treino {workout.letter} — {workout.name}
+              Sessão {nextSession.letter} — {nextSession.name}
             </h2>
+            {program && <p className="text-xs text-muted">Programa: {program.name}</p>}
             <VoltageBar total={totalSets} filled={doneSets} role="ALUNO" />
             <Button asChild>
-              <Link href={`/treinos/${workout.id}`}>Começar treino</Link>
+              <Link href={`/treinos/${nextSession.id}`}>Começar treino</Link>
             </Button>
           </Card>
         )}
 
         {hasPersonal && (
-          <Link href="/treinos" className="text-sm font-semibold text-accent-secondary hover:underline">
-            Ver todos os meus treinos →
+          <Link href="/programas" className="text-sm font-semibold text-accent-secondary hover:underline">
+            Ver todos os meus programas →
           </Link>
         )}
 

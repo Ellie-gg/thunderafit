@@ -24,8 +24,11 @@ export const anamnesisService = {
     return anamnesisRepository.findByAluno(alunoId);
   },
 
-  async getForPersonal(personalId: string, alunoId: string) {
-    const relation = await anamnesisRepository.findRelation(personalId, alunoId);
+  // Renomeado de getForPersonal (Fase 17, Item 6): serve Personal E
+  // Nutricionista — a checagem de vínculo usa o id do profissional
+  // autenticado, e ClientRelation guarda ambos os tipos.
+  async getForProfessional(professionalId: string, alunoId: string) {
+    const relation = await anamnesisRepository.findRelation(professionalId, alunoId);
     if (!relation) {
       forbidden("Este aluno não está vinculado a você.");
     }

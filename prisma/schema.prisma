@@ -283,6 +283,12 @@ model DietPlan {
   nutricionistaId String
   alunoId        String
   name           String
+  // Fase 17 (Item 5): vigência mínima — um único plano ativo por aluno por
+  // vez (granularidade suficiente para o MVP; sem datas de início/fim, que
+  // seriam superengenharia agora). Criar um novo plano desativa os anteriores
+  // do mesmo aluno; o dashboard do aluno mostra o plano ativo em vez do
+  // "primeiro da lista". Default true para os planos pré-existentes.
+  isActive       Boolean    @default(true)
   meals          DietMeal[]
   createdAt      DateTime   @default(now())
   updatedAt      DateTime   @updatedAt

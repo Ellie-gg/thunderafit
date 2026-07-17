@@ -36,7 +36,10 @@ export const supportRepository = {
     });
   },
 
-  async findThreadsForUser(userId: string, role: "ALUNO" | "PERSONAL") {
+  async findThreadsForUser(userId: string, role: "ALUNO" | "PERSONAL" | "NUTRICIONISTA") {
+    // Aluno vê threads onde é o aluno; profissional (Personal ou
+    // Nutricionista) vê onde é o destinatário (personalId guarda o id do
+    // profissional, qualquer que seja o tipo).
     const where = role === "ALUNO" ? { alunoId: userId } : { personalId: userId };
     return prisma.supportThread.findMany({
       where,

@@ -122,27 +122,45 @@ export function AddExerciseForm({
         >
           {filtered.map((ex) => {
             const selected = ex.id === exerciseId;
+            // O link de vídeo fica FORA do <button> (elementos interativos não
+            // podem aninhar) — permite ao Personal conferir a execução antes de
+            // prescrever (Fase 17, Item 2).
             return (
-              <button
+              <div
                 key={ex.id}
-                type="button"
-                role="option"
-                aria-selected={selected}
-                onClick={() => setExerciseId(ex.id)}
                 className={
                   selected
-                    ? "flex items-center justify-between gap-2 rounded-md border border-accent bg-accent/10 px-3 py-2 text-left"
-                    : "flex items-center justify-between gap-2 rounded-md border border-transparent px-3 py-2 text-left hover:border-border"
+                    ? "flex items-center gap-2 rounded-md border border-accent bg-accent/10 pr-2"
+                    : "flex items-center gap-2 rounded-md border border-transparent pr-2 hover:border-border"
                 }
               >
-                <span className="flex flex-col">
-                  <span className="text-sm font-semibold">{ex.name}</span>
-                  <span className="text-xs text-muted">
-                    {ex.muscleGroup} · {ex.equipment}
+                <button
+                  type="button"
+                  role="option"
+                  aria-selected={selected}
+                  onClick={() => setExerciseId(ex.id)}
+                  className="flex flex-1 items-center justify-between gap-2 px-3 py-2 text-left"
+                >
+                  <span className="flex flex-col">
+                    <span className="text-sm font-semibold">{ex.name}</span>
+                    <span className="text-xs text-muted">
+                      {ex.muscleGroup} · {ex.equipment}
+                    </span>
                   </span>
-                </span>
-                <DifficultyBadge level={ex.difficultyLevel} />
-              </button>
+                  <DifficultyBadge level={ex.difficultyLevel} />
+                </button>
+                {ex.mediaUrl && (
+                  <a
+                    href={ex.mediaUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="shrink-0 text-xs font-semibold text-accent-secondary hover:underline"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    ▶ vídeo
+                  </a>
+                )}
+              </div>
             );
           })}
           {exercisesQuery.isSuccess && filtered.length === 0 && (

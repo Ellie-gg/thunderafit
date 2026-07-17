@@ -1,9 +1,18 @@
 import prisma from "../../lib/prisma";
 
 export const dietPlansRepository = {
+  // Fase 17 (Item 5): criar um plano desativa os planos ativos anteriores do
+  // MESMO aluno (um único plano ativo por vez), numa transação — o novo já
+  // nasce ativo. O dashboard do aluno usa o plano ativo.
   async create(nutricionistaId: string, alunoId: string, name: string) {
-    return prisma.dietPlan.create({
-      data: { nutricionistaId, alunoId, name },
+    return prisma.$transaction(async (tx) => {
+      await tx.dietPlan.updateMany({
+        where: { alunoId, isActive: true },
+        data: { isActive: false },
+      });
+      return tx.dietPlan.create({
+        data: { nutricionistaId, alunoId, name, isActive: true },
+      });
     });
   },
 

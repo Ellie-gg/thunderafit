@@ -33,9 +33,11 @@ function NovaDuvidaForm({ onCreated }: { onCreated: () => void }) {
   const [message, setMessage] = useState("");
 
   const personals = personalsQuery.data?.personals ?? [];
-  // Sem estado derivado via effect: se só existe 1 Personal, usa ele direto;
-  // com mais de 1, cai no que o usuário escolheu no <select>.
+  // Sem estado derivado via effect: se só existe 1 profissional, usa ele
+  // direto; com mais de 1 (ex: Personal + Nutricionista), cai no que o usuário
+  // escolheu no <select>.
   const personalId = personals.length === 1 ? personals[0].id : selectedPersonalId;
+  const typeLabel = (t: string) => (t === "NUTRICIONISTA" ? "Nutricionista" : "Personal");
 
   const mutation = useMutation({
     mutationFn: () => createThread({ personalId, subject, message }),
@@ -52,7 +54,14 @@ function NovaDuvidaForm({ onCreated }: { onCreated: () => void }) {
 
       {personalsQuery.isSuccess && personals.length === 0 && (
         <p className="text-sm text-muted">
-          Você precisa estar vinculado a um Personal Trainer para enviar uma dúvida.
+          Você precisa estar vinculado a um Personal Trainer ou Nutricionista para enviar uma
+          dúvida.
+        </p>
+      )}
+
+      {personals.length === 1 && (
+        <p className="text-xs text-muted">
+          Para: {typeLabel(personals[0].professionalType)} ({personals[0].email})
         </p>
       )}
 
@@ -66,7 +75,7 @@ function NovaDuvidaForm({ onCreated }: { onCreated: () => void }) {
         >
           {personals.length > 1 && (
             <div className="flex flex-col gap-1.5">
-              <Label htmlFor="personal">Personal Trainer</Label>
+              <Label htmlFor="personal">Destinatário</Label>
               <select
                 id="personal"
                 required
@@ -79,7 +88,7 @@ function NovaDuvidaForm({ onCreated }: { onCreated: () => void }) {
                 </option>
                 {personals.map((p) => (
                   <option key={p.id} value={p.id}>
-                    {p.email}
+                    {typeLabel(p.professionalType)} — {p.email}
                   </option>
                 ))}
               </select>

@@ -27,7 +27,16 @@ export async function createWorkoutHandler(
   reply: FastifyReply
 ) {
   const personalId = (request as any).user.sub;
+  const role = (request as any).user.role;
   const { alunoId, name, letter } = request.body;
+
+  // Fase 17 (Item 4 — auditoria): treino é domínio do Personal. Antes não
+  // havia checagem de role aqui (só de vínculo), então um Nutricionista
+  // vinculado ao aluno conseguia criar treino — incoerente com diet-plans,
+  // que já restringe a NUTRICIONISTA. Fechado para PERSONAL.
+  if (role !== "PERSONAL") {
+    return reply.status(403).send({ error: "Apenas Personal Trainers podem criar treinos." });
+  }
 
   try {
     const workout = await workoutsService.createWorkout(personalId, alunoId, name, letter);

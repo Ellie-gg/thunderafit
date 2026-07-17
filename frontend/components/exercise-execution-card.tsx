@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { createSetLog } from "@/lib/api/workouts";
 import { ApiError } from "@/lib/api/client";
-import { toYoutubeEmbedUrl } from "@/lib/youtube";
+import { toYoutubeEmbedUrl, toYoutubeThumbnail } from "@/lib/youtube";
 import type { WorkoutExercise } from "@/lib/types";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -21,6 +21,7 @@ export function ExerciseExecutionCard({
   const queryClient = useQueryClient();
   const [repsDone, setRepsDone] = useState("");
   const [weightKg, setWeightKg] = useState("");
+  const [playing, setPlaying] = useState(false);
 
   const setLogs = workoutExercise.setLogs ?? [];
   const nextSetNumber = setLogs.length + 1;
@@ -40,9 +41,9 @@ export function ExerciseExecutionCard({
     },
   });
 
-  const embedUrl = workoutExercise.exercise?.mediaUrl
-    ? toYoutubeEmbedUrl(workoutExercise.exercise.mediaUrl)
-    : null;
+  const mediaUrl = workoutExercise.exercise?.mediaUrl ?? null;
+  const embedUrl = mediaUrl ? toYoutubeEmbedUrl(mediaUrl) : null;
+  const thumbnailUrl = mediaUrl ? toYoutubeThumbnail(mediaUrl) : null;
 
   return (
     <Card className="flex flex-col gap-4">
@@ -55,15 +56,56 @@ export function ExerciseExecutionCard({
 
       <VoltageBar total={workoutExercise.sets} filled={setLogs.length} role="ALUNO" />
 
-      {embedUrl && (
-        <div className="aspect-video w-full overflow-hidden rounded-lg border border-border">
-          <iframe
-            src={embedUrl}
-            title={workoutExercise.exercise?.name}
-            className="h-full w-full"
-            allowFullScreen
-          />
+      {/* Player responsivo (Fase 17, Item 3): largura limitada (max-w-sm) para
+          não dominar a tela; começa como thumbnail-com-play e só carrega o
+          iframe ao clicar. Quando a mídia não é um vídeo embedável (ex: URLs
+          de BUSCA do YouTube dos exercícios da Fase 15), cai num link. */}
+      {embedUrl ? (
+        <div className="w-full max-w-sm overflow-hidden rounded-lg border border-border">
+          <div className="relative aspect-video">
+            {playing ? (
+              <iframe
+                src={`${embedUrl}?autoplay=1`}
+                title={workoutExercise.exercise?.name}
+                className="absolute inset-0 h-full w-full"
+                allow="autoplay; fullscreen"
+                allowFullScreen
+              />
+            ) : (
+              <button
+                type="button"
+                onClick={() => setPlaying(true)}
+                aria-label={`Reproduzir vídeo de ${workoutExercise.exercise?.name ?? "exercício"}`}
+                className="group absolute inset-0 h-full w-full"
+              >
+                {thumbnailUrl && (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={thumbnailUrl}
+                    alt=""
+                    className="h-full w-full object-cover"
+                  />
+                )}
+                <span className="absolute inset-0 flex items-center justify-center bg-black/30 transition-colors group-hover:bg-black/40">
+                  <span className="flex h-12 w-12 items-center justify-center rounded-full bg-accent text-xl text-ink-950">
+                    ▶
+                  </span>
+                </span>
+              </button>
+            )}
+          </div>
         </div>
+      ) : (
+        mediaUrl && (
+          <a
+            href={mediaUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-sm font-semibold text-accent-secondary hover:underline"
+          >
+            ▶ Ver vídeo de demonstração no YouTube
+          </a>
+        )
       )}
 
       <p className="text-sm text-muted">{workoutExercise.exercise?.description}</p>

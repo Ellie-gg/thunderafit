@@ -87,8 +87,8 @@ test("aluno com Personal E Nutricionista simultâneos vê os dois cards no dashb
   await expect(page).toHaveURL(/\/dashboard$/);
 
   // Card do Personal (próximo treino)
-  await expect(page.getByText("Próximo treino")).toBeVisible();
-  await expect(page.getByText("Treino Multi-Profissional")).toBeVisible();
+  await expect(page.getByText("Sessão sugerida")).toBeVisible();
+  await expect(page.getByRole("heading", { name: /Treino Multi-Profissional/ })).toBeVisible();
 
   // Card do Nutricionista (plano alimentar de hoje)
   await expect(page.getByText("Plano alimentar de hoje")).toBeVisible();

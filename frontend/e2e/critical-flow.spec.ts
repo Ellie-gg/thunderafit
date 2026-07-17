@@ -73,8 +73,8 @@ test("login → dashboard → treino → registrar série", async ({ page }) => 
   await page.locator("#password").fill(password);
   await page.getByRole("button", { name: "Entrar" }).click();
   await expect(page).toHaveURL(/\/dashboard$/);
-  await expect(page.getByText(/Próximo treino/i)).toBeVisible();
-  await expect(page.getByText("Treino Playwright E2E")).toBeVisible();
+  await expect(page.getByText(/Sessão sugerida/i)).toBeVisible();
+  await expect(page.getByRole("heading", { name: /Treino Playwright E2E/ })).toBeVisible();
 
   // --- 2. Ver o treino ---
   await page.getByRole("link", { name: "Começar treino" }).click();

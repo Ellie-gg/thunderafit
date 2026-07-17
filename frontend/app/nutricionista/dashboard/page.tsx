@@ -70,9 +70,19 @@ function NutricionistaDashboardContent() {
                 className="flex items-center justify-between rounded-md border border-border px-3 py-2"
               >
                 <span className="text-sm">{a.email}</span>
-                <span className="text-xs text-muted">
-                  desde {new Date(a.createdAt).toLocaleDateString("pt-BR")}
-                </span>
+                <div className="flex items-center gap-3">
+                  {/* Fase 17 (Item 6): Nutricionista pode ver (leitura) a
+                      anamnese do aluno vinculado. */}
+                  <Link
+                    href={`/nutricionista/alunos/${a.id}/anamnese`}
+                    className="text-xs font-semibold text-accent-secondary hover:underline"
+                  >
+                    Anamnese
+                  </Link>
+                  <span className="text-xs text-muted">
+                    desde {new Date(a.createdAt).toLocaleDateString("pt-BR")}
+                  </span>
+                </div>
               </div>
             ))}
             {relationsQuery.isSuccess && alunos.length === 0 && (

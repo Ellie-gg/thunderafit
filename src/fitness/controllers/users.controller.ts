@@ -7,6 +7,15 @@ export async function lookupUserHandler(
 ) {
   const { email } = request.query;
 
+  // Fase 17 (Item 4 — auditoria): lookup por e-mail existe para o profissional
+  // encontrar um aluno a vincular. Sem restrição de role, qualquer usuário
+  // autenticado (inclusive um ALUNO) poderia enumerar contas por e-mail e
+  // obter o id de outro aluno — fechado aqui para PERSONAL/NUTRICIONISTA.
+  const role = (request as any).user?.role;
+  if (role !== "PERSONAL" && role !== "NUTRICIONISTA") {
+    return reply.status(403).send({ error: "Apenas profissionais podem buscar alunos." });
+  }
+
   if (!email) {
     return reply.status(400).send({ error: "email é obrigatório." });
   }

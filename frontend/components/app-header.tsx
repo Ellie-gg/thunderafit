@@ -95,6 +95,14 @@ export function AppHeader() {
             </Link>
           </>
         )}
+        {user?.role === "NUTRICIONISTA" && (
+          <Link
+            href="/nutricionista/duvidas"
+            className="hidden text-sm font-semibold text-accent-secondary hover:underline sm:inline"
+          >
+            Dúvidas
+          </Link>
+        )}
         {user?.role === "ADMIN" && (
           <>
             <Link

@@ -21,11 +21,17 @@ export async function getAnamnesisHandler(
         const anamnesis = await anamnesisService.getForAdmin(user.sub, alunoId);
         return reply.status(200).send({ anamnesis });
       }
-      // Visão do Personal sobre o aluno vinculado.
-      if (user.role !== "PERSONAL") {
-        return reply.status(403).send({ error: "Apenas o Personal pode consultar por alunoId." });
+      // Fase 17 (Item 6): Personal E Nutricionista vinculados podem VISUALIZAR
+      // (somente leitura) a anamnese do aluno. A checagem de vínculo em
+      // getForProfessional usa o id do profissional autenticado (ClientRelation
+      // guarda ambos os tipos), então vale para os dois. Escrita continua
+      // exclusiva do aluno (POST/PUT abaixo).
+      if (user.role !== "PERSONAL" && user.role !== "NUTRICIONISTA") {
+        return reply
+          .status(403)
+          .send({ error: "Apenas profissionais vinculados podem consultar por alunoId." });
       }
-      const anamnesis = await anamnesisService.getForPersonal(user.sub, alunoId);
+      const anamnesis = await anamnesisService.getForProfessional(user.sub, alunoId);
       return reply.status(200).send({ anamnesis });
     }
 
