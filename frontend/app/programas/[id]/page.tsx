@@ -4,6 +4,7 @@ import { useParams } from "next/navigation";
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import { getWorkoutProgram } from "@/lib/api/workouts";
+import { sortByScheme, labelFor } from "@/lib/session-scheme";
 import { AuthGuard } from "@/components/auth-guard";
 import { AppHeader } from "@/components/app-header";
 import { Card } from "@/components/ui/card";
@@ -23,7 +24,8 @@ function ProgramaContent() {
   });
 
   const program = programQuery.data?.program;
-  const sessions = [...(program?.workouts ?? [])].sort((a, b) => a.letter.localeCompare(b.letter));
+  const scheme = program?.sessionScheme ?? "LETTER";
+  const sessions = sortByScheme(program?.workouts ?? [], scheme);
 
   return (
     <>
@@ -54,7 +56,9 @@ function ProgramaContent() {
                     style={s.suggestedNext ? { borderColor: "var(--accent)" } : undefined}
                   >
                     <div>
-                      <span className="font-display text-lg font-bold text-accent">{s.letter}</span>{" "}
+                      <span className="font-display text-lg font-bold text-accent">
+                        {labelFor(scheme, s.letter)}
+                      </span>{" "}
                       <span className="font-semibold">{s.name}</span>
                       <p className="text-xs text-muted">Última conclusão: {formatDate(s.lastCompletedAt)}</p>
                     </div>

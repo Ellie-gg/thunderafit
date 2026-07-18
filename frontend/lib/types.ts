@@ -60,12 +60,15 @@ export interface Workout {
   suggestedNext?: boolean;
 }
 
+export type SessionScheme = "LETTER" | "WEEKDAY";
+
 export interface WorkoutProgram {
   id: string;
   personalId: string;
   name: string;
   isTemplate: boolean;
   alunoId: string | null;
+  sessionScheme: SessionScheme;
   createdAt: string;
   updatedAt: string;
   workouts?: Workout[];

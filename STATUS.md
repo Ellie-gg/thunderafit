@@ -89,6 +89,17 @@ Tela única de e-mail substituindo a seleção Personal/Aluno + login/cadastro s
 
 Evidência: `tsc --noEmit`/`eslint` limpos, 22 Jest/RTL passando, e a suíte **Playwright completa (19 testes) rodando contra backend+Postgres reais — 19/19 passando**, incluindo o novo `personal-cria-programa-flow.spec.ts` (Personal cria programa com aluno-alvo pré-selecionado → adiciona as 5 sessões A-E pela UI → prescreve um exercício do catálogo → aplica ao aluno → confirma via backend que a cópia tem as 5 sessões e o exercício prescrito).
 
+**Fase 26 — Esquema de Sessões (Letras/Dias) + Tela Dedicada por Sessão**
+Esclarecimento do fundador sobre a Fase 25: cada sessão (A-E) já tinha seu próprio conjunto de exercícios isolado por programa (nada compartilhado entre programas diferentes — o modelo de dados já estava correto desde a Fase 16). O pedido real era de **fluxo de tela** — clicar numa sessão abre uma tela própria em vez de expandir inline — e uma **nova opção de nomenclatura**: o Personal escolhe, ao criar o programa, entre **Letras (A-E)** ou **Dias da semana (Segunda-Domingo)**; a quantidade de sessões que ele efetivamente adiciona continua sendo escolha dele (pode parar em qualquer uma).
+
+**Achado de risco corrigido durante a implementação:** a regra de "sessão sugerida" (`suggestedNext`, Fase 16) e as três telas que ordenam sessões ordenavam por `letter.localeCompare` — ordem alfabética, que só bate com a sequência correta por acaso no esquema de Letras. Com dias da semana ela quebraria silenciosamente (ex: "QUARTA" < "SEGUNDA" alfabeticamente, mas Segunda vem antes na semana). Corrigido substituindo por um índice de ordem dependente do esquema (`LETTER_ORDER`/`WEEKDAY_ORDER`), tanto no backend (`computeSuggestedSessionId`/`getProgram`) quanto nas duas telas do frontend que faziam esse sort — coberto por um teste E2E dedicado que cria as sessões fora de ordem e prova que a sugestão continua correta.
+
+**Backend (migration pequena, aditiva):** novo `enum SessionScheme { LETTER WEEKDAY }` e `WorkoutProgram.sessionScheme` (default `LETTER`, sem backfill manual — `Workout.letter` continua `String` como já era, sem constraint de banco, guardando ou uma letra ou um código de dia). `createTemplate`/`addSession` passam a validar contra o conjunto de chaves do esquema do programa (5 letras ou 7 dias) em vez de uma lista fixa; `applyToAluno` agora propaga `sessionScheme` pra cópia (bug que teria feito todo programa aplicado virar Letras, mesmo partindo de um template de Dias da semana). 6 testes novos em `workout-programs.test.ts` (cria com WEEKDAY, rejeita letra A-E nesse modo, adiciona fora de ordem, sugestão correta, limite de 7, `sessionScheme` preservado na cópia) — suíte backend completa: **175/175 passando**.
+
+**Frontend:** tela de criação de programa ganhou a escolha do esquema (chips "Letras (A–E)" / "Dias da semana"); a visão geral do programa perdeu o acordeão inline — cada sessão agora é um link pra `/personal/programas/[id]/sessoes/[sessionId]` (tela nova, reaproveitando o `AddExerciseForm` sem nenhuma mudança nele), com botões "← Voltar ao programa" (sai quando quiser) e "Próximo: {X} →" (cria — se ainda não existir — e abre a próxima sessão da sequência do esquema; ausente na última). Novo módulo `lib/session-scheme.ts` centraliza as ordens/rótulos/limites, reaproveitado também pela tela do aluno (`/programas/[id]`) que tinha o mesmo bug de ordenação.
+
+Evidência: `tsc --noEmit`/`eslint` limpos, 22 Jest/RTL passando, e a suíte **Playwright completa (20 testes) — 20/20 passando** contra backend+Postgres reais, incluindo os 2 casos reescritos/novos: esquema Letras (cria programa → percorre A→E via "Próximo", criando cada sessão na hora → prescreve → aplica → confirma cópia completa) e esquema Dias da semana (adiciona Quarta antes de Segunda pela UI → aplica → confirma via backend que a sugestão aponta pra Segunda, não Quarta — prova viva da correção do bug de ordenação).
+
 ## Progresso Geral das Fases
 - [x] Fase 1: Fundação Core, Auth e Estrutura Modular
 - [x] Fase 2: Vínculo Personal↔Aluno e Limite Freemium
@@ -115,3 +126,4 @@ Evidência: `tsc --noEmit`/`eslint` limpos, 22 Jest/RTL passando, e a suíte **P
 - [x] Fase 22: Reconciliação de Branches (tudo em dev + produção)
 - [x] Fase 24: Fluxo de Auth Unificado (Parte 1: backend + Parte 2: frontend)
 - [x] Fase 25: Correção do Fluxo Programa→Sessões + Ajustes de Mídia
+- [x] Fase 26: Esquema de Sessões (Letras/Dias) + Tela Dedicada por Sessão

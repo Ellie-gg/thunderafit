@@ -1,5 +1,5 @@
 import { apiFetch } from "./client";
-import type { Exercise, SetLog, Workout, WorkoutProgram } from "../types";
+import type { Exercise, SessionScheme, SetLog, Workout, WorkoutProgram } from "../types";
 
 export function listExercises(muscleGroup?: string) {
   const qs = muscleGroup ? `?muscleGroup=${encodeURIComponent(muscleGroup)}` : "";
@@ -49,10 +49,10 @@ export function getWorkoutProgram(programId: string) {
   return apiFetch<{ program: WorkoutProgram }>(`/api/workout-programs/${programId}`);
 }
 
-export function createWorkoutProgram(name: string) {
+export function createWorkoutProgram(name: string, sessionScheme?: SessionScheme) {
   return apiFetch<{ program: WorkoutProgram }>("/api/workout-programs", {
     method: "POST",
-    body: { name },
+    body: { name, sessionScheme },
   });
 }
 
