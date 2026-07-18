@@ -1,28 +1,24 @@
 "use client";
 
 import { Suspense, useState } from "react";
-import { useParams, useSearchParams } from "next/navigation";
+import Link from "next/link";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import {
-  getWorkoutProgram,
-  addProgramSession,
-  applyProgram,
-} from "@/lib/api/workouts";
+import { getWorkoutProgram, addProgramSession, applyProgram } from "@/lib/api/workouts";
 import { listRelations } from "@/lib/api/relations";
 import { ApiError } from "@/lib/api/client";
+import { orderFor, maxSessionsFor, sortByScheme, labelFor } from "@/lib/session-scheme";
 import { AuthGuard } from "@/components/auth-guard";
 import { AppHeader } from "@/components/app-header";
 import { Card } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { QueryError } from "@/components/query-error";
-import { AddExerciseForm } from "@/components/add-exercise-form";
-
-const LETTERS = ["A", "B", "C", "D", "E"];
 
 function ProgramaDetalheContent() {
   const params = useParams<{ id: string }>();
   const searchParams = useSearchParams();
+  const router = useRouter();
   const programId = params.id;
   const queryClient = useQueryClient();
 
@@ -32,18 +28,20 @@ function ProgramaDetalheContent() {
   });
   const relationsQuery = useQuery({ queryKey: ["relations"], queryFn: listRelations });
 
-  const [openSessionId, setOpenSessionId] = useState<string | null>(null);
   // Fase 25: pré-preenche com o aluno-alvo escolhido na criação do programa
   // (query string ?alunoId=), quando houver — só um atalho, aplicar continua
-  // sendo um clique explícito.
-  const [applyAlunoId, setApplyAlunoId] = useState(searchParams.get("alunoId") ?? "");
-
-  const invalidate = () =>
-    queryClient.invalidateQueries({ queryKey: ["workout-program", programId] });
+  // sendo um clique explícito. Preservado nos links pras telas de sessão
+  // (Fase 26) pra sobreviver à ida-e-volta do fluxo de prescrição.
+  const alunoIdParam = searchParams.get("alunoId") ?? "";
+  const [applyAlunoId, setApplyAlunoId] = useState(alunoIdParam);
+  const query = alunoIdParam ? `?alunoId=${alunoIdParam}` : "";
 
   const addSessionMutation = useMutation({
     mutationFn: (letter: string) => addProgramSession(programId, { letter }),
-    onSuccess: invalidate,
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["workout-program", programId] });
+      router.push(`/personal/programas/${programId}/sessoes/${data.session.id}${query}`);
+    },
   });
 
   const applyMutation = useMutation({
@@ -55,9 +53,11 @@ function ProgramaDetalheContent() {
   });
 
   const program = programQuery.data?.program;
-  const sessions = [...(program?.workouts ?? [])].sort((a, b) => a.letter.localeCompare(b.letter));
-  const usedLetters = new Set(sessions.map((s) => s.letter));
-  const availableLetters = LETTERS.filter((l) => !usedLetters.has(l));
+  const scheme = program?.sessionScheme ?? "LETTER";
+  const sessions = sortByScheme(program?.workouts ?? [], scheme);
+  const usedKeys = new Set(sessions.map((s) => s.letter));
+  const availableKeys = orderFor(scheme).filter((k) => !usedKeys.has(k));
+  const maxSessions = maxSessionsFor(scheme);
 
   return (
     <>
@@ -75,70 +75,43 @@ function ProgramaDetalheContent() {
                 {program.isTemplate ? "Template" : "Aplicado a aluno"}
               </span>
               <h1 className="font-display text-2xl font-bold tracking-tight">{program.name}</h1>
-              <p className="text-sm text-muted">{sessions.length}/5 sessão(ões)</p>
+              <p className="text-sm text-muted">
+                {sessions.length}/{maxSessions} sessão(ões)
+              </p>
             </div>
 
-            {/* Sessões */}
+            {/* Sessões — cada uma abre sua própria tela de prescrição (Fase 26) */}
             <section className="flex flex-col gap-3">
               {sessions.map((s) => (
-                <Card key={s.id} className="flex flex-col gap-2">
-                  <div className="flex items-center justify-between">
+                <Link key={s.id} href={`/personal/programas/${programId}/sessoes/${s.id}${query}`}>
+                  <Card className="flex items-center justify-between transition-colors hover:border-accent">
                     <div>
-                      <span className="font-display text-lg font-bold text-accent">{s.letter}</span>{" "}
+                      <span className="font-display text-lg font-bold text-accent">
+                        {labelFor(scheme, s.letter)}
+                      </span>{" "}
                       <span className="font-semibold">{s.name}</span>
-                      <p className="text-xs text-muted">
-                        {s.exercises?.length ?? 0} exercício(s)
-                      </p>
+                      <p className="text-xs text-muted">{s.exercises?.length ?? 0} exercício(s)</p>
                     </div>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setOpenSessionId(openSessionId === s.id ? null : s.id)}
-                    >
-                      {openSessionId === s.id ? "Fechar" : "Exercícios"}
-                    </Button>
-                  </div>
-                  {openSessionId === s.id && (
-                    <div className="border-t border-border pt-3">
-                      {(s.exercises ?? []).length > 0 && (
-                        <ul className="mb-3 flex flex-col gap-1">
-                          {[...(s.exercises ?? [])]
-                            .sort((a, b) => a.order - b.order)
-                            .map((ex) => (
-                              <li key={ex.id} className="text-sm">
-                                <span className="font-mono-nums text-xs text-muted">#{ex.order}</span>{" "}
-                                {ex.exercise?.name}{" "}
-                                <span className="text-xs text-muted">
-                                  ({ex.sets}x {ex.repsRange})
-                                </span>
-                              </li>
-                            ))}
-                        </ul>
-                      )}
-                      <AddExerciseForm
-                        workoutId={s.id}
-                        nextOrder={(s.exercises?.length ?? 0) + 1}
-                      />
-                    </div>
-                  )}
-                </Card>
+                    <span className="text-sm text-muted">Abrir →</span>
+                  </Card>
+                </Link>
               ))}
             </section>
 
             {/* Adicionar sessão */}
-            {availableLetters.length > 0 && (
+            {availableKeys.length > 0 && (
               <Card className="flex flex-col gap-2">
                 <Label>Adicionar sessão</Label>
                 <div className="flex flex-wrap gap-2">
-                  {availableLetters.map((l) => (
+                  {availableKeys.map((key) => (
                     <Button
-                      key={l}
+                      key={key}
                       variant="outline"
                       size="sm"
                       disabled={addSessionMutation.isPending}
-                      onClick={() => addSessionMutation.mutate(l)}
+                      onClick={() => addSessionMutation.mutate(key)}
                     >
-                      + {l}
+                      + {labelFor(scheme, key)}
                     </Button>
                   ))}
                 </div>

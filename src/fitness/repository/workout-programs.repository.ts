@@ -1,13 +1,35 @@
 import prisma from "../../lib/prisma";
+import { SessionScheme } from "@prisma/client";
 
-const MAX_SESSIONS = 5;
+// Fase 26: ordem "de calendário/sequência" de cada esquema — usada pra validar
+// chaves aceitas, calcular o limite de sessões e ordenar sessões
+// corretamente (a ordem alfabética de LETTER coincide por acaso; a de WEEKDAY
+// NÃO coincide, ex: "QUARTA" < "SEGUNDA" alfabeticamente).
+export const LETTER_ORDER = ["A", "B", "C", "D", "E"];
+export const WEEKDAY_ORDER = [
+  "SEGUNDA",
+  "TERCA",
+  "QUARTA",
+  "QUINTA",
+  "SEXTA",
+  "SABADO",
+  "DOMINGO",
+];
+
+export function orderFor(scheme: SessionScheme): string[] {
+  return scheme === "WEEKDAY" ? WEEKDAY_ORDER : LETTER_ORDER;
+}
 
 export const workoutProgramsRepository = {
-  MAX_SESSIONS,
-
-  async createProgram(personalId: string, name: string, isTemplate: boolean, alunoId: string | null) {
+  async createProgram(
+    personalId: string,
+    name: string,
+    isTemplate: boolean,
+    alunoId: string | null,
+    sessionScheme: SessionScheme = "LETTER"
+  ) {
     return prisma.workoutProgram.create({
-      data: { personalId, name, isTemplate, alunoId },
+      data: { personalId, name, isTemplate, alunoId, sessionScheme },
     });
   },
 
@@ -93,7 +115,13 @@ export const workoutProgramsRepository = {
 
     return prisma.$transaction(async (tx) => {
       const copy = await tx.workoutProgram.create({
-        data: { personalId, alunoId, name: source.name, isTemplate: false },
+        data: {
+          personalId,
+          alunoId,
+          name: source.name,
+          isTemplate: false,
+          sessionScheme: source.sessionScheme,
+        },
       });
       for (const w of source.workouts) {
         const newWorkout = await tx.workout.create({

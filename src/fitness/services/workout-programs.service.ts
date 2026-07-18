@@ -1,7 +1,8 @@
-import { workoutProgramsRepository } from "../repository/workout-programs.repository";
+import { SessionScheme } from "@prisma/client";
+import { workoutProgramsRepository, orderFor } from "../repository/workout-programs.repository";
 import { relationsRepository } from "../repository/relations.repository";
 
-const VALID_LETTERS = ["A", "B", "C", "D", "E"];
+const VALID_SCHEMES: SessionScheme[] = ["LETTER", "WEEKDAY"];
 
 function httpError(message: string, statusCode: number) {
   const err = new Error(message) as Error & { statusCode: number };
@@ -10,9 +11,13 @@ function httpError(message: string, statusCode: number) {
 }
 
 export const workoutProgramsService = {
-  async createTemplate(personalId: string, name: string) {
+  async createTemplate(personalId: string, name: string, sessionScheme?: SessionScheme) {
     if (!name?.trim()) throw httpError("Nome do programa é obrigatório.", 400);
-    return workoutProgramsRepository.createProgram(personalId, name.trim(), true, null);
+    const scheme = sessionScheme ?? "LETTER";
+    if (!VALID_SCHEMES.includes(scheme)) {
+      throw httpError("sessionScheme deve ser LETTER ou WEEKDAY.", 400);
+    }
+    return workoutProgramsRepository.createProgram(personalId, name.trim(), true, null, scheme);
   },
 
   async addSession(programId: string, personalId: string, name: string, letter: string) {
@@ -21,14 +26,23 @@ export const workoutProgramsService = {
     if (program.personalId !== personalId) {
       throw httpError("Você não tem permissão para editar este programa.", 403);
     }
-    if (!VALID_LETTERS.includes(letter)) {
-      throw httpError("Sessão deve ser uma letra de A a E.", 400);
+    const validKeys = orderFor(program.sessionScheme);
+    if (!validKeys.includes(letter)) {
+      throw httpError(
+        program.sessionScheme === "WEEKDAY"
+          ? "Sessão deve ser um dia da semana válido (SEGUNDA a DOMINGO)."
+          : "Sessão deve ser uma letra de A a E.",
+        400
+      );
     }
 
     const program2 = await workoutProgramsRepository.findProgramWithSessions(programId);
     const sessions = program2?.workouts ?? [];
-    if (sessions.length >= workoutProgramsRepository.MAX_SESSIONS) {
-      throw httpError("Um programa pode ter no máximo 5 sessões (A-E).", 400);
+    if (sessions.length >= validKeys.length) {
+      throw httpError(
+        `Um programa pode ter no máximo ${validKeys.length} sessões (${program.sessionScheme === "WEEKDAY" ? "Segunda a Domingo" : "A-E"}).`,
+        400
+      );
     }
     if (sessions.some((s) => s.letter === letter)) {
       throw httpError(`A sessão ${letter} já existe neste programa.`, 409);
@@ -93,8 +107,8 @@ export const workoutProgramsService = {
       throw httpError("Você não tem permissão para acessar este programa.", 403);
     }
 
-    const sessions = [...program.workouts].sort((a, b) => a.letter.localeCompare(b.letter));
-    const suggestedId = computeSuggestedSessionId(sessions);
+    const sessions = sortByScheme(program.workouts, program.sessionScheme);
+    const suggestedId = computeSuggestedSessionId(sessions, program.sessionScheme);
 
     return {
       ...program,
@@ -103,12 +117,26 @@ export const workoutProgramsService = {
   },
 };
 
+/**
+ * Ordena sessões pela sequência do esquema do programa — NUNCA por
+ * localeCompare puro (Fase 26: a ordem alfabética de WEEKDAY não bate com a
+ * ordem do calendário, ex: "QUARTA" < "SEGUNDA").
+ */
+export function sortByScheme<T extends { letter: string }>(
+  sessions: T[],
+  scheme: SessionScheme = "LETTER"
+): T[] {
+  const order = orderFor(scheme);
+  return [...sessions].sort((a, b) => order.indexOf(a.letter) - order.indexOf(b.letter));
+}
+
 /** Ver regra em getProgram. Retorna o id da sessão sugerida, ou null. */
 export function computeSuggestedSessionId(
-  sessions: Array<{ id: string; letter: string; lastCompletedAt: Date | null }>
+  sessions: Array<{ id: string; letter: string; lastCompletedAt: Date | null }>,
+  scheme: SessionScheme = "LETTER"
 ): string | null {
   if (sessions.length === 0) return null;
-  const ordered = [...sessions].sort((a, b) => a.letter.localeCompare(b.letter));
+  const ordered = sortByScheme(sessions, scheme);
 
   const nuncaFeita = ordered.find((s) => s.lastCompletedAt === null);
   if (nuncaFeita) return nuncaFeita.id;

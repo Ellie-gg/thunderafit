@@ -176,15 +176,27 @@ enum DifficultyLevel {
 // seguem funcionando sem mudança.
 // ============================================================
 
+// Fase 26: esquema de rotulagem das sessões do programa, escolhido uma vez na
+// criação. LETTER = A-E (5 sessões, ordem alfabética coincide com a ordem de
+// treino por acaso). WEEKDAY = Segunda-Domingo (7 sessões, guardado como
+// código em Workout.letter — ex: "SEGUNDA" — a ordem de calendário NÃO é a
+// ordem alfabética, então todo código que ordena sessões por letter precisa
+// consultar o esquema do programa, não usar localeCompare puro.
+enum SessionScheme {
+  LETTER
+  WEEKDAY
+}
+
 model WorkoutProgram {
-  id         String    @id @default(uuid())
-  personalId String
-  name       String
-  isTemplate Boolean   @default(false)
-  alunoId    String?
-  workouts   Workout[]
-  createdAt  DateTime  @default(now())
-  updatedAt  DateTime  @updatedAt
+  id            String        @id @default(uuid())
+  personalId    String
+  name          String
+  isTemplate    Boolean       @default(false)
+  alunoId       String?
+  sessionScheme SessionScheme @default(LETTER)
+  workouts      Workout[]
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
 }
 
 model Workout {

@@ -7,6 +7,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { listWorkoutPrograms, createWorkoutProgram } from "@/lib/api/workouts";
 import { listRelations } from "@/lib/api/relations";
 import { ApiError } from "@/lib/api/client";
+import type { SessionScheme } from "@/lib/types";
 import { AuthGuard } from "@/components/auth-guard";
 import { AppHeader } from "@/components/app-header";
 import { Card } from "@/components/ui/card";
@@ -29,9 +30,10 @@ function ProgramasPersonalContent() {
   const relationsQuery = useQuery({ queryKey: ["relations"], queryFn: listRelations });
   const [name, setName] = useState("");
   const [targetAlunoId, setTargetAlunoId] = useState("");
+  const [sessionScheme, setSessionScheme] = useState<SessionScheme>("LETTER");
 
   const createMutation = useMutation({
-    mutationFn: () => createWorkoutProgram(name.trim()),
+    mutationFn: () => createWorkoutProgram(name.trim(), sessionScheme),
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["workout-programs", "personal"] });
       const query = targetAlunoId ? `?alunoId=${targetAlunoId}` : "";
@@ -52,7 +54,7 @@ function ProgramasPersonalContent() {
         <Card className="flex flex-col gap-3">
           <h2 className="font-display text-lg font-bold">Novo programa</h2>
           <p className="text-xs text-muted">
-            Crie o programa, adicione as sessões (A–E) e depois aplique a um aluno — o
+            Crie o programa, adicione as sessões e depois aplique a um aluno — o
             mesmo programa pode ser reaplicado a outros alunos vinculados quando
             quiser, como um template reutilizável.
           </p>
@@ -71,6 +73,42 @@ function ProgramasPersonalContent() {
                 onChange={(e) => setName(e.target.value)}
                 placeholder="Ex: Foco em Peito"
               />
+            </div>
+
+            <div className="flex flex-col gap-1.5">
+              <Label>Como nomear as sessões?</Label>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => setSessionScheme("LETTER")}
+                  aria-pressed={sessionScheme === "LETTER"}
+                  className={
+                    sessionScheme === "LETTER"
+                      ? "flex-1 rounded-md border border-accent bg-accent/10 px-3 py-2 text-sm font-semibold text-accent"
+                      : "flex-1 rounded-md border border-border px-3 py-2 text-sm text-muted hover:border-accent"
+                  }
+                >
+                  Letras (A–E)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSessionScheme("WEEKDAY")}
+                  aria-pressed={sessionScheme === "WEEKDAY"}
+                  className={
+                    sessionScheme === "WEEKDAY"
+                      ? "flex-1 rounded-md border border-accent bg-accent/10 px-3 py-2 text-sm font-semibold text-accent"
+                      : "flex-1 rounded-md border border-border px-3 py-2 text-sm text-muted hover:border-accent"
+                  }
+                >
+                  Dias da semana
+                </button>
+              </div>
+              <p className="text-xs text-muted">
+                {sessionScheme === "WEEKDAY"
+                  ? "Até 7 sessões (Segunda a Domingo)."
+                  : "Até 5 sessões (A a E)."}{" "}
+                Você escolhe quantas quiser adicionar — não precisa preencher todas.
+              </p>
             </div>
 
             <div className="flex flex-col gap-1.5">

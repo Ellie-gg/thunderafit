@@ -1,4 +1,5 @@
 import { FastifyRequest, FastifyReply } from "fastify";
+import { SessionScheme } from "@prisma/client";
 import { workoutProgramsService } from "../services/workout-programs.service";
 
 function handleError(err: any, reply: FastifyReply) {
@@ -16,13 +17,17 @@ function assertProfessional(request: FastifyRequest): void {
 }
 
 export async function createProgramHandler(
-  request: FastifyRequest<{ Body: { name: string } }>,
+  request: FastifyRequest<{ Body: { name: string; sessionScheme?: SessionScheme } }>,
   reply: FastifyReply
 ) {
   try {
     assertProfessional(request);
     const personalId = (request as any).user.sub;
-    const program = await workoutProgramsService.createTemplate(personalId, request.body.name);
+    const program = await workoutProgramsService.createTemplate(
+      personalId,
+      request.body.name,
+      request.body.sessionScheme
+    );
     return reply.status(201).send({ program });
   } catch (err) {
     return handleError(err, reply);

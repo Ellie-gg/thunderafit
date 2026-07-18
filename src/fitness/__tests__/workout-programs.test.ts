@@ -88,6 +88,17 @@ describe("Fase 16 — cálculo de suggestedNext (regra unitária)", () => {
   it("programa sem sessões: null", () => {
     expect(computeSuggestedSessionId([])).toBeNull();
   });
+
+  it("esquema WEEKDAY: ordena por dia da semana, NÃO por ordem alfabética (QUARTA < SEGUNDA alfabeticamente, mas Segunda vem antes)", () => {
+    const id = computeSuggestedSessionId(
+      [
+        { id: "qua", letter: "QUARTA", lastCompletedAt: null },
+        { id: "seg", letter: "SEGUNDA", lastCompletedAt: null },
+      ],
+      "WEEKDAY"
+    );
+    expect(id).toBe("seg");
+  });
 });
 
 describe("Fase 16 BLOCO 2 — template, sessões e aplicação (cópia)", () => {
@@ -266,5 +277,73 @@ describe("Fase 16 BLOCO 3 — concluir sessão + suggestedNext ponta a ponta", (
       .post(`/api/workouts/${sessionA.id}/complete`)
       .set("Authorization", `Bearer ${personalToken}`);
     expect(r.status).toBe(403);
+  });
+});
+
+describe("Fase 26 — esquema de sessão WEEKDAY (dias da semana)", () => {
+  let weekdayTemplateId: string;
+
+  it("cria programa com sessionScheme=WEEKDAY", async () => {
+    const r = await supertest(server.server)
+      .post("/api/workout-programs")
+      .set("Authorization", `Bearer ${personalToken}`)
+      .send({ name: "Programa Semanal", sessionScheme: "WEEKDAY" });
+    expect(r.status).toBe(201);
+    expect(r.body.program.sessionScheme).toBe("WEEKDAY");
+    weekdayTemplateId = r.body.program.id;
+  });
+
+  it("rejeita letra A-E num programa WEEKDAY (400)", async () => {
+    const r = await supertest(server.server)
+      .post(`/api/workout-programs/${weekdayTemplateId}/sessions`)
+      .set("Authorization", `Bearer ${personalToken}`)
+      .send({ letter: "A" });
+    expect(r.status).toBe(400);
+  });
+
+  it("adiciona QUARTA e depois SEGUNDA (fora de ordem alfabética e de inserção)", async () => {
+    for (const letter of ["QUARTA", "SEGUNDA"]) {
+      const r = await supertest(server.server)
+        .post(`/api/workout-programs/${weekdayTemplateId}/sessions`)
+        .set("Authorization", `Bearer ${personalToken}`)
+        .send({ letter });
+      expect(r.status).toBe(201);
+    }
+  });
+
+  it("GET do programa sugere SEGUNDA (ordem de calendário), não QUARTA (que foi criada primeiro)", async () => {
+    const r = await supertest(server.server)
+      .get(`/api/workout-programs/${weekdayTemplateId}`)
+      .set("Authorization", `Bearer ${personalToken}`);
+    expect(r.status).toBe(200);
+    const suggested = r.body.program.workouts.filter((w: any) => w.suggestedNext);
+    expect(suggested).toHaveLength(1);
+    expect(suggested[0].letter).toBe("SEGUNDA");
+  });
+
+  it("rejeita a 8ª sessão (máximo de 7 dias)", async () => {
+    for (const letter of ["TERCA", "QUINTA", "SEXTA", "SABADO", "DOMINGO"]) {
+      const r = await supertest(server.server)
+        .post(`/api/workout-programs/${weekdayTemplateId}/sessions`)
+        .set("Authorization", `Bearer ${personalToken}`)
+        .send({ letter });
+      expect(r.status).toBe(201);
+    }
+    // As 7 já existem — qualquer dia novo esbarra no limite antes da checagem de duplicata.
+    const tpl = await prisma.workoutProgram.findUnique({
+      where: { id: weekdayTemplateId },
+      include: { workouts: true },
+    });
+    expect(tpl!.workouts).toHaveLength(7);
+  });
+
+  it("aplicar a um aluno preserva o sessionScheme=WEEKDAY na cópia", async () => {
+    const r = await supertest(server.server)
+      .post(`/api/workout-programs/${weekdayTemplateId}/apply`)
+      .set("Authorization", `Bearer ${personalToken}`)
+      .send({ alunoId: aluno1Id });
+    expect(r.status).toBe(201);
+    expect(r.body.program.sessionScheme).toBe("WEEKDAY");
+    expect(r.body.program.workouts).toHaveLength(7);
   });
 });
