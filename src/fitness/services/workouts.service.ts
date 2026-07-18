@@ -96,26 +96,20 @@ export const workoutsService = {
       throw err;
     }
 
-    const exercises = await workoutsRepository.findExercisesOrdered(workoutId);
-    const index = exercises.findIndex((e) => e.id === workoutExerciseId);
-    if (index === -1) {
+    const result = await workoutsRepository.moveExercise(workoutId, workoutExerciseId, direction);
+    if (result === "not_found") {
       const err = new Error("Exercício não encontrado neste treino.");
       (err as any).statusCode = 404;
       throw err;
     }
-
-    const neighborIndex = direction === "up" ? index - 1 : index + 1;
-    if (neighborIndex < 0 || neighborIndex >= exercises.length) {
+    if (result === "first" || result === "last") {
       const err = new Error(
-        direction === "up" ? "Já é o primeiro exercício." : "Já é o último exercício."
+        result === "first" ? "Já é o primeiro exercício." : "Já é o último exercício."
       );
       (err as any).statusCode = 400;
       throw err;
     }
 
-    const current = exercises[index];
-    const neighbor = exercises[neighborIndex];
-    await workoutsRepository.swapExerciseOrder(current.id, current.order, neighbor.id, neighbor.order);
     return workoutsRepository.findExercisesOrdered(workoutId);
   },
 

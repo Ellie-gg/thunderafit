@@ -2,6 +2,7 @@
 
 import { useMutation } from "@tanstack/react-query";
 import { moveWorkoutExercise } from "@/lib/api/workouts";
+import { ApiError } from "@/lib/api/client";
 
 /**
  * Fase 28: reordenar exercícios já prescritos (setas ↑/↓ — mais simples e
@@ -28,7 +29,7 @@ export function ExerciseReorderButtons({
   });
 
   return (
-    <div className="flex shrink-0 flex-col gap-0.5">
+    <div className="flex shrink-0 flex-col items-center gap-0.5">
       <button
         type="button"
         aria-label="Mover exercício para cima"
@@ -47,6 +48,14 @@ export function ExerciseReorderButtons({
       >
         ↓
       </button>
+      {/* Sem isso, qualquer 400/500 (ex: clique disparado antes do estado
+          disabled atualizar) falhava em silêncio — parecia "travado" porque
+          nada acontecia visivelmente, mas não era um erro fatal. */}
+      {mutation.isError && (
+        <span className="w-16 text-center text-[10px] leading-tight text-danger">
+          {mutation.error instanceof ApiError ? mutation.error.message : "Erro ao mover."}
+        </span>
+      )}
     </div>
   );
 }

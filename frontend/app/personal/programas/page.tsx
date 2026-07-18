@@ -44,6 +44,9 @@ function ProgramasPersonalContent() {
   const programs = programsQuery.data?.programs ?? [];
   const templates = programs.filter((p) => p.isTemplate);
   const instances = programs.filter((p) => !p.isTemplate);
+  // Sem isso, a lista de "Aplicados a alunos" mostrava só o nome do programa
+  // — impossível saber qual aluno recebeu qual, sobretudo com vários alunos.
+  const alunoEmailById = new Map(relationsQuery.data?.relations.map((r) => [r.id, r.email]) ?? []);
 
   return (
     <>
@@ -176,7 +179,10 @@ function ProgramasPersonalContent() {
               <Card className="flex items-center justify-between transition-colors hover:border-accent">
                 <div>
                   <span className="font-semibold">{p.name}</span>
-                  <p className="text-xs text-muted">{p.workouts?.length ?? 0} sessão(ões)</p>
+                  <p className="text-xs text-muted">
+                    {p.alunoId ? alunoEmailById.get(p.alunoId) ?? "aluno desvinculado" : "—"} ·{" "}
+                    {p.workouts?.length ?? 0} sessão(ões)
+                  </p>
                 </div>
                 <span className="text-sm text-muted">Abrir →</span>
               </Card>
