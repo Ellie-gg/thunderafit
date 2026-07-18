@@ -168,4 +168,37 @@ export const workoutProgramsRepository = {
       });
     });
   },
+
+  /**
+   * Fase 31: apaga um programa (template OU instância aplicada) e tudo que
+   * depende dele — sessões, exercícios prescritos e séries registradas.
+   * Nenhuma FK do schema tem `onDelete: Cascade`, então a ordem importa:
+   * setLog → workoutExercise → workout → workoutProgram (de baixo pra cima,
+   * senão o Postgres rejeita por violação de chave estrangeira).
+   *
+   * Bugs potenciais considerados antes de escrever esta função:
+   * - apagar fora de ordem (ex: workout antes de workoutExercise) — violaria
+   *   a FK e a transação inteira falharia no meio.
+   * - fazer cada delete como uma chamada solta (sem transação) deixaria o
+   *   estado pela metade se uma etapa falhasse (ex: setLogs apagados mas
+   *   workoutExercises não) — tudo dentro de um único `$transaction`.
+   * - a checagem de posse (o programa é mesmo do personalId autenticado) é
+   *   responsabilidade do SERVICE, não daqui — esta função assume que quem
+   *   chamou já validou (mesma divisão de responsabilidade de `applyToAluno`
+   *   acima, que também não revalida posse).
+   */
+  async deleteProgram(programId: string) {
+    const workouts = await prisma.workout.findMany({
+      where: { programId },
+      select: { id: true },
+    });
+    const workoutIds = workouts.map((w) => w.id);
+
+    await prisma.$transaction(async (tx) => {
+      await tx.setLog.deleteMany({ where: { workoutExercise: { workoutId: { in: workoutIds } } } });
+      await tx.workoutExercise.deleteMany({ where: { workoutId: { in: workoutIds } } });
+      await tx.workout.deleteMany({ where: { programId } });
+      await tx.workoutProgram.delete({ where: { id: programId } });
+    });
+  },
 };

@@ -83,6 +83,29 @@ export const workoutProgramsService = {
     return workoutProgramsRepository.listByPersonal(personalId, type, alunoId);
   },
 
+  /**
+   * Fase 31: apaga um programa (template ou instância aplicada) — o Personal
+   * não tinha nenhuma forma de desfazer o que criou.
+   *
+   * Bugs potenciais considerados antes de escrever esta função:
+   * - checar posse DEPOIS de já ter apagado algo (a ordem tem que ser: busca
+   *   → 404 se não existe → 403 se não é dono → só então apaga).
+   * - confiar em `personalId` vindo do corpo/query em vez do `sub` do JWT
+   *   (quem chama este método já resolve isso — o controller nunca deve
+   *   aceitar personalId de input, só o do usuário autenticado).
+   * - não distinguir template de instância aqui: a checagem de posse é a
+   *   MESMA para os dois (o dono é sempre `program.personalId`); a UI decide
+   *   o texto de aviso, o backend só verifica dono + existência.
+   */
+  async deleteProgram(programId: string, personalId: string) {
+    const program = await workoutProgramsRepository.findProgramById(programId);
+    if (!program) throw httpError("Programa não encontrado.", 404);
+    if (program.personalId !== personalId) {
+      throw httpError("Você não tem permissão para excluir este programa.", 403);
+    }
+    await workoutProgramsRepository.deleteProgram(programId);
+  },
+
   async listForAluno(alunoId: string) {
     return workoutProgramsRepository.listByAluno(alunoId);
   },

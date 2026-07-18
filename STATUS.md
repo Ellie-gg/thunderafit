@@ -68,6 +68,8 @@
 
 **Fase 30 — Foto de Perfil (aluno e Personal).** Avatar circular pequeno no `AppHeader`, com upload em `/perfil` (novo, aluno) e `/personal/perfil`. Decisão de armazenamento: **banco, não bucket** — o redimensionamento/crop quadrado acontece inteiramente no cliente (canvas, 256px, WebP/JPEG ~0.82 qualidade) antes do upload, resultando em poucos KB; guardado como data URI num `WorkoutExercise`-like `User.avatarUrl String?` (migration aditiva). Backend valida de novo (formato + cap de 140KB), nunca confia só no cliente. Novo endpoint `PUT /api/auth/me/avatar` (qualquer role autenticada; `null` remove). Componentes `AvatarUpload`/`UserAvatar` desacoplados de qualquer domínio (Seção 0: reusabilidade). *Modelo: Sonnet 5. 190/190 backend (6 testes novos), 22 Jest/RTL, 25/25 Playwright (novo `avatar-perfil-flow.spec.ts`, upload real via `setInputFiles`, persistência após reload, remover).*
 
+**Fase 31 — Consolidação: Dashboard Agrupado + Exclusão de Programas/Templates + Correção do Avatar.** Três bugs reais relatados via screenshots do celular. Dashboard do Personal: "Treinos prescritos" deixou de ser uma lista plana de sessões soltas e passou a agrupar por `WorkoutProgram` (nome do programa como cabeçalho, sessões aninhadas dentro). Novo `DELETE /api/workout-programs/:id` (template ou instância aplicada; 404/403 iguais a `apply`; cascata manual em transação, sem `onDelete: Cascade` no schema); componente `DeleteProgramButton` com confirmação inline, usado em `/personal/programas`, no hub do aluno e no dashboard. Avatar: causa raiz era o link "Perfil" do `AppHeader` ficar invisível abaixo do breakpoint `sm` (sem caminho nenhum até `/perfil` no celular); o próprio ícone circular virou botão com popover de upload, em qualquer largura de tela. *Modelo: Sonnet 5. 195/195 backend (5 testes novos de delete), 22 Jest/RTL, 29/29 Playwright (2 specs novos: `dashboard-consolidado-delete-flow.spec.ts` + teste extra em `avatar-perfil-flow.spec.ts` via popover do header).*
+
 ## Progresso Geral das Fases
 - [x] Fase 1: Fundação Core, Auth e Estrutura Modular
 - [x] Fase 2: Vínculo Personal↔Aluno e Limite Freemium
@@ -99,3 +101,4 @@
 - [x] Fase 28: Polish do Formulário de Exercício (bug de posição travada, popup, reordenar)
 - [x] Fase 29: Hub de Administração do Aluno (programas + evolução + anamnese)
 - [x] Fase 30: Foto de Perfil (aluno e Personal, armazenada no banco)
+- [x] Fase 31: Consolidação (Dashboard Agrupado + Exclusão de Programas/Templates + Correção do Avatar)

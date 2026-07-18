@@ -88,6 +88,20 @@ export async function listProgramsHandler(
   }
 }
 
+export async function deleteProgramHandler(
+  request: FastifyRequest<{ Params: { id: string } }>,
+  reply: FastifyReply
+) {
+  try {
+    assertProfessional(request);
+    const personalId = (request as any).user.sub;
+    await workoutProgramsService.deleteProgram(request.params.id, personalId);
+    return reply.status(204).send();
+  } catch (err) {
+    return handleError(err, reply);
+  }
+}
+
 export async function getProgramHandler(
   request: FastifyRequest<{ Params: { id: string } }>,
   reply: FastifyReply

@@ -15,6 +15,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { QueryError } from "@/components/query-error";
+import { DeleteProgramButton } from "@/components/delete-program-button";
 
 function ProgramasPersonalContent() {
   const router = useRouter();
@@ -163,7 +164,16 @@ function ProgramasPersonalContent() {
                   <span className="font-semibold">{p.name}</span>
                   <p className="text-xs text-muted">{p.workouts?.length ?? 0} sessão(ões)</p>
                 </div>
-                <span className="text-sm text-muted">Abrir →</span>
+                <div className="flex items-center gap-2">
+                  <DeleteProgramButton
+                    programId={p.id}
+                    isTemplate
+                    onDeleted={() =>
+                      queryClient.invalidateQueries({ queryKey: ["workout-programs", "personal"] })
+                    }
+                  />
+                  <span className="text-sm text-muted">Abrir →</span>
+                </div>
               </Card>
             </Link>
           ))}
@@ -184,7 +194,16 @@ function ProgramasPersonalContent() {
                     {p.workouts?.length ?? 0} sessão(ões)
                   </p>
                 </div>
-                <span className="text-sm text-muted">Abrir →</span>
+                <div className="flex items-center gap-2">
+                  <DeleteProgramButton
+                    programId={p.id}
+                    isTemplate={false}
+                    onDeleted={() =>
+                      queryClient.invalidateQueries({ queryKey: ["workout-programs", "personal"] })
+                    }
+                  />
+                  <span className="text-sm text-muted">Abrir →</span>
+                </div>
               </Card>
             </Link>
           ))}
