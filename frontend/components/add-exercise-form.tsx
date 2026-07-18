@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { listExercises, addWorkoutExercise } from "@/lib/api/workouts";
 import { ApiError } from "@/lib/api/client";
 import { Input } from "@/components/ui/input";
@@ -17,11 +17,20 @@ const MAX_NOTES_LENGTH = 500;
 export function AddExerciseForm({
   workoutId,
   nextOrder,
+  onAdded,
 }: {
   workoutId: string;
   nextOrder: number;
+  /**
+   * Fase 28: quem chama decide como invalidar/refetch os próprios dados —
+   * este componente é reaproveitado por telas com query keys diferentes
+   * (`["workout", id]` no treino avulso, `["workout-program", programId]` na
+   * sessão de um programa); assumir uma chave fixa aqui foi o bug real por
+   * trás do botão que ficava travado em "posição 1" (o cache nunca era
+   * invalidado na tela de sessão).
+   */
+  onAdded?: () => void;
 }) {
-  const queryClient = useQueryClient();
   // Carrega o catálogo inteiro uma vez e filtra no cliente. O backend também
   // aceita ?muscleGroup= (usado por outros clientes/testes), mas com ~150
   // itens carregar tudo uma vez e alternar grupos sem refetch é mais fluido.
@@ -72,7 +81,7 @@ export function AddExerciseForm({
     onSuccess: () => {
       setExerciseId("");
       setNotes("");
-      queryClient.invalidateQueries({ queryKey: ["workout", workoutId] });
+      onAdded?.();
       // Pop rápido de confirmação — sem isso o Personal não tem nenhum sinal
       // visível de que o exercício foi mesmo adicionado à sessão.
       setShowAddedToast(true);
@@ -253,7 +262,7 @@ export function AddExerciseForm({
       {showAddedToast && (
         <div
           role="status"
-          className="fixed bottom-4 right-4 z-50 rounded-md border border-success/40 bg-success/10 px-4 py-2 text-sm font-semibold text-success shadow-lg"
+          className="fixed left-1/2 top-[35%] z-50 -translate-x-1/2 -translate-y-1/2 rounded-xl border border-success/40 bg-surface px-8 py-5 text-lg font-semibold text-success shadow-2xl"
         >
           ✓ Exercício adicionado
         </div>

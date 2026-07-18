@@ -1,17 +1,19 @@
 "use client";
 
 import { useParams } from "next/navigation";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getWorkout } from "@/lib/api/workouts";
 import { ApiError } from "@/lib/api/client";
 import { AuthGuard } from "@/components/auth-guard";
 import { AppHeader } from "@/components/app-header";
 import { Card } from "@/components/ui/card";
 import { AddExerciseForm } from "@/components/add-exercise-form";
+import { ExerciseReorderButtons } from "@/components/exercise-reorder-buttons";
 
 function PersonalWorkoutContent() {
   const params = useParams<{ id: string }>();
   const workoutId = params.id;
+  const queryClient = useQueryClient();
 
   const workoutQuery = useQuery({
     queryKey: ["workout", workoutId],
@@ -58,13 +60,22 @@ function PersonalWorkoutContent() {
 
       {exercises.length > 0 && (
         <div className="flex flex-col gap-3">
-          {exercises.map((ex) => (
+          {exercises.map((ex, i) => (
             <Card key={ex.id} className="flex flex-col gap-1">
-              <div className="flex items-center justify-between">
-                <div>
-                  <span className="font-mono-nums text-xs text-muted">#{ex.order}</span>{" "}
-                  <span className="font-semibold">{ex.exercise?.name}</span>
-                  <p className="text-xs text-muted">{ex.exercise?.muscleGroup}</p>
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <ExerciseReorderButtons
+                    workoutId={workoutId}
+                    workoutExerciseId={ex.id}
+                    disabledUp={i === 0}
+                    disabledDown={i === exercises.length - 1}
+                    onMoved={() => queryClient.invalidateQueries({ queryKey: ["workout", workoutId] })}
+                  />
+                  <div>
+                    <span className="font-mono-nums text-xs text-muted">#{ex.order}</span>{" "}
+                    <span className="font-semibold">{ex.exercise?.name}</span>
+                    <p className="text-xs text-muted">{ex.exercise?.muscleGroup}</p>
+                  </div>
                 </div>
                 <div className="font-mono-nums text-sm text-muted">
                   {ex.sets}x {ex.repsRange} · {ex.restSeconds}s
@@ -78,7 +89,11 @@ function PersonalWorkoutContent() {
 
       <Card>
         <h2 className="mb-3 font-display text-lg font-bold">Adicionar exercício</h2>
-        <AddExerciseForm workoutId={workoutId} nextOrder={nextOrder} />
+        <AddExerciseForm
+          workoutId={workoutId}
+          nextOrder={nextOrder}
+          onAdded={() => queryClient.invalidateQueries({ queryKey: ["workout", workoutId] })}
+        />
       </Card>
     </main>
   );

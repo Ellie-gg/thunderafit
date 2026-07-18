@@ -42,6 +42,18 @@ export function addWorkoutExercise(
   });
 }
 
+// Fase 28: reordenar exercícios prescritos (setas ↑/↓).
+export function moveWorkoutExercise(
+  workoutId: string,
+  workoutExerciseId: string,
+  direction: "up" | "down"
+) {
+  return apiFetch<{ exercises: unknown[] }>(
+    `/api/workouts/${workoutId}/exercises/${workoutExerciseId}/move`,
+    { method: "POST", body: { direction } }
+  );
+}
+
 // Fase 16 — Programas de Treino
 export function completeWorkout(workoutId: string) {
   return apiFetch<{ workout: Workout }>(`/api/workouts/${workoutId}/complete`, { method: "POST" });
