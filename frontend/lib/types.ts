@@ -6,6 +6,7 @@ export interface User {
   role: Role;
   planoAssinatura: "FREE" | "PAGO";
   limiteAlunos: number;
+  avatarUrl: string | null;
   createdAt: string;
   updatedAt: string;
 }

@@ -154,6 +154,36 @@ export async function refreshHandler(
   }
 }
 
+/**
+ * Fase 30: atualiza (ou remove, com `avatarDataUrl: null`) a foto de perfil
+ * do usuário autenticado. Qualquer role (aluno ou profissional) — não é
+ * dado específico de nenhum domínio, só do próprio usuário.
+ */
+export async function updateAvatarHandler(
+  request: FastifyRequest<{ Body: { avatarDataUrl?: string | null } }>,
+  reply: FastifyReply
+) {
+  const user = (request as FastifyRequest & { user?: { sub: string } }).user;
+  if (!user) {
+    return reply.status(401).send({ error: "Não autenticado." });
+  }
+
+  // `avatarDataUrl` precisa estar PRESENTE no body (string pra atualizar,
+  // null pra remover) — campo ausente é erro, não é tratado como "sem
+  // mudança" silenciosa.
+  if (request.body?.avatarDataUrl === undefined) {
+    return reply.status(400).send({ error: "avatarDataUrl é obrigatório (ou null para remover)." });
+  }
+
+  try {
+    const updatedUser = await authService.updateAvatar(user.sub, request.body.avatarDataUrl);
+    return reply.status(200).send({ user: updatedUser });
+  } catch (err) {
+    const error = err as Error & { statusCode?: number };
+    return reply.status(error.statusCode ?? 500).send({ error: error.message });
+  }
+}
+
 export async function logoutHandler(request: FastifyRequest, reply: FastifyReply) {
   const user = (request as FastifyRequest & { user?: { sub: string } }).user;
   if (user) {

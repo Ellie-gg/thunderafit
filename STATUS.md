@@ -66,6 +66,8 @@
 
 **Fase 29 — Hub de Administração do Aluno.** Nova tela `/personal/alunos/[alunoId]` reunindo programas aplicados, evolução (carga/frequência) e link pra anamnese — antes o Personal criava um programa e não tinha pra onde voltar. Pré-requisito corrigido: `/api/progress/*` rejeitava PERSONAL com 403; ganhou um ramo com checagem de `ClientRelation` (mesmo padrão do domínio anamnesis), fechando o IDOR que existiria se fosse liberado sem checar vínculo. `GET /api/workout-programs` ganhou filtro opcional `?alunoId=`, sempre ANDado com o `personalId` do JWT. Dashboard do Personal: link "Anamnese" virou "Gerenciar →" pro hub. *Modelo: Sonnet 5. 184/184 backend (7 testes novos), 22 Jest/RTL, 23/23 Playwright (novo `hub-aluno-flow.spec.ts`, incluindo o bloqueio a aluno não vinculado).*
 
+**Fase 30 — Foto de Perfil (aluno e Personal).** Avatar circular pequeno no `AppHeader`, com upload em `/perfil` (novo, aluno) e `/personal/perfil`. Decisão de armazenamento: **banco, não bucket** — o redimensionamento/crop quadrado acontece inteiramente no cliente (canvas, 256px, WebP/JPEG ~0.82 qualidade) antes do upload, resultando em poucos KB; guardado como data URI num `WorkoutExercise`-like `User.avatarUrl String?` (migration aditiva). Backend valida de novo (formato + cap de 140KB), nunca confia só no cliente. Novo endpoint `PUT /api/auth/me/avatar` (qualquer role autenticada; `null` remove). Componentes `AvatarUpload`/`UserAvatar` desacoplados de qualquer domínio (Seção 0: reusabilidade). *Modelo: Sonnet 5. 190/190 backend (6 testes novos), 22 Jest/RTL, 25/25 Playwright (novo `avatar-perfil-flow.spec.ts`, upload real via `setInputFiles`, persistência após reload, remover).*
+
 ## Progresso Geral das Fases
 - [x] Fase 1: Fundação Core, Auth e Estrutura Modular
 - [x] Fase 2: Vínculo Personal↔Aluno e Limite Freemium
@@ -96,3 +98,4 @@
 - [x] Fase 27: Feedback de Exercício Adicionado + Observações por Prescrição (sem suíte de testes — pendente pra próxima fase)
 - [x] Fase 28: Polish do Formulário de Exercício (bug de posição travada, popup, reordenar)
 - [x] Fase 29: Hub de Administração do Aluno (programas + evolução + anamnese)
+- [x] Fase 30: Foto de Perfil (aluno e Personal, armazenada no banco)

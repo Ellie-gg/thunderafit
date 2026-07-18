@@ -6,6 +6,7 @@ import {
   logoutHandler,
   protectedHandler,
   checkEmailHandler,
+  updateAvatarHandler,
 } from "../controllers/auth.controller";
 
 type AuthenticateFn = (
@@ -37,6 +38,15 @@ export async function authRoutes(fastify: FastifyInstance) {
       ],
     },
     logoutHandler
+  );
+
+  // Fase 30: foto de perfil (qualquer role autenticada)
+  fastify.put(
+    "/api/auth/me/avatar",
+    {
+      preHandler: [(fastify as any).authenticate],
+    },
+    updateAvatarHandler
   );
 
   // Rota de teste para validar o middleware authenticate

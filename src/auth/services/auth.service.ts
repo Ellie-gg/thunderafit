@@ -183,6 +183,47 @@ export async function checkEmailExists(email: string): Promise<boolean> {
   return !!user;
 }
 
+// Fase 30: foto de perfil. O redimensionamento/compressão acontece no
+// cliente (canvas), mas o backend NUNCA confia só nisso — valida formato e
+// tamanho de verdade antes de gravar. ~140KB de base64 dá margem folgada
+// pra um avatar de até ~256px em WebP/JPEG comprimido (tipicamente poucos
+// KB), sem abrir espaço pra alguém gravar blobs grandes no banco.
+const MAX_AVATAR_DATA_URL_LENGTH = 140_000;
+const AVATAR_DATA_URL_REGEX = /^data:image\/(png|jpe?g|webp);base64,[A-Za-z0-9+/]+=*$/;
+
+/**
+ * Atualiza (ou remove, com `null`) a foto de perfil do usuário autenticado.
+ *
+ * Bugs potenciais considerados antes de escrever esta função:
+ * - confiar no redimensionamento feito no cliente sem validar de novo aqui —
+ *   um client alterado poderia mandar uma imagem enorme ou uma string
+ *   qualquer; por isso o regex de formato E o cap de tamanho, os dois no
+ *   backend, não só no frontend.
+ * - tratar `undefined` (campo ausente do body) como "não fazer nada" em vez
+ *   de erro — o controller já garante que o campo existe (400 se ausente);
+ *   aqui só chega `string` (upload) ou `null` (remoção) de propósito.
+ * - esquecer que `null` é um caso LEGÍTIMO (remover avatar), não um erro —
+ *   por isso o `if` de validação só roda quando `avatarDataUrl !== null`.
+ */
+export async function updateAvatar(userId: string, avatarDataUrl: string | null) {
+  if (avatarDataUrl !== null) {
+    if (avatarDataUrl.length > MAX_AVATAR_DATA_URL_LENGTH) {
+      const err = new Error("Imagem muito grande. Escolha uma foto menor.");
+      (err as Error & { statusCode: number }).statusCode = 400;
+      throw err;
+    }
+    if (!AVATAR_DATA_URL_REGEX.test(avatarDataUrl)) {
+      const err = new Error("Formato de imagem inválido. Use PNG, JPEG ou WebP.");
+      (err as Error & { statusCode: number }).statusCode = 400;
+      throw err;
+    }
+  }
+
+  const user = await authRepository.updateAvatar(userId, avatarDataUrl);
+  const { passwordHash: _ph, refreshTokenHash: _rth, ...safeUser } = user;
+  return safeUser;
+}
+
 /**
  * Verifica um access token e retorna o payload.
  * Usado pelo middleware de autenticação.

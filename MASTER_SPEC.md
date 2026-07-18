@@ -190,11 +190,14 @@ cada vez — o fundador escolhe a próxima.
    403 incondicional); `GET /api/workout-programs` ganhou filtro `?alunoId=`. A lista
    plana de "Treinos prescritos" no dashboard **não foi removida** nesta fase (fora do
    escopo do plano executado — fica como possível ajuste futuro). **Modelo usado: Sonnet 5.**
-3. **Fase 30 — Foto de perfil (aluno e Personal).** Avatar circular pequeno; redimensionar
-   no cliente para no máx. ~128px/WebP antes do upload; armazenar em bucket GCS (infra já
-   é GCP+Terraform) em vez de bytes no Postgres. **Esforço: médio-alto (1ª feature com
-   storage de arquivo) · Modelo: Sonnet 5**, com checkpoint de arquitetura (bucket vs.
-   banco) decidido na hora.
+3. **Fase 30 — Foto de perfil (aluno e Personal). ✅ CONCLUÍDA (2026-07-18).** Avatar
+   circular no `AppHeader`; redimensionamento/crop quadrado no cliente (canvas, 256px,
+   WebP/JPEG ~0.82) antes do upload. **Decisão de arquitetura tomada em execução: banco,
+   não bucket** — o fundador pediu explicitamente pra manter simples no banco se o
+   tamanho não fosse grande; com compressão no cliente o resultado fica na casa de poucos
+   KB, então `User.avatarUrl String?` (data URI) é suficiente, sem custo de storage
+   externo nem complexidade de upload multipart. Backend valida formato+tamanho de novo
+   (nunca confia só no cliente). **Modelo usado: Sonnet 5.**
 
 ### Grupo B — fundação do pivô B2C
 

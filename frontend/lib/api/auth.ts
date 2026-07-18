@@ -34,3 +34,11 @@ export function loginRequest(email: string, password: string) {
 export function logoutRequest() {
   return apiFetch<{ message: string }>("/api/auth/logout", { method: "POST" });
 }
+
+// Fase 30: foto de perfil. `null` remove o avatar.
+export function updateAvatarRequest(avatarDataUrl: string | null) {
+  return apiFetch<{ user: User }>("/api/auth/me/avatar", {
+    method: "PUT",
+    body: { avatarDataUrl },
+  });
+}

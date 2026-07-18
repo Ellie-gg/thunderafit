@@ -54,6 +54,16 @@ export const authRepository = {
   },
 
   /**
+   * Fase 30: atualiza a foto de perfil. `null` remove o avatar.
+   */
+  async updateAvatar(userId: string, avatarUrl: string | null) {
+    return prisma.user.update({
+      where: { id: userId },
+      data: { avatarUrl },
+    });
+  },
+
+  /**
    * Registra um login bem-sucedido: atualiza `lastLoginAt` (consulta rápida
    * para a listagem de usuários do admin) e grava uma linha em `LoginLog`
    * (histórico completo, append-only — só de logins que deram certo;

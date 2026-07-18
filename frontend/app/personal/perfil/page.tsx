@@ -12,6 +12,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { QueryError } from "@/components/query-error";
 import { AvailabilityBadge } from "@/components/availability-badge";
+import { AvatarUpload } from "@/components/avatar-upload";
 
 function PerfilContent() {
   const queryClient = useQueryClient();
@@ -54,6 +55,11 @@ function PerfilContent() {
             solicitação manualmente.
           </p>
         </div>
+
+        <Card>
+          <h2 className="mb-3 font-display text-lg font-bold">Foto de perfil</h2>
+          <AvatarUpload />
+        </Card>
 
         {profileQuery.isLoading && <p className="text-sm text-muted">Carregando...</p>}
         {profileQuery.isError && (
