@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { useParams } from "next/navigation";
+import { Suspense, useState } from "react";
+import { useParams, useSearchParams } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   getWorkoutProgram,
@@ -22,6 +22,7 @@ const LETTERS = ["A", "B", "C", "D", "E"];
 
 function ProgramaDetalheContent() {
   const params = useParams<{ id: string }>();
+  const searchParams = useSearchParams();
   const programId = params.id;
   const queryClient = useQueryClient();
 
@@ -32,7 +33,10 @@ function ProgramaDetalheContent() {
   const relationsQuery = useQuery({ queryKey: ["relations"], queryFn: listRelations });
 
   const [openSessionId, setOpenSessionId] = useState<string | null>(null);
-  const [applyAlunoId, setApplyAlunoId] = useState("");
+  // Fase 25: pré-preenche com o aluno-alvo escolhido na criação do programa
+  // (query string ?alunoId=), quando houver — só um atalho, aplicar continua
+  // sendo um clique explícito.
+  const [applyAlunoId, setApplyAlunoId] = useState(searchParams.get("alunoId") ?? "");
 
   const invalidate = () =>
     queryClient.invalidateQueries({ queryKey: ["workout-program", programId] });
@@ -149,7 +153,8 @@ function ProgramaDetalheContent() {
               <h2 className="font-display text-lg font-bold">Aplicar a um aluno</h2>
               <p className="text-xs text-muted">
                 Cria uma cópia independente deste programa para o aluno. Editar este
-                programa depois não afeta cópias já aplicadas.
+                programa depois não afeta cópias já aplicadas — e você pode aplicar
+                este mesmo template a outros alunos vinculados quantas vezes quiser.
               </p>
               <select
                 value={applyAlunoId}
@@ -192,7 +197,9 @@ function ProgramaDetalheContent() {
 export default function ProgramaDetalhePage() {
   return (
     <AuthGuard allowedRoles={["PERSONAL", "NUTRICIONISTA"]}>
-      <ProgramaDetalheContent />
+      <Suspense fallback={null}>
+        <ProgramaDetalheContent />
+      </Suspense>
     </AuthGuard>
   );
 }
