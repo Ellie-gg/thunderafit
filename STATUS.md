@@ -62,6 +62,8 @@
 
 **Fase 28 — Polish do Formulário de Exercício.** Bug real corrigido: o botão "posição N" ficava travado em 1 na tela de sessão (invalidava a query errada, Fase 26); popup de confirmação maior e centralizado; reordenar exercícios prescritos com setas ↑/↓ (`POST /api/workouts/:id/exercises/:exerciseId/move`, sem migration). *Modelo: Sonnet 5. Backend verde (5 testes novos; único módulo com falha é `src/admin`, timeout de ambiente pré-existente e não relacionado), 22 Jest/RTL, 21/21 Playwright (novo `exercicio-polish-flow.spec.ts`).*
 
+**Fase 28.1 — Hotfix pós-relato.** Investigação do "trava ao mover a mesma seta" não reproduziu corrupção de dados nem freeze (testado via API concorrente e E2E com cliques rápidos repetidos) — mesmo assim, endurecido: `moveExercise` agora lê+troca dentro de uma única transação (fechava uma janela de corrida teórica) e erros deixaram de ser silenciosos no botão. Investigação do "programa novo não aparece" confirmou que os dados estão corretos em toda API testada — o gap real era `/personal/programas` não mostrar qual aluno cada instância aplicada pertence; corrigido (mostra o e-mail do aluno em cada card). *Modelo: Sonnet 5.*
+
 ## Progresso Geral das Fases
 - [x] Fase 1: Fundação Core, Auth e Estrutura Modular
 - [x] Fase 2: Vínculo Personal↔Aluno e Limite Freemium

@@ -70,10 +70,36 @@ export const workoutsRepository = {
     });
   },
 
-  async swapExerciseOrder(aId: string, aOrder: number, bId: string, bOrder: number) {
-    return prisma.$transaction([
-      prisma.workoutExercise.update({ where: { id: aId }, data: { order: bOrder } }),
-      prisma.workoutExercise.update({ where: { id: bId }, data: { order: aOrder } }),
-    ]);
+  /**
+   * Lê a lista ordenada e troca a `order` com o vizinho dentro de UMA única
+   * transação — não é só as duas UPDATEs juntas, é a LEITURA também dentro da
+   * transação, pra fechar a janela entre "ler a ordem atual" e "escrever a
+   * troca" (2 cliques quase simultâneos, num exercício ou em vizinhos,
+   * baseados numa leitura já desatualizada, poderiam produzir uma ordem
+   * inconsistente sem essa garantia).
+   */
+  async moveExercise(
+    workoutId: string,
+    workoutExerciseId: string,
+    direction: "up" | "down"
+  ): Promise<"not_found" | "first" | "last" | "moved"> {
+    return prisma.$transaction(async (tx) => {
+      const exercises = await tx.workoutExercise.findMany({
+        where: { workoutId },
+        orderBy: { order: "asc" },
+      });
+      const index = exercises.findIndex((e) => e.id === workoutExerciseId);
+      if (index === -1) return "not_found";
+
+      const neighborIndex = direction === "up" ? index - 1 : index + 1;
+      if (neighborIndex < 0) return "first";
+      if (neighborIndex >= exercises.length) return "last";
+
+      const current = exercises[index];
+      const neighbor = exercises[neighborIndex];
+      await tx.workoutExercise.update({ where: { id: current.id }, data: { order: neighbor.order } });
+      await tx.workoutExercise.update({ where: { id: neighbor.id }, data: { order: current.order } });
+      return "moved";
+    });
   },
 };
