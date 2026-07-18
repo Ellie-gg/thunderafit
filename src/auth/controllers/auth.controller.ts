@@ -13,6 +13,16 @@ const COOKIE_BASE_OPTIONS = {
   path: "/",
 };
 
+// Não existia validação de formato de e-mail em nenhum lugar do domínio
+// (register só checava presença) — criada aqui para o check-email e reutilizável.
+const EMAIL_FORMAT_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+// Chave fixa para o rate limiter contar por IP (Fase 24): check-email não tem
+// conceito de "senha errada", então toda chamada consome uma tentativa do
+// mesmo limiter em memória da Fase 14, nunca resetada por sucesso — isso limita
+// enumeração de e-mails a 5 chamadas por IP a cada 15min.
+const CHECK_EMAIL_RATE_KEY = "__check_email__";
+
 /**
  * Cookie httpOnly passa a ser a fonte de verdade para o frontend web
  * (Fase 5.5). O corpo da resposta continua retornando os tokens em texto
@@ -87,6 +97,35 @@ export async function loginHandler(
     const error = err as Error & { statusCode?: number };
     return reply.status(error.statusCode ?? 500).send({ error: error.message });
   }
+}
+
+/**
+ * Checagem pública de existência de e-mail (Fase 24 — auth unificado).
+ * Resposta é SEMPRE { exists: boolean }, nunca outro dado do usuário, mesmo
+ * quando ele existe. Sem autenticação; protegida pelo rate limiter de login
+ * (Fase 14) por IP para dificultar enumeração de e-mails.
+ */
+export async function checkEmailHandler(
+  request: FastifyRequest<{ Body: { email: string } }>,
+  reply: FastifyReply
+) {
+  const { email } = request.body;
+
+  if (!email || !EMAIL_FORMAT_REGEX.test(email)) {
+    return reply.status(400).send({ error: "email é obrigatório e deve ter um formato válido." });
+  }
+
+  const ip = request.ip;
+  const blockStatus = loginRateLimiter.isBlocked(ip, CHECK_EMAIL_RATE_KEY);
+  if (blockStatus.blocked) {
+    return reply.status(429).send({
+      error: `Muitas verificações de e-mail. Tente novamente em ${blockStatus.retryAfterSeconds}s.`,
+    });
+  }
+  loginRateLimiter.recordFailedAttempt(ip, CHECK_EMAIL_RATE_KEY);
+
+  const exists = await authService.checkEmailExists(email);
+  return reply.status(200).send({ exists });
 }
 
 export async function refreshHandler(

@@ -175,6 +175,15 @@ export async function logout(userId: string) {
 }
 
 /**
+ * Checa se existe usuário com o e-mail informado (Fase 24 — fluxo de auth
+ * unificado). Não retorna nenhum outro dado do usuário — só o boolean.
+ */
+export async function checkEmailExists(email: string): Promise<boolean> {
+  const user = await authRepository.findByEmail(email);
+  return !!user;
+}
+
+/**
  * Verifica um access token e retorna o payload.
  * Usado pelo middleware de autenticação.
  */
