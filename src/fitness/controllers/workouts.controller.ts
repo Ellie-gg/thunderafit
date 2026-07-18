@@ -50,13 +50,20 @@ export async function createWorkoutHandler(
 export async function addExerciseHandler(
   request: FastifyRequest<{
     Params: { id: string };
-    Body: { exerciseId: string; sets: number; repsRange: string; restSeconds: number; order: number };
+    Body: {
+      exerciseId: string;
+      sets: number;
+      repsRange: string;
+      restSeconds: number;
+      order: number;
+      notes?: string;
+    };
   }>,
   reply: FastifyReply
 ) {
   const personalId = (request as any).user.sub;
   const { id } = request.params;
-  const { exerciseId, sets, repsRange, restSeconds, order } = request.body;
+  const { exerciseId, sets, repsRange, restSeconds, order, notes } = request.body;
 
   try {
     const workoutExercise = await workoutsService.addExercise(
@@ -66,7 +73,8 @@ export async function addExerciseHandler(
       sets,
       repsRange,
       restSeconds,
-      order
+      order,
+      notes
     );
     return reply.status(201).send({ workoutExercise });
   } catch (err: any) {

@@ -54,10 +54,11 @@ export const workoutsRepository = {
     sets: number,
     repsRange: string,
     restSeconds: number,
-    order: number
+    order: number,
+    notes: string | null = null
   ) {
     return prisma.workoutExercise.create({
-      data: { workoutId, exerciseId, sets, repsRange, restSeconds, order },
+      data: { workoutId, exerciseId, sets, repsRange, restSeconds, order, notes },
     });
   },
 };

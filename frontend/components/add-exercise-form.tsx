@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { listExercises, addWorkoutExercise } from "@/lib/api/workouts";
 import { ApiError } from "@/lib/api/client";
@@ -11,6 +11,8 @@ import { QueryError } from "@/components/query-error";
 import { DifficultyBadge } from "@/components/difficulty-badge";
 
 const ALL_GROUPS = "Todos";
+// Fase 27: mesmo limite validado no backend (workouts.service.ts).
+const MAX_NOTES_LENGTH = 500;
 
 export function AddExerciseForm({
   workoutId,
@@ -31,6 +33,15 @@ export function AddExerciseForm({
   const [sets, setSets] = useState("3");
   const [repsRange, setRepsRange] = useState("8-12");
   const [restSeconds, setRestSeconds] = useState("60");
+  const [notes, setNotes] = useState("");
+  const [showAddedToast, setShowAddedToast] = useState(false);
+  const toastTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (toastTimeoutRef.current) clearTimeout(toastTimeoutRef.current);
+    };
+  }, []);
 
   const all = exercisesQuery.data?.exercises ?? [];
 
@@ -56,10 +67,17 @@ export function AddExerciseForm({
         repsRange,
         restSeconds: Number(restSeconds),
         order: nextOrder,
+        notes: notes.trim() || undefined,
       }),
     onSuccess: () => {
       setExerciseId("");
+      setNotes("");
       queryClient.invalidateQueries({ queryKey: ["workout", workoutId] });
+      // Pop rápido de confirmação — sem isso o Personal não tem nenhum sinal
+      // visível de que o exercício foi mesmo adicionado à sessão.
+      setShowAddedToast(true);
+      if (toastTimeoutRef.current) clearTimeout(toastTimeoutRef.current);
+      toastTimeoutRef.current = setTimeout(() => setShowAddedToast(false), 2500);
     },
   });
 
@@ -204,6 +222,22 @@ export function AddExerciseForm({
         </div>
       </div>
 
+      <div className="flex flex-col gap-1.5">
+        <Label htmlFor="notes">Observações (opcional)</Label>
+        <textarea
+          id="notes"
+          rows={3}
+          maxLength={MAX_NOTES_LENGTH}
+          value={notes}
+          onChange={(e) => setNotes(e.target.value)}
+          placeholder="Ex: cadência lenta na descida, trocar se sentir dor no ombro..."
+          className="w-full rounded-md border border-border bg-surface px-3.5 py-2 text-sm text-foreground placeholder:text-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+        />
+        <span className="self-end text-xs text-muted">
+          {notes.length}/{MAX_NOTES_LENGTH}
+        </span>
+      </div>
+
       {mutation.isError && (
         <p className="text-sm text-danger">
           {mutation.error instanceof ApiError
@@ -215,6 +249,15 @@ export function AddExerciseForm({
       <Button type="submit" disabled={mutation.isPending || !exerciseId}>
         {mutation.isPending ? "Adicionando..." : `Adicionar exercício (posição ${nextOrder})`}
       </Button>
+
+      {showAddedToast && (
+        <div
+          role="status"
+          className="fixed bottom-4 right-4 z-50 rounded-md border border-success/40 bg-success/10 px-4 py-2 text-sm font-semibold text-success shadow-lg"
+        >
+          ✓ Exercício adicionado
+        </div>
+      )}
     </form>
   );
 }

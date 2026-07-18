@@ -41,6 +41,7 @@ export interface WorkoutExercise {
   repsRange: string;
   restSeconds: number;
   order: number;
+  notes: string | null;
   exercise?: Exercise;
   setLogs?: SetLog[];
 }

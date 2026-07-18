@@ -91,6 +91,7 @@ function SessaoContent() {
                         <span className="text-xs text-muted">
                           ({ex.sets}x {ex.repsRange})
                         </span>
+                        {ex.notes && <p className="pl-6 text-xs text-muted">Obs: {ex.notes}</p>}
                       </li>
                     ))}
                 </ul>

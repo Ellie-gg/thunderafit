@@ -2,6 +2,9 @@ import { workoutsRepository } from "../repository/workouts.repository";
 import { relationsRepository } from "../repository/relations.repository";
 import { exercisesRepository } from "../repository/exercises.repository";
 
+// Fase 27: observação do Personal sobre a prescrição de um exercício.
+const MAX_NOTES_LENGTH = 500;
+
 export const workoutsService = {
   async listWorkoutsForUser(
     userId: string,
@@ -43,7 +46,8 @@ export const workoutsService = {
     sets: number,
     repsRange: string,
     restSeconds: number,
-    order: number
+    order: number,
+    notes?: string | null
   ) {
     const workout = await workoutsRepository.findById(workoutId);
     if (!workout || workout.personalId !== personalId) {
@@ -59,7 +63,21 @@ export const workoutsService = {
       throw err;
     }
 
-    return workoutsRepository.addExercise(workoutId, exerciseId, sets, repsRange, restSeconds, order);
+    if (notes && notes.length > MAX_NOTES_LENGTH) {
+      const err = new Error(`Observações devem ter no máximo ${MAX_NOTES_LENGTH} caracteres.`);
+      (err as any).statusCode = 400;
+      throw err;
+    }
+
+    return workoutsRepository.addExercise(
+      workoutId,
+      exerciseId,
+      sets,
+      repsRange,
+      restSeconds,
+      order,
+      notes?.trim() || null
+    );
   },
 
   async getWorkout(workoutId: string, userId: string, role?: string) {

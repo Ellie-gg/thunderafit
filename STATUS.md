@@ -100,6 +100,13 @@ Esclarecimento do fundador sobre a Fase 25: cada sessão (A-E) já tinha seu pr�
 
 Evidência: `tsc --noEmit`/`eslint` limpos, 22 Jest/RTL passando, e a suíte **Playwright completa (20 testes) — 20/20 passando** contra backend+Postgres reais, incluindo os 2 casos reescritos/novos: esquema Letras (cria programa → percorre A→E via "Próximo", criando cada sessão na hora → prescreve → aplica → confirma cópia completa) e esquema Dias da semana (adiciona Quarta antes de Segunda pela UI → aplica → confirma via backend que a sugestão aponta pra Segunda, não Quarta — prova viva da correção do bug de ordenação).
 
+**Fase 27 — Feedback de Exercício Adicionado + Observações por Prescrição**
+Dois ajustes pontuais no `AddExerciseForm` (reaproveitado tanto na tela de sessão da Fase 26 quanto na tela legada `/personal/treinos/[id]`): (1) **pop de confirmação** — ao adicionar um exercício, um toast fixo no canto inferior direito ("✓ Exercício adicionado") aparece por ~2,5s; antes não havia nenhum sinal visível de que a ação funcionou. (2) **campo "Observações" (opcional)** por exercício prescrito — textarea com limite de 500 caracteres (validado no backend em `workouts.service.ts` e espelhado no `maxLength` do frontend; sem constraint no banco, mesmo padrão dos outros campos de texto livre do schema, ex: `Anamnesis`), exibido de volta pro Personal na lista de exercícios já prescritos e pro aluno na execução do treino (`ExerciseExecutionCard`, destacado como "Observação do seu Personal").
+
+**Migration pequena e aditiva:** `WorkoutExercise.notes String?`. **Correção proativa:** `applyToAluno` (Fase 16) precisou ser atualizado pra propagar `notes` na cópia de exercícios — sem isso, toda observação escrita num template seria silenciosamente descartada ao aplicar a um aluno.
+
+Nota: a pedido do fundador, esta fase **não rodou a suíte de testes** (nem backend nem Playwright) — só verificação de tipos (`tsc --noEmit`, backend e frontend) e `eslint` nos arquivos tocados, ambos limpos. Cobertura de teste real (Jest/E2E) para o pop e o campo de observações fica para a próxima fase.
+
 ## Progresso Geral das Fases
 - [x] Fase 1: Fundação Core, Auth e Estrutura Modular
 - [x] Fase 2: Vínculo Personal↔Aluno e Limite Freemium
@@ -127,3 +134,4 @@ Evidência: `tsc --noEmit`/`eslint` limpos, 22 Jest/RTL passando, e a suíte **P
 - [x] Fase 24: Fluxo de Auth Unificado (Parte 1: backend + Parte 2: frontend)
 - [x] Fase 25: Correção do Fluxo Programa→Sessões + Ajustes de Mídia
 - [x] Fase 26: Esquema de Sessões (Letras/Dias) + Tela Dedicada por Sessão
+- [x] Fase 27: Feedback de Exercício Adicionado + Observações por Prescrição (sem suíte de testes — pendente pra próxima fase)

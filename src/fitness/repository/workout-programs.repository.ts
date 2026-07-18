@@ -142,6 +142,7 @@ export const workoutProgramsRepository = {
               repsRange: e.repsRange,
               restSeconds: e.restSeconds,
               order: e.order,
+              notes: e.notes,
             })),
           });
         }
