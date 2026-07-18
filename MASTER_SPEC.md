@@ -105,7 +105,7 @@ confiados sob `role === ADMIN` (visão ampliada, leitura). Roles: `PERSONAL`, `A
 ## 3. Decisão Arquitetural do Pivô: treinos do Personal vs treinos do Aluno Solo
 
 > Resultado da análise adversarial da Fase 23 (workflow multi-agente sobre o código real).
-> **Status: DECIDIDO, NÃO IMPLEMENTADO** — ver Fase 32 no roadmap (Seção 8). O workflow
+> **Status: DECIDIDO, NÃO IMPLEMENTADO** — ver Fase 34 no roadmap (Seção 8). O workflow
 > completou a fase de Draft e só 1 de 3 críticas adversariais — é uma recomendação bem
 > fundamentada sobre o schema real, mas não foi stress-testada por completo antes de
 > implementar.
@@ -135,7 +135,7 @@ confiados sob `role === ADMIN` (visão ampliada, leitura). Roles: `PERSONAL`, `A
   Fase 23 (38 agentes em paralelo) não produziu nenhum resultado aproveitável (`started`
   sem `result`). O benchmarking usado até aqui (Gym WP como referência principal) veio
   de busca direta em conversa, não de pesquisa formal. Sem matriz de preço fechada —
-  ver Fase 36 no roadmap.
+  ver Fase 38 no roadmap.
 - **Regra de lojas (anti-steering):** assinatura vendida na **web**; o app mobile apenas
   consulta o status sincronizado — nunca linka checkout externo de dentro do app. Regra
   já vigente (não muda com o pivô); pesquisa 2024-26 completa sobre o estado atual das
@@ -215,27 +215,65 @@ cada vez — o fundador escolhe a próxima.
    botão que abre um popover com `AvatarUpload`, alcançável em qualquer largura de tela.
    **Modelo usado: Sonnet 5.**
 
+### Grupo A.2 — catálogo de exercícios: mídia + administração (priorizado antes do pivô B2C)
+
+5. **Fase 32 — Infraestrutura de Mídia de Exercícios (bucket + player enquadrado).**
+   `Exercise.mediaUrl` hoje só resolve link do YouTube (embed via `frontend/lib/
+   youtube.ts`), sem suporte a vídeo/GIF nativo. Diferente do avatar (Fase 30, banco
+   OK pra blob pequeno e por-usuário), mídia de exercício é o perfil oposto — catálogo
+   fixo (~150 registros), blob maior (até ~1MB), imutável, servido repetidamente pra
+   TODOS os usuários — então vai pra **bucket GCS** (reaproveita o projeto GCP já
+   provisionado via Terraform), não pro Postgres/Neon. Novo campo `Exercise.mediaType`
+   (`YOUTUBE | VIDEO | GIF`); upload nativo com validação de formato/tamanho no backend
+   (mesmo padrão de revalidação da Fase 30, nunca confia só no cliente). Frontend ganha
+   um player enquadrado (não fullscreen) — `<video autoplay loop muted playsinline>`
+   num container de aspect-ratio fixo — para vídeo/GIF nativo; YouTube continua com o
+   fluxo de embed atual. **Conversão de vídeo→GIF avaliada e descartada**: GIF não tem
+   compressão inter-quadro nem paleta >256 cores, infla um clipe H.264 de ~900KB pra
+   5-12MB; upload nativo (MP4/WebM) com autoplay+loop replica a UX de GIF sem o custo.
+   **Esforço: médio · Modelo: Sonnet 5.**
+6. **Fase 33 — Admin: CRUD do Catálogo de Exercícios + Edição de Role de Usuário.**
+   `/src/admin` hoje é 100% leitura (dashboards); ganha camada de escrita em
+   `/api/admin/exercises` (mesmo gate `assertAdmin`, rota separada da pública
+   `/api/exercises` que continua somente-leitura) e `/nimbus/usuarios` ganha edição de
+   role. **Sem tela de login nova** — `/nimbus` + `role === ADMIN` já é a base certa:
+   `ADMIN` não tem auto-cadastro (`register` só aceita PERSONAL/ALUNO/NUTRICIONISTA) e
+   só existe via `prisma/seed-admin.ts` rodado manualmente pelo fundador. Amarras contra
+   o próprio fundador quebrar o catálogo: (a) categoria (`muscleGroup`, hoje string
+   livre) vira dropdown das categorias já existentes no banco — criar categoria nova é
+   uma ação separada e explícita, não digitação livre; (b) nome duplicado exato já
+   barrado por `@unique` no schema — nomes **parecidos** (variação de espaço/acento/
+   caixa) são normalizados e checados por similaridade, com aviso + confirmação
+   explícita (não bloqueio duro, já que variações podem ser exercícios legítimos
+   diferentes); (c) mídia validada (formato/tamanho, link do YouTube) antes de salvar.
+   Edição de role de usuário: ação sensível, precisa de confirmação explícita e log
+   (reaproveitar o padrão de auditoria já usado pra acesso a anamnese, `AdminAccessLog`,
+   estendido pra cobrir mudança de role). **Esforço: médio-alto (escrita administrativa
+   + guardrails) · Modelo: Sonnet 5, com atenção redobrada nos guards de auditoria.**
+
 ### Grupo B — fundação do pivô B2C
 
-5. **Fase 32 — `WorkoutProgram.origin` + guards.** Migration aditiva do enum (ver Seção
+7. **Fase 34 — `WorkoutProgram.origin` + guards.** Migration aditiva do enum (ver Seção
    3), guards tratando `personalId === null`, filtro explícito nas listagens do Personal.
    **Esforço: alto (superfície de autorização) · Modelo: Opus 4.8.**
-6. **Fase 33 — Fluxo de criação de treino para Aluno Solo.** UI/endpoint equivalente ao
+8. **Fase 35 — Fluxo de criação de treino para Aluno Solo.** UI/endpoint equivalente ao
    do Personal, `origin: SELF`. **Esforço: médio · Modelo: Sonnet 5.**
-7. **Fase 34 — Dashboard do aluno com 2 blocos.** "Prescrito pelo seu Personal" + "Meus
+9. **Fase 36 — Dashboard do aluno com 2 blocos.** "Prescrito pelo seu Personal" + "Meus
    treinos"; card de convite copiável quando não há Personal vinculado. **Esforço: médio
    · Modelo: Sonnet 5.**
-8. **Fase 35 — Convite aluno→Personal.** Inverte quem inicia o `ConnectionRequest`
-   (Fase 21). **Esforço: médio · Modelo: Sonnet 5.**
+10. **Fase 37 — Convite aluno→Personal.** Inverte quem inicia o `ConnectionRequest`
+    (Fase 21). **Esforço: médio · Modelo: Sonnet 5.**
 
 ### Grupo C — pesquisa (sem código)
 
-9. **Fase 36 — Pesquisa de monetização B2C.** Busca direta, não workflow multi-agente
-   (o de deep-research da Fase 23 não compensou).
-10. **Fase 37 — Sugestão de treino via IA.** Fase própria só de design (provedor, formato
+11. **Fase 38 — Pesquisa de monetização B2C.** Busca direta, não workflow multi-agente
+    (o de deep-research da Fase 23 não compensou).
+12. **Fase 39 — Sugestão de treino via IA.** Fase própria só de design (provedor, formato
     de prompt, rate limit) antes de qualquer código.
-11. **Fase 38 — Pesquisa de mídia dos exercícios.** Ferramenta/IA pra gerar mídia em massa
-    pros ~120 exercícios sem vídeo curado. Sem código até a pesquisa concluir.
+13. **Fase 40 — Pesquisa de conteúdo de mídia dos exercícios.** A Fase 32 resolve o
+    *mecanismo* (onde/como servir vídeo/GIF/YouTube); esta fase é sobre *conteúdo* —
+    ferramenta/IA pra gerar ou curar mídia em massa pros ~120 exercícios que ainda não
+    têm vídeo. Sem código até a pesquisa concluir.
 
 ### Backlog operacional herdado
 Ver Seção 7 acima (Neon, billing, Android, webhook).
