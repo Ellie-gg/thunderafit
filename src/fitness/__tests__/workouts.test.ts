@@ -136,6 +136,81 @@ describe("POST /api/workouts/:id/exercises", () => {
   });
 });
 
+describe("POST /api/workouts/:id/exercises/:exerciseId/move (Fase 28)", () => {
+  it("move o 2º exercício pra cima → troca de posição com o 1º", async () => {
+    const before = await supertest(server.server)
+      .get(`/api/workouts/${workoutId}`)
+      .set("Authorization", `Bearer ${accessToken}`);
+    const [first, second] = before.body.workout.exercises;
+
+    const r = await supertest(server.server)
+      .post(`/api/workouts/${workoutId}/exercises/${second.id}/move`)
+      .set("Authorization", `Bearer ${accessToken}`)
+      .send({ direction: "up" });
+    expect(r.status).toBe(200);
+
+    const after = await supertest(server.server)
+      .get(`/api/workouts/${workoutId}`)
+      .set("Authorization", `Bearer ${accessToken}`);
+    expect(after.body.workout.exercises[0].id).toBe(second.id);
+    expect(after.body.workout.exercises[1].id).toBe(first.id);
+    expect(after.body.workout.exercises[0].order).toBe(first.order);
+    expect(after.body.workout.exercises[1].order).toBe(second.order);
+  });
+
+  it("mover o primeiro exercício pra cima retorna 400 (já é o primeiro)", async () => {
+    const list = await supertest(server.server)
+      .get(`/api/workouts/${workoutId}`)
+      .set("Authorization", `Bearer ${accessToken}`);
+    const firstId = list.body.workout.exercises[0].id;
+
+    const r = await supertest(server.server)
+      .post(`/api/workouts/${workoutId}/exercises/${firstId}/move`)
+      .set("Authorization", `Bearer ${accessToken}`)
+      .send({ direction: "up" });
+    expect(r.status).toBe(400);
+  });
+
+  it("mover o último exercício pra baixo retorna 400 (já é o último)", async () => {
+    const list = await supertest(server.server)
+      .get(`/api/workouts/${workoutId}`)
+      .set("Authorization", `Bearer ${accessToken}`);
+    const lastId = list.body.workout.exercises[list.body.workout.exercises.length - 1].id;
+
+    const r = await supertest(server.server)
+      .post(`/api/workouts/${workoutId}/exercises/${lastId}/move`)
+      .set("Authorization", `Bearer ${accessToken}`)
+      .send({ direction: "down" });
+    expect(r.status).toBe(400);
+  });
+
+  it("direction inválida retorna 400", async () => {
+    const list = await supertest(server.server)
+      .get(`/api/workouts/${workoutId}`)
+      .set("Authorization", `Bearer ${accessToken}`);
+    const anyId = list.body.workout.exercises[0].id;
+
+    const r = await supertest(server.server)
+      .post(`/api/workouts/${workoutId}/exercises/${anyId}/move`)
+      .set("Authorization", `Bearer ${accessToken}`)
+      .send({ direction: "sideways" });
+    expect(r.status).toBe(400);
+  });
+
+  it("aluno (não dono do treino) não pode reordenar — 404 (mesma semântica de posse do addExercise)", async () => {
+    const list = await supertest(server.server)
+      .get(`/api/workouts/${workoutId}`)
+      .set("Authorization", `Bearer ${accessToken}`);
+    const anyId = list.body.workout.exercises[0].id;
+
+    const r = await supertest(server.server)
+      .post(`/api/workouts/${workoutId}/exercises/${anyId}/move`)
+      .set("Authorization", `Bearer ${alunoAccessToken}`)
+      .send({ direction: "down" });
+    expect(r.status).toBe(404);
+  });
+});
+
 describe("GET /api/workouts", () => {
   it("aluno vê apenas os treinos onde é o alunoId", async () => {
     const r = await supertest(server.server)

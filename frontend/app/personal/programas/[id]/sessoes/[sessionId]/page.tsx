@@ -12,6 +12,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { QueryError } from "@/components/query-error";
 import { AddExerciseForm } from "@/components/add-exercise-form";
+import { ExerciseReorderButtons } from "@/components/exercise-reorder-buttons";
 
 /**
  * Fase 26: tela própria por sessão — substitui o acordeão inline que existia
@@ -48,6 +49,9 @@ function SessaoContent() {
   const session = program?.workouts?.find((w) => w.id === sessionId);
   const nextKey = session ? nextKeyInSequence(scheme, session.letter) : null;
   const nextSession = nextKey ? program?.workouts?.find((w) => w.letter === nextKey) : undefined;
+  const sessionExercises = [...(session?.exercises ?? [])].sort((a, b) => a.order - b.order);
+  const invalidateProgram = () =>
+    queryClient.invalidateQueries({ queryKey: ["workout-program", programId] });
 
   return (
     <>
@@ -80,23 +84,34 @@ function SessaoContent() {
             </div>
 
             <Card className="flex flex-col gap-3">
-              {(session.exercises ?? []).length > 0 && (
-                <ul className="flex flex-col gap-1">
-                  {[...(session.exercises ?? [])]
-                    .sort((a, b) => a.order - b.order)
-                    .map((ex) => (
-                      <li key={ex.id} className="text-sm">
+              {sessionExercises.length > 0 && (
+                <ul className="flex flex-col gap-2">
+                  {sessionExercises.map((ex, i) => (
+                    <li key={ex.id} className="flex items-start gap-3 text-sm">
+                      <ExerciseReorderButtons
+                        workoutId={session.id}
+                        workoutExerciseId={ex.id}
+                        disabledUp={i === 0}
+                        disabledDown={i === sessionExercises.length - 1}
+                        onMoved={invalidateProgram}
+                      />
+                      <div>
                         <span className="font-mono-nums text-xs text-muted">#{ex.order}</span>{" "}
                         {ex.exercise?.name}{" "}
                         <span className="text-xs text-muted">
                           ({ex.sets}x {ex.repsRange})
                         </span>
-                        {ex.notes && <p className="pl-6 text-xs text-muted">Obs: {ex.notes}</p>}
-                      </li>
-                    ))}
+                        {ex.notes && <p className="text-xs text-muted">Obs: {ex.notes}</p>}
+                      </div>
+                    </li>
+                  ))}
                 </ul>
               )}
-              <AddExerciseForm workoutId={session.id} nextOrder={(session.exercises?.length ?? 0) + 1} />
+              <AddExerciseForm
+                workoutId={session.id}
+                nextOrder={sessionExercises.length + 1}
+                onAdded={invalidateProgram}
+              />
             </Card>
 
             <div className="flex gap-3">

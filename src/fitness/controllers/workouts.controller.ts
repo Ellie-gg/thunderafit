@@ -83,6 +83,30 @@ export async function addExerciseHandler(
   }
 }
 
+export async function moveExerciseHandler(
+  request: FastifyRequest<{
+    Params: { id: string; exerciseId: string };
+    Body: { direction: "up" | "down" };
+  }>,
+  reply: FastifyReply
+) {
+  const personalId = (request as any).user.sub;
+  const { id, exerciseId } = request.params;
+  const { direction } = request.body;
+
+  if (direction !== "up" && direction !== "down") {
+    return reply.status(400).send({ error: "direction deve ser 'up' ou 'down'." });
+  }
+
+  try {
+    const exercises = await workoutsService.moveExercise(id, personalId, exerciseId, direction);
+    return reply.status(200).send({ exercises });
+  } catch (err: any) {
+    const status = (err as any).statusCode ?? 500;
+    return reply.status(status).send({ error: err.message });
+  }
+}
+
 export async function getWorkoutHandler(
   request: FastifyRequest<{ Params: { id: string } }>,
   reply: FastifyReply

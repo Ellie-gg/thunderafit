@@ -60,6 +60,8 @@
 
 **Fase 27 — Feedback de Exercício Adicionado + Observações por Prescrição.** Toast de confirmação; campo `notes` (500 caracteres) por exercício prescrito. *Sem suíte de testes rodada nesta fase (pendência aberta).*
 
+**Fase 28 — Polish do Formulário de Exercício.** Bug real corrigido: o botão "posição N" ficava travado em 1 na tela de sessão (invalidava a query errada, Fase 26); popup de confirmação maior e centralizado; reordenar exercícios prescritos com setas ↑/↓ (`POST /api/workouts/:id/exercises/:exerciseId/move`, sem migration). *Modelo: Sonnet 5. Backend verde (5 testes novos; único módulo com falha é `src/admin`, timeout de ambiente pré-existente e não relacionado), 22 Jest/RTL, 21/21 Playwright (novo `exercicio-polish-flow.spec.ts`).*
+
 ## Progresso Geral das Fases
 - [x] Fase 1: Fundação Core, Auth e Estrutura Modular
 - [x] Fase 2: Vínculo Personal↔Aluno e Limite Freemium
@@ -88,3 +90,4 @@
 - [x] Fase 25: Correção do Fluxo Programa→Sessões + Ajustes de Mídia
 - [x] Fase 26: Esquema de Sessões (Letras/Dias) + Tela Dedicada por Sessão
 - [x] Fase 27: Feedback de Exercício Adicionado + Observações por Prescrição (sem suíte de testes — pendente pra próxima fase)
+- [x] Fase 28: Polish do Formulário de Exercício (bug de posição travada, popup, reordenar)

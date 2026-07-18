@@ -3,6 +3,7 @@ import {
   listWorkoutsHandler,
   createWorkoutHandler,
   addExerciseHandler,
+  moveExerciseHandler,
   getWorkoutHandler,
   completeWorkoutHandler,
 } from "../controllers/workouts.controller";
@@ -30,6 +31,14 @@ export async function workoutsRoutes(fastify: FastifyInstance) {
       preHandler: [(fastify as any).authenticate],
     },
     addExerciseHandler
+  );
+
+  fastify.post(
+    "/api/workouts/:id/exercises/:exerciseId/move",
+    {
+      preHandler: [(fastify as any).authenticate],
+    },
+    moveExerciseHandler
   );
 
   fastify.get(

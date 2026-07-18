@@ -80,6 +80,45 @@ export const workoutsService = {
     );
   },
 
+  // Fase 28: reordenar exercícios prescritos (setas ↑/↓ no frontend). Troca a
+  // `order` do exercício com a do vizinho imediato na lista já ordenada —
+  // sempre uma posição por vez, sem reindexar o treino inteiro.
+  async moveExercise(
+    workoutId: string,
+    personalId: string,
+    workoutExerciseId: string,
+    direction: "up" | "down"
+  ) {
+    const workout = await workoutsRepository.findById(workoutId);
+    if (!workout || workout.personalId !== personalId) {
+      const err = new Error("Treino não encontrado.");
+      (err as any).statusCode = 404;
+      throw err;
+    }
+
+    const exercises = await workoutsRepository.findExercisesOrdered(workoutId);
+    const index = exercises.findIndex((e) => e.id === workoutExerciseId);
+    if (index === -1) {
+      const err = new Error("Exercício não encontrado neste treino.");
+      (err as any).statusCode = 404;
+      throw err;
+    }
+
+    const neighborIndex = direction === "up" ? index - 1 : index + 1;
+    if (neighborIndex < 0 || neighborIndex >= exercises.length) {
+      const err = new Error(
+        direction === "up" ? "Já é o primeiro exercício." : "Já é o último exercício."
+      );
+      (err as any).statusCode = 400;
+      throw err;
+    }
+
+    const current = exercises[index];
+    const neighbor = exercises[neighborIndex];
+    await workoutsRepository.swapExerciseOrder(current.id, current.order, neighbor.id, neighbor.order);
+    return workoutsRepository.findExercisesOrdered(workoutId);
+  },
+
   async getWorkout(workoutId: string, userId: string, role?: string) {
     const workout = await workoutsRepository.findByIdWithExercises(workoutId);
     if (!workout) {

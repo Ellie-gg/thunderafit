@@ -178,11 +178,10 @@ cada vez — o fundador escolhe a próxima.
 
 ### Grupo A — polish imediato
 
-1. **Fase 28 — Polish do formulário de exercício.** Popup de confirmação centralizado
-   (não canto da tela) e maior; corrige o texto do botão que ficou fixo em "posição 1";
-   reordenar exercícios prescritos (setas ↑/↓ — mais simples e acessível que
-   drag-and-drop; precisa de 1 endpoint novo pra trocar `order` entre dois
-   `WorkoutExercise`). **Esforço: médio · Modelo: Sonnet 5.**
+1. **Fase 28 — Polish do formulário de exercício. ✅ CONCLUÍDA (2026-07-18).** Popup
+   centralizado/maior; bug real do botão preso em "posição 1" corrigido (a tela de
+   sessão invalidava a query errada); reordenar exercícios prescritos via
+   `POST /api/workouts/:id/exercises/:exerciseId/move`. **Modelo usado: Sonnet 5.**
 2. **Fase 29 — Tela "Treinos" consolidada.** Remove a lista plana de treinos avulsos do
    dashboard do Personal (hoje mistura sessões de programas diferentes sem hierarquia);
    a hierarquia Programa→Sessões que já existe em `/personal/programas` passa a ser a

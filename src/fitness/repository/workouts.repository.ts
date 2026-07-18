@@ -61,4 +61,19 @@ export const workoutsRepository = {
       data: { workoutId, exerciseId, sets, repsRange, restSeconds, order, notes },
     });
   },
+
+  // Fase 28: reordenar exercícios prescritos (setas ↑/↓).
+  async findExercisesOrdered(workoutId: string) {
+    return prisma.workoutExercise.findMany({
+      where: { workoutId },
+      orderBy: { order: "asc" },
+    });
+  },
+
+  async swapExerciseOrder(aId: string, aOrder: number, bId: string, bOrder: number) {
+    return prisma.$transaction([
+      prisma.workoutExercise.update({ where: { id: aId }, data: { order: bOrder } }),
+      prisma.workoutExercise.update({ where: { id: bId }, data: { order: aOrder } }),
+    ]);
+  },
 };
