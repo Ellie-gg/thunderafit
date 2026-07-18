@@ -2,8 +2,10 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { listWorkoutPrograms, createWorkoutProgram } from "@/lib/api/workouts";
+import { listRelations } from "@/lib/api/relations";
 import { ApiError } from "@/lib/api/client";
 import { AuthGuard } from "@/components/auth-guard";
 import { AppHeader } from "@/components/app-header";
@@ -14,18 +16,26 @@ import { Button } from "@/components/ui/button";
 import { QueryError } from "@/components/query-error";
 
 function ProgramasPersonalContent() {
+  const router = useRouter();
   const queryClient = useQueryClient();
   const programsQuery = useQuery({
     queryKey: ["workout-programs", "personal"],
     queryFn: () => listWorkoutPrograms(),
   });
+  // Fase 25: alvo é só um atalho de UI — pré-preenche o select de "Aplicar a
+  // um aluno" na tela do programa recém-criado. O programa em si sempre nasce
+  // como template puro (isTemplate=true, sem aluno), igual já era; aplicar
+  // continua sendo um passo explícito depois de montar as sessões.
+  const relationsQuery = useQuery({ queryKey: ["relations"], queryFn: listRelations });
   const [name, setName] = useState("");
+  const [targetAlunoId, setTargetAlunoId] = useState("");
 
   const createMutation = useMutation({
     mutationFn: () => createWorkoutProgram(name.trim()),
-    onSuccess: () => {
-      setName("");
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["workout-programs", "personal"] });
+      const query = targetAlunoId ? `?alunoId=${targetAlunoId}` : "";
+      router.push(`/personal/programas/${data.program.id}${query}`);
     },
   });
 
@@ -40,7 +50,12 @@ function ProgramasPersonalContent() {
         <h1 className="font-display text-2xl font-bold tracking-tight">Programas de Treino</h1>
 
         <Card className="flex flex-col gap-3">
-          <h2 className="font-display text-lg font-bold">Novo programa (template)</h2>
+          <h2 className="font-display text-lg font-bold">Novo programa</h2>
+          <p className="text-xs text-muted">
+            Crie o programa, adicione as sessões (A–E) e depois aplique a um aluno — o
+            mesmo programa pode ser reaplicado a outros alunos vinculados quando
+            quiser, como um template reutilizável.
+          </p>
           <form
             className="flex flex-col gap-3"
             onSubmit={(e) => {
@@ -54,9 +69,31 @@ function ProgramasPersonalContent() {
                 id="name"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                placeholder="Ex: Masculino Avançado ABCDE"
+                placeholder="Ex: Foco em Peito"
               />
             </div>
+
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="targetAluno">Aluno-alvo (opcional)</Label>
+              <select
+                id="targetAluno"
+                value={targetAlunoId}
+                onChange={(e) => setTargetAlunoId(e.target.value)}
+                className="h-11 rounded-md border border-border bg-surface px-3.5 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+              >
+                <option value="">Deixar como template puro (sem aluno)</option>
+                {relationsQuery.data?.relations.map((r) => (
+                  <option key={r.id} value={r.id}>
+                    {r.email}
+                  </option>
+                ))}
+              </select>
+              <p className="text-xs text-muted">
+                Só pré-seleciona esse aluno na hora de aplicar o programa depois de
+                montar as sessões — não cria vínculo nem aplica nada ainda.
+              </p>
+            </div>
+
             {createMutation.isError && (
               <p className="text-sm text-danger">
                 {createMutation.error instanceof ApiError
@@ -65,7 +102,7 @@ function ProgramasPersonalContent() {
               </p>
             )}
             <Button type="submit" disabled={createMutation.isPending || !name.trim()}>
-              {createMutation.isPending ? "Criando..." : "Criar template"}
+              {createMutation.isPending ? "Criando..." : "Criar programa"}
             </Button>
           </form>
         </Card>

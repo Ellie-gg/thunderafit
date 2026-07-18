@@ -154,10 +154,12 @@ function PersonalDashboardContent() {
             )}
           </div>
 
-          <Button asChild variant="secondary" disabled={alunos.length === 0}>
-            <Link href={alunos.length === 0 ? "#" : "/personal/treinos/novo"}>
-              Criar novo treino
-            </Link>
+          {/* Fase 25: aponta pro fluxo de Programas (Fase 16) — criar um treino
+              sempre passa pelo Programa pai (sessões A-E), sem exigir aluno
+              vinculado de antemão (um programa pode nascer como template
+              puro e ser aplicado depois). */}
+          <Button asChild variant="secondary">
+            <Link href="/personal/programas">Criar novo programa</Link>
           </Button>
         </Card>
 

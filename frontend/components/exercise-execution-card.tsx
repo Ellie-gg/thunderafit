@@ -70,6 +70,7 @@ export function ExerciseExecutionCard({
                 className="absolute inset-0 h-full w-full"
                 allow="autoplay; fullscreen"
                 allowFullScreen
+                loading="lazy"
               />
             ) : (
               <button
@@ -83,6 +84,8 @@ export function ExerciseExecutionCard({
                   <img
                     src={thumbnailUrl}
                     alt=""
+                    loading="lazy"
+                    decoding="async"
                     className="h-full w-full object-cover"
                   />
                 )}
