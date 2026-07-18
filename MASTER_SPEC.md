@@ -12,6 +12,19 @@
 
 ---
 
+## 0. Como trabalhamos (vigente desde 2026-07-18)
+
+- **Fases pequenas.** Uma responsabilidade por fase — nunca "faça o pivô B2C inteiro" de uma vez. Cada fase é pequena o suficiente pra revisar e testar isoladamente.
+- **Modelo + esforço sugeridos por fase.** Antes de começar uma fase nova, o executor (Claude) sugere o nível de esforço (baixo/médio/alto) e o modelo mais adequado:
+  - **Haiku 4.5** — mudanças mecânicas, baixo risco, sem decisão de arquitetura (rename, copy, remoção de código morto).
+  - **Sonnet 5** — padrão para a maioria das fases (features, bugfixes, telas novas).
+  - **Opus 4.8** — decisões de arquitetura com raio de alcance amplo, ou código sensível a segurança/dinheiro/autorização (ex: guards de authz, billing).
+- **Arquitetura pensando em reusabilidade.** Módulos e funções que não são fitness-specific (upload/compressão de imagem, geração de link de convite, rate limiter, etc.) devem ser escritos de forma portável — nomeados e organizados como se fossem servir outro projeto sem reescrita, não acoplados ao domínio por conveniência.
+- **`STATUS.md` é um log macro** (1-3 linhas por fase, sem evidência bruta) — a evidência real (testes rodados, comandos, saída) fica na conversa de execução daquela fase, não arquivada aqui.
+- **`MASTER_SPEC.md` é a fonte de verdade viva** do estado técnico e das decisões — atualizado junto com o código, nunca deixado com seções placeholder por muito tempo.
+
+---
+
 ## 1. Visão de Produto (V2 — Pivô Híbrido)
 
 O ThunderaFit deixa de ser exclusivamente B2B2C (Personal Trainer prescreve para alunos
@@ -49,7 +62,7 @@ convidados) e passa a operar em **modelo híbrido**:
 | Mobile (spike) | **Capacitor 8** scaffold no repo (`frontend/android/`): `server.url` → produção (same-origin), `CookieManager.flush()` no lifecycle. Viável com ajuste; teste de cold start pendente (`frontend/CAPACITOR_SPIKE.md`) |
 | Billing | **Stripe Checkout hospedado** (código completo e testado com cripto real; **inerte em produção** até env `STRIPE_*` — `src/billing/BILLING_SETUP.md`). Webhook com verificação de assinatura sobre raw body; entra pela URL pública do frontend (backend é IAM-restricted) |
 | Infra | **GCP via Terraform** (`infra/`): Cloud Run ×2 (backend IAM-restricted + frontend público com proxy server-side autenticado), Artifact Registry, Cloud Build (CD no push em `main`, path filters), Secret Manager, alerta de orçamento. Neon fora do Terraform de propósito |
-| Testes | 162 backend (Jest/Supertest) + 22 frontend (Jest/RTL) + 16 E2E (Playwright, backend real) |
+| Testes | 175 backend (Jest/Supertest) + 22 frontend (Jest/RTL) + 20 E2E (Playwright, backend real) — contagem da Fase 26; a Fase 27 não rodou suíte (ver Seção 7/STATUS.md) |
 
 ### 2.2 Padrão: Monolito Modular "Domain-First"
 
@@ -92,11 +105,25 @@ confiados sob `role === ADMIN` (visão ampliada, leitura). Roles: `PERSONAL`, `A
 ## 3. Decisão Arquitetural do Pivô: treinos do Personal vs treinos do Aluno Solo
 
 > Resultado da análise adversarial da Fase 23 (workflow multi-agente sobre o código real).
-> **[Seção preenchida ao final da análise — ver artifact do relatório para a versão longa.]**
+> **Status: DECIDIDO, NÃO IMPLEMENTADO** — ver Fase 31 no roadmap (Seção 8). O workflow
+> completou a fase de Draft e só 1 de 3 críticas adversariais — é uma recomendação bem
+> fundamentada sobre o schema real, mas não foi stress-testada por completo antes de
+> implementar.
 
-- **Recomendação:** _(preenchida na conclusão da Fase 23)_
-- **Salvaguardas obrigatórias:** _(idem)_
-- **Esboço de migration:** _(idem)_
+- **Recomendação: schema UNIFICADO** (não tabelas separadas para treino do Personal vs.
+  treino do Aluno Solo). `WorkoutProgram.personalId` já é nullable desde a Fase 16 —
+  a mudança é aditiva: um novo enum `origin` (`PERSONAL | SELF | MARKETPLACE`) na
+  `WorkoutProgram`, sem duplicar o domínio `/src/fitness`.
+- **Salvaguardas obrigatórias (a implementar junto, não depois):**
+  1. Toda listagem usada pelo Personal deve filtrar `origin: 'PERSONAL'` explicitamente
+     (nunca "todos os programas do aluno") — recomendado um único helper de repository
+     (ex: `findPersonalPrescriptions()`) que já embute esse filtro, em vez de cada
+     endpoint escrever a where clause à mão.
+  2. Guards que hoje comparam `workout.personalId !== userId` para negar acesso
+     precisam tratar `personalId === null` como "não é do Personal, é do próprio aluno
+     dono" — sem isso, o aluno solo cai num caminho de código pensado só pro B2B2C.
+- **Esboço de migration:** aditiva — novo enum + coluna `origin` em `WorkoutProgram`
+  com default `PERSONAL` (backfill automático dos registros existentes).
 
 ---
 
@@ -104,30 +131,33 @@ confiados sob `role === ADMIN` (visão ampliada, leitura). Roles: `PERSONAL`, `A
 
 - **B2B (Personal):** mantém o implementado — Freemium 3 alunos; pago R$ 9,90/mês ou
   R$ 95,04/ano (20% off), 50 alunos. Stripe Checkout (ativação pendente de chaves).
-- **B2C (Aluno Solo):** _(matriz recomendada preenchida na conclusão da Fase 23, com base
-  no benchmarking Gym WP/Hevy/Strong/Fitbod — ver artifact)_
+- **B2C (Aluno Solo):** **pendência de pesquisa real** — o workflow de deep-research da
+  Fase 23 (38 agentes em paralelo) não produziu nenhum resultado aproveitável (`started`
+  sem `result`). O benchmarking usado até aqui (Gym WP como referência principal) veio
+  de busca direta em conversa, não de pesquisa formal. Sem matriz de preço fechada —
+  ver Fase 35 no roadmap.
 - **Regra de lojas (anti-steering):** assinatura vendida na **web**; o app mobile apenas
-  consulta o status sincronizado — nunca linka checkout externo de dentro do app.
-  _(Detalhe atualizado com a pesquisa 2024–26 na conclusão da Fase 23.)_
+  consulta o status sincronizado — nunca linka checkout externo de dentro do app. Regra
+  já vigente (não muda com o pivô); pesquisa 2024-26 completa sobre o estado atual das
+  regras das lojas segue pendente (mesma causa acima).
 
 ---
 
-## 5. Roadmap Proposto (pós-Fase 23)
+## 5. Roadmap Proposto
 
-_(Sequência preenchida na conclusão da Fase 23; rascunho: F24 fundação `origin` +
-fluxo Aluno Solo mínimo → F25 retenção B2C (PRs/volume) → F26 marketplace de
-programas → F27 billing B2C → F28 app Android.)_
+Ver **Seção 8 (Roadmap Priorizado)** — lista viva, atualizada a cada fase concluída/nova.
 
 ---
 
-## 6. Governança: STATUS.md (regras vigentes, preservadas)
+## 6. Governança: STATUS.md (regras vigentes)
 
-1. Ler o arquivo inteiro antes de editar; entradas identificam o **modelo real** executor.
+1. Ler o arquivo inteiro antes de editar; entradas identificam o **modelo real** executor
+   quando relevante.
 2. `## Progresso Geral das Fases` existe **uma única vez** — reescrita completa, nunca append duplicado.
-3. **Evidência bruta obrigatória**: nenhuma entrada é aceita sem a saída real dos
-   comandos/testes; relato sem evidência = não validado.
-4. Desde a Fase 15 o STATUS é mantido em formato resumido por fase (decisão do fundador);
-   a evidência bruta é exigida na conversa de execução, não mais arquivada integralmente no arquivo.
+3. **Formato macro (desde 2026-07-18, Fase 0):** 1-3 linhas por fase, sem evidência bruta
+   arquivada no arquivo. Testes/comandos ainda precisam ser rodados de verdade (a menos
+   que o fundador explicitamente dispense, como na Fase 27) — a evidência fica registrada
+   na conversa de execução, não no arquivo.
 
 ## 7. Pendências operacionais conhecidas (2026-07-17)
 
@@ -138,3 +168,57 @@ programas → F27 billing B2C → F28 app Android.)_
 3. **Spike Android**: rodar o teste de cold start em máquina com Android Studio.
 4. Melhorias documentadas não aplicadas: idempotência por `event.id` no webhook,
    rate limit no webhook público, `AdminAccessLog` para progress.
+
+---
+
+## 8. Roadmap Priorizado (2026-07-18)
+
+Cada item já vem com esforço e modelo sugeridos (ver regra na Seção 0). Uma fase de
+cada vez — o fundador escolhe a próxima.
+
+### Grupo A — polish imediato
+
+1. **Fase 28 — Polish do formulário de exercício.** Popup de confirmação centralizado
+   (não canto da tela) e maior; corrige o texto do botão que ficou fixo em "posição 1";
+   reordenar exercícios prescritos (setas ↑/↓ — mais simples e acessível que
+   drag-and-drop; precisa de 1 endpoint novo pra trocar `order` entre dois
+   `WorkoutExercise`). **Esforço: médio · Modelo: Sonnet 5.**
+2. **Fase 29 — Tela "Treinos" consolidada.** Remove a lista plana de treinos avulsos do
+   dashboard do Personal (hoje mistura sessões de programas diferentes sem hierarquia);
+   a hierarquia Programa→Sessões que já existe em `/personal/programas` passa a ser a
+   única superfície de "Treinos" (rename de rótulos, sem duplicar tela/lógica).
+   **Esforço: baixo · Modelo: Sonnet 5** (ou Haiku 4.5 se for só remover+renomear, sem
+   lógica nova).
+3. **Fase 30 — Foto de perfil (aluno e Personal).** Avatar circular pequeno; redimensionar
+   no cliente para no máx. ~128px/WebP antes do upload; armazenar em bucket GCS (infra já
+   é GCP+Terraform) em vez de bytes no Postgres. **Esforço: médio-alto (1ª feature com
+   storage de arquivo) · Modelo: Sonnet 5**, com checkpoint de arquitetura (bucket vs.
+   banco) decidido na hora.
+
+### Grupo B — fundação do pivô B2C
+
+4. **Fase 31 — `WorkoutProgram.origin` + guards.** Migration aditiva do enum (ver Seção
+   3), guards tratando `personalId === null`, filtro explícito nas listagens do Personal.
+   **Esforço: alto (superfície de autorização) · Modelo: Opus 4.8.**
+5. **Fase 32 — Fluxo de criação de treino para Aluno Solo.** UI/endpoint equivalente ao
+   do Personal, `origin: SELF`. **Esforço: médio · Modelo: Sonnet 5.**
+6. **Fase 33 — Dashboard do aluno com 2 blocos.** "Prescrito pelo seu Personal" + "Meus
+   treinos"; card de convite copiável quando não há Personal vinculado. **Esforço: médio
+   · Modelo: Sonnet 5.**
+7. **Fase 34 — Convite aluno→Personal.** Inverte quem inicia o `ConnectionRequest`
+   (Fase 21). **Esforço: médio · Modelo: Sonnet 5.**
+
+### Grupo C — pesquisa (sem código)
+
+8. **Fase 35 — Pesquisa de monetização B2C.** Busca direta, não workflow multi-agente
+   (o de deep-research da Fase 23 não compensou).
+9. **Fase 36 — Sugestão de treino via IA.** Fase própria só de design (provedor, formato
+   de prompt, rate limit) antes de qualquer código.
+10. **Fase 37 — Pesquisa de mídia dos exercícios.** Ferramenta/IA pra gerar mídia em massa
+    pros ~120 exercícios sem vídeo curado. Sem código até a pesquisa concluir.
+
+### Backlog operacional herdado
+Ver Seção 7 acima (Neon, billing, Android, webhook).
+
+### Adiado de propósito (decisão de produto, não bloqueio)
+Login Google · camadas anti-abuso de conta · web pública vs. só app nas lojas.
