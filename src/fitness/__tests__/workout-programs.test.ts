@@ -369,3 +369,109 @@ describe("Fase 26 — esquema de sessão WEEKDAY (dias da semana)", () => {
     expect(r.body.program.workouts).toHaveLength(7);
   });
 });
+
+describe("Fase 31 — excluir programa (template ou instância aplicada)", () => {
+  let deletableTemplateId: string;
+  let deletableInstanceId: string;
+  let instanceSessionId: string;
+  let instanceWorkoutExerciseId: string;
+
+  it("cria um template com 1 sessão + 1 exercício, aplica a um aluno, e o aluno registra uma série real", async () => {
+    const tpl = await supertest(server.server)
+      .post("/api/workout-programs")
+      .set("Authorization", `Bearer ${personalToken}`)
+      .send({ name: "Programa Descartável" });
+    deletableTemplateId = tpl.body.program.id;
+
+    const session = await supertest(server.server)
+      .post(`/api/workout-programs/${deletableTemplateId}/sessions`)
+      .set("Authorization", `Bearer ${personalToken}`)
+      .send({ letter: "A" });
+    await supertest(server.server)
+      .post(`/api/workouts/${session.body.session.id}/exercises`)
+      .set("Authorization", `Bearer ${personalToken}`)
+      .send({ exerciseId: exerciseIds[0], sets: 3, repsRange: "8-12", restSeconds: 60, order: 1 });
+
+    const applied = await supertest(server.server)
+      .post(`/api/workout-programs/${deletableTemplateId}/apply`)
+      .set("Authorization", `Bearer ${personalToken}`)
+      .send({ alunoId: aluno1Id });
+    deletableInstanceId = applied.body.program.id;
+    instanceSessionId = applied.body.program.workouts[0].id;
+    instanceWorkoutExerciseId = applied.body.program.workouts[0].exercises[0].id;
+
+    const log = await supertest(server.server)
+      .post(`/api/workouts/${instanceSessionId}/exercises/${instanceWorkoutExerciseId}/logs`)
+      .set("Authorization", `Bearer ${aluno1Token}`)
+      .send({ setNumber: 1, repsDone: 10, weightKg: 50 });
+    expect(log.status).toBe(201);
+  });
+
+  it("outro Personal não pode excluir (403), e o programa continua existindo", async () => {
+    const outro = await supertest(server.server)
+      .post("/api/auth/register")
+      .send({ email: "wp_outro_personal@thunderafit.test", password: pw, role: "PERSONAL" });
+    const outroToken = (
+      await supertest(server.server)
+        .post("/api/auth/login")
+        .send({ email: "wp_outro_personal@thunderafit.test", password: pw })
+    ).body.accessToken;
+
+    const r = await supertest(server.server)
+      .delete(`/api/workout-programs/${deletableTemplateId}`)
+      .set("Authorization", `Bearer ${outroToken}`);
+    expect(r.status).toBe(403);
+
+    const stillThere = await prisma.workoutProgram.findUnique({ where: { id: deletableTemplateId } });
+    expect(stillThere).not.toBeNull();
+    await prisma.user.deleteMany({ where: { email: "wp_outro_personal@thunderafit.test" } });
+  });
+
+  it("id inexistente retorna 404", async () => {
+    const r = await supertest(server.server)
+      .delete("/api/workout-programs/00000000-0000-0000-0000-000000000000")
+      .set("Authorization", `Bearer ${personalToken}`);
+    expect(r.status).toBe(404);
+  });
+
+  it("dono exclui o TEMPLATE → 204, sessão e exercício somem, mas a INSTÂNCIA aplicada (cópia independente) continua intacta", async () => {
+    const r = await supertest(server.server)
+      .delete(`/api/workout-programs/${deletableTemplateId}`)
+      .set("Authorization", `Bearer ${personalToken}`);
+    expect(r.status).toBe(204);
+
+    expect(await prisma.workoutProgram.findUnique({ where: { id: deletableTemplateId } })).toBeNull();
+
+    // A instância aplicada é uma CÓPIA (Fase 16) — apagar o template de origem
+    // não deve afetar a cópia que o aluno já recebeu.
+    const instance = await prisma.workoutProgram.findUnique({
+      where: { id: deletableInstanceId },
+      include: { workouts: { include: { exercises: { include: { setLogs: true } } } } },
+    });
+    expect(instance).not.toBeNull();
+    expect(instance!.workouts).toHaveLength(1);
+    expect(instance!.workouts[0].exercises[0].setLogs).toHaveLength(1);
+  });
+
+  it("dono exclui a INSTÂNCIA aplicada → 204, e a sessão/exercício/SetLog real do aluno somem junto", async () => {
+    const r = await supertest(server.server)
+      .delete(`/api/workout-programs/${deletableInstanceId}`)
+      .set("Authorization", `Bearer ${personalToken}`);
+    expect(r.status).toBe(204);
+
+    expect(await prisma.workoutProgram.findUnique({ where: { id: deletableInstanceId } })).toBeNull();
+    expect(await prisma.workout.findUnique({ where: { id: instanceSessionId } })).toBeNull();
+    expect(
+      await prisma.workoutExercise.findUnique({ where: { id: instanceWorkoutExerciseId } })
+    ).toBeNull();
+    expect(
+      await prisma.setLog.findMany({ where: { workoutExerciseId: instanceWorkoutExerciseId } })
+    ).toHaveLength(0);
+
+    // Não afetou outros programas do mesmo Personal (ex: o template WEEKDAY
+    // criado no bloco de testes acima, "Programa Semanal").
+    expect(
+      await prisma.workoutProgram.findFirst({ where: { personalId, name: "Programa Semanal" } })
+    ).not.toBeNull();
+  });
+});

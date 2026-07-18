@@ -105,7 +105,7 @@ confiados sob `role === ADMIN` (visão ampliada, leitura). Roles: `PERSONAL`, `A
 ## 3. Decisão Arquitetural do Pivô: treinos do Personal vs treinos do Aluno Solo
 
 > Resultado da análise adversarial da Fase 23 (workflow multi-agente sobre o código real).
-> **Status: DECIDIDO, NÃO IMPLEMENTADO** — ver Fase 31 no roadmap (Seção 8). O workflow
+> **Status: DECIDIDO, NÃO IMPLEMENTADO** — ver Fase 32 no roadmap (Seção 8). O workflow
 > completou a fase de Draft e só 1 de 3 críticas adversariais — é uma recomendação bem
 > fundamentada sobre o schema real, mas não foi stress-testada por completo antes de
 > implementar.
@@ -135,7 +135,7 @@ confiados sob `role === ADMIN` (visão ampliada, leitura). Roles: `PERSONAL`, `A
   Fase 23 (38 agentes em paralelo) não produziu nenhum resultado aproveitável (`started`
   sem `result`). O benchmarking usado até aqui (Gym WP como referência principal) veio
   de busca direta em conversa, não de pesquisa formal. Sem matriz de preço fechada —
-  ver Fase 35 no roadmap.
+  ver Fase 36 no roadmap.
 - **Regra de lojas (anti-steering):** assinatura vendida na **web**; o app mobile apenas
   consulta o status sincronizado — nunca linka checkout externo de dentro do app. Regra
   já vigente (não muda com o pivô); pesquisa 2024-26 completa sobre o estado atual das
@@ -189,7 +189,7 @@ cada vez — o fundador escolhe a próxima.
    um ramo PERSONAL/NUTRICIONISTA com checagem de `ClientRelation` (antes rejeitava com
    403 incondicional); `GET /api/workout-programs` ganhou filtro `?alunoId=`. A lista
    plana de "Treinos prescritos" no dashboard **não foi removida** nesta fase (fora do
-   escopo do plano executado — fica como possível ajuste futuro). **Modelo usado: Sonnet 5.**
+   escopo do plano executado — corrigido na Fase 31 abaixo). **Modelo usado: Sonnet 5.**
 3. **Fase 30 — Foto de perfil (aluno e Personal). ✅ CONCLUÍDA (2026-07-18).** Avatar
    circular no `AppHeader`; redimensionamento/crop quadrado no cliente (canvas, 256px,
    WebP/JPEG ~0.82) antes do upload. **Decisão de arquitetura tomada em execução: banco,
@@ -198,27 +198,43 @@ cada vez — o fundador escolhe a próxima.
    KB, então `User.avatarUrl String?` (data URI) é suficiente, sem custo de storage
    externo nem complexidade de upload multipart. Backend valida formato+tamanho de novo
    (nunca confia só no cliente). **Modelo usado: Sonnet 5.**
+4. **Fase 31 — Consolidação: Dashboard Agrupado + Exclusão de Programas/Templates +
+   Correção do Avatar. ✅ CONCLUÍDA (2026-07-18).** Três bugs reais relatados com
+   screenshots do celular, corrigidos: (a) "Treinos prescritos" no dashboard do Personal
+   passou a agrupar por `WorkoutProgram` (nome do programa como cabeçalho, sessões
+   A-E/dias da semana aninhadas dentro), reaproveitando `listWorkoutPrograms()` já usado
+   no hub do aluno; (b) `DELETE /api/workout-programs/:id` novo — apaga template OU
+   instância aplicada (mesma checagem de posse de `apply`/`addSession`: 404 se não existe,
+   403 se não é do Personal autenticado), cascata manual em transação
+   (`setLog → workoutExercise → workout → workoutProgram`, já que nenhuma FK do schema
+   tem `onDelete: Cascade`); componente `DeleteProgramButton` reutilizável (confirmação
+   inline "Sim, excluir"/"Cancelar", sem modal) usado em `/personal/programas`
+   (templates e aplicados), no hub do aluno e no novo card agrupado do dashboard; (c)
+   causa raiz do avatar "não funcionava": o link "Perfil" do `AppHeader` só aparecia a
+   partir do breakpoint `sm`, invisível no mobile — o próprio ícone circular virou um
+   botão que abre um popover com `AvatarUpload`, alcançável em qualquer largura de tela.
+   **Modelo usado: Sonnet 5.**
 
 ### Grupo B — fundação do pivô B2C
 
-4. **Fase 31 — `WorkoutProgram.origin` + guards.** Migration aditiva do enum (ver Seção
+5. **Fase 32 — `WorkoutProgram.origin` + guards.** Migration aditiva do enum (ver Seção
    3), guards tratando `personalId === null`, filtro explícito nas listagens do Personal.
    **Esforço: alto (superfície de autorização) · Modelo: Opus 4.8.**
-5. **Fase 32 — Fluxo de criação de treino para Aluno Solo.** UI/endpoint equivalente ao
+6. **Fase 33 — Fluxo de criação de treino para Aluno Solo.** UI/endpoint equivalente ao
    do Personal, `origin: SELF`. **Esforço: médio · Modelo: Sonnet 5.**
-6. **Fase 33 — Dashboard do aluno com 2 blocos.** "Prescrito pelo seu Personal" + "Meus
+7. **Fase 34 — Dashboard do aluno com 2 blocos.** "Prescrito pelo seu Personal" + "Meus
    treinos"; card de convite copiável quando não há Personal vinculado. **Esforço: médio
    · Modelo: Sonnet 5.**
-7. **Fase 34 — Convite aluno→Personal.** Inverte quem inicia o `ConnectionRequest`
+8. **Fase 35 — Convite aluno→Personal.** Inverte quem inicia o `ConnectionRequest`
    (Fase 21). **Esforço: médio · Modelo: Sonnet 5.**
 
 ### Grupo C — pesquisa (sem código)
 
-8. **Fase 35 — Pesquisa de monetização B2C.** Busca direta, não workflow multi-agente
+9. **Fase 36 — Pesquisa de monetização B2C.** Busca direta, não workflow multi-agente
    (o de deep-research da Fase 23 não compensou).
-9. **Fase 36 — Sugestão de treino via IA.** Fase própria só de design (provedor, formato
-   de prompt, rate limit) antes de qualquer código.
-10. **Fase 37 — Pesquisa de mídia dos exercícios.** Ferramenta/IA pra gerar mídia em massa
+10. **Fase 37 — Sugestão de treino via IA.** Fase própria só de design (provedor, formato
+    de prompt, rate limit) antes de qualquer código.
+11. **Fase 38 — Pesquisa de mídia dos exercícios.** Ferramenta/IA pra gerar mídia em massa
     pros ~120 exercícios sem vídeo curado. Sem código até a pesquisa concluir.
 
 ### Backlog operacional herdado

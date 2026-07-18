@@ -96,3 +96,12 @@ export function applyProgram(programId: string, alunoId: string) {
     body: { alunoId },
   });
 }
+
+// Fase 31: apaga um programa (template ou instância aplicada) — sem volta,
+// por isso todo lugar que usa isto exige confirmação antes de chamar
+// (ver DeleteProgramButton).
+export function deleteWorkoutProgram(programId: string) {
+  return apiFetch<Record<string, never>>(`/api/workout-programs/${programId}`, {
+    method: "DELETE",
+  });
+}

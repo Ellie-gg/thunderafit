@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/lib/store/auth-store";
@@ -8,6 +9,7 @@ import { dashboardPathForRole } from "@/lib/auth/redirect";
 import { Button } from "@/components/ui/button";
 import { NotificationBell } from "@/components/notification-bell";
 import { UserAvatar } from "@/components/user-avatar";
+import { AvatarUpload } from "@/components/avatar-upload";
 import type { Role } from "@/lib/types";
 
 const ROLE_ACCENT_VAR: Record<Role, string> = {
@@ -20,6 +22,10 @@ const ROLE_ACCENT_VAR: Record<Role, string> = {
 export function AppHeader() {
   const router = useRouter();
   const { user, clearSession } = useAuthStore();
+  // Fase 31: o link "Perfil" só aparecia a partir do breakpoint sm — no
+  // celular não havia NENHUM jeito de chegar em /perfil pra trocar a foto.
+  // O ícone circular vira o ponto de entrada em qualquer largura de tela.
+  const [avatarMenuOpen, setAvatarMenuOpen] = useState(false);
 
   return (
     <header
@@ -163,7 +169,36 @@ export function AppHeader() {
           </>
         )}
         {user && <NotificationBell />}
-        {user && <UserAvatar email={user.email} avatarUrl={user.avatarUrl} size={28} />}
+        {user && (
+          <div className="relative">
+            <button
+              type="button"
+              aria-label="Foto de perfil"
+              aria-expanded={avatarMenuOpen}
+              onClick={() => setAvatarMenuOpen((v) => !v)}
+              className="rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+            >
+              <UserAvatar email={user.email} avatarUrl={user.avatarUrl} size={28} />
+            </button>
+
+            {avatarMenuOpen && (
+              <>
+                {/* Backdrop: fecha ao clicar fora. Fica ATRÁS do botão do
+                    avatar (que está num elemento posterior no DOM/mesmo
+                    z-index padrão), então clicar no próprio botão não conta
+                    como "fora" — o onClick do botão já cuida de alternar. */}
+                <div
+                  className="fixed inset-0 z-40"
+                  onClick={() => setAvatarMenuOpen(false)}
+                  aria-hidden
+                />
+                <div className="absolute right-0 top-full z-50 mt-2 w-72 rounded-md border border-border bg-surface p-3 shadow-lg">
+                  <AvatarUpload />
+                </div>
+              </>
+            )}
+          </div>
+        )}
         <span className="hidden text-sm text-muted sm:inline">{user?.email}</span>
         <Button
           variant="ghost"

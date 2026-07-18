@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { listRelations } from "@/lib/api/relations";
 import { listWorkoutPrograms } from "@/lib/api/workouts";
 import { listLoggedExercises, getLoadHistory, getFrequency } from "@/lib/api/progress";
@@ -13,6 +13,7 @@ import { Card } from "@/components/ui/card";
 import { QueryError } from "@/components/query-error";
 import { LoadHistoryChart } from "@/components/load-history-chart";
 import { FrequencyChart } from "@/components/frequency-chart";
+import { DeleteProgramButton } from "@/components/delete-program-button";
 
 /**
  * Fase 29 — hub de administração do aluno: o Personal cria um programa e
@@ -26,6 +27,7 @@ import { FrequencyChart } from "@/components/frequency-chart";
 function AlunoHubContent() {
   const params = useParams<{ alunoId: string }>();
   const alunoId = params.alunoId;
+  const queryClient = useQueryClient();
 
   const relationsQuery = useQuery({ queryKey: ["relations"], queryFn: listRelations });
   const aluno = relationsQuery.data?.relations.find((r) => r.id === alunoId);
@@ -110,7 +112,18 @@ function AlunoHubContent() {
                         <span className="font-semibold">{p.name}</span>
                         <p className="text-xs text-muted">{p.workouts?.length ?? 0} sessão(ões)</p>
                       </div>
-                      <span className="text-sm text-muted">Abrir →</span>
+                      <div className="flex items-center gap-2">
+                        <DeleteProgramButton
+                          programId={p.id}
+                          isTemplate={false}
+                          onDeleted={() =>
+                            queryClient.invalidateQueries({
+                              queryKey: ["workout-programs", "personal", "aluno", alunoId],
+                            })
+                          }
+                        />
+                        <span className="text-sm text-muted">Abrir →</span>
+                      </div>
                     </div>
                   </Link>
                 ))}

@@ -83,3 +83,35 @@ test("Personal sobe foto de perfil em /personal/perfil", async ({ page }) => {
   });
   await expect(page.locator("img").first()).toBeVisible({ timeout: 15000 });
 });
+
+test("Fase 31 — sobe foto direto pelo ícone do header, sem passar por /perfil", async ({ page }) => {
+  const stamp = Date.now();
+  const email = `e2e_avatar_header_${stamp}@thunderafit.test`;
+  const password = "SenhaSegura@123";
+  await backendJson("/api/auth/register", { email, password, role: "ALUNO" });
+
+  await loginViaUI(page, email, password);
+  await expect(page).toHaveURL(/\/dashboard$/);
+
+  // O popover começa fechado — o upload não aparece até clicar no ícone.
+  await expect(page.locator('input[type="file"]')).toHaveCount(0);
+
+  await page.getByRole("button", { name: "Foto de perfil" }).click();
+  await expect(page.locator('input[type="file"]')).toHaveCount(1);
+
+  await page.locator('input[type="file"]').setInputFiles({
+    name: "avatar.png",
+    mimeType: "image/png",
+    buffer: Buffer.from(TINY_PNG_BASE64, "base64"),
+  });
+
+  // A <img> real aparece dentro do próprio popover (UserAvatar do
+  // AvatarUpload) — e também no botão do header por trás dele.
+  await expect(page.locator("img").first()).toBeVisible({ timeout: 15000 });
+
+  // Clicar fora (no backdrop) fecha o popover; a foto persiste no botão do
+  // header mesmo com o popover fechado.
+  await page.mouse.click(10, 10);
+  await expect(page.locator('input[type="file"]')).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Foto de perfil" }).locator("img")).toBeVisible();
+});

@@ -5,6 +5,7 @@ import {
   applyProgramHandler,
   listProgramsHandler,
   getProgramHandler,
+  deleteProgramHandler,
 } from "../controllers/workout-programs.controller";
 
 export async function workoutProgramsRoutes(fastify: FastifyInstance) {
@@ -15,4 +16,5 @@ export async function workoutProgramsRoutes(fastify: FastifyInstance) {
   fastify.get("/api/workout-programs/:id", auth, getProgramHandler);
   fastify.post("/api/workout-programs/:id/sessions", auth, addSessionHandler);
   fastify.post("/api/workout-programs/:id/apply", auth, applyProgramHandler);
+  fastify.delete("/api/workout-programs/:id", auth, deleteProgramHandler);
 }
