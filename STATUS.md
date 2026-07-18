@@ -64,6 +64,8 @@
 
 **Fase 28.1 — Hotfix pós-relato.** Investigação do "trava ao mover a mesma seta" não reproduziu corrupção de dados nem freeze (testado via API concorrente e E2E com cliques rápidos repetidos) — mesmo assim, endurecido: `moveExercise` agora lê+troca dentro de uma única transação (fechava uma janela de corrida teórica) e erros deixaram de ser silenciosos no botão. Investigação do "programa novo não aparece" confirmou que os dados estão corretos em toda API testada — o gap real era `/personal/programas` não mostrar qual aluno cada instância aplicada pertence; corrigido (mostra o e-mail do aluno em cada card). *Modelo: Sonnet 5.*
 
+**Fase 29 — Hub de Administração do Aluno.** Nova tela `/personal/alunos/[alunoId]` reunindo programas aplicados, evolução (carga/frequência) e link pra anamnese — antes o Personal criava um programa e não tinha pra onde voltar. Pré-requisito corrigido: `/api/progress/*` rejeitava PERSONAL com 403; ganhou um ramo com checagem de `ClientRelation` (mesmo padrão do domínio anamnesis), fechando o IDOR que existiria se fosse liberado sem checar vínculo. `GET /api/workout-programs` ganhou filtro opcional `?alunoId=`, sempre ANDado com o `personalId` do JWT. Dashboard do Personal: link "Anamnese" virou "Gerenciar →" pro hub. *Modelo: Sonnet 5. 184/184 backend (7 testes novos), 22 Jest/RTL, 23/23 Playwright (novo `hub-aluno-flow.spec.ts`, incluindo o bloqueio a aluno não vinculado).*
+
 ## Progresso Geral das Fases
 - [x] Fase 1: Fundação Core, Auth e Estrutura Modular
 - [x] Fase 2: Vínculo Personal↔Aluno e Limite Freemium
@@ -93,3 +95,4 @@
 - [x] Fase 26: Esquema de Sessões (Letras/Dias) + Tela Dedicada por Sessão
 - [x] Fase 27: Feedback de Exercício Adicionado + Observações por Prescrição (sem suíte de testes — pendente pra próxima fase)
 - [x] Fase 28: Polish do Formulário de Exercício (bug de posição travada, popup, reordenar)
+- [x] Fase 29: Hub de Administração do Aluno (programas + evolução + anamnese)

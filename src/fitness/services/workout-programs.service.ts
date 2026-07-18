@@ -79,8 +79,8 @@ export const workoutProgramsService = {
     return copy;
   },
 
-  async listPrograms(personalId: string, type?: "template" | "instance") {
-    return workoutProgramsRepository.listByPersonal(personalId, type);
+  async listPrograms(personalId: string, type?: "template" | "instance", alunoId?: string) {
+    return workoutProgramsRepository.listByPersonal(personalId, type, alunoId);
   },
 
   async listForAluno(alunoId: string) {

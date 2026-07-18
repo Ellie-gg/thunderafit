@@ -103,11 +103,14 @@ function PersonalDashboardContent() {
                   <span className="text-xs text-muted">
                     desde {new Date(a.createdAt).toLocaleDateString("pt-BR")}
                   </span>
+                  {/* Fase 29: substitui o link direto de Anamnese — agora é
+                      uma seção dentro do hub do aluno, junto com programas e
+                      evolução, em vez de um atalho solto. */}
                   <Link
-                    href={`/personal/alunos/${a.id}/anamnese`}
+                    href={`/personal/alunos/${a.id}`}
                     className="text-xs font-semibold text-accent-secondary hover:underline"
                   >
-                    Anamnese
+                    Gerenciar →
                   </Link>
                 </div>
               </div>

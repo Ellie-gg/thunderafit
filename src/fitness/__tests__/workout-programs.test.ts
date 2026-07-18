@@ -203,6 +203,28 @@ describe("Fase 16 BLOCO 2 — template, sessões e aplicação (cópia)", () => 
     expect(r.body.programs.every((p: any) => p.isTemplate === true)).toBe(true);
     expect(r.body.programs.some((p: any) => p.id === templateId)).toBe(true);
   });
+
+  // Fase 29 (hub do aluno): filtro opcional ?alunoId= — só as instâncias
+  // aplicadas àquele aluno, nunca as de outro aluno (mesmo Personal) nem
+  // templates (alunoId=null nunca bate com o filtro).
+  it("GET /api/workout-programs?alunoId= retorna só as instâncias daquele aluno, nunca de outro", async () => {
+    const r = await supertest(server.server)
+      .get(`/api/workout-programs?alunoId=${aluno1Id}`)
+      .set("Authorization", `Bearer ${personalToken}`);
+    expect(r.status).toBe(200);
+    expect(r.body.programs.length).toBeGreaterThanOrEqual(1);
+    expect(r.body.programs.every((p: any) => p.alunoId === aluno1Id)).toBe(true);
+    expect(r.body.programs.some((p: any) => p.alunoId === aluno2Id)).toBe(false);
+    expect(r.body.programs.some((p: any) => p.isTemplate)).toBe(false);
+  });
+
+  it("GET /api/workout-programs?type=instance&alunoId= compõe os dois filtros", async () => {
+    const r = await supertest(server.server)
+      .get(`/api/workout-programs?type=instance&alunoId=${aluno1Id}`)
+      .set("Authorization", `Bearer ${personalToken}`);
+    expect(r.status).toBe(200);
+    expect(r.body.programs.every((p: any) => p.alunoId === aluno1Id && p.isTemplate === false)).toBe(true);
+  });
 });
 
 describe("Fase 16 BLOCO 3 — concluir sessão + suggestedNext ponta a ponta", () => {

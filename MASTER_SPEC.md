@@ -182,12 +182,14 @@ cada vez — o fundador escolhe a próxima.
    centralizado/maior; bug real do botão preso em "posição 1" corrigido (a tela de
    sessão invalidava a query errada); reordenar exercícios prescritos via
    `POST /api/workouts/:id/exercises/:exerciseId/move`. **Modelo usado: Sonnet 5.**
-2. **Fase 29 — Tela "Treinos" consolidada.** Remove a lista plana de treinos avulsos do
-   dashboard do Personal (hoje mistura sessões de programas diferentes sem hierarquia);
-   a hierarquia Programa→Sessões que já existe em `/personal/programas` passa a ser a
-   única superfície de "Treinos" (rename de rótulos, sem duplicar tela/lógica).
-   **Esforço: baixo · Modelo: Sonnet 5** (ou Haiku 4.5 se for só remover+renomear, sem
-   lógica nova).
+2. **Fase 29 — Tela "Treinos" consolidada. ✅ CONCLUÍDA (2026-07-18), redefinida em execução
+   como "Hub de Administração do Aluno".** Nova tela `/personal/alunos/[alunoId]` reúne
+   programas aplicados, evolução (carga/frequência, reaproveitando os componentes de
+   `/evolucao`) e link pra anamnese. Pré-requisito corrigido: `/api/progress/*` ganhou
+   um ramo PERSONAL/NUTRICIONISTA com checagem de `ClientRelation` (antes rejeitava com
+   403 incondicional); `GET /api/workout-programs` ganhou filtro `?alunoId=`. A lista
+   plana de "Treinos prescritos" no dashboard **não foi removida** nesta fase (fora do
+   escopo do plano executado — fica como possível ajuste futuro). **Modelo usado: Sonnet 5.**
 3. **Fase 30 — Foto de perfil (aluno e Personal).** Avatar circular pequeno; redimensionar
    no cliente para no máx. ~128px/WebP antes do upload; armazenar em bucket GCS (infra já
    é GCP+Terraform) em vez de bytes no Postgres. **Esforço: médio-alto (1ª feature com

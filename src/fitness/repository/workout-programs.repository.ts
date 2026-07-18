@@ -79,11 +79,26 @@ export const workoutProgramsRepository = {
    *  - "template": só templates (isTemplate=true)
    *  - "instance": só instâncias aplicadas a alunos (isTemplate=false)
    *  - undefined: todos
+   * `alunoId` (Fase 29, opcional): restringe às instâncias aplicadas a UM
+   * aluno específico — sempre ANDado com `personalId` (nunca substitui), já
+   * que `personalId` vem do JWT autenticado, não de input do cliente; um
+   * template (alunoId=null) nunca bate com este filtro, então passar
+   * `alunoId` já exclui templates implicitamente, sem precisar combinar com
+   * `type: "instance"`.
+   *
+   * Bugs potenciais considerados antes de escrever esta função:
+   * - trocar `where` inteiro por `{ alunoId }` em vez de acumular no mesmo
+   *   objeto já escopado por `personalId` — deixaria um Personal ver
+   *   programas de OUTRO Personal aplicados ao mesmo aluno (IDOR real).
+   * - esquecer que `alunoId` e `type` precisam compor (um Personal pode
+   *   querer `?type=instance&alunoId=X` juntos) — ambos são adicionados ao
+   *   mesmo objeto `where`, não são exclusivos entre si.
    */
-  async listByPersonal(personalId: string, type?: "template" | "instance") {
-    const where: { personalId: string; isTemplate?: boolean } = { personalId };
+  async listByPersonal(personalId: string, type?: "template" | "instance", alunoId?: string) {
+    const where: { personalId: string; isTemplate?: boolean; alunoId?: string } = { personalId };
     if (type === "template") where.isTemplate = true;
     if (type === "instance") where.isTemplate = false;
+    if (alunoId) where.alunoId = alunoId;
     return prisma.workoutProgram.findMany({
       where,
       orderBy: { createdAt: "desc" },

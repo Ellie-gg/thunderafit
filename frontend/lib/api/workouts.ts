@@ -59,8 +59,16 @@ export function completeWorkout(workoutId: string) {
   return apiFetch<{ workout: Workout }>(`/api/workouts/${workoutId}/complete`, { method: "POST" });
 }
 
-export function listWorkoutPrograms(type?: "template" | "instance") {
-  const qs = type ? `?type=${type}` : "";
+// Fase 29: `alunoId` opcional — filtra pra só as instâncias aplicadas a um
+// aluno específico (hub `/personal/alunos/[alunoId]`). Composto com `type`
+// via URLSearchParams (não concatenação de string) porque os dois parâmetros
+// agora podem vir juntos (`?type=instance&alunoId=...`) — a versão anterior
+// só suportava um parâmetro por vez.
+export function listWorkoutPrograms(type?: "template" | "instance", alunoId?: string) {
+  const params = new URLSearchParams();
+  if (type) params.set("type", type);
+  if (alunoId) params.set("alunoId", alunoId);
+  const qs = params.toString() ? `?${params.toString()}` : "";
   return apiFetch<{ programs: WorkoutProgram[] }>(`/api/workout-programs${qs}`);
 }
 
