@@ -6,6 +6,7 @@ locals {
     "secretmanager.googleapis.com",
     "iam.googleapis.com",
     "billingbudgets.googleapis.com",
+    "storage.googleapis.com",
   ]
 }
 

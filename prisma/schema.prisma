@@ -144,6 +144,10 @@ model Exercise {
   muscleGroup     String
   equipment       String
   mediaUrl        String?
+  // Fase 32: tipo da mídia em mediaUrl. Default YOUTUBE preserva os
+  // exercícios já cadastrados (só tinham link do YouTube, sem essa
+  // distinção existir ainda).
+  mediaType       ExerciseMediaType @default(YOUTUBE)
   description     String
   // Fase 15: nível informativo (não usado em filtro nesta fase). Default
   // INTERMEDIARIO para os 29 exercícios pré-existentes que não declaravam
@@ -158,6 +162,15 @@ enum DifficultyLevel {
   INICIANTE
   INTERMEDIARIO
   AVANCADO
+}
+
+// Fase 32: YOUTUBE = mediaUrl é um link do YouTube (comportamento antigo,
+// sem upload). VIDEO/GIF = mediaUrl é a URL pública de um objeto no bucket
+// GCS de mídia de exercícios (infra/storage.tf).
+enum ExerciseMediaType {
+  YOUTUBE
+  VIDEO
+  GIF
 }
 
 // ============================================================

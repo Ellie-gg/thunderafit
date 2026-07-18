@@ -217,7 +217,7 @@ cada vez — o fundador escolhe a próxima.
 
 ### Grupo A.2 — catálogo de exercícios: mídia + administração (priorizado antes do pivô B2C)
 
-5. **Fase 32 — Infraestrutura de Mídia de Exercícios (bucket + player enquadrado).**
+5. **Fase 32 — Infraestrutura de Mídia de Exercícios (bucket + player enquadrado). ✅ CONCLUÍDA (2026-07-18).**
    `Exercise.mediaUrl` hoje só resolve link do YouTube (embed via `frontend/lib/
    youtube.ts`), sem suporte a vídeo/GIF nativo. Diferente do avatar (Fase 30, banco
    OK pra blob pequeno e por-usuário), mídia de exercício é o perfil oposto — catálogo
