@@ -118,6 +118,15 @@ export function ExerciseExecutionCard({
         {workoutExercise.restSeconds}s
       </p>
 
+      {/* Fase 27: observação do Personal sobre esta prescrição específica —
+          diferente da descrição do catálogo acima. */}
+      {workoutExercise.notes && (
+        <p className="rounded-md border border-accent-secondary/30 bg-accent-secondary/10 px-3 py-2 text-sm text-foreground">
+          <span className="font-semibold text-accent-secondary">Observação do seu Personal: </span>
+          {workoutExercise.notes}
+        </p>
+      )}
+
       {setLogs.length > 0 && (
         <div className="flex flex-col gap-1 border-t border-border pt-3">
           {setLogs.map((log) => (

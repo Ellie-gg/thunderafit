@@ -233,6 +233,11 @@ model WorkoutExercise {
   repsRange    String
   restSeconds  Int
   order        Int
+  // Fase 27: observação livre do Personal sobre esta prescrição (ex: "cadência
+  // lenta na descida", "trocar se sentir dor"). Sem limite no banco (mesmo
+  // padrão dos outros campos de texto livre do schema, ex: Anamnesis) — o
+  // limite de 500 caracteres é validado na aplicação (service).
+  notes        String?
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
   setLogs      SetLog[]

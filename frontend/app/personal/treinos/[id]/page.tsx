@@ -59,15 +59,18 @@ function PersonalWorkoutContent() {
       {exercises.length > 0 && (
         <div className="flex flex-col gap-3">
           {exercises.map((ex) => (
-            <Card key={ex.id} className="flex items-center justify-between">
-              <div>
-                <span className="font-mono-nums text-xs text-muted">#{ex.order}</span>{" "}
-                <span className="font-semibold">{ex.exercise?.name}</span>
-                <p className="text-xs text-muted">{ex.exercise?.muscleGroup}</p>
+            <Card key={ex.id} className="flex flex-col gap-1">
+              <div className="flex items-center justify-between">
+                <div>
+                  <span className="font-mono-nums text-xs text-muted">#{ex.order}</span>{" "}
+                  <span className="font-semibold">{ex.exercise?.name}</span>
+                  <p className="text-xs text-muted">{ex.exercise?.muscleGroup}</p>
+                </div>
+                <div className="font-mono-nums text-sm text-muted">
+                  {ex.sets}x {ex.repsRange} · {ex.restSeconds}s
+                </div>
               </div>
-              <div className="font-mono-nums text-sm text-muted">
-                {ex.sets}x {ex.repsRange} · {ex.restSeconds}s
-              </div>
+              {ex.notes && <p className="text-xs text-muted">Obs: {ex.notes}</p>}
             </Card>
           ))}
         </div>

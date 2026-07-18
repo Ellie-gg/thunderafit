@@ -27,7 +27,14 @@ export function createSetLog(
 
 export function addWorkoutExercise(
   workoutId: string,
-  input: { exerciseId: string; sets: number; repsRange: string; restSeconds: number; order: number }
+  input: {
+    exerciseId: string;
+    sets: number;
+    repsRange: string;
+    restSeconds: number;
+    order: number;
+    notes?: string;
+  }
 ) {
   return apiFetch<{ workoutExercise: unknown }>(`/api/workouts/${workoutId}/exercises`, {
     method: "POST",

@@ -20,6 +20,7 @@ const baseWorkoutExercise: WorkoutExercise = {
   repsRange: "8-12",
   restSeconds: 60,
   order: 1,
+  notes: null,
   exercise: {
     id: "ex-1",
     name: "Supino Reto",
