@@ -72,3 +72,19 @@ export async function accessLogsHandler(request: FastifyRequest, reply: FastifyR
     return handleError(err, reply);
   }
 }
+
+export async function updateExerciseMediaHandler(
+  request: FastifyRequest<{
+    Params: { id: string };
+    Body: { mediaType?: string; mediaDataUrl?: string; youtubeUrl?: string };
+  }>,
+  reply: FastifyReply
+) {
+  try {
+    assertAdmin(request);
+    const exercise = await adminService.updateExerciseMedia(request.params.id, request.body);
+    return reply.status(200).send({ exercise });
+  } catch (err: any) {
+    return handleError(err, reply);
+  }
+}

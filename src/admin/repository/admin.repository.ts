@@ -106,4 +106,15 @@ export const adminRepository = {
       take,
     });
   },
+
+  async findExerciseById(id: string) {
+    return prisma.exercise.findUnique({ where: { id } });
+  },
+
+  async updateExerciseMedia(id: string, mediaUrl: string, mediaType: "YOUTUBE" | "VIDEO" | "GIF") {
+    return prisma.exercise.update({
+      where: { id },
+      data: { mediaUrl, mediaType },
+    });
+  },
 };

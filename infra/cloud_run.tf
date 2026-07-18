@@ -80,6 +80,12 @@ resource "google_cloud_run_v2_service" "backend" {
           }
         }
       }
+      # Fase 32: bucket de mídia de exercícios (infra/storage.tf) — o
+      # service account do backend já tem roles/storage.objectAdmin nele.
+      env {
+        name  = "GCS_BUCKET_NAME"
+        value = google_storage_bucket.exercise_media.name
+      }
     }
   }
 
