@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { loginViaUI } from "./auth-helpers";
 
 /**
  * Fase 17 (Item 6) — Dúvidas simétricas ao Nutricionista, ponta a ponta:
@@ -38,10 +39,7 @@ test("aluno abre dúvida com o Nutricionista e o Nutricionista responde pela UI"
   await backendJson("/api/relations", { alunoId: aluno.user.id }, nutriToken);
 
   // --- Aluno abre a dúvida pela UI, escolhendo o Nutricionista ---
-  await page.goto("/login");
-  await page.locator("#email").fill(alunoEmail);
-  await page.locator("#password").fill(password);
-  await page.getByRole("button", { name: "Entrar" }).click();
+  await loginViaUI(page, alunoEmail, password);
   await expect(page).toHaveURL(/\/dashboard$/);
 
   await page.goto("/duvidas");
@@ -54,10 +52,7 @@ test("aluno abre dúvida com o Nutricionista e o Nutricionista responde pela UI"
   await expect(page.getByText("Posso trocar arroz por batata?")).toBeVisible();
 
   // --- Nutricionista loga, vê e responde a dúvida ---
-  await page.goto("/login");
-  await page.locator("#email").fill(nutriEmail);
-  await page.locator("#password").fill(password);
-  await page.getByRole("button", { name: "Entrar" }).click();
+  await loginViaUI(page, nutriEmail, password);
   await expect(page).toHaveURL(/\/nutricionista\/dashboard$/);
 
   await page.goto("/nutricionista/duvidas");

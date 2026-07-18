@@ -13,6 +13,19 @@ const COOKIE_BASE_OPTIONS = {
   path: "/",
 };
 
+// Não existia validação de formato de e-mail em nenhum lugar do domínio
+// (register só checava presença) — criada aqui para o check-email e reutilizável.
+const EMAIL_FORMAT_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+// Fase 24 (correção pós-Parte 1): a chave do limiter é (IP, e-mail), igual ao
+// login — NÃO uma chave fixa por IP. Em produção o backend só vê o IP do
+// proxy do frontend (mesmo motivo documentado no rate limiter de login); uma
+// chave fixa por IP compartilharia um único balde de 5 chamadas/15min entre
+// TODOS os usuários reais atrás do proxy, bloqueando gente de verdade após
+// poucos cadastros/logins. Com (IP, e-mail), cada e-mail testado tem seu
+// próprio balde — a defesa anti-enumeração fica mais fraca (dá pra variar o
+// e-mail), mas é a mesma postura de risco já aceita no limiter de login.
+
 /**
  * Cookie httpOnly passa a ser a fonte de verdade para o frontend web
  * (Fase 5.5). O corpo da resposta continua retornando os tokens em texto
@@ -87,6 +100,35 @@ export async function loginHandler(
     const error = err as Error & { statusCode?: number };
     return reply.status(error.statusCode ?? 500).send({ error: error.message });
   }
+}
+
+/**
+ * Checagem pública de existência de e-mail (Fase 24 — auth unificado).
+ * Resposta é SEMPRE { exists: boolean }, nunca outro dado do usuário, mesmo
+ * quando ele existe. Sem autenticação; protegida pelo rate limiter de login
+ * (Fase 14) por IP para dificultar enumeração de e-mails.
+ */
+export async function checkEmailHandler(
+  request: FastifyRequest<{ Body: { email: string } }>,
+  reply: FastifyReply
+) {
+  const { email } = request.body;
+
+  if (!email || !EMAIL_FORMAT_REGEX.test(email)) {
+    return reply.status(400).send({ error: "email é obrigatório e deve ter um formato válido." });
+  }
+
+  const ip = request.ip;
+  const blockStatus = loginRateLimiter.isBlocked(ip, email);
+  if (blockStatus.blocked) {
+    return reply.status(429).send({
+      error: `Muitas verificações de e-mail. Tente novamente em ${blockStatus.retryAfterSeconds}s.`,
+    });
+  }
+  loginRateLimiter.recordFailedAttempt(ip, email);
+
+  const exists = await authService.checkEmailExists(email);
+  return reply.status(200).send({ exists });
 }
 
 export async function refreshHandler(

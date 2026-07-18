@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { loginViaUI } from "./auth-helpers";
 
 /**
  * Fluxo de Dúvidas (Fase 10) — o mais interativo dos três blocos, envolvendo
@@ -49,10 +50,7 @@ test("aluno pergunta → Personal responde → aluno vê resposta e notificaçã
   const personalPage = await personalContext.newPage();
 
   // --- 1. Aluno loga e envia uma dúvida ---
-  await alunoPage.goto("/login");
-  await alunoPage.locator("#email").fill(alunoEmail);
-  await alunoPage.locator("#password").fill(password);
-  await alunoPage.getByRole("button", { name: "Entrar" }).click();
+  await loginViaUI(alunoPage, alunoEmail, password);
   await expect(alunoPage).toHaveURL(/\/dashboard$/);
 
   await alunoPage.getByRole("link", { name: "Dúvidas" }).click();
@@ -66,10 +64,7 @@ test("aluno pergunta → Personal responde → aluno vê resposta e notificaçã
   await expect(alunoPage.getByText("Aberto")).toBeVisible();
 
   // --- 2. Personal loga, vê a dúvida em "Abertas" e responde ---
-  await personalPage.goto("/login");
-  await personalPage.locator("#email").fill(personalEmail);
-  await personalPage.locator("#password").fill(password);
-  await personalPage.getByRole("button", { name: "Entrar" }).click();
+  await loginViaUI(personalPage, personalEmail, password);
   await expect(personalPage).toHaveURL(/\/personal\/dashboard$/);
 
   await personalPage.getByRole("link", { name: "Dúvidas" }).click();

@@ -7,6 +7,14 @@ interface AuthResponse {
   user: User;
 }
 
+export function checkEmailRequest(email: string) {
+  return apiFetch<{ exists: boolean }>("/api/auth/check-email", {
+    method: "POST",
+    body: { email },
+    auth: false,
+  });
+}
+
 export function registerRequest(email: string, password: string, role: Role) {
   return apiFetch<{ user: User }>("/api/auth/register", {
     method: "POST",

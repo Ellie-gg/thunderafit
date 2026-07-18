@@ -11,11 +11,11 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 
 function buildInviteText(professionalLabel: string) {
-  const registerUrl =
-    typeof window !== "undefined"
-      ? `${window.location.origin}/register?role=ALUNO`
-      : "/register?role=ALUNO";
-  return `Oi! Te convidei pra usar o ThunderaFit comigo como seu(sua) ${professionalLabel}. Cria sua conta de aluno aqui: ${registerUrl}`;
+  // Fase 24 (Parte 2): /register não existe mais — o cadastro (com escolha de
+  // papel) agora acontece dentro do fluxo unificado de e-mail em /login.
+  const loginUrl =
+    typeof window !== "undefined" ? `${window.location.origin}/login` : "/login";
+  return `Oi! Te convidei pra usar o ThunderaFit comigo como seu(sua) ${professionalLabel}. Cria sua conta de aluno aqui: ${loginUrl}`;
 }
 
 function AlunoNaoEncontrado({ professionalLabel }: { professionalLabel: string }) {

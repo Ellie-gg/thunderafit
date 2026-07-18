@@ -5,6 +5,7 @@ import {
   refreshHandler,
   logoutHandler,
   protectedHandler,
+  checkEmailHandler,
 } from "../controllers/auth.controller";
 
 type AuthenticateFn = (
@@ -18,6 +19,10 @@ export async function authRoutes(fastify: FastifyInstance) {
 
   // Login
   fastify.post("/api/auth/login", loginHandler);
+
+  // Checagem de existência de e-mail (fluxo de auth unificado, Fase 24) —
+  // pública, sem preHandler de auth.
+  fastify.post("/api/auth/check-email", checkEmailHandler);
 
   // Refresh de tokens
   fastify.post("/api/auth/refresh", refreshHandler);

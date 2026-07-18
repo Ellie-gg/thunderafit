@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { loginViaUI } from "./auth-helpers";
 
 /**
  * Fluxo do Nutricionista (Fase 11, Bloco 3) — o equivalente ao painel do
@@ -37,10 +38,7 @@ test("Nutricionista se cadastra, vincula aluno e cria plano de dieta com 2 refei
     method: "POST",
     body: JSON.stringify({ email: nutriEmail, password, role: "NUTRICIONISTA" }),
   });
-  await page.goto("/login");
-  await page.locator("#email").fill(nutriEmail);
-  await page.locator("#password").fill(password);
-  await page.getByRole("button", { name: "Entrar" }).click();
+  await loginViaUI(page, nutriEmail, password);
   await expect(page).toHaveURL(/\/nutricionista\/dashboard$/);
   await expect(page.getByText("0/3")).toBeVisible();
 
