@@ -153,11 +153,34 @@ describe("GET /api/progress/exercises", () => {
     expect(ids).not.toContain(exerciseCId);
   });
 
-  it("retorna 403 para um PERSONAL", async () => {
+  // Fase 29: PERSONAL passou a poder ver a evolução de um aluno VINCULADO,
+  // desde que passe ?alunoId= explicitamente — sem isso, ainda é rejeitado
+  // (400, não mais 403, já que agora existe um jeito válido de pedir).
+  it("retorna 400 para um PERSONAL sem alunoId", async () => {
     const r = await supertest(server.server)
       .get("/api/progress/exercises")
       .set("Authorization", `Bearer ${tokenPersonal}`);
+    expect(r.status).toBe(400);
+  });
+
+  it("PERSONAL com alunoId de um aluno VINCULADO recebe 200 com os exercícios do aluno", async () => {
+    const r = await supertest(server.server)
+      .get(`/api/progress/exercises?alunoId=${alunoId}`)
+      .set("Authorization", `Bearer ${tokenPersonal}`);
+    expect(r.status).toBe(200);
+    const ids = r.body.exercises.map((e: any) => e.id);
+    expect(ids).toContain(exerciseAId);
+  });
+
+  it("PERSONAL com alunoId de um aluno NÃO vinculado recebe 403 (IDOR fechado)", async () => {
+    const outroAluno = await supertest(server.server)
+      .post("/api/auth/register")
+      .send({ email: "test_progress_naovinc@thunderafit.test", password: "SenhaSegura@123", role: "ALUNO" });
+    const r = await supertest(server.server)
+      .get(`/api/progress/exercises?alunoId=${outroAluno.body.user.id}`)
+      .set("Authorization", `Bearer ${tokenPersonal}`);
     expect(r.status).toBe(403);
+    await prisma.user.deleteMany({ where: { email: "test_progress_naovinc@thunderafit.test" } });
   });
 });
 

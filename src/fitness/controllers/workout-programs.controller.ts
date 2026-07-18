@@ -64,19 +64,24 @@ export async function applyProgramHandler(
 }
 
 export async function listProgramsHandler(
-  request: FastifyRequest<{ Querystring: { type?: "template" | "instance" } }>,
+  request: FastifyRequest<{ Querystring: { type?: "template" | "instance"; alunoId?: string } }>,
   reply: FastifyReply
 ) {
   try {
     const { sub, role } = (request as any).user;
     // O aluno lista os programas aplicados a ele; o profissional lista os seus
-    // (templates + instâncias, filtráveis por type).
+    // (templates + instâncias, filtráveis por type e, opcionalmente, por
+    // alunoId — Fase 29, hub de administração do aluno).
     if (role === "ALUNO") {
       const programs = await workoutProgramsService.listForAluno(sub);
       return reply.status(200).send({ programs });
     }
     assertProfessional(request);
-    const programs = await workoutProgramsService.listPrograms(sub, request.query.type);
+    const programs = await workoutProgramsService.listPrograms(
+      sub,
+      request.query.type,
+      request.query.alunoId
+    );
     return reply.status(200).send({ programs });
   } catch (err) {
     return handleError(err, reply);

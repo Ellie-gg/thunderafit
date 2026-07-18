@@ -31,7 +31,7 @@ function EvolucaoContent() {
 
   const exercisesQuery = useQuery({
     queryKey: ["progress-exercises"],
-    queryFn: listLoggedExercises,
+    queryFn: () => listLoggedExercises(),
   });
 
   const exercises = exercisesQuery.data?.exercises ?? [];

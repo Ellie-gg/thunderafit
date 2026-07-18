@@ -14,7 +14,7 @@ import { Card } from "@/components/ui/card";
 export function EvolucaoTeaser() {
   const exercisesQuery = useQuery({
     queryKey: ["progress-exercises"],
-    queryFn: listLoggedExercises,
+    queryFn: () => listLoggedExercises(),
   });
 
   const firstExercise = exercisesQuery.data?.exercises[0];
