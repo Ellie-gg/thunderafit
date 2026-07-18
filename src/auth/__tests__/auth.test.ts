@@ -230,3 +230,78 @@ describe("Cookies httpOnly", () => {
     expect(refreshAfterLogout.status).toBe(401);
   });
 });
+
+describe("PUT /api/auth/me/avatar (Fase 30)", () => {
+  const email = "test_avatar_user@thunderafit.test";
+  const password = "SenhaSegura@123";
+  // 1x1 PNG válido (menor imagem real possível) em base64 — testa o
+  // caminho feliz sem depender de arquivo externo.
+  const TINY_PNG_DATA_URL =
+    "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=";
+
+  let token: string;
+
+  beforeAll(async () => {
+    await supertest(app.server)
+      .post("/api/auth/register")
+      .send({ email, password, role: "ALUNO" });
+    const login = await supertest(app.server).post("/api/auth/login").send({ email, password });
+    token = login.body.accessToken;
+  });
+
+  it("sem autenticação retorna 401", async () => {
+    const r = await supertest(app.server)
+      .put("/api/auth/me/avatar")
+      .send({ avatarDataUrl: TINY_PNG_DATA_URL });
+    expect(r.status).toBe(401);
+  });
+
+  it("sem o campo avatarDataUrl no body retorna 400", async () => {
+    const r = await supertest(app.server)
+      .put("/api/auth/me/avatar")
+      .set("Authorization", `Bearer ${token}`)
+      .send({});
+    expect(r.status).toBe(400);
+  });
+
+  it("formato inválido (não é data URI de imagem) retorna 400", async () => {
+    const r = await supertest(app.server)
+      .put("/api/auth/me/avatar")
+      .set("Authorization", `Bearer ${token}`)
+      .send({ avatarDataUrl: "not-an-image" });
+    expect(r.status).toBe(400);
+  });
+
+  it("imagem grande demais (acima do limite) retorna 400", async () => {
+    const huge = "data:image/png;base64," + "A".repeat(150_000);
+    const r = await supertest(app.server)
+      .put("/api/auth/me/avatar")
+      .set("Authorization", `Bearer ${token}`)
+      .send({ avatarDataUrl: huge });
+    expect(r.status).toBe(400);
+  });
+
+  it("aceita uma imagem PNG pequena válida e persiste", async () => {
+    const r = await supertest(app.server)
+      .put("/api/auth/me/avatar")
+      .set("Authorization", `Bearer ${token}`)
+      .send({ avatarDataUrl: TINY_PNG_DATA_URL });
+    expect(r.status).toBe(200);
+    expect(r.body.user.avatarUrl).toBe(TINY_PNG_DATA_URL);
+    expect(r.body.user.passwordHash).toBeUndefined();
+    expect(r.body.user.refreshTokenHash).toBeUndefined();
+
+    // Persistiu de verdade — login de novo confirma via o campo do usuário.
+    const login = await supertest(app.server).post("/api/auth/login").send({ email, password });
+    expect(login.body.user.avatarUrl).toBe(TINY_PNG_DATA_URL);
+  });
+
+  it("avatarDataUrl: null remove o avatar", async () => {
+    const r = await supertest(app.server)
+      .put("/api/auth/me/avatar")
+      .set("Authorization", `Bearer ${token}`)
+      .send({ avatarDataUrl: null });
+    expect(r.status).toBe(200);
+    expect(r.body.user.avatarUrl).toBeNull();
+  });
+});

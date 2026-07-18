@@ -54,6 +54,13 @@ model User {
   availableForNewStudents Boolean @default(false)
   location         String?
   bio              String?
+  // Fase 30: foto de perfil pequena (aluno e Personal). Guardada como data
+  // URI (ex: "data:image/webp;base64,...") — o redimensionamento/compressão
+  // acontece no cliente (canvas, max ~256px) antes do upload, então o
+  // arquivo já chega pequeno (poucos KB); sem tabela/bucket separado
+  // enquanto o tamanho continuar nessa faixa. Tamanho e formato validados no
+  // backend (auth.service.ts), nunca só confiando no cliente.
+  avatarUrl        String?
   createdAt        DateTime        @default(now())
   updatedAt        DateTime        @updatedAt
 

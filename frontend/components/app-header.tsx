@@ -7,6 +7,7 @@ import { logoutRequest } from "@/lib/api/auth";
 import { dashboardPathForRole } from "@/lib/auth/redirect";
 import { Button } from "@/components/ui/button";
 import { NotificationBell } from "@/components/notification-bell";
+import { UserAvatar } from "@/components/user-avatar";
 import type { Role } from "@/lib/types";
 
 const ROLE_ACCENT_VAR: Record<Role, string> = {
@@ -83,6 +84,12 @@ export function AppHeader() {
             >
               Encontrar Personal
             </Link>
+            <Link
+              href="/perfil"
+              className="hidden text-sm font-semibold text-accent-secondary hover:underline sm:inline"
+            >
+              Perfil
+            </Link>
           </>
         )}
         {user?.role === "PERSONAL" && (
@@ -156,6 +163,7 @@ export function AppHeader() {
           </>
         )}
         {user && <NotificationBell />}
+        {user && <UserAvatar email={user.email} avatarUrl={user.avatarUrl} size={28} />}
         <span className="hidden text-sm text-muted sm:inline">{user?.email}</span>
         <Button
           variant="ghost"
