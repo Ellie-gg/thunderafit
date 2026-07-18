@@ -27,6 +27,7 @@ const baseWorkoutExercise: WorkoutExercise = {
     muscleGroup: "Peito",
     equipment: "Barra",
     mediaUrl: null,
+    mediaType: "YOUTUBE",
     description: "Deite-se no banco...",
     difficultyLevel: "INTERMEDIARIO",
     createdAt: "",
@@ -103,5 +104,49 @@ describe("ExerciseExecutionCard — formulário de registro de série", () => {
     renderCard(complete);
     expect(screen.getByText("3/3 séries")).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /registrar/i })).not.toBeInTheDocument();
+  });
+});
+
+describe("ExerciseExecutionCard — mídia do exercício (Fase 32)", () => {
+  it("renderiza um <video> nativo quando mediaType é VIDEO", () => {
+    const withVideo: WorkoutExercise = {
+      ...baseWorkoutExercise,
+      exercise: {
+        ...baseWorkoutExercise.exercise!,
+        mediaType: "VIDEO",
+        mediaUrl: "https://storage.googleapis.com/bucket/exercises/supino.mp4",
+      },
+    };
+    const { container } = renderCard(withVideo);
+    const video = container.querySelector("video");
+    expect(video).toBeInTheDocument();
+    expect(video).toHaveAttribute("src", "https://storage.googleapis.com/bucket/exercises/supino.mp4");
+  });
+
+  it("renderiza um <img> quando mediaType é GIF", () => {
+    const withGif: WorkoutExercise = {
+      ...baseWorkoutExercise,
+      exercise: {
+        ...baseWorkoutExercise.exercise!,
+        mediaType: "GIF",
+        mediaUrl: "https://storage.googleapis.com/bucket/exercises/supino.gif",
+      },
+    };
+    renderCard(withGif);
+    const img = screen.getByAltText("Demonstração de Supino Reto");
+    expect(img).toHaveAttribute("src", "https://storage.googleapis.com/bucket/exercises/supino.gif");
+  });
+
+  it("mantém o comportamento de link do YouTube quando mediaType é YOUTUBE e a URL não é embedável", () => {
+    const withSearchUrl: WorkoutExercise = {
+      ...baseWorkoutExercise,
+      exercise: {
+        ...baseWorkoutExercise.exercise!,
+        mediaType: "YOUTUBE",
+        mediaUrl: "https://www.youtube.com/results?search_query=supino",
+      },
+    };
+    renderCard(withSearchUrl);
+    expect(screen.getByText("▶ Ver vídeo de demonstração no YouTube")).toBeInTheDocument();
   });
 });

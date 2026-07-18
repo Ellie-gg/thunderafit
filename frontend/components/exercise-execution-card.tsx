@@ -42,8 +42,9 @@ export function ExerciseExecutionCard({
   });
 
   const mediaUrl = workoutExercise.exercise?.mediaUrl ?? null;
-  const embedUrl = mediaUrl ? toYoutubeEmbedUrl(mediaUrl) : null;
-  const thumbnailUrl = mediaUrl ? toYoutubeThumbnail(mediaUrl) : null;
+  const mediaType = workoutExercise.exercise?.mediaType ?? "YOUTUBE";
+  const embedUrl = mediaType === "YOUTUBE" && mediaUrl ? toYoutubeEmbedUrl(mediaUrl) : null;
+  const thumbnailUrl = mediaType === "YOUTUBE" && mediaUrl ? toYoutubeThumbnail(mediaUrl) : null;
 
   return (
     <Card className="flex flex-col gap-4">
@@ -59,8 +60,34 @@ export function ExerciseExecutionCard({
       {/* Player responsivo (Fase 17, Item 3): largura limitada (max-w-sm) para
           não dominar a tela; começa como thumbnail-com-play e só carrega o
           iframe ao clicar. Quando a mídia não é um vídeo embedável (ex: URLs
-          de BUSCA do YouTube dos exercícios da Fase 15), cai num link. */}
-      {embedUrl ? (
+          de BUSCA do YouTube dos exercícios da Fase 15), cai num link.
+          Fase 32: VIDEO/GIF são arquivos nativos do bucket — sem necessidade
+          de thumbnail-com-play, tocam/exibem direto. */}
+      {mediaType === "VIDEO" && mediaUrl ? (
+        <div className="w-full max-w-sm overflow-hidden rounded-lg border border-border">
+          {/* Replica a UX de GIF (autoplay em loop, sem som) num container
+              de aspect-ratio fixo, não fullscreen — decisão da Fase 32:
+              GIF de verdade infla um clipe H.264 de ~900KB pra 5-12MB. */}
+          <video
+            src={mediaUrl}
+            autoPlay
+            loop
+            muted
+            playsInline
+            className="aspect-video w-full object-cover"
+          />
+        </div>
+      ) : mediaType === "GIF" && mediaUrl ? (
+        <div className="w-full max-w-sm overflow-hidden rounded-lg border border-border">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={mediaUrl}
+            alt={`Demonstração de ${workoutExercise.exercise?.name ?? "exercício"}`}
+            loading="lazy"
+            className="w-full"
+          />
+        </div>
+      ) : embedUrl ? (
         <div className="w-full max-w-sm overflow-hidden rounded-lg border border-border">
           <div className="relative aspect-video">
             {playing ? (

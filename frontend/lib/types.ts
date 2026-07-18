@@ -13,12 +13,18 @@ export interface User {
 
 export type DifficultyLevel = "INICIANTE" | "INTERMEDIARIO" | "AVANCADO";
 
+// Fase 32: tipo da mídia do exercício — YOUTUBE é o default (compatibilidade
+// com o catálogo já existente); VIDEO/GIF são arquivos nativos hospedados
+// no bucket GCS (mediaUrl aponta pra storage.googleapis.com nesses casos).
+export type ExerciseMediaType = "YOUTUBE" | "VIDEO" | "GIF";
+
 export interface Exercise {
   id: string;
   name: string;
   muscleGroup: string;
   equipment: string;
   mediaUrl: string | null;
+  mediaType: ExerciseMediaType;
   description: string;
   difficultyLevel: DifficultyLevel;
   createdAt: string;

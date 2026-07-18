@@ -22,3 +22,8 @@ output "frontend_service_account" {
   description = "E-mail do service account de runtime do frontend."
   value       = google_service_account.frontend.email
 }
+
+output "exercise_media_bucket" {
+  description = "Nome do bucket GCS de mídia de exercícios (vídeo/GIF, Fase 32)."
+  value       = google_storage_bucket.exercise_media.name
+}
