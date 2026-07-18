@@ -80,4 +80,15 @@ describe("POST /api/auth/check-email", () => {
     expect(sixth.status).toBe(429);
     expect(sixth.body.error).toMatch(/Muitas verificações/);
   });
+
+  it("bloqueio é por (IP, e-mail) — outro e-mail do mesmo IP não é afetado (evita bloquear todo mundo atrás do mesmo proxy em produção)", async () => {
+    for (let i = 0; i < 6; i++) {
+      await supertest(app.server).post("/api/auth/check-email").send({ email: EXISTING_EMAIL });
+    }
+
+    const otherEmail = await supertest(app.server)
+      .post("/api/auth/check-email")
+      .send({ email: "test_check_email_outro@thunderafit.test" });
+    expect(otherEmail.status).toBe(200);
+  });
 });

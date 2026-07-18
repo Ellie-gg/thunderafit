@@ -17,11 +17,14 @@ const COOKIE_BASE_OPTIONS = {
 // (register só checava presença) — criada aqui para o check-email e reutilizável.
 const EMAIL_FORMAT_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-// Chave fixa para o rate limiter contar por IP (Fase 24): check-email não tem
-// conceito de "senha errada", então toda chamada consome uma tentativa do
-// mesmo limiter em memória da Fase 14, nunca resetada por sucesso — isso limita
-// enumeração de e-mails a 5 chamadas por IP a cada 15min.
-const CHECK_EMAIL_RATE_KEY = "__check_email__";
+// Fase 24 (correção pós-Parte 1): a chave do limiter é (IP, e-mail), igual ao
+// login — NÃO uma chave fixa por IP. Em produção o backend só vê o IP do
+// proxy do frontend (mesmo motivo documentado no rate limiter de login); uma
+// chave fixa por IP compartilharia um único balde de 5 chamadas/15min entre
+// TODOS os usuários reais atrás do proxy, bloqueando gente de verdade após
+// poucos cadastros/logins. Com (IP, e-mail), cada e-mail testado tem seu
+// próprio balde — a defesa anti-enumeração fica mais fraca (dá pra variar o
+// e-mail), mas é a mesma postura de risco já aceita no limiter de login.
 
 /**
  * Cookie httpOnly passa a ser a fonte de verdade para o frontend web
@@ -116,13 +119,13 @@ export async function checkEmailHandler(
   }
 
   const ip = request.ip;
-  const blockStatus = loginRateLimiter.isBlocked(ip, CHECK_EMAIL_RATE_KEY);
+  const blockStatus = loginRateLimiter.isBlocked(ip, email);
   if (blockStatus.blocked) {
     return reply.status(429).send({
       error: `Muitas verificações de e-mail. Tente novamente em ${blockStatus.retryAfterSeconds}s.`,
     });
   }
-  loginRateLimiter.recordFailedAttempt(ip, CHECK_EMAIL_RATE_KEY);
+  loginRateLimiter.recordFailedAttempt(ip, email);
 
   const exists = await authService.checkEmailExists(email);
   return reply.status(200).send({ exists });
