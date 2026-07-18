@@ -19,8 +19,11 @@ async function backendJson(path: string, body: unknown, token?: string) {
 }
 
 async function login(page: import("@playwright/test").Page, email: string, password: string) {
+  // Fase 24 (Parte 2): /login virou o fluxo unificado — e-mail primeiro,
+  // senha só depois de check-email confirmar que a conta já existe.
   await page.goto("/login");
   await page.locator("#email").fill(email);
+  await page.getByRole("button", { name: "Continuar" }).click();
   await page.locator("#password").fill(password);
   await page.getByRole("button", { name: "Entrar" }).click();
 }

@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { loginViaUI } from "./auth-helpers";
 
 /**
  * Fase 16 — Programas de Treino, fluxo ponta a ponta:
@@ -48,10 +49,7 @@ test("Personal cria programa, aplica a aluno; aluno vê sugestão e conclui sess
   for (const w of applied.program.workouts) sessionByLetter[w.letter] = w.id;
 
   // Login como aluno pela UI.
-  await page.goto("/login");
-  await page.locator("#email").fill(alunoEmail);
-  await page.locator("#password").fill(password);
-  await page.getByRole("button", { name: "Entrar" }).click();
+  await loginViaUI(page, alunoEmail, password);
   await expect(page).toHaveURL(/\/dashboard$/);
 
   // Abre o programa aplicado.

@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { loginViaUI } from "./auth-helpers";
 
 /**
  * Catálogo expandido + filtro por grupo muscular (Fase 15). Personal abre a
@@ -43,10 +44,7 @@ test("Personal filtra o catálogo por grupo muscular e adiciona um exercício de
   const workoutId = workout.workout.id;
 
   // Login como Personal pela UI
-  await page.goto("/login");
-  await page.locator("#email").fill(personalEmail);
-  await page.locator("#password").fill(password);
-  await page.getByRole("button", { name: "Entrar" }).click();
+  await loginViaUI(page, personalEmail, password);
   await expect(page).toHaveURL(/\/personal\/dashboard$/);
 
   // Vai direto para a tela do treino (timeout generoso: o Next dev pode

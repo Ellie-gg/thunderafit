@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { loginViaUI } from "./auth-helpers";
 
 /**
  * Fluxo de Evolução (Fase 8): login → /evolucao → gráfico de carga máxima e
@@ -73,10 +74,7 @@ test("login → /evolucao → gráfico de carga e frequência com dados reais", 
   }
 
   // --- 1. Login como aluno pela UI ---
-  await page.goto("/login");
-  await page.locator("#email").fill(alunoEmail);
-  await page.locator("#password").fill(password);
-  await page.getByRole("button", { name: "Entrar" }).click();
+  await loginViaUI(page, alunoEmail, password);
   await expect(page).toHaveURL(/\/dashboard$/);
 
   // --- 2. Navegar para /evolucao via o link do AppHeader ---

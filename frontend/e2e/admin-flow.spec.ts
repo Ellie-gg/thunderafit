@@ -1,6 +1,7 @@
 import { test, expect } from "@playwright/test";
 import { execFileSync } from "node:child_process";
 import path from "node:path";
+import { loginViaUI } from "./auth-helpers";
 
 /**
  * Painel Administrativo (Fase 14, Bloco 4). ADMIN não tem auto-cadastro —
@@ -57,10 +58,7 @@ test("admin loga, navega pelo painel e vê dados reais (overview, usuários, SLA
   );
 
   // --- Admin loga pela UI ---
-  await page.goto("/login");
-  await page.locator("#email").fill(adminEmail);
-  await page.locator("#password").fill(password);
-  await page.getByRole("button", { name: "Entrar" }).click();
+  await loginViaUI(page, adminEmail, password);
   await expect(page).toHaveURL(/\/nimbus\/dashboard$/);
 
   // Overview: dado real, não mock — o Personal criado agora conta em "Personal Trainers".

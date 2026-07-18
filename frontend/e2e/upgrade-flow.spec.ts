@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { loginViaUI } from "./auth-helpers";
 
 /**
  * Fase 20 — fluxo de upgrade (billing) na UI, SEM tocar no Stripe real:
@@ -38,10 +39,7 @@ test("Personal no limite navega para os planos e vê mensal + anual", async ({ p
     await backendJson("/api/relations", { alunoId: aluno.user.id }, token);
   }
 
-  await page.goto("/login");
-  await page.locator("#email").fill(personalEmail);
-  await page.locator("#password").fill(password);
-  await page.getByRole("button", { name: "Entrar" }).click();
+  await loginViaUI(page, personalEmail, password);
   await expect(page).toHaveURL(/\/personal\/dashboard$/);
 
   // Aviso de limite atingido, linkando para o upgrade.
@@ -63,10 +61,7 @@ test("ALUNO não acessa /personal/upgrade (gating)", async ({ page }) => {
   const password = "SenhaSegura@123";
   await backendJson("/api/auth/register", { email: alunoEmail, password, role: "ALUNO" });
 
-  await page.goto("/login");
-  await page.locator("#email").fill(alunoEmail);
-  await page.locator("#password").fill(password);
-  await page.getByRole("button", { name: "Entrar" }).click();
+  await loginViaUI(page, alunoEmail, password);
   await expect(page).toHaveURL(/\/dashboard$/);
 
   // Tentar acessar direto a tela de upgrade do Personal → AuthGuard redireciona

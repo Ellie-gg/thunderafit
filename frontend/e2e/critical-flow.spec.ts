@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { loginViaUI } from "./auth-helpers";
 
 /**
  * Fluxo crítico de ponta a ponta: login → dashboard → treino → registro de
@@ -68,10 +69,7 @@ test("login → dashboard → treino → registrar série", async ({ page }) => 
   const workoutExercise = (await weRes.json()).workoutExercise;
 
   // --- 1. Login como aluno pela UI ---
-  await page.goto("/login");
-  await page.locator("#email").fill(alunoEmail);
-  await page.locator("#password").fill(password);
-  await page.getByRole("button", { name: "Entrar" }).click();
+  await loginViaUI(page, alunoEmail, password);
   await expect(page).toHaveURL(/\/dashboard$/);
   await expect(page.getByText(/Sessão sugerida/i)).toBeVisible();
   await expect(page.getByRole("heading", { name: /Treino Playwright E2E/ })).toBeVisible();

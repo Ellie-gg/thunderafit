@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { loginViaUI } from "./auth-helpers";
 
 /**
  * Cenário multi-profissional (Fase 11, Bloco 4) — o caso central desta fase:
@@ -80,10 +81,7 @@ test("aluno com Personal E Nutricionista simultâneos vê os dois cards no dashb
   );
 
   // --- Aluno loga e vê o dashboard unificado ---
-  await page.goto("/login");
-  await page.locator("#email").fill(alunoEmail);
-  await page.locator("#password").fill(password);
-  await page.getByRole("button", { name: "Entrar" }).click();
+  await loginViaUI(page, alunoEmail, password);
   await expect(page).toHaveURL(/\/dashboard$/);
 
   // Card do Personal (próximo treino)

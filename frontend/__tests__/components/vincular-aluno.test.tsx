@@ -85,7 +85,7 @@ describe("Tela de vincular novo aluno", () => {
 
     await user.click(screen.getByRole("button", { name: "Copiar convite para compartilhar" }));
 
-    expect(writeText).toHaveBeenCalledWith(expect.stringContaining("/register?role=ALUNO"));
+    expect(writeText).toHaveBeenCalledWith(expect.stringContaining("/login"));
     expect(await screen.findByText("Convite copiado!")).toBeInTheDocument();
   });
 
