@@ -274,6 +274,13 @@ cada vez — o fundador escolhe a próxima.
     *mecanismo* (onde/como servir vídeo/GIF/YouTube); esta fase é sobre *conteúdo* —
     ferramenta/IA pra gerar ou curar mídia em massa pros ~120 exercícios que ainda não
     têm vídeo. Sem código até a pesquisa concluir.
+14. **Fase 41 — Monitoramento geral + backup.** O bucket de mídia de exercícios (Fase 32)
+    hoje está dentro do free tier do GCS (`us-central1`, classe `STANDARD`, volume atual
+    bem abaixo de 5GB) — mas egress de rede (1GB/mês grátis) e operações de leitura
+    (Classe B, 50.000/mês grátis) escalam com o número de usuários assistindo
+    vídeo/GIF repetidamente, ao contrário do volume de armazenamento em si. Fase futura
+    de monitoramento de uso (bucket + demais recursos GCP) e estratégia de backup —
+    ainda sem escopo detalhado, é só um marcador de pendência.
 
 ### Backlog operacional herdado
 Ver Seção 7 acima (Neon, billing, Android, webhook).
