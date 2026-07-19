@@ -78,7 +78,8 @@ convidados) e passa a operar em **modelo híbrido**:
   /anamnesis     questionário de saúde (aluno escreve; profissional vinculado lê)
   /support       dúvidas aluno↔profissional (threads com status)
   /notifications in-app (sino); push real fora de escopo
-  /admin         painel /nimbus: métricas, usuários, logins, SLA, AdminAccessLog
+  /admin         painel /nimbus: métricas, usuários (+ edição de role), logins, SLA,
+                 CRUD do catálogo de exercícios, AdminAccessLog, AdminAuditLog
   /nutrition     DORMENTE (funcional, sem UI de entrada)
 ```
 
@@ -97,8 +98,10 @@ confiados sob `role === ADMIN` (visão ampliada, leitura). Roles: `PERSONAL`, `A
   alunoId?, letter A–E, lastCompletedAt) → `WorkoutExercise` → `SetLog`.
   Aplicar template = **cópia**, nunca referência. `suggestedNext` = menor letra nunca
   concluída; senão a de conclusão mais antiga (sem ordem forçada).
-- `Exercise` (149, difficultyLevel, mediaUrl) · `Anamnesis` · `SupportThread/Message` ·
-  `Notification` · `LoginLog` · `AdminAccessLog` · nutrição (dormente).
+- `Exercise` (~150, difficultyLevel, mediaUrl/mediaType, CRUD via `/nimbus/exercicios` desde
+  a Fase 33) · `Anamnesis` · `SupportThread/Message` · `Notification` · `LoginLog` ·
+  `AdminAccessLog` (acesso a anamnese) · `AdminAuditLog` (ações administrativas
+  sensíveis, ex: mudança de role — Fase 33) · nutrição (dormente).
 
 ---
 
@@ -232,7 +235,7 @@ cada vez — o fundador escolhe a próxima.
    compressão inter-quadro nem paleta >256 cores, infla um clipe H.264 de ~900KB pra
    5-12MB; upload nativo (MP4/WebM) com autoplay+loop replica a UX de GIF sem o custo.
    **Esforço: médio · Modelo: Sonnet 5.**
-6. **Fase 33 — Admin: CRUD do Catálogo de Exercícios + Edição de Role de Usuário.**
+6. **Fase 33 — Admin: CRUD do Catálogo de Exercícios + Edição de Role de Usuário. ✅ CONCLUÍDA (2026-07-19).**
    `/src/admin` hoje é 100% leitura (dashboards); ganha camada de escrita em
    `/api/admin/exercises` (mesmo gate `assertAdmin`, rota separada da pública
    `/api/exercises` que continua somente-leitura) e `/nimbus/usuarios` ganha edição de

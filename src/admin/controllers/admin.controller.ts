@@ -66,8 +66,11 @@ export async function supportSlaHandler(request: FastifyRequest, reply: FastifyR
 export async function accessLogsHandler(request: FastifyRequest, reply: FastifyReply) {
   try {
     assertAdmin(request);
-    const logs = await adminService.listAccessLogs();
-    return reply.status(200).send({ logs });
+    const [logs, auditLogs] = await Promise.all([
+      adminService.listAccessLogs(),
+      adminService.listAuditLogs(),
+    ]);
+    return reply.status(200).send({ logs, auditLogs });
   } catch (err: any) {
     return handleError(err, reply);
   }
@@ -84,6 +87,78 @@ export async function updateExerciseMediaHandler(
     assertAdmin(request);
     const exercise = await adminService.updateExerciseMedia(request.params.id, request.body);
     return reply.status(200).send({ exercise });
+  } catch (err: any) {
+    return handleError(err, reply);
+  }
+}
+
+type ExerciseCrudBody = {
+  name?: string;
+  muscleGroup?: string;
+  equipment?: string;
+  description?: string;
+  difficultyLevel?: string;
+  confirmSimilarName?: boolean;
+};
+
+export async function listAdminExercisesHandler(request: FastifyRequest, reply: FastifyReply) {
+  try {
+    assertAdmin(request);
+    const exercises = await adminService.listExercisesForAdmin();
+    return reply.status(200).send({ exercises });
+  } catch (err: any) {
+    return handleError(err, reply);
+  }
+}
+
+export async function createExerciseHandler(
+  request: FastifyRequest<{ Body: ExerciseCrudBody }>,
+  reply: FastifyReply
+) {
+  try {
+    assertAdmin(request);
+    const result = await adminService.createExercise(request.body);
+    return reply.status(200).send(result);
+  } catch (err: any) {
+    return handleError(err, reply);
+  }
+}
+
+export async function updateExerciseHandler(
+  request: FastifyRequest<{ Params: { id: string }; Body: ExerciseCrudBody }>,
+  reply: FastifyReply
+) {
+  try {
+    assertAdmin(request);
+    const result = await adminService.updateExercise(request.params.id, request.body);
+    return reply.status(200).send(result);
+  } catch (err: any) {
+    return handleError(err, reply);
+  }
+}
+
+export async function deleteExerciseHandler(
+  request: FastifyRequest<{ Params: { id: string } }>,
+  reply: FastifyReply
+) {
+  try {
+    assertAdmin(request);
+    const result = await adminService.deleteExercise(request.params.id);
+    return reply.status(200).send(result);
+  } catch (err: any) {
+    return handleError(err, reply);
+  }
+}
+
+export async function updateUserRoleHandler(
+  request: FastifyRequest<{ Params: { id: string }; Body: { role?: string } }>,
+  reply: FastifyReply
+) {
+  try {
+    assertAdmin(request);
+    const adminId = (request as any).user.sub;
+    const result = await adminService.updateUserRole(adminId, request.params.id, request.body.role);
+    return reply.status(200).send(result);
   } catch (err: any) {
     return handleError(err, reply);
   }

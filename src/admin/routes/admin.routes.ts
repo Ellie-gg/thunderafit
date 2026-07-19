@@ -6,6 +6,11 @@ import {
   supportSlaHandler,
   accessLogsHandler,
   updateExerciseMediaHandler,
+  listAdminExercisesHandler,
+  createExerciseHandler,
+  updateExerciseHandler,
+  deleteExerciseHandler,
+  updateUserRoleHandler,
 } from "../controllers/admin.controller";
 
 export async function adminRoutes(fastify: FastifyInstance) {
@@ -25,4 +30,13 @@ export async function adminRoutes(fastify: FastifyInstance) {
     { preHandler: [(fastify as any).authenticate], bodyLimit: 8_000_000 },
     updateExerciseMediaHandler
   );
+
+  // Fase 33: CRUD do catálogo — rota separada da pública GET /api/exercises
+  // (src/fitness/routes/exercises.routes.ts), que continua 100% leitura.
+  fastify.get("/api/admin/exercises", auth, listAdminExercisesHandler);
+  fastify.post("/api/admin/exercises", auth, createExerciseHandler);
+  fastify.put("/api/admin/exercises/:id", auth, updateExerciseHandler);
+  fastify.delete("/api/admin/exercises/:id", auth, deleteExerciseHandler);
+
+  fastify.put("/api/admin/users/:id/role", auth, updateUserRoleHandler);
 }

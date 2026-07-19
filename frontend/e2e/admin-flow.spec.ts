@@ -90,4 +90,48 @@ test("admin loga, navega pelo painel e vê dados reais (overview, usuários, SLA
   // Ao menos uma linha de log com o recurso "Anamnese" (o span da linha, não o
   // texto introdutório da página).
   await expect(page.getByText("Anamnese", { exact: true }).first()).toBeVisible();
+
+  // --- Fase 33: CRUD do catálogo de exercícios (tela dedicada) ---
+  const exerciseName = `E2E Exercício ${stamp}`;
+  const exerciseNameEdited = `E2E Exercício Editado ${stamp}`;
+
+  await page.getByRole("banner").getByRole("link", { name: "Exercícios" }).click();
+  await expect(page).toHaveURL(/\/nimbus\/exercicios$/);
+
+  await page.getByRole("button", { name: "Novo exercício" }).click();
+  await page.getByLabel("Nome").fill(exerciseName);
+  await page.getByLabel("Equipamento").fill("Barra");
+  await page.getByLabel("Descrição").fill("Exercício criado pelo teste E2E da Fase 33.");
+  await page.getByRole("button", { name: "Salvar" }).click();
+  await expect(page.getByText(exerciseName, { exact: true })).toBeVisible();
+
+  // Edita o exercício recém-criado.
+  const exerciseRow = page.locator("div.rounded-md").filter({ hasText: exerciseName });
+  await exerciseRow.getByRole("button", { name: "Editar" }).click();
+  await page.getByLabel("Nome").fill(exerciseNameEdited);
+  await page.getByRole("button", { name: "Salvar" }).click();
+  await expect(page.getByText(exerciseNameEdited, { exact: true })).toBeVisible();
+
+  // Exclui o exercício (confirmação inline).
+  const editedRow = page.locator("div.rounded-md").filter({ hasText: exerciseNameEdited });
+  await editedRow.getByRole("button", { name: "Excluir" }).click();
+  await editedRow.getByRole("button", { name: "Sim, excluir" }).click();
+  await expect(page.getByText(exerciseNameEdited, { exact: true })).not.toBeVisible();
+
+  // --- Fase 33: edição de role de usuário (auditada) ---
+  await page.getByRole("banner").getByRole("link", { name: "Usuários" }).click();
+  await expect(page).toHaveURL(/\/nimbus\/usuarios$/);
+
+  const alunoRow = page.getByTestId(`user-row-${aluno.user.id}`);
+  await alunoRow.getByRole("button", { name: "Editar role" }).click();
+  await alunoRow.getByRole("combobox").selectOption("NUTRICIONISTA");
+  await alunoRow.getByRole("button", { name: "Confirmar" }).click();
+  // O role fica embutido numa string composta ("NUTRICIONISTA · desde ..."),
+  // por isso `toContainText` em vez de `getByText` com exact.
+  await expect(alunoRow).toContainText("NUTRICIONISTA");
+
+  // A mudança de role aparece na trilha de auditoria (seção nova em Logs de acesso).
+  await page.getByRole("banner").getByRole("link", { name: "Logs de acesso" }).click();
+  await expect(page.getByText("ROLE_CHANGE").first()).toBeVisible();
+  await expect(page.getByText("ALUNO -> NUTRICIONISTA").first()).toBeVisible();
 });

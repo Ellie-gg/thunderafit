@@ -60,6 +60,22 @@ function ExecucaoContent() {
   const doneSets = exercises.reduce((acc, ex) => acc + (ex.setLogs?.length ?? 0), 0);
   const allSetsDone = totalSets > 0 && doneSets >= totalSets;
 
+  // Fase 33.1: ordem estável usada tanto pra renderizar quanto pra saber
+  // qual card vem "abaixo" de cada exercício, pro auto-scroll ao marcar
+  // "Concluído". O último exercício rola até o card "Concluir sessão" — fim
+  // natural do fluxo, em vez de não fazer nada.
+  const sortedExercises = [...exercises].sort((a, b) => a.order - b.order);
+  const exerciseCardId = (exerciseId: string) => `exercise-card-${exerciseId}`;
+  const COMPLETE_SESSION_CARD_ID = "complete-session-card";
+
+  function scrollToNext(index: number) {
+    const nextId =
+      index + 1 < sortedExercises.length
+        ? exerciseCardId(sortedExercises[index + 1].id)
+        : COMPLETE_SESSION_CARD_ID;
+    document.getElementById(nextId)?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
   return (
     <main className="flex flex-1 flex-col gap-6 px-6 py-8">
       <div>
@@ -76,17 +92,23 @@ function ExecucaoContent() {
       </div>
 
       <div className="flex flex-col gap-4">
-        {exercises
-          .sort((a, b) => a.order - b.order)
-          .map((ex) => (
-            <ExerciseExecutionCard key={ex.id} workoutId={workoutId} workoutExercise={ex} />
-          ))}
+        {sortedExercises.map((ex, index) => (
+          <ExerciseExecutionCard
+            key={ex.id}
+            workoutId={workoutId}
+            workoutExercise={ex}
+            id={exerciseCardId(ex.id)}
+            onMarkDone={(done) => {
+              if (done) scrollToNext(index);
+            }}
+          />
+        ))}
       </div>
 
       {/* Concluir sessão: disponível a qualquer momento (não exige todas as
           séries registradas — sem ordem/obrigação forçada, decisão da Fase 16),
           mas destacamos quando todas as séries já foram feitas. */}
-      <Card className="flex flex-col gap-2">
+      <Card id={COMPLETE_SESSION_CARD_ID} className="flex flex-col gap-2">
         {workout.lastCompletedAt && (
           <p className="text-xs text-muted">
             Última conclusão: {new Date(workout.lastCompletedAt).toLocaleString("pt-BR")}
