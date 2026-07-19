@@ -36,6 +36,46 @@ function errorMessage(error: unknown): string {
   return error instanceof ApiError ? error.message : "Não foi possível conectar ao servidor.";
 }
 
+// Fase 32.1: alterna a senha entre oculta/visível — útil pra conferir o que
+// foi digitado quando o login falha por senha errada, sem depender do
+// gerenciador de senha do navegador (que nem sempre está ativo).
+function PasswordField({
+  id,
+  value,
+  onChange,
+  minLength,
+}: {
+  id: string;
+  value: string;
+  onChange: (value: string) => void;
+  minLength?: number;
+}) {
+  const [visible, setVisible] = useState(false);
+
+  return (
+    <div className="relative">
+      <Input
+        id={id}
+        type={visible ? "text" : "password"}
+        required
+        minLength={minLength}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder="••••••••"
+        className="pr-16"
+      />
+      <button
+        type="button"
+        onClick={() => setVisible((v) => !v)}
+        className="absolute inset-y-0 right-0 px-3 text-xs font-semibold text-muted hover:text-foreground"
+        aria-label={visible ? "Ocultar senha" : "Mostrar senha"}
+      >
+        {visible ? "Ocultar" : "Mostrar"}
+      </button>
+    </div>
+  );
+}
+
 function RoleChip({
   signupRole,
   active,
@@ -191,14 +231,7 @@ export default function LoginPage() {
           >
             <div className="flex flex-col gap-1.5">
               <Label htmlFor="password">Senha</Label>
-              <Input
-                id="password"
-                type="password"
-                required
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••"
-              />
+              <PasswordField id="password" value={password} onChange={setPassword} />
             </div>
 
             {loginMutation.isError && (
@@ -232,6 +265,7 @@ export default function LoginPage() {
           <h2 className="mb-1 font-display text-xl font-bold text-foreground">
             Vamos criar sua conta
           </h2>
+          <p className="mb-1 text-sm text-muted">{email}</p>
           <p className="mb-5 text-sm text-muted">
             Você é Personal Trainer ou está aqui pra treinar?
           </p>
@@ -292,15 +326,7 @@ export default function LoginPage() {
           >
             <div className="flex flex-col gap-1.5">
               <Label htmlFor="password">Senha</Label>
-              <Input
-                id="password"
-                type="password"
-                required
-                minLength={8}
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••"
-              />
+              <PasswordField id="password" value={password} onChange={setPassword} minLength={8} />
             </div>
 
             {registerMutation.isError && (
