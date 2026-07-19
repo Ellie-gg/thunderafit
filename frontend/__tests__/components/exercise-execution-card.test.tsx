@@ -30,6 +30,7 @@ const baseWorkoutExercise: WorkoutExercise = {
     mediaType: "YOUTUBE",
     description: "Deite-se no banco...",
     difficultyLevel: "INTERMEDIARIO",
+    isFeatured: false,
     createdAt: "",
     updatedAt: "",
   },

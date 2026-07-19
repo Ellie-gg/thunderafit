@@ -27,6 +27,10 @@ export interface Exercise {
   mediaType: ExerciseMediaType;
   description: string;
   difficultyLevel: DifficultyLevel;
+  // Fase 34: os ~5 exercícios mais feitos de cada grupo muscular (curadoria
+  // manual, editável em /nimbus/exercicios) — aparecem primeiro dentro do
+  // grupo e ganham destaque visual sutil na tela de prescrição.
+  isFeatured: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -287,6 +291,7 @@ export interface AdminExerciseInput {
   description: string;
   difficultyLevel: DifficultyLevel;
   confirmSimilarName?: boolean;
+  isFeatured?: boolean;
 }
 
 /** Resposta de criar/editar exercício: ou salvou, ou avisou de nome parecido (sem salvar). */

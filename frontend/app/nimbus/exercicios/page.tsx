@@ -78,6 +78,11 @@ function ExerciciosContent() {
                     </span>
                   </div>
                   <div className="flex items-center gap-2">
+                    {ex.isFeatured && (
+                      <span className="shrink-0 rounded-full border border-accent-secondary px-2 py-0.5 text-xs font-semibold text-accent-secondary">
+                        ★ Destaque
+                      </span>
+                    )}
                     <DifficultyBadge level={ex.difficultyLevel} />
                     <Button
                       type="button"

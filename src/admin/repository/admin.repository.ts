@@ -134,6 +134,7 @@ export const adminRepository = {
     equipment: string;
     description: string;
     difficultyLevel: "INICIANTE" | "INTERMEDIARIO" | "AVANCADO";
+    isFeatured?: boolean;
   }) {
     return prisma.exercise.create({ data });
   },
@@ -146,6 +147,7 @@ export const adminRepository = {
       equipment: string;
       description: string;
       difficultyLevel: "INICIANTE" | "INTERMEDIARIO" | "AVANCADO";
+      isFeatured?: boolean;
     }
   ) {
     return prisma.exercise.update({ where: { id }, data });

@@ -153,6 +153,11 @@ model Exercise {
   // INTERMEDIARIO para os 29 exercícios pré-existentes que não declaravam
   // dificuldade — mantém a migration aditiva sem exigir backfill manual.
   difficultyLevel DifficultyLevel   @default(INTERMEDIARIO)
+  // Fase 34: marca os ~5 exercícios mais feitos/relevantes de cada grupo
+  // muscular (curadoria manual, ver prisma/seed-featured-exercises.ts) —
+  // aparecem primeiro dentro do grupo e ganham destaque visual sutil na
+  // tela de prescrição. Editável depois pela tela /nimbus/exercicios.
+  isFeatured      Boolean           @default(false)
   createdAt       DateTime          @default(now())
   updatedAt       DateTime          @updatedAt
   workoutItems    WorkoutExercise[]

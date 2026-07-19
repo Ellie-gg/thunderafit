@@ -4,7 +4,11 @@ export const exercisesRepository = {
   async findAll(muscleGroup?: string) {
     return prisma.exercise.findMany({
       where: muscleGroup ? { muscleGroup } : undefined,
-      orderBy: { name: "asc" },
+      // Fase 34: destaque primeiro (curadoria dos ~5 exercícios mais feitos
+      // de cada grupo), depois alfabético — centralizado aqui pra qualquer
+      // consumidor da lista (ex: seletor de exercício do Personal) já
+      // receber a ordem certa sem precisar reordenar no cliente.
+      orderBy: [{ isFeatured: "desc" }, { name: "asc" }],
     });
   },
 
