@@ -48,11 +48,11 @@ export const relationsService = {
 
   async listRelations(personalId: string) {
     const relations = await relationsRepository.findAllByPersonal(personalId);
-    const result: Array<{ id: string; email: string; createdAt: Date }> = [];
+    const result: Array<{ id: string; email: string; avatarUrl: string | null; createdAt: Date }> = [];
     for (const rel of relations) {
       const aluno = await prisma.user.findUnique({ where: { id: rel.alunoId } });
       if (aluno) {
-        result.push({ id: aluno.id, email: aluno.email, createdAt: rel.createdAt });
+        result.push({ id: aluno.id, email: aluno.email, avatarUrl: aluno.avatarUrl, createdAt: rel.createdAt });
       }
     }
     return result;

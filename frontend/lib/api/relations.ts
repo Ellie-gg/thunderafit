@@ -3,6 +3,7 @@ import { apiFetch } from "./client";
 export interface RelationAluno {
   id: string;
   email: string;
+  avatarUrl: string | null;
   createdAt: string;
 }
 

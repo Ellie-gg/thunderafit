@@ -14,6 +14,7 @@ import { QueryError } from "@/components/query-error";
 import { LoadHistoryChart } from "@/components/load-history-chart";
 import { FrequencyChart } from "@/components/frequency-chart";
 import { DeleteProgramButton } from "@/components/delete-program-button";
+import { UserAvatar } from "@/components/user-avatar";
 
 /**
  * Fase 29 — hub de administração do aluno: o Personal cria um programa e
@@ -78,14 +79,21 @@ function AlunoHubContent() {
 
         {aluno && (
           <>
-            <div>
-              <span className="text-xs font-semibold uppercase tracking-wide text-accent-secondary">
-                Aluno
-              </span>
-              <h1 className="font-display text-2xl font-bold tracking-tight">{aluno.email}</h1>
-              <p className="text-sm text-muted">
-                Vinculado desde {new Date(aluno.createdAt).toLocaleDateString("pt-BR")}
-              </p>
+            <div className="flex items-center gap-3">
+              <UserAvatar email={aluno.email} avatarUrl={aluno.avatarUrl} size={56} />
+              <div className="min-w-0">
+                <span className="text-xs font-semibold uppercase tracking-wide text-accent-secondary">
+                  Aluno
+                </span>
+                {/* break-all: e-mail é uma string sem espaços — sem isso ela
+                    estoura a largura da tela no celular em vez de quebrar linha. */}
+                <h1 className="break-all font-display text-xl font-bold tracking-tight sm:text-2xl">
+                  {aluno.email}
+                </h1>
+                <p className="text-sm text-muted">
+                  Vinculado desde {new Date(aluno.createdAt).toLocaleDateString("pt-BR")}
+                </p>
+              </div>
             </div>
 
             <Link

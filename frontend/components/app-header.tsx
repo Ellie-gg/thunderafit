@@ -19,6 +19,40 @@ const ROLE_ACCENT_VAR: Record<Role, string> = {
   ADMIN: "var(--role-admin)",
 };
 
+type NavLink = { href: string; label: string };
+
+// Fase 33.2: fonte única dos links por papel — antes só existiam como
+// `hidden ... sm:inline` no header, então no celular (a maioria do uso real,
+// segundo o fundador) não havia NENHUM jeito de navegar entre as seções
+// (Programas/Evolução/Anamnese/etc) além do botão voltar do navegador. Os
+// mesmos itens agora alimentam a barra desktop (`sm:flex`, texto inline) E o
+// menu hambúrguer mobile (visível só abaixo de `sm`).
+const NAV_LINKS_BY_ROLE: Record<Role, NavLink[]> = {
+  ALUNO: [
+    { href: "/programas", label: "Programas" },
+    { href: "/evolucao", label: "Evolução" },
+    { href: "/anamnese", label: "Anamnese" },
+    { href: "/duvidas", label: "Dúvidas" },
+    { href: "/profissionais", label: "Encontrar Personal" },
+    { href: "/perfil", label: "Perfil" },
+  ],
+  PERSONAL: [
+    { href: "/personal/programas", label: "Programas" },
+    { href: "/personal/solicitacoes", label: "Solicitações" },
+    { href: "/personal/duvidas", label: "Dúvidas" },
+    { href: "/personal/upgrade", label: "Planos" },
+    { href: "/personal/perfil", label: "Perfil" },
+  ],
+  NUTRICIONISTA: [{ href: "/nutricionista/duvidas", label: "Dúvidas" }],
+  ADMIN: [
+    { href: "/nimbus/usuarios", label: "Usuários" },
+    { href: "/nimbus/exercicios", label: "Exercícios" },
+    { href: "/nimbus/logins", label: "Logins" },
+    { href: "/nimbus/suporte", label: "Suporte" },
+    { href: "/nimbus/logs-acesso", label: "Logs de acesso" },
+  ],
+};
+
 export function AppHeader() {
   const router = useRouter();
   const { user, clearSession } = useAuthStore();
@@ -26,6 +60,13 @@ export function AppHeader() {
   // celular não havia NENHUM jeito de chegar em /perfil pra trocar a foto.
   // O ícone circular vira o ponto de entrada em qualquer largura de tela.
   const [avatarMenuOpen, setAvatarMenuOpen] = useState(false);
+  // Fase 33.2: mesmo problema do avatar (Fase 31), só que pra TODOS os links
+  // de navegação — "Programas", "Evolução", "Anamnese" etc eram só
+  // `sm:inline`, então no celular não existia nenhum jeito de navegar entre
+  // seções (só o botão voltar do navegador). Menu hambúrguer visível abaixo
+  // de `sm` resolve pra todos os papéis de uma vez.
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const navLinks = user ? NAV_LINKS_BY_ROLE[user.role] : [];
 
   return (
     <header
@@ -56,124 +97,17 @@ export function AppHeader() {
 
       <div className="flex items-center gap-3">
         {/* Links de texto só a partir de sm — em telas de celular eles cabem
-            mal ao lado do sino e do botão Sair; ficam disponíveis também nos
-            respectivos dashboards. */}
-        {user?.role === "ALUNO" && (
-          <>
-            <Link
-              href="/programas"
-              className="hidden text-sm font-semibold text-accent-secondary hover:underline sm:inline"
-            >
-              Programas
-            </Link>
-            <Link
-              href="/evolucao"
-              className="hidden text-sm font-semibold text-accent-secondary hover:underline sm:inline"
-            >
-              Evolução
-            </Link>
-            <Link
-              href="/anamnese"
-              className="hidden text-sm font-semibold text-accent-secondary hover:underline sm:inline"
-            >
-              Anamnese
-            </Link>
-            <Link
-              href="/duvidas"
-              className="hidden text-sm font-semibold text-accent-secondary hover:underline sm:inline"
-            >
-              Dúvidas
-            </Link>
-            <Link
-              href="/profissionais"
-              className="hidden text-sm font-semibold text-accent-secondary hover:underline sm:inline"
-            >
-              Encontrar Personal
-            </Link>
-            <Link
-              href="/perfil"
-              className="hidden text-sm font-semibold text-accent-secondary hover:underline sm:inline"
-            >
-              Perfil
-            </Link>
-          </>
-        )}
-        {user?.role === "PERSONAL" && (
-          <>
-            <Link
-              href="/personal/programas"
-              className="hidden text-sm font-semibold text-accent-secondary hover:underline sm:inline"
-            >
-              Programas
-            </Link>
-            <Link
-              href="/personal/solicitacoes"
-              className="hidden text-sm font-semibold text-accent-secondary hover:underline sm:inline"
-            >
-              Solicitações
-            </Link>
-            <Link
-              href="/personal/duvidas"
-              className="hidden text-sm font-semibold text-accent-secondary hover:underline sm:inline"
-            >
-              Dúvidas
-            </Link>
-            <Link
-              href="/personal/upgrade"
-              className="hidden text-sm font-semibold text-accent-secondary hover:underline sm:inline"
-            >
-              Planos
-            </Link>
-            <Link
-              href="/personal/perfil"
-              className="hidden text-sm font-semibold text-accent-secondary hover:underline sm:inline"
-            >
-              Perfil
-            </Link>
-          </>
-        )}
-        {user?.role === "NUTRICIONISTA" && (
+            mal ao lado do sino e do botão Sair; no mobile o menu hambúrguer
+            abaixo cobre os mesmos itens. */}
+        {navLinks.map((link) => (
           <Link
-            href="/nutricionista/duvidas"
+            key={link.href}
+            href={link.href}
             className="hidden text-sm font-semibold text-accent-secondary hover:underline sm:inline"
           >
-            Dúvidas
+            {link.label}
           </Link>
-        )}
-        {user?.role === "ADMIN" && (
-          <>
-            <Link
-              href="/nimbus/usuarios"
-              className="hidden text-sm font-semibold text-accent-secondary hover:underline sm:inline"
-            >
-              Usuários
-            </Link>
-            <Link
-              href="/nimbus/exercicios"
-              className="hidden text-sm font-semibold text-accent-secondary hover:underline sm:inline"
-            >
-              Exercícios
-            </Link>
-            <Link
-              href="/nimbus/logins"
-              className="hidden text-sm font-semibold text-accent-secondary hover:underline sm:inline"
-            >
-              Logins
-            </Link>
-            <Link
-              href="/nimbus/suporte"
-              className="hidden text-sm font-semibold text-accent-secondary hover:underline sm:inline"
-            >
-              Suporte
-            </Link>
-            <Link
-              href="/nimbus/logs-acesso"
-              className="hidden text-sm font-semibold text-accent-secondary hover:underline sm:inline"
-            >
-              Logs de acesso
-            </Link>
-          </>
-        )}
+        ))}
         {user && <NotificationBell />}
         {user && (
           <div className="relative">
@@ -206,6 +140,43 @@ export function AppHeader() {
           </div>
         )}
         <span className="hidden text-sm text-muted sm:inline">{user?.email}</span>
+        {navLinks.length > 0 && (
+          <div className="relative sm:hidden">
+            <button
+              type="button"
+              aria-label="Abrir menu de navegação"
+              aria-expanded={mobileMenuOpen}
+              onClick={() => setMobileMenuOpen((v) => !v)}
+              className="flex h-9 w-9 items-center justify-center rounded-md border border-border text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+            >
+              <span aria-hidden className="text-lg leading-none">
+                ☰
+              </span>
+            </button>
+
+            {mobileMenuOpen && (
+              <>
+                <div
+                  className="fixed inset-0 z-40"
+                  onClick={() => setMobileMenuOpen(false)}
+                  aria-hidden
+                />
+                <nav className="absolute right-0 top-full z-50 mt-2 flex w-56 flex-col gap-1 rounded-md border border-border bg-surface p-2 shadow-lg">
+                  {navLinks.map((link) => (
+                    <Link
+                      key={link.href}
+                      href={link.href}
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="rounded-md px-3 py-2 text-sm font-semibold text-accent-secondary hover:bg-surface-raised"
+                    >
+                      {link.label}
+                    </Link>
+                  ))}
+                </nav>
+              </>
+            )}
+          </div>
+        )}
         <Button
           variant="ghost"
           size="sm"
