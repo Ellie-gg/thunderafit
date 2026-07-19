@@ -465,7 +465,7 @@
   },
   {
     "name": "Levantamento Terra Romeno",
-    "muscleGroup": "Costas",
+    "muscleGroup": "Pernas",
     "equipment": "Barra",
     "mediaUrl": "https://www.youtube.com/results?search_query=Levantamento%20Terra%20Romeno%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
     "description": "Joelhos levemente flexionados, desça a barra rente às pernas empurrando o quadril para trás, suba contraindo posteriores e lombar.",
@@ -1189,6 +1189,182 @@
     "equipment": "Peso Corporal",
     "mediaUrl": "https://www.youtube.com/results?search_query=Prancha%20com%20Eleva%C3%A7%C3%A3o%20de%20Perna%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
     "description": "Na prancha, eleve uma perna estendida mantendo o quadril estável, alternando os lados sem rotacionar o tronco.",
+    "difficultyLevel": "INTERMEDIARIO"
+  },
+  {
+    "name": "Alongamento de Isquiotibiais em Pé",
+    "muscleGroup": "Alongamento",
+    "equipment": "Nenhum",
+    "mediaUrl": "https://www.youtube.com/results?search_query=Alongamento%20de%20Isquiotibiais%20em%20P%C3%A9%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
+    "description": "Em pé, incline o tronco à frente com a perna apoiada num banco baixo e o joelho estendido, sentindo o alongamento atrás da coxa sem forçar a lombar.",
+    "difficultyLevel": "INICIANTE"
+  },
+  {
+    "name": "Alongamento de Quadríceps em Pé",
+    "muscleGroup": "Alongamento",
+    "equipment": "Nenhum",
+    "mediaUrl": "https://www.youtube.com/results?search_query=Alongamento%20de%20Quadr%C3%ADceps%20em%20P%C3%A9%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
+    "description": "Em pé com apoio, segure o tornozelo e puxe o calcanhar em direção ao glúteo, mantendo os joelhos alinhados e o quadril neutro.",
+    "difficultyLevel": "INICIANTE"
+  },
+  {
+    "name": "Alongamento de Panturrilha na Parede",
+    "muscleGroup": "Alongamento",
+    "equipment": "Nenhum",
+    "mediaUrl": "https://www.youtube.com/results?search_query=Alongamento%20de%20Panturrilha%20na%20Parede%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
+    "description": "De frente pra parede, apoie as mãos e leve uma perna pra trás com o calcanhar no chão, inclinando o corpo à frente até sentir o alongamento na panturrilha.",
+    "difficultyLevel": "INICIANTE"
+  },
+  {
+    "name": "Alongamento de Peitoral no Batente da Porta",
+    "muscleGroup": "Alongamento",
+    "equipment": "Nenhum",
+    "mediaUrl": "https://www.youtube.com/results?search_query=Alongamento%20de%20Peitoral%20no%20Batente%20da%20Porta%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
+    "description": "Apoie o antebraço no batente da porta com o cotovelo a 90 graus e incline o corpo levemente à frente, alongando o peitoral do lado apoiado.",
+    "difficultyLevel": "INICIANTE"
+  },
+  {
+    "name": "Alongamento de Ombro Cruzado",
+    "muscleGroup": "Alongamento",
+    "equipment": "Nenhum",
+    "mediaUrl": "https://www.youtube.com/results?search_query=Alongamento%20de%20Ombro%20Cruzado%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
+    "description": "Cruze um braço estendido à frente do corpo e use o outro braço pra puxá-lo levemente contra o peito, alongando a parte de trás do ombro.",
+    "difficultyLevel": "INICIANTE"
+  },
+  {
+    "name": "Alongamento de Tríceps Overhead",
+    "muscleGroup": "Alongamento",
+    "equipment": "Nenhum",
+    "mediaUrl": "https://www.youtube.com/results?search_query=Alongamento%20de%20Tr%C3%ADceps%20Overhead%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
+    "description": "Com um braço elevado e o cotovelo flexionado atrás da cabeça, use a outra mão pra empurrar levemente o cotovelo, alongando o tríceps.",
+    "difficultyLevel": "INICIANTE"
+  },
+  {
+    "name": "Alongamento Borboleta (Adutores)",
+    "muscleGroup": "Alongamento",
+    "equipment": "Nenhum",
+    "mediaUrl": "https://www.youtube.com/results?search_query=Alongamento%20Borboleta%20Adutores%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
+    "description": "Sentado com as solas dos pés unidas e os joelhos abertos, incline levemente o tronco à frente pressionando os joelhos em direção ao chão.",
+    "difficultyLevel": "INICIANTE"
+  },
+  {
+    "name": "Gato-Camelo (Mobilidade Lombar)",
+    "muscleGroup": "Alongamento",
+    "equipment": "Nenhum",
+    "mediaUrl": "https://www.youtube.com/results?search_query=Gato-Camelo%20Mobilidade%20Lombar%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
+    "description": "Em quatro apoios, alterne entre arquear a coluna pra cima (gato) e deixá-la afundar pra baixo (camelo), num movimento lento e controlado.",
+    "difficultyLevel": "INICIANTE"
+  },
+  {
+    "name": "Alongamento do Piriforme Sentado",
+    "muscleGroup": "Alongamento",
+    "equipment": "Nenhum",
+    "mediaUrl": "https://www.youtube.com/results?search_query=Alongamento%20do%20Piriforme%20Sentado%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
+    "description": "Sentado, cruze um tornozelo sobre o joelho oposto e incline o tronco à frente, sentindo o alongamento na lateral do glúteo.",
+    "difficultyLevel": "INICIANTE"
+  },
+  {
+    "name": "Alongamento de Flexores do Quadril (Meia-Ajoelhado)",
+    "muscleGroup": "Alongamento",
+    "equipment": "Nenhum",
+    "mediaUrl": "https://www.youtube.com/results?search_query=Alongamento%20de%20Flexores%20do%20Quadril%20Meia-Ajoelhado%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
+    "description": "Em posição de meio-ajoelhado, empurre o quadril levemente à frente mantendo o tronco ereto, alongando a frente do quadril da perna de trás.",
+    "difficultyLevel": "INICIANTE"
+  },
+  {
+    "name": "Corrida na Esteira",
+    "muscleGroup": "Cardio",
+    "equipment": "Esteira",
+    "mediaUrl": "https://www.youtube.com/results?search_query=Corrida%20na%20Esteira%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
+    "description": "Mantenha postura ereta e passada natural, ajustando velocidade/inclinação gradualmente conforme o condicionamento.",
+    "difficultyLevel": "INICIANTE"
+  },
+  {
+    "name": "Bicicleta Ergométrica",
+    "muscleGroup": "Cardio",
+    "equipment": "Bicicleta Ergométrica",
+    "mediaUrl": "https://www.youtube.com/results?search_query=Bicicleta%20Erg%C3%A9metrica%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
+    "description": "Ajuste o banco na altura correta e pedale em ritmo constante, mantendo o core levemente contraído e as costas relaxadas.",
+    "difficultyLevel": "INICIANTE"
+  },
+  {
+    "name": "Elíptico",
+    "muscleGroup": "Cardio",
+    "equipment": "Elíptico",
+    "mediaUrl": "https://www.youtube.com/results?search_query=El%C3%ADptico%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
+    "description": "Mantenha o movimento fluido de pernas e braços simultaneamente, com postura ereta e passos amplos.",
+    "difficultyLevel": "INICIANTE"
+  },
+  {
+    "name": "Remo Ergométrico",
+    "muscleGroup": "Cardio",
+    "equipment": "Remo Ergométrico",
+    "mediaUrl": "https://www.youtube.com/results?search_query=Remo%20Erg%C3%A9metrico%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
+    "description": "Empurre com as pernas primeiro, depois incline o tronco e puxe os braços, revertendo a sequência na volta — pernas, tronco, braços.",
+    "difficultyLevel": "INTERMEDIARIO"
+  },
+  {
+    "name": "Pular Corda",
+    "muscleGroup": "Cardio",
+    "equipment": "Corda",
+    "mediaUrl": "https://www.youtube.com/results?search_query=Pular%20Corda%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
+    "description": "Salte com os pés juntos e joelhos levemente flexionados, girando a corda com os punhos, não os braços inteiros.",
+    "difficultyLevel": "INTERMEDIARIO"
+  },
+  {
+    "name": "Escada Ergométrica (StepMill)",
+    "muscleGroup": "Cardio",
+    "equipment": "Escada Ergométrica",
+    "mediaUrl": "https://www.youtube.com/results?search_query=Escada%20Erg%C3%A9metrica%20StepMill%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
+    "description": "Suba os degraus em ritmo constante mantendo o tronco ereto, evitando se apoiar demais nos corrimãos.",
+    "difficultyLevel": "INTERMEDIARIO"
+  },
+  {
+    "name": "Burpees",
+    "muscleGroup": "Cardio",
+    "equipment": "Peso Corporal",
+    "mediaUrl": "https://www.youtube.com/results?search_query=Burpees%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
+    "description": "Agache, apoie as mãos no chão, jogue as pernas pra trás em prancha, retorne e salte com os braços estendidos acima da cabeça.",
+    "difficultyLevel": "AVANCADO"
+  },
+  {
+    "name": "Mountain Climbers",
+    "muscleGroup": "Cardio",
+    "equipment": "Peso Corporal",
+    "mediaUrl": "https://www.youtube.com/results?search_query=Mountain%20Climbers%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
+    "description": "Em posição de prancha, alterne trazendo os joelhos em direção ao peito rapidamente, mantendo o quadril estável.",
+    "difficultyLevel": "INTERMEDIARIO"
+  },
+  {
+    "name": "Corrida Intervalada (Sprints)",
+    "muscleGroup": "Cardio",
+    "equipment": "Esteira",
+    "mediaUrl": "https://www.youtube.com/results?search_query=Corrida%20Intervalada%20Sprints%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
+    "description": "Alterne tiros curtos em alta intensidade com períodos de recuperação em ritmo leve, num formato de intervalos.",
+    "difficultyLevel": "AVANCADO"
+  },
+  {
+    "name": "Polichinelo (Jumping Jacks)",
+    "muscleGroup": "Cardio",
+    "equipment": "Peso Corporal",
+    "mediaUrl": "https://www.youtube.com/results?search_query=Polichinelo%20Jumping%20Jacks%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
+    "description": "Salte abrindo pernas e braços simultaneamente, retornando à posição inicial num ritmo constante.",
+    "difficultyLevel": "INICIANTE"
+  },
+  {
+    "name": "Dead Bug (Inseto Morto)",
+    "muscleGroup": "Abdômen",
+    "equipment": "Peso Corporal",
+    "mediaUrl": "https://www.youtube.com/results?search_query=Dead%20Bug%20Inseto%20Morto%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
+    "description": "Deitado, braços e pernas para cima a 90 graus, estenda um braço e a perna oposta simultaneamente sem deixar a lombar descolar do chão, alternando os lados.",
+    "difficultyLevel": "INICIANTE"
+  },
+  {
+    "name": "Prancha com Rotação",
+    "muscleGroup": "Abdômen",
+    "equipment": "Peso Corporal",
+    "mediaUrl": "https://www.youtube.com/results?search_query=Prancha%20com%20Rota%C3%A7%C3%A3o%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
+    "description": "Na prancha lateral com um braço estendido para cima, gire o tronco levando o braço por baixo do corpo e retorne, alternando os lados.",
     "difficultyLevel": "INTERMEDIARIO"
   }
 ]

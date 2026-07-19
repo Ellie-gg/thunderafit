@@ -13,23 +13,31 @@ const exercises: Prisma.ExerciseCreateInput[] = (exercisesRaw as any[]).map((ex)
 });
 
 async function main() {
-  console.log(`Seeding ${exercises.length} exercises...`);
+  // Fase 34: create-only, nunca upsert. Antes disso, rodar `npm run db:seed`
+  // de novo sobrescrevia SILENCIOSAMENTE qualquer edição manual feita pela
+  // tela de admin (Fase 33, ex: mídia customizada via upload da Fase 32) com
+  // o valor "original" do JSON — bug real de perda de dado, encontrado ao
+  // planejar a curadoria da Fase 34. Itens novos no JSON continuam sendo
+  // criados normalmente; itens já existentes (por nome) são ignorados.
+  console.log(`Seeding ${exercises.length} exercises (create-only)...`);
+  let exercisesCreated = 0;
   for (const ex of exercises) {
-    await prisma.exercise.upsert({
-      where: { name: ex.name },
-      update: ex,
-      create: ex,
-    });
+    const existing = await prisma.exercise.findUnique({ where: { name: ex.name } });
+    if (existing) continue;
+    await prisma.exercise.create({ data: ex });
+    exercisesCreated++;
   }
+  console.log(`${exercisesCreated} new exercise(s) created, ${exercises.length - exercisesCreated} already existed (skipped).`);
 
-  console.log(`Seeding ${foods.length} foods...`);
+  console.log(`Seeding ${foods.length} foods (create-only)...`);
+  let foodsCreated = 0;
   for (const food of foods) {
-    await prisma.food.upsert({
-      where: { name: food.name },
-      update: food,
-      create: food,
-    });
+    const existing = await prisma.food.findUnique({ where: { name: food.name } });
+    if (existing) continue;
+    await prisma.food.create({ data: food });
+    foodsCreated++;
   }
+  console.log(`${foodsCreated} new food(s) created, ${foods.length - foodsCreated} already existed (skipped).`);
 
   console.log("Seeding complete.");
 }

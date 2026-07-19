@@ -52,7 +52,7 @@ export function AddExerciseForm({
     };
   }, []);
 
-  const all = exercisesQuery.data?.exercises ?? [];
+  const all = useMemo(() => exercisesQuery.data?.exercises ?? [], [exercisesQuery.data]);
 
   const groups = useMemo(() => {
     const set = new Set(all.map((e) => e.muscleGroup));
@@ -152,15 +152,19 @@ export function AddExerciseForm({
             // O link de vídeo fica FORA do <button> (elementos interativos não
             // podem aninhar) — permite ao Personal conferir a execução antes de
             // prescrever (Fase 17, Item 2).
+            // Fase 34: destaque visual dos ~5 exercícios mais feitos de cada
+            // grupo — borda esquerda + selo ☆, em accent-secondary (não
+            // accent, que já marca o item SELECIONADO nesta mesma lista;
+            // cores diferentes evitam confundir os dois estados).
+            const rowClasses = [
+              "flex items-center gap-2 rounded-md border pr-2",
+              selected ? "border-accent bg-accent/10" : "border-transparent hover:border-border",
+              ex.isFeatured && "border-l-4 border-l-accent-secondary",
+            ]
+              .filter(Boolean)
+              .join(" ");
             return (
-              <div
-                key={ex.id}
-                className={
-                  selected
-                    ? "flex items-center gap-2 rounded-md border border-accent bg-accent/10 pr-2"
-                    : "flex items-center gap-2 rounded-md border border-transparent pr-2 hover:border-border"
-                }
-              >
+              <div key={ex.id} className={rowClasses}>
                 <button
                   type="button"
                   role="option"
@@ -169,7 +173,14 @@ export function AddExerciseForm({
                   className="flex flex-1 items-center justify-between gap-2 px-3 py-2 text-left"
                 >
                   <span className="flex flex-col">
-                    <span className="text-sm font-semibold">{ex.name}</span>
+                    <span className="text-sm font-semibold">
+                      {ex.isFeatured && (
+                        <span aria-hidden className="mr-1 text-accent-secondary">
+                          ☆
+                        </span>
+                      )}
+                      {ex.name}
+                    </span>
                     <span className="text-xs text-muted">
                       {ex.muscleGroup} · {ex.equipment}
                     </span>

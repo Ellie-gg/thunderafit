@@ -70,6 +70,7 @@ export function AdminExerciseForm({
     exercise?.mediaType === "YOUTUBE" ? exercise?.mediaUrl ?? "" : ""
   );
   const [mediaFile, setMediaFile] = useState<File | null>(null);
+  const [isFeatured, setIsFeatured] = useState(exercise?.isFeatured ?? false);
   const [similarNames, setSimilarNames] = useState<string[] | null>(null);
   const [localError, setLocalError] = useState<string | null>(null);
 
@@ -84,6 +85,7 @@ export function AdminExerciseForm({
         description: description.trim(),
         difficultyLevel,
         confirmSimilarName,
+        isFeatured,
       };
       const result = exercise
         ? await updateAdminExercise(exercise.id, input)
@@ -199,6 +201,21 @@ export function AdminExerciseForm({
           ))}
         </select>
       </div>
+
+      <label className="flex w-fit items-center gap-2">
+        <input
+          type="checkbox"
+          checked={isFeatured}
+          onChange={(e) => setIsFeatured(e.target.checked)}
+          className="h-4 w-4 rounded border-border accent-accent-secondary"
+        />
+        <span className="text-sm text-foreground">
+          Destaque{" "}
+          <span className="text-xs text-muted">
+            (aparece primeiro dentro do grupo muscular, com selo ☆)
+          </span>
+        </span>
+      </label>
 
       <div className="flex flex-col gap-1.5 border-t border-border pt-3">
         <Label>Mídia {exercise ? "(deixe em branco pra manter a atual)" : "(opcional)"}</Label>
