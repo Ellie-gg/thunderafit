@@ -149,6 +149,12 @@ export function AppHeader() {
               Usuários
             </Link>
             <Link
+              href="/nimbus/exercicios"
+              className="hidden text-sm font-semibold text-accent-secondary hover:underline sm:inline"
+            >
+              Exercícios
+            </Link>
+            <Link
               href="/nimbus/logins"
               className="hidden text-sm font-semibold text-accent-secondary hover:underline sm:inline"
             >

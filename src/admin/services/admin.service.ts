@@ -10,6 +10,98 @@ const MAX_EXERCISE_MEDIA_DATA_URL_LENGTH = 6_000_000;
 const VIDEO_DATA_URL_REGEX = /^data:video\/(mp4|webm);base64,[A-Za-z0-9+/]+=*$/;
 const GIF_DATA_URL_REGEX = /^data:image\/gif;base64,[A-Za-z0-9+/]+=*$/;
 
+// Fase 33: CRUD do catálogo de exercícios.
+const VALID_DIFFICULTY_LEVELS = ["INICIANTE", "INTERMEDIARIO", "AVANCADO"] as const;
+type DifficultyLevel = (typeof VALID_DIFFICULTY_LEVELS)[number];
+const VALID_ROLES = ["PERSONAL", "ALUNO", "NUTRICIONISTA", "ADMIN"] as const;
+type UserRole = (typeof VALID_ROLES)[number];
+
+// Nome IDÊNTICO já é barrado pelo @unique do schema — a checagem de
+// similaridade aqui é só pra "parecido, mas diferente" (variação de
+// espaço/acento/caixa, ou um erro de digitação de 1-2 caracteres), que não
+// vira um bloqueio duro (podem ser exercícios legítimos diferentes), só um
+// aviso com confirmação explícita.
+function normalizeExerciseName(name: string): string {
+  return name
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .toLowerCase()
+    .trim()
+    .replace(/\s+/g, " ");
+}
+
+function levenshteinDistance(a: string, b: string): number {
+  const rows = a.length + 1;
+  const cols = b.length + 1;
+  const dist: number[][] = Array.from({ length: rows }, () => new Array(cols).fill(0));
+  for (let i = 0; i < rows; i++) dist[i][0] = i;
+  for (let j = 0; j < cols; j++) dist[0][j] = j;
+  for (let i = 1; i < rows; i++) {
+    for (let j = 1; j < cols; j++) {
+      const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+      dist[i][j] = Math.min(dist[i - 1][j] + 1, dist[i][j - 1] + 1, dist[i - 1][j - 1] + cost);
+    }
+  }
+  return dist[rows - 1][cols - 1];
+}
+
+const SIMILAR_NAME_MAX_DISTANCE = 2;
+
+function findSimilarExerciseNames(
+  candidateName: string,
+  existing: Array<{ id: string; name: string }>,
+  excludeId?: string
+): string[] {
+  const normalizedCandidate = normalizeExerciseName(candidateName);
+  const similar: string[] = [];
+  for (const ex of existing) {
+    if (ex.id === excludeId) continue;
+    const normalizedExisting = normalizeExerciseName(ex.name);
+    if (normalizedExisting === normalizedCandidate) {
+      // Mesmo nome normalizado, mas grafia original diferente (acento/caixa/
+      // espaço) — @unique do schema só barra o literal idêntico.
+      similar.push(ex.name);
+      continue;
+    }
+    if (levenshteinDistance(normalizedCandidate, normalizedExisting) <= SIMILAR_NAME_MAX_DISTANCE) {
+      similar.push(ex.name);
+    }
+  }
+  return similar;
+}
+
+function validateExerciseInput<
+  T extends {
+    name?: string;
+    muscleGroup?: string;
+    equipment?: string;
+    description?: string;
+    difficultyLevel?: string;
+  },
+>(
+  input: T
+): asserts input is T & {
+  name: string;
+  muscleGroup: string;
+  equipment: string;
+  description: string;
+  difficultyLevel: DifficultyLevel;
+} {
+  const missing = ["name", "muscleGroup", "equipment", "description", "difficultyLevel"].filter(
+    (field) => !(input as any)[field]
+  );
+  if (missing.length > 0) {
+    const err = new Error(`Campo(s) obrigatório(s) ausente(s): ${missing.join(", ")}.`);
+    (err as any).statusCode = 400;
+    throw err;
+  }
+  if (!VALID_DIFFICULTY_LEVELS.includes(input.difficultyLevel as DifficultyLevel)) {
+    const err = new Error("difficultyLevel inválido. Use INICIANTE, INTERMEDIARIO ou AVANCADO.");
+    (err as any).statusCode = 400;
+    throw err;
+  }
+}
+
 export const adminService = {
   async getOverview() {
     const [byRoleRaw, growthRaw, professionals, relationCounts] = await Promise.all([
@@ -98,6 +190,13 @@ export const adminService = {
     return adminRepository.recentAccessLogs(take);
   },
 
+  // Fase 33: trilha de ações administrativas sensíveis (hoje só mudança de
+  // role) — tabela separada de AdminAccessLog (ver schema.prisma), exposta
+  // junto na mesma tela pra manter a auditoria consolidada num único lugar.
+  async listAuditLogs(take = 50) {
+    return adminRepository.recentAuditLogs(take);
+  },
+
   /**
    * Bugs potenciais considerados antes de escrever esta função:
    * - confiar no `mediaType` que o cliente manda sem validar o formato de
@@ -169,5 +268,181 @@ export const adminService = {
     const err = new Error("mediaType inválido. Use YOUTUBE, VIDEO ou GIF.");
     (err as any).statusCode = 400;
     throw err;
+  },
+
+  // --- Fase 33: CRUD do catálogo de exercícios ---
+
+  async listExercisesForAdmin() {
+    return adminRepository.listAllExercises();
+  },
+
+  /**
+   * Bugs potenciais considerados antes de escrever esta função:
+   * - checar nome EXATO duplicado antes do @unique estourar um erro cru do
+   *   Prisma — mensagem clara em vez de um 500/erro genérico de constraint.
+   * - rodar a checagem de similaridade sempre, mesmo sem confirmSimilarName,
+   *   pra devolver a lista de nomes parecidos no aviso (o cliente precisa
+   *   saber COM O QUE está parecido pra decidir se confirma).
+   */
+  async createExercise(input: {
+    name?: string;
+    muscleGroup?: string;
+    equipment?: string;
+    description?: string;
+    difficultyLevel?: string;
+    confirmSimilarName?: boolean;
+  }) {
+    validateExerciseInput(input);
+
+    const existing = await adminRepository.listAllExercises();
+    const exactMatch = existing.find(
+      (ex) => normalizeExerciseName(ex.name) === normalizeExerciseName(input.name) && ex.name === input.name
+    );
+    if (exactMatch) {
+      const err = new Error("Já existe um exercício com esse nome.");
+      (err as any).statusCode = 409;
+      throw err;
+    }
+
+    const similarNames = findSimilarExerciseNames(input.name, existing);
+    if (similarNames.length > 0 && !input.confirmSimilarName) {
+      return { warning: "similar_name" as const, similarNames };
+    }
+
+    const exercise = await adminRepository.createExercise({
+      name: input.name,
+      muscleGroup: input.muscleGroup,
+      equipment: input.equipment,
+      description: input.description,
+      difficultyLevel: input.difficultyLevel,
+    });
+    return { exercise };
+  },
+
+  async updateExercise(
+    exerciseId: string,
+    input: {
+      name?: string;
+      muscleGroup?: string;
+      equipment?: string;
+      description?: string;
+      difficultyLevel?: string;
+      confirmSimilarName?: boolean;
+    }
+  ) {
+    const current = await adminRepository.findExerciseById(exerciseId);
+    if (!current) {
+      const err = new Error("Exercício não encontrado.");
+      (err as any).statusCode = 404;
+      throw err;
+    }
+
+    validateExerciseInput(input);
+
+    const existing = await adminRepository.listAllExercises();
+    const exactMatch = existing.find(
+      (ex) =>
+        ex.id !== exerciseId &&
+        normalizeExerciseName(ex.name) === normalizeExerciseName(input.name) &&
+        ex.name === input.name
+    );
+    if (exactMatch) {
+      const err = new Error("Já existe um exercício com esse nome.");
+      (err as any).statusCode = 409;
+      throw err;
+    }
+
+    const similarNames = findSimilarExerciseNames(input.name, existing, exerciseId);
+    if (similarNames.length > 0 && !input.confirmSimilarName) {
+      return { warning: "similar_name" as const, similarNames };
+    }
+
+    const exercise = await adminRepository.updateExercise(exerciseId, {
+      name: input.name,
+      muscleGroup: input.muscleGroup,
+      equipment: input.equipment,
+      description: input.description,
+      difficultyLevel: input.difficultyLevel,
+    });
+    return { exercise };
+  },
+
+  /**
+   * Bloqueia (409) em vez de deixar o FK constraint estourar cru — e,
+   * principalmente, em vez de cascatear a exclusão: apagar um exercício em
+   * uso apagaria prescrições/históricos de série de alunos de verdade sem
+   * aviso nenhum. Sem `onDelete: Cascade` nesse relacionamento no schema é
+   * proposital (mesmo raciocínio da Fase 31 pra programas/templates).
+   */
+  async deleteExercise(exerciseId: string) {
+    const exercise = await adminRepository.findExerciseById(exerciseId);
+    if (!exercise) {
+      const err = new Error("Exercício não encontrado.");
+      (err as any).statusCode = 404;
+      throw err;
+    }
+
+    const usageCount = await adminRepository.countWorkoutItemsForExercise(exerciseId);
+    if (usageCount > 0) {
+      const err = new Error(
+        `Este exercício está em uso em ${usageCount} prescrição(ões) e não pode ser excluído.`
+      );
+      (err as any).statusCode = 409;
+      throw err;
+    }
+
+    await adminRepository.deleteExercise(exerciseId);
+    return { deleted: true };
+  },
+
+  // --- Fase 33: edição de role de usuário ---
+
+  /**
+   * Bugs potenciais considerados antes de escrever esta função:
+   * - admin removendo a própria role de ADMIN (se acontecer sem querer,
+   *   perde acesso ao próprio painel sem ninguém pra reverter via UI).
+   * - remover o ÚLTIMO admin do sistema (mesmo que não seja o próprio
+   *   admin logado) — travaria toda a área /nimbus até alguém rodar o seed
+   *   manual de novo.
+   * - confiar no role novo sem validar contra o enum de verdade.
+   */
+  async updateUserRole(adminId: string, targetUserId: string, newRole?: string) {
+    if (!newRole || !VALID_ROLES.includes(newRole as UserRole)) {
+      const err = new Error("role inválida. Use PERSONAL, ALUNO, NUTRICIONISTA ou ADMIN.");
+      (err as any).statusCode = 400;
+      throw err;
+    }
+
+    if (targetUserId === adminId) {
+      const err = new Error("Você não pode alterar a própria role.");
+      (err as any).statusCode = 400;
+      throw err;
+    }
+
+    const target = await adminRepository.findUserById(targetUserId);
+    if (!target) {
+      const err = new Error("Usuário não encontrado.");
+      (err as any).statusCode = 404;
+      throw err;
+    }
+
+    if (target.role === "ADMIN" && newRole !== "ADMIN") {
+      const adminCount = await adminRepository.countUsersWithRole("ADMIN");
+      if (adminCount <= 1) {
+        const err = new Error("Não é possível remover o último administrador do sistema.");
+        (err as any).statusCode = 400;
+        throw err;
+      }
+    }
+
+    const oldRole = target.role;
+    const updated = await adminRepository.updateUserRole(targetUserId, newRole as UserRole);
+    await adminRepository.createAuditLog(
+      adminId,
+      "ROLE_CHANGE",
+      targetUserId,
+      `${oldRole} -> ${newRole}`
+    );
+    return { user: updated };
   },
 };

@@ -54,6 +54,36 @@ function AccessLogsContent() {
             )}
           </Card>
         )}
+
+        {/* Fase 33: trilha de ações administrativas sensíveis (hoje só
+            mudança de role) — tabela separada de AdminAccessLog (que é
+            especificamente sobre acesso a anamnese), mas exibida na mesma
+            tela pra manter a auditoria consolidada. */}
+        {logsQuery.data && (
+          <div>
+            <h2 className="mb-2 font-display text-lg font-bold">Ações administrativas</h2>
+            <Card className="flex flex-col gap-2">
+              {logsQuery.data.auditLogs.map((l) => (
+                <div
+                  key={l.id}
+                  className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-border px-3 py-2"
+                >
+                  <span className="text-sm font-semibold">{l.action}</span>
+                  <span className="text-xs text-muted">{l.details}</span>
+                  <span className="font-mono-nums text-xs text-muted">
+                    admin: {l.adminId.slice(0, 8)}…
+                  </span>
+                  <span className="text-xs text-muted">
+                    {new Date(l.createdAt).toLocaleString("pt-BR")}
+                  </span>
+                </div>
+              ))}
+              {logsQuery.data.auditLogs.length === 0 && (
+                <p className="text-sm text-muted">Nenhuma ação administrativa registrada ainda.</p>
+              )}
+            </Card>
+          </div>
+        )}
       </main>
     </>
   );

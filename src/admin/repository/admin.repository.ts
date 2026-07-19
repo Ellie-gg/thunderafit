@@ -117,4 +117,72 @@ export const adminRepository = {
       data: { mediaUrl, mediaType },
     });
   },
+
+  // --- Fase 33: CRUD do catálogo de exercícios ---
+
+  async findExerciseByName(name: string) {
+    return prisma.exercise.findUnique({ where: { name } });
+  },
+
+  async listAllExercises() {
+    return prisma.exercise.findMany({ orderBy: { name: "asc" } });
+  },
+
+  async createExercise(data: {
+    name: string;
+    muscleGroup: string;
+    equipment: string;
+    description: string;
+    difficultyLevel: "INICIANTE" | "INTERMEDIARIO" | "AVANCADO";
+  }) {
+    return prisma.exercise.create({ data });
+  },
+
+  async updateExercise(
+    id: string,
+    data: {
+      name: string;
+      muscleGroup: string;
+      equipment: string;
+      description: string;
+      difficultyLevel: "INICIANTE" | "INTERMEDIARIO" | "AVANCADO";
+    }
+  ) {
+    return prisma.exercise.update({ where: { id }, data });
+  },
+
+  async countWorkoutItemsForExercise(exerciseId: string) {
+    return prisma.workoutExercise.count({ where: { exerciseId } });
+  },
+
+  async deleteExercise(id: string) {
+    return prisma.exercise.delete({ where: { id } });
+  },
+
+  // --- Fase 33: edição de role de usuário ---
+
+  async findUserById(id: string) {
+    return prisma.user.findUnique({ where: { id } });
+  },
+
+  async countUsersWithRole(role: "PERSONAL" | "ALUNO" | "NUTRICIONISTA" | "ADMIN") {
+    return prisma.user.count({ where: { role } });
+  },
+
+  async updateUserRole(id: string, role: "PERSONAL" | "ALUNO" | "NUTRICIONISTA" | "ADMIN") {
+    return prisma.user.update({ where: { id }, data: { role } });
+  },
+
+  async createAuditLog(adminId: string, action: string, targetUserId: string, details: string) {
+    return prisma.adminAuditLog.create({
+      data: { adminId, action, targetUserId, details },
+    });
+  },
+
+  async recentAuditLogs(take: number) {
+    return prisma.adminAuditLog.findMany({
+      orderBy: { createdAt: "desc" },
+      take,
+    });
+  },
 };
