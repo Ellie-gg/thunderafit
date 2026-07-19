@@ -99,6 +99,7 @@ type ExerciseCrudBody = {
   description?: string;
   difficultyLevel?: string;
   confirmSimilarName?: boolean;
+  isFeatured?: boolean;
 };
 
 export async function listAdminExercisesHandler(request: FastifyRequest, reply: FastifyReply) {

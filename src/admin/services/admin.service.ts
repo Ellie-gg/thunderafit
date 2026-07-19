@@ -291,6 +291,7 @@ export const adminService = {
     description?: string;
     difficultyLevel?: string;
     confirmSimilarName?: boolean;
+    isFeatured?: boolean;
   }) {
     validateExerciseInput(input);
 
@@ -315,6 +316,7 @@ export const adminService = {
       equipment: input.equipment,
       description: input.description,
       difficultyLevel: input.difficultyLevel,
+      isFeatured: input.isFeatured ?? false,
     });
     return { exercise };
   },
@@ -328,6 +330,7 @@ export const adminService = {
       description?: string;
       difficultyLevel?: string;
       confirmSimilarName?: boolean;
+      isFeatured?: boolean;
     }
   ) {
     const current = await adminRepository.findExerciseById(exerciseId);
@@ -363,6 +366,7 @@ export const adminService = {
       equipment: input.equipment,
       description: input.description,
       difficultyLevel: input.difficultyLevel,
+      isFeatured: input.isFeatured ?? current.isFeatured,
     });
     return { exercise };
   },

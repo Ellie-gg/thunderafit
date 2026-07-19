@@ -56,8 +56,9 @@ test("Personal filtra o catálogo por grupo muscular e adiciona um exercício de
 
   const listbox = page.getByRole("listbox", { name: "Exercícios" });
 
-  // Sem filtro: lista tem o catálogo inteiro (149).
-  await expect(page.getByText("Exercício (149)")).toBeVisible();
+  // Sem filtro: lista tem o catálogo inteiro (171 desde a Fase 34 —
+  // Alongamento/Cardio novos + 2 extras em Abdômen).
+  await expect(page.getByText("Exercício (171)")).toBeVisible();
 
   // Filtra por Peito → a contagem cai para 22 e só aparecem itens de Peito.
   await page.getByRole("button", { name: "Peito", exact: true }).click();
