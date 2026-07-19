@@ -14,14 +14,25 @@ import { VoltageBar } from "@/components/voltage-bar";
 export function ExerciseExecutionCard({
   workoutId,
   workoutExercise,
+  id,
+  onMarkDone,
 }: {
   workoutId: string;
   workoutExercise: WorkoutExercise;
+  /** id do elemento raiz — usado pelo container pra rolar até o próximo card. */
+  id?: string;
+  /** Fase 33.1: disparado ao marcar/desmarcar o checkbox "Concluído". */
+  onMarkDone?: (done: boolean) => void;
 }) {
   const queryClient = useQueryClient();
   const [repsDone, setRepsDone] = useState("");
   const [weightKg, setWeightKg] = useState("");
   const [playing, setPlaying] = useState(false);
+  // Fase 33.1: marca manual do aluno, independente de isComplete — é o aluno
+  // quem decide que terminou o exercício, mesmo sem ter registrado todas as
+  // séries. Só um assistente de navegação (esmaece + avisa o pai pra rolar
+  // até o próximo card); não persiste no backend nem afeta setLogs/sets.
+  const [markedDone, setMarkedDone] = useState(false);
 
   const setLogs = workoutExercise.setLogs ?? [];
   const nextSetNumber = setLogs.length + 1;
@@ -47,10 +58,26 @@ export function ExerciseExecutionCard({
   const thumbnailUrl = mediaType === "YOUTUBE" && mediaUrl ? toYoutubeThumbnail(mediaUrl) : null;
 
   return (
-    <Card className="flex flex-col gap-4">
-      <div className="flex items-center justify-between">
-        <h3 className="font-display text-lg font-bold">{workoutExercise.exercise?.name}</h3>
-        <span className="font-mono-nums text-xs text-muted">
+    <Card
+      id={id}
+      className={`flex flex-col gap-4 transition-opacity duration-300 ${markedDone ? "opacity-60" : ""}`}
+    >
+      <div className="flex items-center justify-between gap-3">
+        <label className="flex items-center gap-2">
+          <input
+            type="checkbox"
+            checked={markedDone}
+            onChange={(e) => {
+              const done = e.target.checked;
+              setMarkedDone(done);
+              onMarkDone?.(done);
+            }}
+            aria-label={`Marcar ${workoutExercise.exercise?.name ?? "exercício"} como concluído`}
+            className="h-5 w-5 shrink-0 rounded border-border accent-accent"
+          />
+          <h3 className="font-display text-lg font-bold">{workoutExercise.exercise?.name}</h3>
+        </label>
+        <span className="font-mono-nums shrink-0 text-xs text-muted">
           {setLogs.length}/{workoutExercise.sets} séries
         </span>
       </div>

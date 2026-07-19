@@ -74,6 +74,8 @@
 
 **Fase 32.1 — Hotfix: E-mail Visível no Cadastro + Mostrar Senha no Login.** Bug real reportado durante o teste manual da Fase 32: a etapa "Vamos criar sua conta" (`/login`, quando o e-mail digitado ainda não tem conta) não mostrava o e-mail digitado — diferente das outras etapas do mesmo fluxo, que já mostravam. Corrigido. Aproveitado pra adicionar um botão "Mostrar/Ocultar" nos campos de senha (login e cadastro), pra conferir o que foi digitado quando o login falha por senha errada, sem depender do gerenciador de senha do navegador. *Modelo: Sonnet 5. 25/25 Jest/RTL (sem teste novo — mudança de UI simples).*
 
+**Fase 33 — Admin: CRUD do Catálogo de Exercícios (tela dedicada) + Edição de Role.** `/src/admin` era só leitura; ganhou camada de escrita completa em `/api/admin/exercises` (create/update/delete, rota separada da pública `GET /api/exercises` que continua só-leitura) e `PUT /api/admin/users/:id/role`. Nova tela dedicada `/nimbus/exercicios` (form inline de criar/editar, exclusão com confirmação — mesmo padrão do `DeleteProgramButton` da Fase 31). Guardrails: categoria (`muscleGroup`) vira dropdown das já existentes no banco, criar categoria nova é uma ação separada e explícita; nome **parecido** (variação de acento/espaço/caixa, ou erro de digitação de até 2 caracteres via distância de Levenshtein) pede confirmação explícita antes de salvar (nome idêntico já é barrado pelo `@unique`); exclusão bloqueada (409) se o exercício está em uso em alguma prescrição (`WorkoutExercise`), evitando corromper histórico de séries de alunos — mesmo raciocínio de cascata manual da Fase 31. Edição de role em `/nimbus/usuarios`: bloqueia auto-edição e remoção do último ADMIN do sistema, audita em nova tabela `AdminAuditLog` (separada de `AdminAccessLog`, que é especificamente sobre acesso a anamnese) — exibida junto em `/nimbus/logs-acesso`. *Modelo: Sonnet 5. 222/222 backend (18 testes novos: 12 de CRUD de exercício, 6 de role/auditoria), 25/25 Jest/RTL, 29/29 Playwright (`admin-flow.spec.ts` estendido com CRUD de exercício + edição de role + checagem de auditoria).*
+
 ## Progresso Geral das Fases
 - [x] Fase 1: Fundação Core, Auth e Estrutura Modular
 - [x] Fase 2: Vínculo Personal↔Aluno e Limite Freemium
@@ -107,3 +109,4 @@
 - [x] Fase 30: Foto de Perfil (aluno e Personal, armazenada no banco)
 - [x] Fase 31: Consolidação (Dashboard Agrupado + Exclusão de Programas/Templates + Correção do Avatar)
 - [x] Fase 32: Infraestrutura de Mídia de Exercícios (bucket GCS + player enquadrado)
+- [x] Fase 33: Admin — CRUD do Catálogo de Exercícios (tela dedicada) + Edição de Role

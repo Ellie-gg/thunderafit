@@ -443,3 +443,18 @@ model AdminAccessLog {
   alunoId      String
   createdAt    DateTime @default(now())
 }
+
+// Fase 33: auditoria genérica de ações administrativas de escrita sensíveis
+// (hoje só mudança de role de usuário). Tabela separada de AdminAccessLog de
+// propósito — aquela é especificamente sobre acesso a anamnese (alunoId
+// obrigatório); aqui o alvo não é necessariamente um aluno, então forçar o
+// mesmo campo seria enganoso. `details` guarda um resumo legível (ex:
+// "PERSONAL -> ADMIN") sem exigir parsing estruturado.
+model AdminAuditLog {
+  id           String   @id @default(uuid())
+  adminId      String
+  action       String
+  targetUserId String
+  details      String
+  createdAt    DateTime @default(now())
+}

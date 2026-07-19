@@ -5,7 +5,13 @@ import type {
   AdminLoginLogEntry,
   AdminSupportSlaThread,
   AdminAccessLogEntry,
+  AdminAuditLogEntry,
+  AdminExerciseInput,
+  AdminExerciseMutationResult,
   Anamnesis,
+  Exercise,
+  ExerciseMediaType,
+  Role,
 } from "../types";
 
 export function getAdminOverview() {
@@ -30,7 +36,52 @@ export function getAdminSupportSla() {
 }
 
 export function listAdminAccessLogs() {
-  return apiFetch<{ logs: AdminAccessLogEntry[] }>("/api/admin/access-logs");
+  return apiFetch<{ logs: AdminAccessLogEntry[]; auditLogs: AdminAuditLogEntry[] }>(
+    "/api/admin/access-logs"
+  );
+}
+
+// --- Fase 33: CRUD do catálogo de exercícios ---
+
+export function listAdminExercises() {
+  return apiFetch<{ exercises: Exercise[] }>("/api/admin/exercises");
+}
+
+export function createAdminExercise(input: AdminExerciseInput) {
+  return apiFetch<AdminExerciseMutationResult>("/api/admin/exercises", {
+    method: "POST",
+    body: input,
+  });
+}
+
+export function updateAdminExercise(id: string, input: AdminExerciseInput) {
+  return apiFetch<AdminExerciseMutationResult>(`/api/admin/exercises/${id}`, {
+    method: "PUT",
+    body: input,
+  });
+}
+
+export function deleteAdminExercise(id: string) {
+  return apiFetch<{ deleted: true }>(`/api/admin/exercises/${id}`, { method: "DELETE" });
+}
+
+export function updateAdminExerciseMedia(
+  id: string,
+  input: { mediaType: ExerciseMediaType; mediaDataUrl?: string; youtubeUrl?: string }
+) {
+  return apiFetch<{ exercise: Exercise }>(`/api/admin/exercises/${id}/media`, {
+    method: "PUT",
+    body: input,
+  });
+}
+
+// --- Fase 33: edição de role de usuário ---
+
+export function updateUserRole(id: string, role: Role) {
+  return apiFetch<{ user: { id: string; role: Role } }>(`/api/admin/users/${id}/role`, {
+    method: "PUT",
+    body: { role },
+  });
 }
 
 /** Reaproveita GET /api/anamnesis?alunoId= — o backend já aceita ADMIN e audita o acesso. */

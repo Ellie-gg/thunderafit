@@ -268,3 +268,28 @@ export interface AdminAccessLogEntry {
   alunoId: string;
   createdAt: string;
 }
+
+// Fase 33: trilha de ações administrativas sensíveis (hoje só mudança de
+// role) — tabela separada de AdminAccessLog (ver prisma/schema.prisma).
+export interface AdminAuditLogEntry {
+  id: string;
+  adminId: string;
+  action: string;
+  targetUserId: string;
+  details: string;
+  createdAt: string;
+}
+
+export interface AdminExerciseInput {
+  name: string;
+  muscleGroup: string;
+  equipment: string;
+  description: string;
+  difficultyLevel: DifficultyLevel;
+  confirmSimilarName?: boolean;
+}
+
+/** Resposta de criar/editar exercício: ou salvou, ou avisou de nome parecido (sem salvar). */
+export type AdminExerciseMutationResult =
+  | { exercise: Exercise; warning?: undefined }
+  | { warning: "similar_name"; similarNames: string[]; exercise?: undefined };
