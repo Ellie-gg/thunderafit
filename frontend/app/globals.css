@@ -108,3 +108,17 @@ body {
   border-color: var(--voltage-accent, var(--volt-500));
   box-shadow: 0 0 8px 0 color-mix(in srgb, var(--voltage-accent, var(--volt-400)) 60%, transparent);
 }
+
+/* Fase 33.4: dia atual na barra de voltagem semanal — contorno tracejado,
+   aceso ou não, pra sempre destacar "hoje" dentro da semana. */
+.voltage-segment[data-today="true"] {
+  border-style: dashed;
+}
+
+/* Fase 33.4: variante mais alta da barra pro dashboard (7 dias, não séries)
+   — mesma linguagem visual, só um pouco mais robusta pra ler como "blocos de
+   dia" em vez de "progresso fino de série". */
+.voltage-bar--weekly .voltage-segment {
+  height: 20px;
+  border-radius: 4px;
+}

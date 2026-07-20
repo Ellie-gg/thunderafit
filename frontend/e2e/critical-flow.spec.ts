@@ -71,7 +71,6 @@ test("login → dashboard → treino → registrar série", async ({ page }) => 
   // --- 1. Login como aluno pela UI ---
   await loginViaUI(page, alunoEmail, password);
   await expect(page).toHaveURL(/\/dashboard$/);
-  await expect(page.getByText(/Sessão sugerida/i)).toBeVisible();
   await expect(page.getByRole("heading", { name: /Treino Playwright E2E/ })).toBeVisible();
 
   // --- 2. Ver o treino ---

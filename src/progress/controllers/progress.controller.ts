@@ -107,3 +107,17 @@ export async function listLoggedExercisesHandler(
     return reply.status(status).send({ error: err.message });
   }
 }
+
+export async function weeklySummaryHandler(
+  request: FastifyRequest<{ Querystring: { alunoId?: string } }>,
+  reply: FastifyReply
+) {
+  try {
+    const alunoId = await assertAluno(request);
+    const result = await progressService.getWeeklySummary(alunoId);
+    return reply.status(200).send(result);
+  } catch (err: any) {
+    const status = (err as any).statusCode ?? 500;
+    return reply.status(status).send({ error: err.message });
+  }
+}
