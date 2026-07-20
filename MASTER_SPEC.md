@@ -254,13 +254,30 @@ cada vez — o fundador escolhe a próxima.
    estendido pra cobrir mudança de role). **Esforço: médio-alto (escrita administrativa
    + guardrails) · Modelo: Sonnet 5, com atenção redobrada nos guards de auditoria.**
 
+
 ### Grupo B — fundação do pivô B2C
 
-7. **Fase 34 — `WorkoutProgram.origin` + guards.** Migration aditiva do enum (ver Seção
-   3), guards tratando `personalId === null`, filtro explícito nas listagens do Personal.
-   **Esforço: alto (superfície de autorização) · Modelo: Opus 4.8.**
-8. **Fase 35 — Fluxo de criação de treino para Aluno Solo.** UI/endpoint equivalente ao
-   do Personal, `origin: SELF`. **Esforço: médio · Modelo: Sonnet 5.**
+7. **Fase 34 — `WorkoutProgram.origin` + guards.** Migration aditiva do enum `origin`
+   (`PERSONAL | SELF`, sem `MARKETPLACE` ainda), `personalId` nullable, guards tratando
+   `personalId === null` como "não é do Personal, é do próprio dono" (nunca "todos os
+   programas do aluno" sem filtro explícito), filtro explícito nas listagens do Personal
+   (helper único de repository, ex: `findPersonalPrescriptions()`). **Puxada pra frente**
+   para servir de base à Fase 34.5 — valida a mudança de authz com escopo pequeno e
+   controlado antes de abrir pro pivô B2C completo (Fase 35+). **Esforço: alto (superfície
+   de autorização) · Modelo: Opus 4.8.**
+8. **Fase 34.5 — Meu Treino Pessoal (templates curados, free).** Depende da Fase 34.
+   Substitui o antigo escopo da Fase 35 (UI livre de criação, catálogo completo) por algo
+   mais restrito e menor: nova tela no dashboard do aluno ("Meu treino pessoal") listando
+   `WorkoutProgram` templates com `origin: SELF`, curados pelo admin usando os exercícios
+   já marcados `isFeatured` (Fase 33.3) — **sem acesso ao catálogo completo de 170
+   exercícios nem liberdade de montagem**. Aplicar = cópia (mesmo padrão da Fase 16),
+   mesma sessão A-E, mesmo `SetLog`/histórico de evolução dos treinos prescritos pelo
+   Personal (sem aba ou fluxo separado). Botão "Crie seu treino do zero" presente na UI
+   desde já, sem lógica por trás (placeholder "em breve") — decisão de virar feature paga
+   (plano PRO) ou gratuita fica em aberto, é só uma checagem de authz a adicionar depois,
+   não uma mudança estrutural. CTA de upsell ao fim da execução (assinar plano PRO ou
+   convidar um Personal) — texto/link por ora, sem checagem de plano ainda. **Esforço:
+   médio · Modelo: Sonnet 5.**
 9. **Fase 36 — Dashboard do aluno com 2 blocos.** "Prescrito pelo seu Personal" + "Meus
    treinos"; card de convite copiável quando não há Personal vinculado. **Esforço: médio
    · Modelo: Sonnet 5.**
@@ -270,23 +287,36 @@ cada vez — o fundador escolhe a próxima.
 ### Grupo C — pesquisa (sem código)
 
 11. **Fase 38 — Pesquisa de monetização B2C.** Busca direta, não workflow multi-agente
-    (o de deep-research da Fase 23 não compensou).
+    (o de deep-research da Fase 23 não compensou). Inclui avaliar anúncios como fonte
+    secundária de receita (banner ancorado discreto em telas de navegação — nunca na
+    tela de execução do treino) e provedores disponíveis pra Android/Capacitor.
 12. **Fase 39 — Sugestão de treino via IA.** Fase própria só de design (provedor, formato
     de prompt, rate limit) antes de qualquer código.
 13. **Fase 40 — Pesquisa de conteúdo de mídia dos exercícios.** A Fase 32 resolve o
     *mecanismo* (onde/como servir vídeo/GIF/YouTube); esta fase é sobre *conteúdo* —
     ferramenta/IA pra gerar ou curar mídia em massa pros ~120 exercícios que ainda não
-    têm vídeo. Sem código até a pesquisa concluir.
+    têm vídeo. Sem código até a pesquisa concluir. Tratada fora do Claude Code — trabalho
+    manual (image-to-video com imagem de referência travando a pose, não text-to-video).
 14. **Fase 41 — Monitoramento geral + backup.** O bucket de mídia de exercícios (Fase 32)
     hoje está dentro do free tier do GCS (`us-central1`, classe `STANDARD`, volume atual
     bem abaixo de 5GB) — mas egress de rede (1GB/mês grátis) e operações de leitura
     (Classe B, 50.000/mês grátis) escalam com o número de usuários assistindo
-    vídeo/GIF repetidamente, ao contrário do volume de armazenamento em si. Fase futura
-    de monitoramento de uso (bucket + demais recursos GCP) e estratégia de backup —
-    ainda sem escopo detalhado, é só um marcador de pendência.
+    vídeo/GIF repetidamente, ao contrário do volume de armazenamento em si. **Nota:
+    monitoramento de GCP (Cloud Monitoring + Billing Budget) e do Neon (dashboard nativo)
+    é configuração manual de console, sem código — não depende de fase no Claude Code,
+    pode ser feito a qualquer momento direto nos respectivos consoles.** Estratégia de
+    backup ainda sem escopo detalhado — marcador de pendência.
 
 ### Backlog operacional herdado
 Ver Seção 7 acima (Neon, billing, Android, webhook).
 
+### Publicação em beta fechado (sem fase — configuração de loja)
+Google Play tem **Internal testing** (até 100 emails, sem review) e Apple tem
+**TestFlight** (até 100 testers internos sem review, ou até 10.000 externos com review
+leve) — permite testar com usuários selecionados antes de qualquer publicação pública,
+em paralelo ao resto do roadmap, sem depender de nenhuma fase de código.
+
 ### Adiado de propósito (decisão de produto, não bloqueio)
-Login Google · camadas anti-abuso de conta · web pública vs. só app nas lojas.
+Login Google · camadas anti-abuso de conta · web pública vs. só app nas lojas · programa
+de indicação Personal→desconto/bônus (quando a regra de negócio fechar, é migration
+aditiva simples sobre o código de convite que já existe — não precisa de fundação hoje).
