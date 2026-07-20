@@ -237,3 +237,44 @@ describe("GET /api/progress/frequency", () => {
     expect(r.body.months).toHaveLength(3);
   });
 });
+
+describe("GET /api/progress/weekly-summary (Fase 33.4)", () => {
+  it("agrega volume da semana e dias ativos a partir dos logs existentes (hoje + 3 dias atrás)", async () => {
+    const r = await supertest(server.server)
+      .get("/api/progress/weekly-summary")
+      .set("Authorization", `Bearer ${tokenAluno}`);
+    expect(r.status).toBe(200);
+    expect(r.body.days).toHaveLength(7);
+
+    // Volume = soma de weightKg*repsDone dos logs de hoje e 3 dias atrás
+    // (55*10 + 60*8) + (62*9 + 65*7) = 1030 + 1013 = 2043
+    expect(r.body.volumeKg).toBe(2043);
+
+    // Hoje tem log → sequência conta pelo menos o dia de hoje. Ontem não tem
+    // log (só hoje e 3 dias atrás), então a sequência para em 1.
+    expect(r.body.streakDays).toBe(1);
+
+    const today = r.body.days[r.body.days.length - 1];
+    expect(today.active).toBe(true);
+    const threeDaysAgoKey = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+    const threeDaysAgoEntry = r.body.days.find((d: any) => d.date === threeDaysAgoKey);
+    expect(threeDaysAgoEntry.active).toBe(true);
+  });
+
+  it("aluno sem nenhum log recebe tudo zerado, sem erro", async () => {
+    const r = await supertest(server.server)
+      .get("/api/progress/weekly-summary")
+      .set("Authorization", `Bearer ${tokenAluno2}`);
+    expect(r.status).toBe(200);
+    expect(r.body.volumeKg).toBe(0);
+    expect(r.body.streakDays).toBe(0);
+    expect(r.body.days.every((d: any) => d.active === false)).toBe(true);
+  });
+
+  it("retorna 400 para um PERSONAL sem alunoId", async () => {
+    const r = await supertest(server.server)
+      .get("/api/progress/weekly-summary")
+      .set("Authorization", `Bearer ${tokenPersonal}`);
+    expect(r.status).toBe(400);
+  });
+});

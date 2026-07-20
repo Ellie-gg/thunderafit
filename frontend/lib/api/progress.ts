@@ -1,5 +1,5 @@
 import { apiFetch } from "./client";
-import type { LoggedExercise, LoadHistoryResponse, FrequencyResponse } from "../types";
+import type { LoggedExercise, LoadHistoryResponse, FrequencyResponse, WeeklySummaryResponse } from "../types";
 
 // Fase 29: as 3 funções abaixo ganham `alunoId` opcional — usado pelo hub do
 // Personal (`/personal/alunos/[alunoId]`) pra ver a evolução de um aluno
@@ -30,4 +30,9 @@ export function getFrequency(period: string = "6m", alunoId?: string) {
   const params = new URLSearchParams({ period });
   if (alunoId) params.set("alunoId", alunoId);
   return apiFetch<FrequencyResponse>(`/api/progress/frequency?${params.toString()}`);
+}
+
+export function getWeeklySummary(alunoId?: string) {
+  const qs = alunoId ? `?alunoId=${encodeURIComponent(alunoId)}` : "";
+  return apiFetch<WeeklySummaryResponse>(`/api/progress/weekly-summary${qs}`);
 }
