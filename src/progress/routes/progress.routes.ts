@@ -3,6 +3,7 @@ import {
   loadHistoryHandler,
   frequencyHandler,
   listLoggedExercisesHandler,
+  weeklySummaryHandler,
 } from "../controllers/progress.controller";
 
 export async function progressRoutes(fastify: FastifyInstance) {
@@ -22,5 +23,11 @@ export async function progressRoutes(fastify: FastifyInstance) {
     "/api/progress/exercises",
     { preHandler: [(fastify as any).authenticate] },
     listLoggedExercisesHandler
+  );
+
+  fastify.get(
+    "/api/progress/weekly-summary",
+    { preHandler: [(fastify as any).authenticate] },
+    weeklySummaryHandler
   );
 }

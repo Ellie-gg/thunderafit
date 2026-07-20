@@ -96,4 +96,50 @@ export const progressService = {
       muscleGroup: we.exercise.muscleGroup,
     }));
   },
+
+  /**
+   * Fase 33.4: resumo pra barra de voltagem semanal + métricas rápidas do
+   * dashboard do aluno.
+   *
+   * Janela de 90 dias (não só 7) pra calcular a SEQUÊNCIA de verdade — um
+   * aluno com 10 dias seguidos de treino não pode ver isso capado em 7 só
+   * porque a barra visual só mostra os últimos 7 blocos. O volume, esse sim,
+   * é só dos últimos 7 dias (é uma métrica "desta semana", não histórica).
+   *
+   * Sequência conta pra trás a partir de HOJE, mas se hoje ainda não tem
+   * série registrada, começa de ONTEM — não zera a sequência só porque o dia
+   * ainda não acabou (mesmo raciocínio de apps de hábito).
+   */
+  async getWeeklySummary(alunoId: string) {
+    const now = new Date();
+    const since = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
+    const logs = await progressRepository.findSetLogsSince(alunoId, since);
+
+    const activeDays = new Set<string>();
+    const sevenDaysAgoKey = dayKey(new Date(now.getTime() - 6 * 24 * 60 * 60 * 1000));
+    let volumeKg = 0;
+    for (const log of logs) {
+      const key = dayKey(log.loggedAt);
+      activeDays.add(key);
+      if (key >= sevenDaysAgoKey) {
+        volumeKg += log.weightKg * log.repsDone;
+      }
+    }
+
+    const days: Array<{ date: string; active: boolean }> = [];
+    for (let i = 6; i >= 0; i--) {
+      const key = dayKey(new Date(now.getTime() - i * 24 * 60 * 60 * 1000));
+      days.push({ date: key, active: activeDays.has(key) });
+    }
+
+    const todayKey = dayKey(now);
+    let cursor = activeDays.has(todayKey) ? now : new Date(now.getTime() - 24 * 60 * 60 * 1000);
+    let streakDays = 0;
+    while (activeDays.has(dayKey(cursor))) {
+      streakDays++;
+      cursor = new Date(cursor.getTime() - 24 * 60 * 60 * 1000);
+    }
+
+    return { days, volumeKg: Math.round(volumeKg * 10) / 10, streakDays };
+  },
 };

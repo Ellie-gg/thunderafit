@@ -4,14 +4,30 @@ import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import { listWorkoutPrograms, getWorkoutProgram } from "@/lib/api/workouts";
 import { listMyDietPlans, getDietPlan } from "@/lib/api/nutrition";
+import { getWeeklySummary } from "@/lib/api/progress";
 import { useAuthStore } from "@/lib/store/auth-store";
+import { labelFor } from "@/lib/session-scheme";
 import { AuthGuard } from "@/components/auth-guard";
 import { AppHeader } from "@/components/app-header";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { VoltageBar } from "@/components/voltage-bar";
+import { WeeklyVoltageBar } from "@/components/weekly-voltage-bar";
+import { WeeklyStats } from "@/components/weekly-stats";
 import { QueryError } from "@/components/query-error";
-import { EvolucaoTeaser } from "@/components/evolucao-teaser";
+
+// Fase 33.4: tempo estimado da sessão — heurística client-side (sem schema
+// novo), ~40s de execução por série + o descanso prescrito entre elas. É uma
+// ESTIMATIVA pro aluno decidir se começa agora, não uma medição real.
+const ESTIMATED_SECONDS_PER_SET = 40;
+
+function estimateSessionMinutes(exercises: Array<{ sets: number; restSeconds: number }>): number {
+  const totalSeconds = exercises.reduce(
+    (acc, ex) => acc + ex.sets * (ESTIMATED_SECONDS_PER_SET + ex.restSeconds),
+    0
+  );
+  return Math.max(1, Math.round(totalSeconds / 60));
+}
 
 function DashboardContent() {
   const user = useAuthStore((s) => s.user);
@@ -36,9 +52,16 @@ function DashboardContent() {
   const program = programQuery.data?.program;
   const sessions = program?.workouts ?? [];
   const nextSession = sessions.find((s) => s.suggestedNext) ?? sessions[0];
-  const totalSets = nextSession?.exercises?.reduce((acc, ex) => acc + ex.sets, 0) ?? 0;
-  const doneSets =
-    nextSession?.exercises?.reduce((acc, ex) => acc + (ex.setLogs?.length ?? 0), 0) ?? 0;
+  const nextExercises = nextSession?.exercises ?? [];
+  const totalSets = nextExercises.reduce((acc, ex) => acc + ex.sets, 0);
+  const doneSets = nextExercises.reduce((acc, ex) => acc + (ex.setLogs?.length ?? 0), 0);
+  const estimatedMinutes = nextExercises.length > 0 ? estimateSessionMinutes(nextExercises) : 0;
+
+  const weeklySummaryQuery = useQuery({
+    queryKey: ["weekly-summary"],
+    queryFn: () => getWeeklySummary(),
+  });
+  const weeklySummary = weeklySummaryQuery.data;
 
   // Fase 17 (Item 5): "plano alimentar de hoje" agora usa o plano ATIVO
   // (isActive) em vez do primeiro da lista — a vigência substituiu a
@@ -87,25 +110,37 @@ function DashboardContent() {
           </Card>
         )}
 
-        {nextSession && (
+        {nextSession && program && (
           <Card className="flex flex-col gap-4 border-accent/40">
             <div className="flex items-center justify-between">
               <span className="text-xs font-semibold uppercase tracking-wide text-accent-secondary">
-                Sessão sugerida
+                {program.name}
               </span>
               <span className="font-mono-nums text-xs text-muted">
                 {doneSets}/{totalSets} séries
               </span>
             </div>
             <h2 className="font-display text-xl font-bold">
-              Sessão {nextSession.letter} — {nextSession.name}
+              {labelFor(program.sessionScheme, nextSession.letter)} — {nextSession.name}
             </h2>
-            {program && <p className="text-xs text-muted">Programa: {program.name}</p>}
+            <p className="text-xs text-muted">
+              {nextExercises.length} exercício{nextExercises.length === 1 ? "" : "s"}
+              {estimatedMinutes > 0 && ` · ~${estimatedMinutes} min`}
+            </p>
             <VoltageBar total={totalSets} filled={doneSets} role="ALUNO" />
             <Button asChild>
               <Link href={`/treinos/${nextSession.id}`}>Começar treino</Link>
             </Button>
           </Card>
+        )}
+
+        {weeklySummary && (
+          <div className="flex flex-col gap-2">
+            <span className="text-xs font-semibold uppercase tracking-wide text-muted">
+              Últimos 7 dias
+            </span>
+            <WeeklyVoltageBar days={weeklySummary.days} />
+          </div>
         )}
 
         {hasPersonal && (
@@ -140,20 +175,32 @@ function DashboardContent() {
           </Card>
         )}
 
-        <EvolucaoTeaser />
+        {weeklySummary && (
+          <WeeklyStats volumeKg={weeklySummary.volumeKg} streakDays={weeklySummary.streakDays} />
+        )}
 
         {/* Atalhos visíveis também aqui (não só no AppHeader) — no celular,
-            os links de texto do header ficam escondidos por falta de espaço. */}
-        <div className="flex flex-wrap gap-4 border-t border-border pt-4 sm:hidden">
-          <Link href="/evolucao" className="text-sm font-semibold text-accent-secondary hover:underline">
-            Evolução
-          </Link>
-          <Link href="/anamnese" className="text-sm font-semibold text-accent-secondary hover:underline">
-            Anamnese
-          </Link>
-          <Link href="/duvidas" className="text-sm font-semibold text-accent-secondary hover:underline">
-            Dúvidas
-          </Link>
+            os links de texto do header ficam escondidos por falta de espaço.
+            Fase 33.4: 3 ícones de peso visual igual (em vez de links de texto
+            soltos), em violeta — claramente secundários ao hero. */}
+        <div className="grid grid-cols-3 gap-2 border-t border-border pt-4 sm:hidden">
+          {[
+            { href: "/evolucao", icon: "📈", label: "Evolução" },
+            { href: "/anamnese", icon: "📋", label: "Anamnese" },
+            { href: "/duvidas", icon: "💬", label: "Dúvidas" },
+          ].map((item) => (
+            <Link
+              key={item.href}
+              href={item.href}
+              className="flex flex-col items-center gap-1 rounded-md py-2 text-center"
+              style={{ color: "var(--role-nutricionista)" }}
+            >
+              <span className="text-xl" aria-hidden>
+                {item.icon}
+              </span>
+              <span className="text-xs font-semibold">{item.label}</span>
+            </Link>
+          ))}
         </div>
       </main>
     </>

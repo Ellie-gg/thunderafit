@@ -114,6 +114,19 @@ export interface FrequencyResponse {
   totalWorkouts: number;
 }
 
+// Fase 33.4: resumo pra barra de voltagem semanal + métricas rápidas do
+// dashboard do aluno.
+export interface WeeklySummaryDay {
+  date: string;
+  active: boolean;
+}
+
+export interface WeeklySummaryResponse {
+  days: WeeklySummaryDay[];
+  volumeKg: number;
+  streakDays: number;
+}
+
 export interface Anamnesis {
   alunoId: string;
   fullName: string | null;
