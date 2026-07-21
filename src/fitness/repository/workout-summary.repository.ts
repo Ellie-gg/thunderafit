@@ -1,0 +1,32 @@
+import prisma from "../../lib/prisma";
+
+export const workoutSummaryRepository = {
+  // Séries logadas para ESTE Workout dentro de uma janela de tempo — usado
+  // tanto pra janela da sessão que acabou de terminar quanto (com outros
+  // argumentos) pra janela da sessão anterior, evitando duplicar a query.
+  async findSetLogsForWorkoutInWindow(workoutId: string, start: Date, end: Date) {
+    return prisma.setLog.findMany({
+      where: {
+        workoutExercise: { workoutId },
+        loggedAt: { gte: start, lte: end },
+      },
+      include: {
+        workoutExercise: { select: { exerciseId: true, exercise: { select: { name: true } } } },
+      },
+      orderBy: { loggedAt: "asc" },
+    });
+  },
+
+  // Histórico de TODOS os treinos/programas do aluno pra este exercício,
+  // estritamente anterior ao início da janela da sessão atual — não filtra
+  // por workoutId (é isso que torna a detecção de PR cross-programa).
+  async findHistoricalSetLogsForExercise(alunoId: string, exerciseId: string, before: Date) {
+    return prisma.setLog.findMany({
+      where: {
+        workoutExercise: { exerciseId, workout: { alunoId } },
+        loggedAt: { lt: before },
+      },
+      select: { weightKg: true },
+    });
+  },
+};

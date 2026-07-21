@@ -72,6 +72,35 @@ export interface Workout {
   suggestedNext?: boolean;
 }
 
+// Fase 35: resumo pós-treino — devolvido junto da resposta de conclusão de
+// sessão, usado tanto pra recapitulação motivacional quanto pro card
+// exportável como imagem (mesmo componente, dois usos).
+export type WorkoutSummaryComparisonType = "FIRST_TIME" | "PERCENT";
+
+export interface WorkoutSummaryComparison {
+  type: WorkoutSummaryComparisonType;
+  previousVolumeKg: number | null;
+  percentChange: number | null;
+}
+
+export interface WorkoutSummaryPR {
+  exerciseId: string;
+  exerciseName: string;
+  weightKg: number;
+  previousBestKg: number;
+}
+
+export interface WorkoutCompletionSummary {
+  workoutId: string;
+  workoutName: string;
+  workoutLetter: string;
+  completedAt: string;
+  volumeKg: number;
+  setsLogged: number;
+  comparison: WorkoutSummaryComparison;
+  personalRecords: WorkoutSummaryPR[];
+}
+
 export type SessionScheme = "LETTER" | "WEEKDAY";
 
 export interface WorkoutProgram {

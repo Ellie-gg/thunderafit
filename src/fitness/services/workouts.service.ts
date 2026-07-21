@@ -1,6 +1,7 @@
 import { workoutsRepository } from "../repository/workouts.repository";
 import { relationsRepository } from "../repository/relations.repository";
 import { exercisesRepository } from "../repository/exercises.repository";
+import { workoutSummaryService } from "./workout-summary.service";
 
 // Fase 27: observação do Personal sobre a prescrição de um exercício.
 const MAX_NOTES_LENGTH = 500;
@@ -133,6 +134,12 @@ export const workoutsService = {
   // Fase 16: o aluno marca a sessão como concluída. Só o próprio aluno dono da
   // sessão pode concluir (nem Personal, nem admin — concluir é um ato de
   // execução do aluno). Idempotente: só atualiza lastCompletedAt.
+  //
+  // Fase 35: além de concluir, monta o resumo pós-treino (volume, comparação
+  // com a sessão anterior, PRs) — precisa capturar o `lastCompletedAt` ANTIGO
+  // antes de sobrescrevê-lo, já que ele é a única fronteira disponível pra
+  // separar "séries desta sessão" das de sessões passadas (não existe uma
+  // entidade de sessão/conclusão própria no banco).
   async completeWorkout(workoutId: string, userId: string) {
     const workout = await workoutsRepository.findById(workoutId);
     if (!workout) {
@@ -145,6 +152,17 @@ export const workoutsService = {
       (err as any).statusCode = 403;
       throw err;
     }
-    return workoutsRepository.markCompleted(workoutId, new Date());
+
+    const previousLastCompletedAt = workout.lastCompletedAt;
+    const completedAt = new Date();
+
+    const summary = await workoutSummaryService.buildCompletionSummary(
+      workout,
+      previousLastCompletedAt,
+      completedAt
+    );
+    const updatedWorkout = await workoutsRepository.markCompleted(workoutId, completedAt);
+
+    return { workout: updatedWorkout, summary };
   },
 };

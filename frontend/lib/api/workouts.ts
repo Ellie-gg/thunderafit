@@ -1,5 +1,12 @@
 import { apiFetch } from "./client";
-import type { Exercise, SessionScheme, SetLog, Workout, WorkoutProgram } from "../types";
+import type {
+  Exercise,
+  SessionScheme,
+  SetLog,
+  Workout,
+  WorkoutCompletionSummary,
+  WorkoutProgram,
+} from "../types";
 
 export function listExercises(muscleGroup?: string) {
   const qs = muscleGroup ? `?muscleGroup=${encodeURIComponent(muscleGroup)}` : "";
@@ -55,8 +62,13 @@ export function moveWorkoutExercise(
 }
 
 // Fase 16 — Programas de Treino
+// Fase 35: a resposta agora também traz o resumo pós-treino (volume,
+// comparação com a sessão anterior, PRs).
 export function completeWorkout(workoutId: string) {
-  return apiFetch<{ workout: Workout }>(`/api/workouts/${workoutId}/complete`, { method: "POST" });
+  return apiFetch<{ workout: Workout; summary: WorkoutCompletionSummary }>(
+    `/api/workouts/${workoutId}/complete`,
+    { method: "POST" }
+  );
 }
 
 // Fase 29: `alunoId` opcional — filtra pra só as instâncias aplicadas a um
