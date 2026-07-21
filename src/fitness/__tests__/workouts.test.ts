@@ -242,3 +242,34 @@ describe("GET /api/workouts/:id", () => {
     expect(r.body.workout.exercises[0].exercise.description).toBeDefined();
   });
 });
+
+describe("POST /api/workouts/:id/complete (Fase 35 — resumo pós-treino)", () => {
+  it("retorna workout + summary bem formado, primeira conclusão vira FIRST_TIME", async () => {
+    const r = await supertest(server.server)
+      .post(`/api/workouts/${workoutId}/complete`)
+      .set("Authorization", `Bearer ${alunoAccessToken}`);
+
+    expect(r.status).toBe(200);
+    expect(r.body.workout.lastCompletedAt).toBeDefined();
+    expect(r.body.summary).toMatchObject({
+      workoutId,
+      workoutName: expect.any(String),
+      workoutLetter: expect.any(String),
+      volumeKg: 0,
+      setsLogged: 0,
+      comparison: { type: "FIRST_TIME", previousVolumeKg: null, percentChange: null },
+      personalRecords: [],
+    });
+  });
+
+  it("aluno não dono do treino recebe 403 ao tentar concluir", async () => {
+    const loginRes2 = await supertest(server.server)
+      .post("/api/auth/login")
+      .send({ email: "test_workout_aluno2@thunderafit.test", password: "SenhaSegura@123" });
+
+    const r = await supertest(server.server)
+      .post(`/api/workouts/${workoutId}/complete`)
+      .set("Authorization", `Bearer ${loginRes2.body.accessToken}`);
+    expect(r.status).toBe(403);
+  });
+});

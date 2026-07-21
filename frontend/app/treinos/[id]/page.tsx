@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { useParams } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { getWorkout, completeWorkout } from "@/lib/api/workouts";
@@ -10,12 +11,15 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { VoltageBar } from "@/components/voltage-bar";
 import { ExerciseExecutionCard } from "@/components/exercise-execution-card";
+import { PostWorkoutSummaryModal } from "@/components/post-workout-summary-modal";
+import type { WorkoutCompletionSummary } from "@/lib/types";
 
 function ExecucaoContent() {
   const params = useParams<{ id: string }>();
   const workoutId = params.id;
 
   const queryClient = useQueryClient();
+  const [summary, setSummary] = useState<WorkoutCompletionSummary | null>(null);
   const workoutQuery = useQuery({
     queryKey: ["workout", workoutId],
     queryFn: () => getWorkout(workoutId),
@@ -23,10 +27,11 @@ function ExecucaoContent() {
 
   const completeMutation = useMutation({
     mutationFn: () => completeWorkout(workoutId),
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["workout", workoutId] });
       // A sugestão de próxima sessão no programa depende do lastCompletedAt.
       queryClient.invalidateQueries({ queryKey: ["workout-program"] });
+      setSummary(data.summary);
     },
   });
 
@@ -129,6 +134,10 @@ function ExecucaoContent() {
           <p className="text-sm text-danger">Não foi possível concluir a sessão.</p>
         )}
       </Card>
+
+      {summary && (
+        <PostWorkoutSummaryModal summary={summary} onClose={() => setSummary(null)} />
+      )}
     </main>
   );
 }
