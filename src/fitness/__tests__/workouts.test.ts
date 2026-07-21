@@ -257,9 +257,12 @@ describe("POST /api/workouts/:id/complete (Fase 35 — resumo pós-treino)", () 
       workoutLetter: expect.any(String),
       volumeKg: 0,
       setsLogged: 0,
-      comparison: { type: "FIRST_TIME", previousVolumeKg: null, percentChange: null },
+      hasHistory: false,
+      previousVolumeKg: null,
+      volumeChangePercent: null,
       personalRecords: [],
     });
+    expect(typeof r.body.summary.streakDays).toBe("number");
   });
 
   it("aluno não dono do treino recebe 403 ao tentar concluir", async () => {

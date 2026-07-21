@@ -16,7 +16,7 @@ import { PrBadgePill, PrOverflowPill } from "@/components/pr-badge-pill";
 // central, longe de onde a UI deles cobriria.
 export const PostWorkoutSummaryCard = React.forwardRef<HTMLDivElement, { summary: WorkoutCompletionSummary }>(
   function PostWorkoutSummaryCard({ summary }, ref) {
-    const { comparison, personalRecords } = summary;
+    const { hasHistory, volumeChangePercent, personalRecords } = summary;
     const visiblePRs = personalRecords.slice(0, 2);
     const overflowCount = personalRecords.length - visiblePRs.length;
 
@@ -41,9 +41,9 @@ export const PostWorkoutSummaryCard = React.forwardRef<HTMLDivElement, { summary
             <span className="text-lg font-normal text-muted">kg</span>
           </p>
 
-          {comparison.type === "PERCENT" ? (
-            <p className={comparison.percentChange! >= 0 ? "text-accent-secondary" : "text-muted"}>
-              {comparison.percentChange! >= 0 ? "▲" : "▼"} {Math.abs(comparison.percentChange!)}% vs.
+          {hasHistory ? (
+            <p className={volumeChangePercent! >= 0 ? "text-accent-secondary" : "text-muted"}>
+              {volumeChangePercent! >= 0 ? "▲" : "▼"} {Math.abs(volumeChangePercent!)}% vs.
               treino anterior
             </p>
           ) : (

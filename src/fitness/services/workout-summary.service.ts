@@ -8,16 +8,17 @@ import { workoutSummaryRepository } from "../repository/workout-summary.reposito
 // aluno tenha ficado com sets pendentes sem concluir por muito tempo.
 const SESSION_WINDOW_MS = 6 * 60 * 60 * 1000; // 6h
 
+// Janela pra cálculo de sequência (streak) — generosa (não só os últimos 7
+// dias) pra um aluno com 10+ dias seguidos não ver a sequência capada.
+// Mesmo raciocínio já usado em progress.service.ts::getWeeklySummary.
+const STREAK_LOOKBACK_MS = 90 * 24 * 60 * 60 * 1000; // 90 dias
+
 interface WorkoutForSummary {
   id: string;
   alunoId: string | null;
   name: string;
   letter: string;
 }
-
-export type WorkoutSummaryComparison =
-  | { type: "FIRST_TIME"; previousVolumeKg: number | null; percentChange: null }
-  | { type: "PERCENT"; previousVolumeKg: number; percentChange: number };
 
 export interface WorkoutSummaryPR {
   exerciseId: string;
@@ -31,14 +32,45 @@ export interface WorkoutCompletionSummary {
   workoutName: string;
   workoutLetter: string;
   completedAt: string;
+  // Aproximada: (última série logada nesta sessão − primeira série logada
+  // nesta sessão), em minutos. Não existe campo de início de sessão no
+  // schema hoje — isso subestima o tempo real (não conta o aquecimento
+  // antes da primeira série registrada). null quando há 0 ou 1 série (não dá
+  // pra medir um intervalo). Pra duração exata, seria necessário um campo
+  // novo (ex: `Workout.currentSessionStartedAt DateTime?`, setado ao abrir a
+  // tela de execução e limpo ao concluir) — migration mínima, não aplicada
+  // aqui sem decisão explícita do time.
+  durationMinutes: number | null;
   volumeKg: number;
   setsLogged: number;
-  comparison: WorkoutSummaryComparison;
+  hasHistory: boolean;
+  previousVolumeKg: number | null;
+  volumeChangePercent: number | null;
+  streakDays: number;
   personalRecords: WorkoutSummaryPR[];
 }
 
 function sumVolumeKg(logs: Array<{ weightKg: number; repsDone: number }>): number {
   return logs.reduce((total, log) => total + log.weightKg * log.repsDone, 0);
+}
+
+function dayKey(date: Date): string {
+  return date.toISOString().slice(0, 10);
+}
+
+// Mesma lógica de streak de progress.service.ts::getWeeklySummary (contagem
+// pra trás a partir de hoje; começa de ontem se hoje ainda não tem série —
+// não zera a sequência só porque o dia ainda não acabou).
+function computeStreakDays(loggedAtDates: Date[], now: Date): number {
+  const activeDays = new Set(loggedAtDates.map(dayKey));
+  const todayKey = dayKey(now);
+  let cursor = activeDays.has(todayKey) ? now : new Date(now.getTime() - 24 * 60 * 60 * 1000);
+  let streakDays = 0;
+  while (activeDays.has(dayKey(cursor))) {
+    streakDays++;
+    cursor = new Date(cursor.getTime() - 24 * 60 * 60 * 1000);
+  }
+  return streakDays;
 }
 
 export const workoutSummaryService = {
@@ -59,30 +91,70 @@ export const workoutSummaryService = {
 
     const volumeKg = sumVolumeKg(thisSessionLogs);
     const setsLogged = thisSessionLogs.length;
+    const durationMinutes = computeDurationMinutes(thisSessionLogs);
 
-    const comparison = await buildComparison(workout.id, previousLastCompletedAt, volumeKg);
+    const { hasHistory, previousVolumeKg, volumeChangePercent } = await buildVolumeComparison(
+      workout.id,
+      previousLastCompletedAt,
+      volumeKg
+    );
     const personalRecords = await buildPersonalRecords(workout.alunoId, thisSessionLogs, windowStart);
+    const streakDays = workout.alunoId ? await buildStreakDays(workout.alunoId, completedAt) : 0;
 
     return {
       workoutId: workout.id,
       workoutName: workout.name,
       workoutLetter: workout.letter,
       completedAt: completedAt.toISOString(),
+      durationMinutes,
       volumeKg: Math.round(volumeKg * 10) / 10,
       setsLogged,
-      comparison,
+      hasHistory,
+      previousVolumeKg,
+      volumeChangePercent,
+      streakDays,
       personalRecords,
     };
   },
+
+  // Detecção de PR em tempo real, usada por setlogs.service ao gravar uma
+  // série — compara só contra o histórico ANTERIOR (não inclui a série que
+  // acabou de ser criada). PR = maior peso já registrado, reps não entram na
+  // comparação. Primeira vez que o aluno registra o exercício → não é PR
+  // (sem baseline pra bater).
+  async detectPersonalRecord(
+    alunoId: string,
+    exerciseId: string,
+    weightKg: number,
+    before: Date
+  ): Promise<{ isPersonalRecord: boolean; previousBest: number | null }> {
+    const historicalLogs = await workoutSummaryRepository.findHistoricalSetLogsForExercise(
+      alunoId,
+      exerciseId,
+      before
+    );
+    if (historicalLogs.length === 0) {
+      return { isPersonalRecord: false, previousBest: null };
+    }
+    const previousBest = Math.max(...historicalLogs.map((l) => l.weightKg));
+    return { isPersonalRecord: weightKg > previousBest, previousBest };
+  },
 };
 
-async function buildComparison(
+function computeDurationMinutes(logs: Array<{ loggedAt: Date }>): number | null {
+  if (logs.length < 2) return null;
+  const timestamps = logs.map((l) => l.loggedAt.getTime());
+  const spanMs = Math.max(...timestamps) - Math.min(...timestamps);
+  return Math.round(spanMs / 60000);
+}
+
+async function buildVolumeComparison(
   workoutId: string,
   previousLastCompletedAt: Date | null,
   thisVolumeKg: number
-): Promise<WorkoutSummaryComparison> {
+): Promise<{ hasHistory: boolean; previousVolumeKg: number | null; volumeChangePercent: number | null }> {
   if (!previousLastCompletedAt) {
-    return { type: "FIRST_TIME", previousVolumeKg: null, percentChange: null };
+    return { hasHistory: false, previousVolumeKg: null, volumeChangePercent: null };
   }
 
   const prevWindowStart = new Date(previousLastCompletedAt.getTime() - SESSION_WINDOW_MS);
@@ -94,12 +166,12 @@ async function buildComparison(
   const previousVolumeKg = sumVolumeKg(prevLogs);
 
   if (previousVolumeKg <= 0) {
-    return { type: "FIRST_TIME", previousVolumeKg: 0, percentChange: null };
+    return { hasHistory: false, previousVolumeKg: 0, volumeChangePercent: null };
   }
 
   const roundedPrevious = Math.round(previousVolumeKg * 10) / 10;
-  const percentChange = Math.round(((thisVolumeKg - previousVolumeKg) / previousVolumeKg) * 10000) / 100;
-  return { type: "PERCENT", previousVolumeKg: roundedPrevious, percentChange };
+  const volumeChangePercent = Math.round(((thisVolumeKg - previousVolumeKg) / previousVolumeKg) * 10000) / 100;
+  return { hasHistory: true, previousVolumeKg: roundedPrevious, volumeChangePercent };
 }
 
 async function buildPersonalRecords(
@@ -143,4 +215,13 @@ async function buildPersonalRecords(
 
   personalRecords.sort((a, b) => b.weightKg - a.weightKg);
   return personalRecords;
+}
+
+async function buildStreakDays(alunoId: string, now: Date): Promise<number> {
+  const since = new Date(now.getTime() - STREAK_LOOKBACK_MS);
+  const logs = await workoutSummaryRepository.findSetLogsForAlunoSince(alunoId, since);
+  return computeStreakDays(
+    logs.map((l) => l.loggedAt),
+    now
+  );
 }

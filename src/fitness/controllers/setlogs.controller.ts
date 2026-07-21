@@ -13,7 +13,7 @@ export async function createSetLogHandler(
   const { setNumber, repsDone, weightKg } = request.body;
 
   try {
-    const setLog = await setlogsService.createSetLog(
+    const { setLog, isPersonalRecord, previousBest } = await setlogsService.createSetLog(
       workoutId,
       workoutExerciseId,
       alunoId,
@@ -21,7 +21,7 @@ export async function createSetLogHandler(
       repsDone,
       weightKg
     );
-    return reply.status(201).send({ setLog });
+    return reply.status(201).send({ setLog, isPersonalRecord, previousBest });
   } catch (err: any) {
     const status = (err as any).statusCode ?? 500;
     return reply.status(status).send({ error: err.message });

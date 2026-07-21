@@ -72,17 +72,11 @@ export interface Workout {
   suggestedNext?: boolean;
 }
 
-// Fase 35: resumo pós-treino — devolvido junto da resposta de conclusão de
+// Fase 35/36: resumo pós-treino — devolvido junto da resposta de conclusão de
 // sessão, usado tanto pra recapitulação motivacional quanto pro card
-// exportável como imagem (mesmo componente, dois usos).
-export type WorkoutSummaryComparisonType = "FIRST_TIME" | "PERCENT";
-
-export interface WorkoutSummaryComparison {
-  type: WorkoutSummaryComparisonType;
-  previousVolumeKg: number | null;
-  percentChange: number | null;
-}
-
+// exportável como imagem (mesmo componente, dois usos). `hasHistory` distingue
+// "sem sessão anterior deste mesmo treino pra comparar" de uma comparação
+// percentual de verdade (evita mostrar 0%/∞% sem sentido).
 export interface WorkoutSummaryPR {
   exerciseId: string;
   exerciseName: string;
@@ -95,9 +89,14 @@ export interface WorkoutCompletionSummary {
   workoutName: string;
   workoutLetter: string;
   completedAt: string;
+  // Aproximada (última série − primeira série desta sessão); null com 0/1 série.
+  durationMinutes: number | null;
   volumeKg: number;
   setsLogged: number;
-  comparison: WorkoutSummaryComparison;
+  hasHistory: boolean;
+  previousVolumeKg: number | null;
+  volumeChangePercent: number | null;
+  streakDays: number;
   personalRecords: WorkoutSummaryPR[];
 }
 
