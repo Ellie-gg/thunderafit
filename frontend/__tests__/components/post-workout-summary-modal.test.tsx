@@ -15,9 +15,13 @@ const summary: WorkoutCompletionSummary = {
   workoutName: "Treino B",
   workoutLetter: "B",
   completedAt: "2026-07-21T18:00:00.000Z",
+  durationMinutes: 45,
   volumeKg: 4820.5,
   setsLogged: 18,
-  comparison: { type: "PERCENT", previousVolumeKg: 4300, percentChange: 12.1 },
+  hasHistory: true,
+  previousVolumeKg: 4300,
+  volumeChangePercent: 12.1,
+  streakDays: 3,
   personalRecords: [],
 };
 

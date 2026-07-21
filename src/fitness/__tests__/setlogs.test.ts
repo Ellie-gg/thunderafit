@@ -10,6 +10,8 @@ let tokenAluno2: string;
 let workoutId: string;
 let otherWorkoutId: string;
 let workoutExerciseId: string;
+let prExerciseId: string;
+let prWorkoutExerciseId: string;
 
 beforeAll(async () => {
   server = await buildApp();
@@ -62,7 +64,9 @@ beforeAll(async () => {
     .send({ alunoId: aluno1Id, name: "Outro Treino", letter: "B" });
   otherWorkoutId = otherWorkoutRes.body.workout.id;
 
-  const exercise = await prisma.exercise.findFirst({ orderBy: { name: "asc" } });
+  const exercises = await prisma.exercise.findMany({ orderBy: { name: "asc" }, take: 2 });
+  const exercise = exercises[0];
+  prExerciseId = exercises[1].id;
 
   const weRes = await supertest(server.server)
     .post(`/api/workouts/${workoutId}/exercises`)
@@ -72,7 +76,7 @@ beforeAll(async () => {
 });
 
 afterAll(async () => {
-  await prisma.setLog.deleteMany({ where: { workoutExerciseId } });
+  await prisma.setLog.deleteMany({ where: { workoutExercise: { workoutId: { in: [workoutId, otherWorkoutId] } } } });
   await prisma.workoutExercise.deleteMany({ where: { workoutId: { in: [workoutId, otherWorkoutId] } } });
   await prisma.workout.deleteMany({ where: { personalId } });
   await prisma.clientRelation.deleteMany({ where: { personalId } });
@@ -121,6 +125,47 @@ describe("POST /api/workouts/:workoutId/exercises/:workoutExerciseId/logs", () =
       .set("Authorization", `Bearer ${tokenAluno1}`)
       .send({ setNumber: 3, repsDone: 8, weightKg: 65 });
     expect(r3.status).toBe(201);
+  });
+});
+
+describe("POST .../logs — detecção de PR em tempo real (Fase 36)", () => {
+  it("primeira série de um exercício NÃO é PR (sem baseline pra comparar)", async () => {
+    const weRes = await supertest(server.server)
+      .post(`/api/workouts/${workoutId}/exercises`)
+      .set("Authorization", `Bearer ${tokenPersonal}`)
+      .send({ exerciseId: prExerciseId, sets: 3, repsRange: "8-12", restSeconds: 60, order: 2 });
+    prWorkoutExerciseId = weRes.body.workoutExercise.id;
+
+    const r = await supertest(server.server)
+      .post(`/api/workouts/${workoutId}/exercises/${prWorkoutExerciseId}/logs`)
+      .set("Authorization", `Bearer ${tokenAluno1}`)
+      .send({ setNumber: 1, repsDone: 10, weightKg: 50 });
+
+    expect(r.status).toBe(201);
+    expect(r.body.isPersonalRecord).toBe(false);
+    expect(r.body.previousBest).toBeNull();
+  });
+
+  it("peso maior que o histórico → PR, com o peso anterior superado", async () => {
+    const r = await supertest(server.server)
+      .post(`/api/workouts/${workoutId}/exercises/${prWorkoutExerciseId}/logs`)
+      .set("Authorization", `Bearer ${tokenAluno1}`)
+      .send({ setNumber: 2, repsDone: 8, weightKg: 55 });
+
+    expect(r.status).toBe(201);
+    expect(r.body.isPersonalRecord).toBe(true);
+    expect(r.body.previousBest).toBe(50);
+  });
+
+  it("peso igual ou menor que o recorde atual → não é PR", async () => {
+    const r = await supertest(server.server)
+      .post(`/api/workouts/${workoutId}/exercises/${prWorkoutExerciseId}/logs`)
+      .set("Authorization", `Bearer ${tokenAluno1}`)
+      .send({ setNumber: 3, repsDone: 12, weightKg: 40 });
+
+    expect(r.status).toBe(201);
+    expect(r.body.isPersonalRecord).toBe(false);
+    expect(r.body.previousBest).toBe(55);
   });
 });
 

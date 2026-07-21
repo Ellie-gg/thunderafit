@@ -7,9 +7,13 @@ const baseSummary: WorkoutCompletionSummary = {
   workoutName: "Peito e Tríceps",
   workoutLetter: "B",
   completedAt: "2026-07-21T18:00:00.000Z",
+  durationMinutes: 45,
   volumeKg: 4820.5,
   setsLogged: 18,
-  comparison: { type: "PERCENT", previousVolumeKg: 4300, percentChange: 12.1 },
+  hasHistory: true,
+  previousVolumeKg: 4300,
+  volumeChangePercent: 12.1,
+  streakDays: 3,
   personalRecords: [],
 };
 
@@ -30,7 +34,8 @@ describe("PostWorkoutSummaryCard", () => {
   it("mostra comparação percentual negativa com seta pra baixo e valor absoluto", () => {
     const summary: WorkoutCompletionSummary = {
       ...baseSummary,
-      comparison: { type: "PERCENT", previousVolumeKg: 5000, percentChange: -8.5 },
+      previousVolumeKg: 5000,
+      volumeChangePercent: -8.5,
     };
     render(<PostWorkoutSummaryCard summary={summary} />);
     expect(screen.getByText(/▼ 8.5% vs\. treino anterior/)).toBeInTheDocument();
@@ -39,7 +44,9 @@ describe("PostWorkoutSummaryCard", () => {
   it("mostra copy de 'primeira vez' quando não há sessão anterior pra comparar", () => {
     const summary: WorkoutCompletionSummary = {
       ...baseSummary,
-      comparison: { type: "FIRST_TIME", previousVolumeKg: null, percentChange: null },
+      hasHistory: false,
+      previousVolumeKg: null,
+      volumeChangePercent: null,
     };
     render(<PostWorkoutSummaryCard summary={summary} />);
     expect(screen.getByText(/Primeiro treino de Peito e Tríceps registrado/)).toBeInTheDocument();

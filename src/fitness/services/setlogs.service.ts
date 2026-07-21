@@ -1,5 +1,6 @@
 import { setlogsRepository } from "../repository/setlogs.repository";
 import { workoutsRepository } from "../repository/workouts.repository";
+import { workoutSummaryService } from "./workout-summary.service";
 
 async function assertOwnerAluno(
   workoutId: string,
@@ -31,6 +32,11 @@ async function assertOwnerAluno(
 }
 
 export const setlogsService = {
+  // Fase 36: detecção de PR em tempo real — comparada ANTES de gravar a nova
+  // série (senão a própria série que acabou de ser salva "bateria a si
+  // mesma" no histórico). PR = maior peso já registrado pro exercício por
+  // este aluno, reps não entram na comparação; primeira vez que o aluno
+  // registra o exercício não conta como PR (sem baseline pra bater).
   async createSetLog(
     workoutId: string,
     workoutExerciseId: string,
@@ -39,8 +45,18 @@ export const setlogsService = {
     repsDone: number,
     weightKg: number
   ) {
-    await assertOwnerAluno(workoutId, workoutExerciseId, alunoId);
-    return setlogsRepository.create(workoutExerciseId, setNumber, repsDone, weightKg);
+    const workoutExercise = await assertOwnerAluno(workoutId, workoutExerciseId, alunoId);
+    const now = new Date();
+
+    const { isPersonalRecord, previousBest } = await workoutSummaryService.detectPersonalRecord(
+      alunoId,
+      workoutExercise.exerciseId,
+      weightKg,
+      now
+    );
+
+    const setLog = await setlogsRepository.create(workoutExerciseId, setNumber, repsDone, weightKg);
+    return { setLog, isPersonalRecord, previousBest };
   },
 
   async listSetLogs(workoutId: string, workoutExerciseId: string, alunoId: string, role?: string) {

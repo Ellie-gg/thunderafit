@@ -29,4 +29,18 @@ export const workoutSummaryRepository = {
       select: { weightKg: true },
     });
   },
+
+  // Todas as séries do aluno (qualquer treino/exercício) desde uma data —
+  // usado só pra calcular a sequência de dias com atividade (streak), mesma
+  // ideia de progressRepository.findSetLogsSince, mas duplicada aqui pra não
+  // importar o repositório de outro domínio (progress) dentro de fitness.
+  async findSetLogsForAlunoSince(alunoId: string, since: Date) {
+    return prisma.setLog.findMany({
+      where: {
+        workoutExercise: { workout: { alunoId } },
+        loggedAt: { gte: since },
+      },
+      select: { loggedAt: true },
+    });
+  },
 };

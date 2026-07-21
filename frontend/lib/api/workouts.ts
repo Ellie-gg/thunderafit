@@ -21,12 +21,14 @@ export function getWorkout(workoutId: string) {
   return apiFetch<{ workout: Workout }>(`/api/workouts/${workoutId}`);
 }
 
+// Fase 36: a resposta também traz detecção de PR em tempo real (não usada em
+// nenhuma tela ainda — só o contrato de dados, por ora).
 export function createSetLog(
   workoutId: string,
   workoutExerciseId: string,
   input: { setNumber: number; repsDone: number; weightKg: number }
 ) {
-  return apiFetch<{ setLog: SetLog }>(
+  return apiFetch<{ setLog: SetLog; isPersonalRecord: boolean; previousBest: number | null }>(
     `/api/workouts/${workoutId}/exercises/${workoutExerciseId}/logs`,
     { method: "POST", body: input }
   );
