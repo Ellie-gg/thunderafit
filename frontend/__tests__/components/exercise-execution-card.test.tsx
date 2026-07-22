@@ -78,6 +78,17 @@ describe("ExerciseExecutionCard — formulário de registro de série", () => {
     );
   });
 
+  it("limita reps a 2 dígitos e pula o foco pro campo de carga (Fase 38)", async () => {
+    const user = userEvent.setup();
+    renderCard(baseWorkoutExercise);
+
+    const [repsInput, weightInput] = screen.getAllByRole("spinbutton");
+    await user.type(repsInput, "100");
+
+    expect(repsInput).toHaveValue(10);
+    expect(weightInput).toHaveFocus();
+  });
+
   it("mostra a mensagem de erro da API quando o registro falha", async () => {
     mockedCreateSetLog.mockRejectedValue(new ApiError(400, "Exercício não pertence ao treino informado."));
     const user = userEvent.setup();

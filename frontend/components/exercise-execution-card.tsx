@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { createSetLog } from "@/lib/api/workouts";
 import { ApiError } from "@/lib/api/client";
@@ -27,6 +27,7 @@ export function ExerciseExecutionCard({
   const queryClient = useQueryClient();
   const [repsDone, setRepsDone] = useState("");
   const [weightKg, setWeightKg] = useState("");
+  const weightInputRef = useRef<HTMLInputElement>(null);
   const [playing, setPlaying] = useState(false);
   // Fase 33.1: marca manual do aluno, independente de isComplete — é o aluno
   // quem decide que terminou o exercício, mesmo sem ter registrado todas as
@@ -210,9 +211,20 @@ export function ExerciseExecutionCard({
             <Input
               type="number"
               min={0}
+              max={99}
               required
               value={repsDone}
-              onChange={(e) => setRepsDone(e.target.value)}
+              onChange={(e) => {
+                // Fase 38: ninguém faz mais de 99 reps numa série — 2 dígitos
+                // é o teto (também evita o campo crescer feio na tela). Ao
+                // completar 2 dígitos, pula o foco pro campo de carga
+                // seguinte, sem precisar tocar em Tab/Próximo.
+                const next = e.target.value.slice(0, 2);
+                setRepsDone(next);
+                if (next.length === 2) {
+                  weightInputRef.current?.focus();
+                }
+              }}
             />
           </div>
           <div className="flex flex-1 flex-col gap-1">
@@ -222,6 +234,7 @@ export function ExerciseExecutionCard({
               min={0}
               step="0.5"
               required
+              ref={weightInputRef}
               value={weightKg}
               onChange={(e) => setWeightKg(e.target.value)}
             />

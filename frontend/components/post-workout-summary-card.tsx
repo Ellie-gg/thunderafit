@@ -3,7 +3,7 @@ import type { WorkoutCompletionSummary } from "@/lib/types";
 import { BoltMark } from "@/components/bolt-mark";
 import { PrBadgePill, PrOverflowPill } from "@/components/pr-badge-pill";
 
-// Fase 35: card de resumo pós-treino — uma peça só, dois usos: recapitulação
+// Fase 35/37: card de resumo pós-treino — uma peça só, dois usos: recapitulação
 // motivacional dentro do app E imagem exportável (proporção 9:16, Stories do
 // Instagram). Sempre renderiza no aspect-ratio 9:16 inteiro; é o MESMO DOM
 // que é capturado na exportação (via html-to-image, upscaled por pixelRatio),
@@ -34,16 +34,27 @@ export const PostWorkoutSummaryCard = React.forwardRef<HTMLDivElement, { summary
           </h2>
         </header>
 
+        {/* Fase 37: hero passa a ser a contagem de séries (o "quanto trabalho
+            de verdade" mais direto de comunicar), não mais o volume — volume
+            desce pra métrica secundária, relabelado "Peso levantado Hoje". */}
         <section className="flex flex-col gap-2">
-          <p className="text-xs uppercase tracking-wide text-muted">Volume total</p>
-          <p className="font-mono-nums font-display text-5xl font-bold text-accent-secondary">
-            {summary.volumeKg.toLocaleString("pt-BR")}{" "}
-            <span className="text-lg font-normal text-muted">kg</span>
+          <p className="text-xs uppercase tracking-wide text-muted">Séries registradas</p>
+          <p className="font-mono-nums font-display text-6xl font-bold text-accent-secondary">
+            {summary.setsLogged}
           </p>
+
+          <div className="grid grid-cols-3 gap-2">
+            <SecondaryMetric
+              label="Duração"
+              value={summary.durationMinutes !== null ? `${summary.durationMinutes} min` : "—"}
+            />
+            <SecondaryMetric label="Peso levantado Hoje" value={`${summary.volumeKg.toLocaleString("pt-BR")} kg`} />
+            <SecondaryMetric label="Dias seguidos" value={`${summary.streakDays}`} accent="accent" />
+          </div>
 
           {hasHistory ? (
             <p className={volumeChangePercent! >= 0 ? "text-accent-secondary" : "text-muted"}>
-              {volumeChangePercent! >= 0 ? "▲" : "▼"} {Math.abs(volumeChangePercent!)}% vs.
+              {volumeChangePercent! >= 0 ? "▲" : "▼"} {Math.abs(volumeChangePercent!)}% de peso vs.
               treino anterior
             </p>
           ) : (
@@ -51,8 +62,6 @@ export const PostWorkoutSummaryCard = React.forwardRef<HTMLDivElement, { summary
               Primeiro treino de {summary.workoutName} registrado 💪
             </p>
           )}
-
-          <p className="text-sm text-muted">{summary.setsLogged} séries registradas</p>
         </section>
 
         {personalRecords.length > 0 && (
@@ -72,3 +81,21 @@ export const PostWorkoutSummaryCard = React.forwardRef<HTMLDivElement, { summary
     );
   }
 );
+
+function SecondaryMetric({
+  label,
+  value,
+  accent = "accent-secondary",
+}: {
+  label: string;
+  value: string;
+  accent?: "accent" | "accent-secondary";
+}) {
+  const accentClass = accent === "accent" ? "text-accent" : "text-accent-secondary";
+  return (
+    <div className="flex flex-col gap-0.5">
+      <span className="text-[10px] uppercase tracking-wide text-muted">{label}</span>
+      <span className={`font-mono-nums text-sm font-bold ${accentClass}`}>{value}</span>
+    </div>
+  );
+}
