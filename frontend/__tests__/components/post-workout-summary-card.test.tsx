@@ -18,17 +18,33 @@ const baseSummary: WorkoutCompletionSummary = {
 };
 
 describe("PostWorkoutSummaryCard", () => {
-  it("mostra o volume total e o rótulo do treino", () => {
+  it("mostra a contagem de séries como número principal e o rótulo do treino", () => {
     render(<PostWorkoutSummaryCard summary={baseSummary} />);
     expect(screen.getByText("Treino B")).toBeInTheDocument();
     expect(screen.getByText("Peito e Tríceps")).toBeInTheDocument();
-    expect(screen.getByText(/4\.820,5/)).toBeInTheDocument();
-    expect(screen.getByText("18 séries registradas")).toBeInTheDocument();
+    expect(screen.getByText("Séries registradas")).toBeInTheDocument();
+    expect(screen.getByText("18")).toBeInTheDocument();
+  });
+
+  it("mostra as 3 métricas secundárias: duração, peso levantado hoje e dias seguidos", () => {
+    render(<PostWorkoutSummaryCard summary={baseSummary} />);
+    expect(screen.getByText("Duração")).toBeInTheDocument();
+    expect(screen.getByText("45 min")).toBeInTheDocument();
+    expect(screen.getByText("Peso levantado Hoje")).toBeInTheDocument();
+    expect(screen.getByText(/4\.820,5 kg/)).toBeInTheDocument();
+    expect(screen.getByText("Dias seguidos")).toBeInTheDocument();
+    expect(screen.getByText("3")).toBeInTheDocument();
+  });
+
+  it("mostra travessão na duração quando não há série suficiente pra medir intervalo", () => {
+    const summary: WorkoutCompletionSummary = { ...baseSummary, durationMinutes: null };
+    render(<PostWorkoutSummaryCard summary={summary} />);
+    expect(screen.getByText("—")).toBeInTheDocument();
   });
 
   it("mostra comparação percentual positiva com seta pra cima", () => {
     render(<PostWorkoutSummaryCard summary={baseSummary} />);
-    expect(screen.getByText(/▲ 12.1% vs\. treino anterior/)).toBeInTheDocument();
+    expect(screen.getByText(/▲ 12.1% de peso vs\. treino anterior/)).toBeInTheDocument();
   });
 
   it("mostra comparação percentual negativa com seta pra baixo e valor absoluto", () => {
@@ -38,7 +54,7 @@ describe("PostWorkoutSummaryCard", () => {
       volumeChangePercent: -8.5,
     };
     render(<PostWorkoutSummaryCard summary={summary} />);
-    expect(screen.getByText(/▼ 8.5% vs\. treino anterior/)).toBeInTheDocument();
+    expect(screen.getByText(/▼ 8.5% de peso vs\. treino anterior/)).toBeInTheDocument();
   });
 
   it("mostra copy de 'primeira vez' quando não há sessão anterior pra comparar", () => {

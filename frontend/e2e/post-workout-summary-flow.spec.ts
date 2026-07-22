@@ -77,10 +77,11 @@ test("concluir treino → mostra o card de resumo pós-treino e permite baixar a
   await page.getByRole("button", { name: "Concluir sessão" }).click();
 
   // Card de resumo: primeira conclusão deste Workout → framing "primeira vez",
-  // volume calculado a partir da série registrada (10 reps × 50kg = 500kg).
+  // volume calculado a partir da série registrada (10 reps × 50kg = 500kg),
+  // hero mostra a contagem de séries (1).
   await expect(page.getByText(/Primeiro treino de Treino Resumo E2E registrado/)).toBeVisible();
+  await expect(page.getByText("Séries registradas")).toBeVisible();
   await expect(page.getByText(/500/)).toBeVisible();
-  await expect(page.getByText("1 séries registradas")).toBeVisible();
 
   const downloadPromise = page.waitForEvent("download");
   await page.getByRole("button", { name: "Baixar imagem" }).click();
