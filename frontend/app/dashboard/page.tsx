@@ -7,6 +7,7 @@ import { listMyDietPlans, getDietPlan } from "@/lib/api/nutrition";
 import { getWeeklySummary } from "@/lib/api/progress";
 import { useAuthStore } from "@/lib/store/auth-store";
 import { labelFor } from "@/lib/session-scheme";
+import { firstNameOrEmailPrefix } from "@/lib/utils";
 import { AuthGuard } from "@/components/auth-guard";
 import { AppHeader } from "@/components/app-header";
 import { Card } from "@/components/ui/card";
@@ -90,7 +91,7 @@ function DashboardContent() {
       <main className="flex flex-1 flex-col gap-6 px-6 py-8">
         <div>
           <h1 className="font-display text-2xl font-bold tracking-tight">
-            Olá, {user?.email.split("@")[0]}
+            Olá, {firstNameOrEmailPrefix(user)}
           </h1>
           <p className="text-sm text-muted">Pronto para descarregar o treino de hoje?</p>
         </div>
@@ -176,7 +177,7 @@ function DashboardContent() {
         )}
 
         {weeklySummary && (
-          <WeeklyStats volumeKg={weeklySummary.volumeKg} streakDays={weeklySummary.streakDays} />
+          <WeeklyStats setsThisWeek={weeklySummary.setsThisWeek} streakDays={weeklySummary.streakDays} />
         )}
 
         {/* Atalhos visíveis também aqui (não só no AppHeader) — no celular,

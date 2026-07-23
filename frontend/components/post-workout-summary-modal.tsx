@@ -34,9 +34,13 @@ function dataUrlToBase64(dataUrl: string): string {
 // há ambiguidade de qual caminho roda.
 export function PostWorkoutSummaryModal({
   summary,
+  alunoName,
+  durationSeconds,
   onClose,
 }: {
   summary: WorkoutCompletionSummary;
+  alunoName: string;
+  durationSeconds: number | null;
   onClose: () => void;
 }) {
   const cardRef = React.useRef<HTMLDivElement>(null);
@@ -116,7 +120,12 @@ export function PostWorkoutSummaryModal({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
       <div className="flex w-full max-w-xs flex-col gap-4">
-        <PostWorkoutSummaryCard ref={cardRef} summary={summary} />
+        <PostWorkoutSummaryCard
+          ref={cardRef}
+          summary={summary}
+          alunoName={alunoName}
+          durationSeconds={durationSeconds}
+        />
         {shareError && (
           <p className="text-sm text-danger">
             Não foi possível compartilhar direto — baixamos a imagem pra você anexar manualmente.

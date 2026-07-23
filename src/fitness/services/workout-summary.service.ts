@@ -13,6 +13,12 @@ const SESSION_WINDOW_MS = 6 * 60 * 60 * 1000; // 6h
 // Mesmo raciocínio já usado em progress.service.ts::getWeeklySummary.
 const STREAK_LOOKBACK_MS = 90 * 24 * 60 * 60 * 1000; // 90 dias
 
+// Fase 39: a duração da sessão SAIU deste summary — antes era aproximada
+// (primeira a última série logada), o que subestimava o aquecimento antes
+// da 1ª série. Substituída por um cronômetro real no frontend (marca o
+// timestamp de quando a tela de execução abre até o clique em "Concluir"),
+// sem precisar de nenhum campo novo no banco nem lógica aqui.
+
 interface WorkoutForSummary {
   id: string;
   alunoId: string | null;
@@ -32,15 +38,6 @@ export interface WorkoutCompletionSummary {
   workoutName: string;
   workoutLetter: string;
   completedAt: string;
-  // Aproximada: (última série logada nesta sessão − primeira série logada
-  // nesta sessão), em minutos. Não existe campo de início de sessão no
-  // schema hoje — isso subestima o tempo real (não conta o aquecimento
-  // antes da primeira série registrada). null quando há 0 ou 1 série (não dá
-  // pra medir um intervalo). Pra duração exata, seria necessário um campo
-  // novo (ex: `Workout.currentSessionStartedAt DateTime?`, setado ao abrir a
-  // tela de execução e limpo ao concluir) — migration mínima, não aplicada
-  // aqui sem decisão explícita do time.
-  durationMinutes: number | null;
   volumeKg: number;
   setsLogged: number;
   hasHistory: boolean;
@@ -91,7 +88,6 @@ export const workoutSummaryService = {
 
     const volumeKg = sumVolumeKg(thisSessionLogs);
     const setsLogged = thisSessionLogs.length;
-    const durationMinutes = computeDurationMinutes(thisSessionLogs);
 
     const { hasHistory, previousVolumeKg, volumeChangePercent } = await buildVolumeComparison(
       workout.id,
@@ -106,7 +102,6 @@ export const workoutSummaryService = {
       workoutName: workout.name,
       workoutLetter: workout.letter,
       completedAt: completedAt.toISOString(),
-      durationMinutes,
       volumeKg: Math.round(volumeKg * 10) / 10,
       setsLogged,
       hasHistory,
@@ -140,13 +135,6 @@ export const workoutSummaryService = {
     return { isPersonalRecord: weightKg > previousBest, previousBest };
   },
 };
-
-function computeDurationMinutes(logs: Array<{ loggedAt: Date }>): number | null {
-  if (logs.length < 2) return null;
-  const timestamps = logs.map((l) => l.loggedAt.getTime());
-  const spanMs = Math.max(...timestamps) - Math.min(...timestamps);
-  return Math.round(spanMs / 60000);
-}
 
 async function buildVolumeComparison(
   workoutId: string,

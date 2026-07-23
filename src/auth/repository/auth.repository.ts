@@ -5,6 +5,7 @@ export interface CreateUserInput {
   email: string;
   passwordHash: string;
   role: Role;
+  name?: string | null;
 }
 
 export const authRepository = {
@@ -27,6 +28,7 @@ export const authRepository = {
         email: data.email,
         passwordHash: data.passwordHash,
         role: data.role,
+        name: data.name ?? null,
         planoAssinatura: PlanoAssinatura.FREE,
         limiteAlunos: 3,
       },

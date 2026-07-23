@@ -110,6 +110,7 @@ export default function LoginPage() {
   const [step, setStep] = useState<Step>("email");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [name, setName] = useState("");
   const [signupRole, setSignupRole] = useState<SignupRole | null>(null);
 
   const checkEmailMutation = useMutation({
@@ -127,7 +128,7 @@ export default function LoginPage() {
 
   const registerMutation = useMutation({
     mutationFn: async () => {
-      await registerRequest(email.trim(), password, signupRole!);
+      await registerRequest(email.trim(), password, signupRole!, name.trim());
       return loginRequest(email.trim(), password); // encadeia login pra pegar cookies+user, mesmo padrão do /register antigo
     },
     onSuccess: (data) => {
@@ -139,6 +140,7 @@ export default function LoginPage() {
   function backToEmail() {
     setStep("email");
     setPassword("");
+    setName("");
     setSignupRole(null);
     checkEmailMutation.reset();
   }
@@ -324,6 +326,17 @@ export default function LoginPage() {
               registerMutation.mutate();
             }}
           >
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="name">Nome</Label>
+              <Input
+                id="name"
+                required
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="Como podemos te chamar?"
+              />
+            </div>
+
             <div className="flex flex-col gap-1.5">
               <Label htmlFor="password">Senha</Label>
               <PasswordField id="password" value={password} onChange={setPassword} minLength={8} />

@@ -19,6 +19,10 @@ export interface RegisterInput {
   email: string;
   password: string;
   role: Role;
+  // Fase 39: cadastro mínimo de nome — obrigatório no formulário de cadastro
+  // real, mas opcional na API (ver comentário em registerHandler) e nullable
+  // no schema (contas já existentes não têm esse dado, sem backfill).
+  name: string | null;
 }
 
 export interface LoginInput {
@@ -71,6 +75,7 @@ export async function register(input: RegisterInput) {
     email: input.email,
     passwordHash,
     role: input.role,
+    name: input.name,
   });
 
   // Nunca retornar passwordHash nem refreshTokenHash

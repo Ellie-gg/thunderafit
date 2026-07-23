@@ -3,7 +3,17 @@ import type { WorkoutCompletionSummary } from "@/lib/types";
 import { BoltMark } from "@/components/bolt-mark";
 import { PrBadgePill, PrOverflowPill } from "@/components/pr-badge-pill";
 
-// Fase 35/37: card de resumo pós-treino — uma peça só, dois usos: recapitulação
+// Fase 39: formato Horas:Min:Segundos pedido explicitamente — sempre com a
+// hora (mesmo "0:12:34"), não só MM:SS, pra treinos que passam de 1h também
+// ficarem corretos sem mudar de formato no meio.
+function formatDuration(totalSeconds: number): string {
+  const h = Math.floor(totalSeconds / 3600);
+  const m = Math.floor((totalSeconds % 3600) / 60);
+  const s = totalSeconds % 60;
+  return `${h}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+}
+
+// Fase 35/37/39: card de resumo pós-treino — uma peça só, dois usos: recapitulação
 // motivacional dentro do app E imagem exportável (proporção 9:16, Stories do
 // Instagram). Sempre renderiza no aspect-ratio 9:16 inteiro; é o MESMO DOM
 // que é capturado na exportação (via html-to-image, upscaled por pixelRatio),
@@ -14,73 +24,77 @@ import { PrBadgePill, PrOverflowPill } from "@/components/pr-badge-pill";
 // Instagram Stories (a própria UI do app deles sobrepõe o topo ~120-250px e
 // o rodapé ~180-250px a 1080×1920) — mantém os números principais no terço
 // central, longe de onde a UI deles cobriria.
-export const PostWorkoutSummaryCard = React.forwardRef<HTMLDivElement, { summary: WorkoutCompletionSummary }>(
-  function PostWorkoutSummaryCard({ summary }, ref) {
-    const { hasHistory, volumeChangePercent, personalRecords } = summary;
-    const visiblePRs = personalRecords.slice(0, 2);
-    const overflowCount = personalRecords.length - visiblePRs.length;
+export const PostWorkoutSummaryCard = React.forwardRef<
+  HTMLDivElement,
+  { summary: WorkoutCompletionSummary; alunoName: string; durationSeconds: number | null }
+>(function PostWorkoutSummaryCard({ summary, alunoName, durationSeconds }, ref) {
+  const { hasHistory, volumeChangePercent, personalRecords } = summary;
+  const visiblePRs = personalRecords.slice(0, 2);
+  const overflowCount = personalRecords.length - visiblePRs.length;
 
-    return (
-      <div
-        ref={ref}
-        className="relative flex aspect-[9/16] w-full flex-col justify-between overflow-hidden rounded-2xl border border-border bg-surface px-6 pb-[10%] pt-[8%]"
-      >
-        <header>
-          <span className="text-xs font-semibold uppercase tracking-wide text-accent-secondary">
-            Treino {summary.workoutLetter}
-          </span>
-          <h2 className="font-display text-lg font-bold tracking-tight text-foreground">
-            {summary.workoutName}
-          </h2>
-        </header>
+  return (
+    <div
+      ref={ref}
+      className="relative flex aspect-[9/16] w-full flex-col justify-between overflow-hidden rounded-2xl border border-border bg-surface px-6 pb-[10%] pt-[8%]"
+    >
+      <header>
+        <span className="text-xs font-semibold uppercase tracking-wide text-accent-secondary">
+          Treino {summary.workoutLetter} · {summary.workoutName}
+        </span>
+        {/* Fase 39: header personalizado — substitui o antigo "Treino A"
+            como texto principal. Cai pro prefixo do e-mail quando o aluno
+            não tem nome cadastrado (ver firstNameOrEmailPrefix). */}
+        <h2 className="font-display text-lg font-bold tracking-tight text-foreground">
+          {alunoName} mandou bem no treino! 💪
+        </h2>
+      </header>
 
-        {/* Fase 37: hero passa a ser a contagem de séries (o "quanto trabalho
-            de verdade" mais direto de comunicar), não mais o volume — volume
-            desce pra métrica secundária, relabelado "Peso levantado Hoje". */}
-        <section className="flex flex-col gap-2">
-          <p className="text-xs uppercase tracking-wide text-muted">Séries registradas</p>
-          <p className="font-mono-nums font-display text-6xl font-bold text-accent-secondary">
-            {summary.setsLogged}
+      {/* Fase 37: hero passa a ser a contagem de séries (o "quanto trabalho
+          de verdade" mais direto de comunicar), não mais o volume — volume
+          desce pra métrica secundária, relabelado "Peso levantado Hoje". */}
+      <section className="flex flex-col gap-2">
+        <p className="text-xs uppercase tracking-wide text-muted">Séries registradas</p>
+        <p className="font-mono-nums font-display text-6xl font-bold text-accent-secondary">
+          {summary.setsLogged}
+        </p>
+
+        <div className="grid grid-cols-3 gap-2">
+          <SecondaryMetric
+            label="Duração"
+            value={durationSeconds !== null ? formatDuration(durationSeconds) : "—"}
+          />
+          <SecondaryMetric label="Peso levantado Hoje" value={`${summary.volumeKg.toLocaleString("pt-BR")} kg`} />
+          <SecondaryMetric label="Dias seguidos" value={`${summary.streakDays}`} accent="accent" />
+        </div>
+
+        {hasHistory ? (
+          <p className={volumeChangePercent! >= 0 ? "text-accent-secondary" : "text-muted"}>
+            {volumeChangePercent! >= 0 ? "▲" : "▼"} {Math.abs(volumeChangePercent!)}% de peso vs.
+            treino anterior
           </p>
-
-          <div className="grid grid-cols-3 gap-2">
-            <SecondaryMetric
-              label="Duração"
-              value={summary.durationMinutes !== null ? `${summary.durationMinutes} min` : "—"}
-            />
-            <SecondaryMetric label="Peso levantado Hoje" value={`${summary.volumeKg.toLocaleString("pt-BR")} kg`} />
-            <SecondaryMetric label="Dias seguidos" value={`${summary.streakDays}`} accent="accent" />
-          </div>
-
-          {hasHistory ? (
-            <p className={volumeChangePercent! >= 0 ? "text-accent-secondary" : "text-muted"}>
-              {volumeChangePercent! >= 0 ? "▲" : "▼"} {Math.abs(volumeChangePercent!)}% de peso vs.
-              treino anterior
-            </p>
-          ) : (
-            <p className="text-accent-secondary">
-              Primeiro treino de {summary.workoutName} registrado 💪
-            </p>
-          )}
-        </section>
-
-        {personalRecords.length > 0 && (
-          <section className="flex flex-wrap gap-2">
-            {visiblePRs.map((pr) => (
-              <PrBadgePill key={pr.exerciseId} pr={pr} />
-            ))}
-            {overflowCount > 0 && <PrOverflowPill count={overflowCount} />}
-          </section>
+        ) : (
+          <p className="text-accent-secondary">
+            Primeiro treino de {summary.workoutName} registrado 💪
+          </p>
         )}
+      </section>
 
-        <footer className="flex items-center gap-1.5 opacity-70">
-          <BoltMark className="h-4 w-4" />
-          <span className="font-display text-xs">ThunderaFit</span>
-        </footer>
-      </div>
-    );
-  }
-);
+      {personalRecords.length > 0 && (
+        <section className="flex flex-wrap gap-2">
+          {visiblePRs.map((pr) => (
+            <PrBadgePill key={pr.exerciseId} pr={pr} />
+          ))}
+          {overflowCount > 0 && <PrOverflowPill count={overflowCount} />}
+        </section>
+      )}
+
+      <footer className="flex items-center gap-1.5 opacity-70">
+        <BoltMark className="h-4 w-4" />
+        <span className="font-display text-xs">ThunderaFit</span>
+      </footer>
+    </div>
+  );
+});
 
 function SecondaryMetric({
   label,

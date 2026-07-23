@@ -58,6 +58,7 @@ test("e-mail novo → escolhe Treinar (ALUNO), completa cadastro e chega no dash
   await expect(page.getByRole("heading", { name: "Criar conta" })).toBeVisible();
   await expect(page.getByText("Treinar", { exact: true })).toBeVisible();
 
+  await page.locator("#name").fill("Fulano de Tal");
   await page.locator("#password").fill(password);
   await page.getByRole("button", { name: "Criar conta" }).click();
   await expect(page).toHaveURL(/\/dashboard$/);
@@ -89,6 +90,7 @@ test("e-mail novo → escolhe Personal, completa cadastro e chega no dashboard c
   await page.getByRole("button", { name: "Continuar" }).click();
   await expect(page.getByRole("heading", { name: "Criar conta" })).toBeVisible();
 
+  await page.locator("#name").fill("Fulana Personal");
   await page.locator("#password").fill(password);
   await page.getByRole("button", { name: "Criar conta" }).click();
   await expect(page).toHaveURL(/\/personal\/dashboard$/);

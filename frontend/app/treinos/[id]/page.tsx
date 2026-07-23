@@ -5,6 +5,8 @@ import { useParams } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { getWorkout, completeWorkout } from "@/lib/api/workouts";
 import { ApiError } from "@/lib/api/client";
+import { useAuthStore } from "@/lib/store/auth-store";
+import { firstNameOrEmailPrefix } from "@/lib/utils";
 import { AuthGuard } from "@/components/auth-guard";
 import { AppHeader } from "@/components/app-header";
 import { Card } from "@/components/ui/card";
@@ -17,9 +19,21 @@ import type { WorkoutCompletionSummary } from "@/lib/types";
 function ExecucaoContent() {
   const params = useParams<{ id: string }>();
   const workoutId = params.id;
+  const user = useAuthStore((s) => s.user);
 
   const queryClient = useQueryClient();
   const [summary, setSummary] = useState<WorkoutCompletionSummary | null>(null);
+  const [durationSeconds, setDurationSeconds] = useState<number | null>(null);
+  // Fase 39: cronômetro real da sessão — marca o momento em que a tela de
+  // execução abriu; a duração exibida no card é (agora do clique em
+  // "Concluir" − este timestamp). Puramente client-side, sem migration:
+  // substitui a aproximação anterior (primeira a última série logada), que
+  // não contava o aquecimento antes do primeiro registro. Limitação aceita:
+  // se o aluno deixar a aba aberta em segundo plano por muito tempo antes de
+  // concluir, a duração infla (não há pausa/retomada) — trade-off razoável
+  // frente à aproximação anterior, que também não era exata.
+  const [sessionStartedAt] = useState(() => Date.now());
+
   const workoutQuery = useQuery({
     queryKey: ["workout", workoutId],
     queryFn: () => getWorkout(workoutId),
@@ -31,6 +45,7 @@ function ExecucaoContent() {
       queryClient.invalidateQueries({ queryKey: ["workout", workoutId] });
       // A sugestão de próxima sessão no programa depende do lastCompletedAt.
       queryClient.invalidateQueries({ queryKey: ["workout-program"] });
+      setDurationSeconds(Math.round((Date.now() - sessionStartedAt) / 1000));
       setSummary(data.summary);
     },
   });
@@ -136,7 +151,12 @@ function ExecucaoContent() {
       </Card>
 
       {summary && (
-        <PostWorkoutSummaryModal summary={summary} onClose={() => setSummary(null)} />
+        <PostWorkoutSummaryModal
+          summary={summary}
+          alunoName={firstNameOrEmailPrefix(user)}
+          durationSeconds={durationSeconds}
+          onClose={() => setSummary(null)}
+        />
       )}
     </main>
   );
