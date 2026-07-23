@@ -6,7 +6,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { getWorkout, completeWorkout } from "@/lib/api/workouts";
 import { ApiError } from "@/lib/api/client";
 import { useAuthStore } from "@/lib/store/auth-store";
-import { firstNameOrEmailPrefix } from "@/lib/utils";
+import { firstNameOrEmailPrefix, splitSetLogsBySessionBoundary } from "@/lib/utils";
 import { AuthGuard } from "@/components/auth-guard";
 import { AppHeader } from "@/components/app-header";
 import { Card } from "@/components/ui/card";
@@ -76,8 +76,17 @@ function ExecucaoContent() {
 
   const workout = workoutQuery.data.workout;
   const exercises = workout.exercises ?? [];
+  // Fase 40: mesmo bug corrigido no ExerciseExecutionCard — `setLogs` traz o
+  // histórico inteiro (o Workout é reaberto toda semana), então o total do
+  // cabeçalho também precisa contar só as séries DESTA sessão, senão volta a
+  // mostrar "completo" pra sempre depois da 1ª semana.
+  const sessionBoundary = workout.lastCompletedAt;
   const totalSets = exercises.reduce((acc, ex) => acc + ex.sets, 0);
-  const doneSets = exercises.reduce((acc, ex) => acc + (ex.setLogs?.length ?? 0), 0);
+  const doneSets = exercises.reduce(
+    (acc, ex) =>
+      acc + splitSetLogsBySessionBoundary(ex.setLogs ?? [], sessionBoundary).thisSession.length,
+    0
+  );
   const allSetsDone = totalSets > 0 && doneSets >= totalSets;
 
   // Fase 33.1: ordem estável usada tanto pra renderizar quanto pra saber
@@ -117,6 +126,7 @@ function ExecucaoContent() {
             key={ex.id}
             workoutId={workoutId}
             workoutExercise={ex}
+            sessionBoundary={sessionBoundary}
             id={exerciseCardId(ex.id)}
             onMarkDone={(done) => {
               if (done) scrollToNext(index);

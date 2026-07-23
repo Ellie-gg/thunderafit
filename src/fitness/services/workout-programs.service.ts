@@ -74,6 +74,23 @@ export const workoutProgramsService = {
       throw httpError("Aluno não vinculado a este profissional.", 403);
     }
 
+    // Fase 41: 1 programa aplicado por aluno, POR PERSONAL — escopado por
+    // personalId de propósito (um aluno pode ter mais de um Personal
+    // vinculado; cada um só é limitado ao PRÓPRIO programa aplicado, nunca
+    // ao de outro profissional). Sem substituição automática: o Personal
+    // precisa excluir o programa atual primeiro (ação que já existe e já
+    // avisa que apaga o histórico de séries) antes de aplicar um novo.
+    const existing = await workoutProgramsRepository.findAppliedProgramForAlunoByPersonal(
+      personalId,
+      alunoId
+    );
+    if (existing) {
+      throw httpError(
+        `Este aluno já tem o programa "${existing.name}" aplicado por você. Exclua-o antes de aplicar um novo.`,
+        409
+      );
+    }
+
     const copy = await workoutProgramsRepository.applyToAluno(sourceProgramId, personalId, alunoId);
     if (!copy) throw httpError("Falha ao aplicar o programa.", 500);
     return copy;
