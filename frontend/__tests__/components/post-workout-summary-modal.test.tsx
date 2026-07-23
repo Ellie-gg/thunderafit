@@ -34,7 +34,6 @@ const summary: WorkoutCompletionSummary = {
   workoutName: "Treino B",
   workoutLetter: "B",
   completedAt: "2026-07-21T18:00:00.000Z",
-  durationMinutes: 45,
   volumeKg: 4820.5,
   setsLogged: 18,
   hasHistory: true,
@@ -43,6 +42,12 @@ const summary: WorkoutCompletionSummary = {
   streakDays: 3,
   personalRecords: [],
 };
+
+function renderModal(onClose: () => void) {
+  return render(
+    <PostWorkoutSummaryModal summary={summary} alunoName="João" durationSeconds={754} onClose={onClose} />
+  );
+}
 
 const TINY_PNG_DATA_URL =
   "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=";
@@ -71,20 +76,20 @@ beforeEach(() => {
 
 describe("PostWorkoutSummaryModal — fora do Capacitor (web)", () => {
   it("esconde o botão Compartilhar quando navigator.share não existe", () => {
-    render(<PostWorkoutSummaryModal summary={summary} onClose={jest.fn()} />);
+    renderModal(jest.fn());
     expect(screen.queryByRole("button", { name: /compartilhar/i })).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: /baixar imagem/i })).toBeInTheDocument();
   });
 
   it("mostra o botão Compartilhar quando navigator.share existe", () => {
     (navigator as Partial<Navigator>).share = jest.fn();
-    render(<PostWorkoutSummaryModal summary={summary} onClose={jest.fn()} />);
+    renderModal(jest.fn());
     expect(screen.getByRole("button", { name: /compartilhar/i })).toBeInTheDocument();
   });
 
   it("aciona toPng ao clicar em Baixar imagem", async () => {
     const user = userEvent.setup();
-    render(<PostWorkoutSummaryModal summary={summary} onClose={jest.fn()} />);
+    renderModal(jest.fn());
 
     await user.click(screen.getByRole("button", { name: /baixar imagem/i }));
 
@@ -94,7 +99,7 @@ describe("PostWorkoutSummaryModal — fora do Capacitor (web)", () => {
   it("chama onClose ao clicar em Fechar", async () => {
     const onClose = jest.fn();
     const user = userEvent.setup();
-    render(<PostWorkoutSummaryModal summary={summary} onClose={onClose} />);
+    renderModal(onClose);
 
     await user.click(screen.getByRole("button", { name: /fechar/i }));
     expect(onClose).toHaveBeenCalledTimes(1);
@@ -107,13 +112,13 @@ describe("PostWorkoutSummaryModal — dentro do Capacitor (nativo)", () => {
   });
 
   it("mostra o botão Compartilhar mesmo sem Web Share API, por estar no Capacitor", () => {
-    render(<PostWorkoutSummaryModal summary={summary} onClose={jest.fn()} />);
+    renderModal(jest.fn());
     expect(screen.getByRole("button", { name: /compartilhar/i })).toBeInTheDocument();
   });
 
   it("grava o PNG via Filesystem e abre o share sheet nativo com o arquivo", async () => {
     const user = userEvent.setup();
-    render(<PostWorkoutSummaryModal summary={summary} onClose={jest.fn()} />);
+    renderModal(jest.fn());
 
     await user.click(screen.getByRole("button", { name: /compartilhar/i }));
 
@@ -130,7 +135,7 @@ describe("PostWorkoutSummaryModal — dentro do Capacitor (nativo)", () => {
   it("cai pro download quando o share nativo falha, mostrando aviso amigável", async () => {
     mockedShare.mockRejectedValue(new Error("falha nativa"));
     const user = userEvent.setup();
-    render(<PostWorkoutSummaryModal summary={summary} onClose={jest.fn()} />);
+    renderModal(jest.fn());
 
     await user.click(screen.getByRole("button", { name: /compartilhar/i }));
 

@@ -107,7 +107,7 @@ test("esquema Letras: Personal cria programa, percorre A→E via Próximo, presc
   ).toBe(true);
 });
 
-test("esquema Dias da semana: sessão adicionada fora de ordem (Quarta antes de Segunda) sugere Segunda primeiro", async ({
+test("esquema Dias da semana: sessão adicionada fora de ordem (Quarta antes de Segunda) ordena por calendário e sugere o dia de hoje", async ({
   page,
 }) => {
   const stamp = Date.now();
@@ -157,10 +157,34 @@ test("esquema Dias da semana: sessão adicionada fora de ordem (Quarta antes de 
   const applied = alunoPrograms.programs.find((p: { name: string }) => p.name === programName);
   expect(applied.sessionScheme).toBe("WEEKDAY");
 
-  const programDetail = await fetch(`${BACKEND_URL}/api/workout-programs/${applied.id}`, {
+  // Confirma a ordenação de CALENDÁRIO (Segunda antes de Quarta, mesmo tendo
+  // sido criada depois) — sortByScheme, não localeCompare/ordem de inserção.
+  let programDetail = await fetch(`${BACKEND_URL}/api/workout-programs/${applied.id}`, {
+    headers: { Authorization: `Bearer ${alunoLogin.accessToken}` },
+  }).then((r) => r.json());
+  expect(programDetail.program.workouts.map((w: { letter: string }) => w.letter)).toEqual([
+    "SEGUNDA",
+    "QUARTA",
+  ]);
+
+  // Fase 39: a sugestão pra esquema WEEKDAY é SEMPRE o dia de hoje, não
+  // round-robin — completa a semana (na INSTÂNCIA aplicada, não no template)
+  // pra garantir que hoje sempre tenha uma sessão, e confirma dinamicamente.
+  for (const letter of ["TERCA", "QUINTA", "SEXTA", "SABADO", "DOMINGO"]) {
+    await fetch(`${BACKEND_URL}/api/workout-programs/${applied.id}/sessions`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${personalLogin.accessToken}` },
+      body: JSON.stringify({ letter }),
+    });
+  }
+
+  const WEEKDAY_ORDER = ["SEGUNDA", "TERCA", "QUARTA", "QUINTA", "SEXTA", "SABADO", "DOMINGO"];
+  const todayKey = WEEKDAY_ORDER[(new Date().getUTCDay() + 6) % 7];
+
+  programDetail = await fetch(`${BACKEND_URL}/api/workout-programs/${applied.id}`, {
     headers: { Authorization: `Bearer ${alunoLogin.accessToken}` },
   }).then((r) => r.json());
   const suggested = programDetail.program.workouts.filter((w: { suggestedNext: boolean }) => w.suggestedNext);
   expect(suggested).toHaveLength(1);
-  expect(suggested[0].letter).toBe("SEGUNDA");
+  expect(suggested[0].letter).toBe(todayKey);
 });

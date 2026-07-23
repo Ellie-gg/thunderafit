@@ -37,6 +37,12 @@ model User {
   passwordHash     String
   role             Role
   refreshTokenHash String?
+  // Fase 39 — cadastro mínimo de nome: capturado no cadastro a partir de
+  // agora (obrigatório pra conta NOVA), mas nullable porque contas já
+  // existentes não têm esse dado e não há backfill — todo lugar que exibe
+  // nome precisa lidar com null (fallback pro prefixo do e-mail, mesmo
+  // padrão já usado na saudação do dashboard).
+  name             String?
   planoAssinatura  PlanoAssinatura @default(FREE)
   limiteAlunos     Int             @default(3)
   lastLoginAt      DateTime?

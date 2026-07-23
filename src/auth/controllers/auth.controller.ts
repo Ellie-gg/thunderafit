@@ -49,11 +49,11 @@ function clearAuthCookies(reply: FastifyReply) {
 
 export async function registerHandler(
   request: FastifyRequest<{
-    Body: { email: string; password: string; role: Role };
+    Body: { email: string; password: string; role: Role; name: string };
   }>,
   reply: FastifyReply
 ) {
-  const { email, password, role } = request.body;
+  const { email, password, role, name } = request.body;
 
   if (!email || !password || !role) {
     return reply.status(400).send({ error: "email, password e role são obrigatórios." });
@@ -63,8 +63,15 @@ export async function registerHandler(
     return reply.status(400).send({ error: "role deve ser PERSONAL, ALUNO ou NUTRICIONISTA." });
   }
 
+  // Fase 39: cadastro mínimo de nome. Obrigatório no FORMULÁRIO de cadastro
+  // real (frontend/app/login/page.tsx), mas não vira 400 aqui — deixar
+  // opcional na API evita quebrar todo cliente de teste/fixture que já
+  // registra usuários sem esse campo (17 arquivos de teste do backend, só
+  // usando /api/auth/register como setup, não testando cadastro em si).
+  // O dado continua nullable no schema; quem se cadastra pela UI de verdade
+  // sempre manda nome porque o campo é `required` no form.
   try {
-    const user = await authService.register({ email, password, role });
+    const user = await authService.register({ email, password, role, name: name?.trim() || null });
     return reply.status(201).send({ user });
   } catch (err) {
     const error = err as Error & { statusCode?: number };

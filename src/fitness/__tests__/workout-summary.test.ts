@@ -117,31 +117,6 @@ describe("workoutSummaryService.buildCompletionSummary — comparação de volum
   });
 });
 
-describe("workoutSummaryService.buildCompletionSummary — duração aproximada", () => {
-  it("null quando há 0 ou 1 série (não dá pra medir um intervalo)", async () => {
-    mockedRepo.findSetLogsForWorkoutInWindow.mockResolvedValueOnce([log({ weightKg: 50 })]);
-    mockedRepo.findHistoricalSetLogsForExercise.mockResolvedValueOnce([]);
-
-    const completedAt = new Date("2026-07-21T12:30:00.000Z");
-    const result = await workoutSummaryService.buildCompletionSummary(WORKOUT, null, completedAt);
-
-    expect(result.durationMinutes).toBeNull();
-  });
-
-  it("calcula a diferença em minutos entre a primeira e a última série desta sessão", async () => {
-    mockedRepo.findSetLogsForWorkoutInWindow.mockResolvedValueOnce([
-      log({ weightKg: 50, loggedAt: new Date("2026-07-21T12:00:00.000Z") }),
-      log({ weightKg: 55, loggedAt: new Date("2026-07-21T12:25:00.000Z") }),
-    ]);
-    mockedRepo.findHistoricalSetLogsForExercise.mockResolvedValue([]);
-
-    const completedAt = new Date("2026-07-21T12:30:00.000Z");
-    const result = await workoutSummaryService.buildCompletionSummary(WORKOUT, null, completedAt);
-
-    expect(result.durationMinutes).toBe(25);
-  });
-});
-
 describe("workoutSummaryService.buildCompletionSummary — PRs", () => {
   it("múltiplos PRs numa sessão são todos retornados (corte de exibição fica pro frontend)", async () => {
     mockedRepo.findSetLogsForWorkoutInWindow.mockResolvedValueOnce([

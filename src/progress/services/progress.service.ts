@@ -118,11 +118,17 @@ export const progressService = {
     const activeDays = new Set<string>();
     const sevenDaysAgoKey = dayKey(new Date(now.getTime() - 6 * 24 * 60 * 60 * 1000));
     let volumeKg = 0;
+    // Fase 39: a tela inicial do aluno passou a mostrar "séries executadas na
+    // semana" no lugar de volume — contagem de SetLog na mesma janela de 7
+    // dias já usada pro volume (volumeKg continua no payload, sem uso na UI
+    // do dashboard por ora, mas sem motivo pra remover do contrato).
+    let setsThisWeek = 0;
     for (const log of logs) {
       const key = dayKey(log.loggedAt);
       activeDays.add(key);
       if (key >= sevenDaysAgoKey) {
         volumeKg += log.weightKg * log.repsDone;
+        setsThisWeek++;
       }
     }
 
@@ -140,6 +146,6 @@ export const progressService = {
       cursor = new Date(cursor.getTime() - 24 * 60 * 60 * 1000);
     }
 
-    return { days, volumeKg: Math.round(volumeKg * 10) / 10, streakDays };
+    return { days, volumeKg: Math.round(volumeKg * 10) / 10, setsThisWeek, streakDays };
   },
 };

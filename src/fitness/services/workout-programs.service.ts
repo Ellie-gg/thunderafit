@@ -1,5 +1,5 @@
 import { SessionScheme } from "@prisma/client";
-import { workoutProgramsRepository, orderFor } from "../repository/workout-programs.repository";
+import { workoutProgramsRepository, orderFor, WEEKDAY_ORDER } from "../repository/workout-programs.repository";
 import { relationsRepository } from "../repository/relations.repository";
 
 const VALID_SCHEMES: SessionScheme[] = ["LETTER", "WEEKDAY"];
@@ -113,12 +113,20 @@ export const workoutProgramsService = {
   /**
    * Visão de um programa com o cálculo de `suggestedNext` por sessão.
    *
-   * Regra de sugestão (documentada, Fase 16): a sessão sugerida é a de MENOR
-   * letra que NUNCA foi concluída (lastCompletedAt nulo). Se todas já foram
-   * concluídas ao menos uma vez, é a de conclusão mais ANTIGA (menor
-   * lastCompletedAt). Exatamente uma sessão recebe suggestedNext=true (ou
-   * nenhuma, se o programa não tem sessões). É só sugestão — não trava o aluno,
-   * que pode abrir qualquer sessão.
+   * Regra de sugestão pra esquema LETTER (Fase 16, inalterada): a sessão
+   * sugerida é a de MENOR letra que NUNCA foi concluída (lastCompletedAt
+   * nulo). Se todas já foram concluídas ao menos uma vez, é a de conclusão
+   * mais ANTIGA (menor lastCompletedAt) — round-robin sem repetir enquanto
+   * houver sessão nunca feita.
+   *
+   * Regra pra esquema WEEKDAY (Fase 39 — corrigido um bug real: antes usava
+   * a MESMA lógica de round-robin do LETTER, ignorando completamente o dia
+   * da semana atual, o que não faz sentido pra um programa organizado por
+   * dia): a sugestão é SEMPRE a sessão do dia da semana de HOJE,
+   * deterministicamente — não depende de histórico de conclusão. Se o
+   * programa não tem sessão cadastrada pro dia de hoje (ex: só treina
+   * Segunda a Sexta e hoje é Sábado), não há sugestão (null) — é só
+   * sugestão, nunca trava o aluno, que pode abrir qualquer sessão.
    */
   async getProgram(programId: string, userId: string, role: string) {
     const program = await workoutProgramsRepository.findProgramWithSessions(programId);
@@ -153,12 +161,29 @@ export function sortByScheme<T extends { letter: string }>(
   return [...sessions].sort((a, b) => order.indexOf(a.letter) - order.indexOf(b.letter));
 }
 
+// Dia da semana de `now` como chave de WEEKDAY_ORDER (SEGUNDA..DOMINGO).
+// Usa o dia calendário em UTC — mesmo critério já usado em todo o resto do
+// código pra "dia" (ex: progress.service.ts::dayKey), pra não introduzir um
+// segundo critério de fuso horário só aqui.
+function todayWeekdayKey(now: Date): string {
+  const utcDay = now.getUTCDay(); // 0=Domingo .. 6=Sábado
+  return WEEKDAY_ORDER[(utcDay + 6) % 7];
+}
+
 /** Ver regra em getProgram. Retorna o id da sessão sugerida, ou null. */
 export function computeSuggestedSessionId(
   sessions: Array<{ id: string; letter: string; lastCompletedAt: Date | null }>,
-  scheme: SessionScheme = "LETTER"
+  scheme: SessionScheme = "LETTER",
+  now: Date = new Date()
 ): string | null {
   if (sessions.length === 0) return null;
+
+  if (scheme === "WEEKDAY") {
+    const todayKey = todayWeekdayKey(now);
+    const todaySession = sessions.find((s) => s.letter === todayKey);
+    return todaySession ? todaySession.id : null;
+  }
+
   const ordered = sortByScheme(sessions, scheme);
 
   const nuncaFeita = ordered.find((s) => s.lastCompletedAt === null);

@@ -249,6 +249,8 @@ describe("GET /api/progress/weekly-summary (Fase 33.4)", () => {
     // Volume = soma de weightKg*repsDone dos logs de hoje e 3 dias atrás
     // (55*10 + 60*8) + (62*9 + 65*7) = 1030 + 1013 = 2043
     expect(r.body.volumeKg).toBe(2043);
+    // 4 séries no total na janela de 7 dias (2 hoje + 2 há 3 dias).
+    expect(r.body.setsThisWeek).toBe(4);
 
     // Hoje tem log → sequência conta pelo menos o dia de hoje. Ontem não tem
     // log (só hoje e 3 dias atrás), então a sequência para em 1.
@@ -267,6 +269,7 @@ describe("GET /api/progress/weekly-summary (Fase 33.4)", () => {
       .set("Authorization", `Bearer ${tokenAluno2}`);
     expect(r.status).toBe(200);
     expect(r.body.volumeKg).toBe(0);
+    expect(r.body.setsThisWeek).toBe(0);
     expect(r.body.streakDays).toBe(0);
     expect(r.body.days.every((d: any) => d.active === false)).toBe(true);
   });

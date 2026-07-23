@@ -44,6 +44,27 @@ describe("POST /api/auth/register", () => {
     expect(response.body.user.refreshTokenHash).toBeUndefined();
   });
 
+  it("Fase 39: cadastro com name grava e retorna o nome", async () => {
+    const email = "test_com_nome@thunderafit.test";
+    const response = await supertest(app.server)
+      .post("/api/auth/register")
+      .send({ email, password: TEST_PASSWORD, role: "ALUNO", name: "  Maria Silva  " });
+
+    expect(response.status).toBe(201);
+    // trim aplicado no controller.
+    expect(response.body.user.name).toBe("Maria Silva");
+  });
+
+  it("Fase 39: cadastro SEM name continua funcionando (API não exige, só o form real exige) — name fica null", async () => {
+    const email = "test_sem_nome@thunderafit.test";
+    const response = await supertest(app.server)
+      .post("/api/auth/register")
+      .send({ email, password: TEST_PASSWORD, role: "ALUNO" });
+
+    expect(response.status).toBe(201);
+    expect(response.body.user.name).toBeNull();
+  });
+
   it("deve retornar 409 ao tentar registrar um e-mail já existente", async () => {
     const response = await supertest(app.server)
       .post("/api/auth/register")

@@ -15,10 +15,10 @@ export function checkEmailRequest(email: string) {
   });
 }
 
-export function registerRequest(email: string, password: string, role: Role) {
+export function registerRequest(email: string, password: string, role: Role, name: string) {
   return apiFetch<{ user: User }>("/api/auth/register", {
     method: "POST",
-    body: { email, password, role },
+    body: { email, password, role, name },
     auth: false,
   });
 }

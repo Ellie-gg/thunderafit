@@ -3,6 +3,10 @@ export type Role = "PERSONAL" | "ALUNO" | "NUTRICIONISTA" | "ADMIN";
 export interface User {
   id: string;
   email: string;
+  // Fase 39: cadastro mínimo de nome — null pra contas criadas antes desta
+  // fase (sem backfill); todo lugar que exibe precisa de fallback (ex:
+  // prefixo do e-mail, já usado na saudação do dashboard).
+  name: string | null;
   role: Role;
   planoAssinatura: "FREE" | "PAGO";
   limiteAlunos: number;
@@ -89,8 +93,6 @@ export interface WorkoutCompletionSummary {
   workoutName: string;
   workoutLetter: string;
   completedAt: string;
-  // Aproximada (última série − primeira série desta sessão); null com 0/1 série.
-  durationMinutes: number | null;
   volumeKg: number;
   setsLogged: number;
   hasHistory: boolean;
@@ -152,6 +154,8 @@ export interface WeeklySummaryDay {
 export interface WeeklySummaryResponse {
   days: WeeklySummaryDay[];
   volumeKg: number;
+  // Fase 39: usado na tela inicial no lugar do volume ("Séries na semana").
+  setsThisWeek: number;
   streakDays: number;
 }
 

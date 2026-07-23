@@ -89,15 +89,42 @@ describe("Fase 16 — cálculo de suggestedNext (regra unitária)", () => {
     expect(computeSuggestedSessionId([])).toBeNull();
   });
 
-  it("esquema WEEKDAY: ordena por dia da semana, NÃO por ordem alfabética (QUARTA < SEGUNDA alfabeticamente, mas Segunda vem antes)", () => {
+  it("esquema WEEKDAY: sugere SEMPRE a sessão do dia da semana de hoje, não o round-robin do LETTER (Fase 39)", () => {
+    // 2026-07-22 é uma quarta-feira.
     const id = computeSuggestedSessionId(
       [
-        { id: "qua", letter: "QUARTA", lastCompletedAt: null },
         { id: "seg", letter: "SEGUNDA", lastCompletedAt: null },
+        { id: "qua", letter: "QUARTA", lastCompletedAt: null },
       ],
-      "WEEKDAY"
+      "WEEKDAY",
+      new Date("2026-07-22T12:00:00.000Z")
     );
-    expect(id).toBe("seg");
+    expect(id).toBe("qua");
+  });
+
+  it("esquema WEEKDAY: ignora histórico de conclusão — mesmo com QUARTA já feita e SEGUNDA nunca feita, hoje sendo quarta sugere QUARTA", () => {
+    const id = computeSuggestedSessionId(
+      [
+        { id: "seg", letter: "SEGUNDA", lastCompletedAt: null },
+        { id: "qua", letter: "QUARTA", lastCompletedAt: new Date("2026-07-15") },
+      ],
+      "WEEKDAY",
+      new Date("2026-07-22T12:00:00.000Z")
+    );
+    expect(id).toBe("qua");
+  });
+
+  it("esquema WEEKDAY: sem sessão cadastrada pro dia de hoje, não sugere nada (null)", () => {
+    // 2026-07-25 é um sábado; programa só tem Segunda a Sexta.
+    const id = computeSuggestedSessionId(
+      [
+        { id: "seg", letter: "SEGUNDA", lastCompletedAt: null },
+        { id: "sex", letter: "SEXTA", lastCompletedAt: null },
+      ],
+      "WEEKDAY",
+      new Date("2026-07-25T12:00:00.000Z")
+    );
+    expect(id).toBeNull();
   });
 });
 
@@ -333,15 +360,14 @@ describe("Fase 26 — esquema de sessão WEEKDAY (dias da semana)", () => {
     }
   });
 
-  it("GET do programa sugere SEGUNDA (ordem de calendário), não QUARTA (que foi criada primeiro)", async () => {
+  it("GET do programa ordena por calendário (SEGUNDA antes de QUARTA), mesmo tendo sido criada depois", async () => {
     const r = await supertest(server.server)
       .get(`/api/workout-programs/${weekdayTemplateId}`)
       .set("Authorization", `Bearer ${personalToken}`);
     expect(r.status).toBe(200);
-    const suggested = r.body.program.workouts.filter((w: any) => w.suggestedNext);
-    expect(suggested).toHaveLength(1);
-    expect(suggested[0].letter).toBe("SEGUNDA");
+    expect(r.body.program.workouts.map((w: any) => w.letter)).toEqual(["SEGUNDA", "QUARTA"]);
   });
+
 
   it("rejeita a 8ª sessão (máximo de 7 dias)", async () => {
     for (const letter of ["TERCA", "QUINTA", "SEXTA", "SABADO", "DOMINGO"]) {
@@ -357,6 +383,19 @@ describe("Fase 26 — esquema de sessão WEEKDAY (dias da semana)", () => {
       include: { workouts: true },
     });
     expect(tpl!.workouts).toHaveLength(7);
+  });
+
+  it("GET do programa sugere a sessão do dia da semana de HOJE (Fase 39), não round-robin — com a semana completa, hoje sempre tem sessão", async () => {
+    const WEEKDAY_ORDER = ["SEGUNDA", "TERCA", "QUARTA", "QUINTA", "SEXTA", "SABADO", "DOMINGO"];
+    const todayKey = WEEKDAY_ORDER[(new Date().getUTCDay() + 6) % 7];
+
+    const r = await supertest(server.server)
+      .get(`/api/workout-programs/${weekdayTemplateId}`)
+      .set("Authorization", `Bearer ${personalToken}`);
+    expect(r.status).toBe(200);
+    const suggested = r.body.program.workouts.filter((w: any) => w.suggestedNext);
+    expect(suggested).toHaveLength(1);
+    expect(suggested[0].letter).toBe(todayKey);
   });
 
   it("aplicar a um aluno preserva o sessionScheme=WEEKDAY na cópia", async () => {
