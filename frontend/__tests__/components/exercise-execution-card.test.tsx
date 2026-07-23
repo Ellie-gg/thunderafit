@@ -37,11 +37,15 @@ const baseWorkoutExercise: WorkoutExercise = {
   setLogs: [],
 };
 
-function renderCard(workoutExercise: WorkoutExercise) {
+function renderCard(workoutExercise: WorkoutExercise, sessionBoundary: string | null = null) {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } });
   return render(
     <QueryClientProvider client={queryClient}>
-      <ExerciseExecutionCard workoutId="w-1" workoutExercise={workoutExercise} />
+      <ExerciseExecutionCard
+        workoutId="w-1"
+        workoutExercise={workoutExercise}
+        sessionBoundary={sessionBoundary}
+      />
     </QueryClientProvider>
   );
 }
@@ -116,6 +120,63 @@ describe("ExerciseExecutionCard — formulário de registro de série", () => {
     renderCard(complete);
     expect(screen.getByText("3/3 séries")).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /registrar/i })).not.toBeInTheDocument();
+  });
+});
+
+describe("ExerciseExecutionCard — corte de sessão por Workout.lastCompletedAt (Fase 40)", () => {
+  // Bug real corrigido: o mesmo Workout/WorkoutExercise é reaberto toda
+  // semana (nunca recriado), e `setLogs` sempre trouxe o histórico INTEIRO
+  // — sem o corte por `sessionBoundary`, depois da 1ª semana completa o
+  // formulário ficava escondido pra sempre (setLogs.length já batia o
+  // `sets` prescrito com séries de semanas passadas).
+  const previousCycleLogs = [
+    { id: "l1", workoutExerciseId: "we-1", setNumber: 1, repsDone: 10, weightKg: 60, loggedAt: "2026-07-10T12:00:00.000Z" },
+    { id: "l2", workoutExerciseId: "we-1", setNumber: 2, repsDone: 9, weightKg: 60, loggedAt: "2026-07-10T12:05:00.000Z" },
+    { id: "l3", workoutExerciseId: "we-1", setNumber: 3, repsDone: 8, weightKg: 65, loggedAt: "2026-07-10T12:10:00.000Z" },
+  ];
+  const boundary = "2026-07-10T12:30:00.000Z"; // lastCompletedAt da semana passada
+
+  it("séries de um ciclo anterior (antes do boundary) NÃO contam pra esta sessão — formulário continua visível", () => {
+    const workoutExercise: WorkoutExercise = { ...baseWorkoutExercise, setLogs: previousCycleLogs };
+    renderCard(workoutExercise, boundary);
+
+    expect(screen.getByText("0/3 séries")).toBeInTheDocument();
+    expect(screen.getByText("Reps (série 1)")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /registrar/i })).toBeInTheDocument();
+  });
+
+  it("sem sessionBoundary (1ª vez), o histórico inteiro conta normalmente (comportamento antigo preservado)", () => {
+    const workoutExercise: WorkoutExercise = { ...baseWorkoutExercise, setLogs: previousCycleLogs };
+    renderCard(workoutExercise, null);
+
+    expect(screen.getByText("3/3 séries")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /registrar/i })).not.toBeInTheDocument();
+  });
+
+  it("séries logadas DEPOIS do boundary contam normalmente pra esta sessão", () => {
+    const workoutExercise: WorkoutExercise = {
+      ...baseWorkoutExercise,
+      setLogs: [
+        ...previousCycleLogs,
+        { id: "l4", workoutExerciseId: "we-1", setNumber: 1, repsDone: 12, weightKg: 62.5, loggedAt: "2026-07-17T12:00:00.000Z" },
+      ],
+    };
+    renderCard(workoutExercise, boundary);
+
+    expect(screen.getByText("1/3 séries")).toBeInTheDocument();
+    expect(screen.getByText("Reps (série 2)")).toBeInTheDocument();
+  });
+
+  it("mostra a referência 'Última vez' com o valor do ciclo anterior pro mesmo número de série", () => {
+    const workoutExercise: WorkoutExercise = { ...baseWorkoutExercise, setLogs: previousCycleLogs };
+    renderCard(workoutExercise, boundary);
+
+    expect(screen.getByText("Última vez: 10 reps × 60kg")).toBeInTheDocument();
+  });
+
+  it("não mostra referência quando não há registro anterior pra esse número de série", () => {
+    renderCard(baseWorkoutExercise, boundary);
+    expect(screen.queryByText(/Última vez/)).not.toBeInTheDocument();
   });
 });
 

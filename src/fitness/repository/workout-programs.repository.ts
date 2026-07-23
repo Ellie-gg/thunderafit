@@ -106,6 +106,19 @@ export const workoutProgramsRepository = {
     });
   },
 
+  /**
+   * Fase 41: checagem de "1 programa aplicado por aluno, POR PERSONAL" —
+   * escopado por `personalId` de propósito. Um aluno pode ter mais de um
+   * Personal vinculado (ClientRelation é N:N de verdade, sem unique só em
+   * `alunoId`); cada Personal só pode ter UM programa aplicado a ele, mas
+   * isso não impede um Personal DIFERENTE de aplicar o dele ao mesmo aluno.
+   */
+  async findAppliedProgramForAlunoByPersonal(personalId: string, alunoId: string) {
+    return prisma.workoutProgram.findFirst({
+      where: { personalId, alunoId, isTemplate: false },
+    });
+  },
+
   async listByAluno(alunoId: string) {
     return prisma.workoutProgram.findMany({
       where: { alunoId, isTemplate: false },

@@ -9,6 +9,16 @@ let personalId: string;
 let aluno1Id: string;
 let aluno2Id: string;
 let aluno1Token: string;
+// Fase 41: alunos extras só pra evitar colisão com a regra nova de "1
+// programa aplicado por aluno, por Personal" — cada describe block que
+// precisa aplicar MAIS UM programa a partir do mesmo personalId usa um
+// aluno dedicado, em vez de reaproveitar aluno1Id/aluno2Id (que já têm
+// programa aplicado desde o bloco 2).
+let aluno3Id: string;
+let aluno3Token: string;
+let aluno4Id: string;
+let aluno5Id: string;
+let aluno5Token: string;
 let exerciseIds: string[];
 
 const pw = "SenhaSegura@123";
@@ -30,6 +40,18 @@ beforeAll(async () => {
     .post("/api/auth/register")
     .send({ email: "wp_aluno2@thunderafit.test", password: pw, role: "ALUNO" });
   aluno2Id = regA2.body.user.id;
+  const regA3 = await supertest(server.server)
+    .post("/api/auth/register")
+    .send({ email: "wp_aluno3@thunderafit.test", password: pw, role: "ALUNO" });
+  aluno3Id = regA3.body.user.id;
+  const regA4 = await supertest(server.server)
+    .post("/api/auth/register")
+    .send({ email: "wp_aluno4@thunderafit.test", password: pw, role: "ALUNO" });
+  aluno4Id = regA4.body.user.id;
+  const regA5 = await supertest(server.server)
+    .post("/api/auth/register")
+    .send({ email: "wp_aluno5@thunderafit.test", password: pw, role: "ALUNO" });
+  aluno5Id = regA5.body.user.id;
 
   personalToken = (
     await supertest(server.server).post("/api/auth/login").send({ email: "wp_personal@thunderafit.test", password: pw })
@@ -37,8 +59,20 @@ beforeAll(async () => {
   aluno1Token = (
     await supertest(server.server).post("/api/auth/login").send({ email: "wp_aluno1@thunderafit.test", password: pw })
   ).body.accessToken;
+  aluno3Token = (
+    await supertest(server.server).post("/api/auth/login").send({ email: "wp_aluno3@thunderafit.test", password: pw })
+  ).body.accessToken;
+  aluno5Token = (
+    await supertest(server.server).post("/api/auth/login").send({ email: "wp_aluno5@thunderafit.test", password: pw })
+  ).body.accessToken;
 
-  for (const alunoId of [aluno1Id, aluno2Id]) {
+  // Fase 41: precisa vincular 5 alunos de teste (3 a mais do que antes, pra
+  // evitar colisão com a regra nova de "1 programa aplicado por aluno, por
+  // Personal") — acima do limite freemium padrão (3), então sobe o limite
+  // só pra este Personal de teste.
+  await prisma.user.update({ where: { id: personalId }, data: { limiteAlunos: 10 } });
+
+  for (const alunoId of [aluno1Id, aluno2Id, aluno3Id, aluno4Id, aluno5Id]) {
     await supertest(server.server)
       .post("/api/relations")
       .set("Authorization", `Bearer ${personalToken}`)
@@ -179,6 +213,69 @@ describe("Fase 16 BLOCO 2 — template, sessões e aplicação (cópia)", () => 
     }
   });
 
+  it("Fase 41: mesmo Personal tentando aplicar OUTRO programa ao mesmo aluno recebe 409 (já tem um aplicado)", async () => {
+    const outroTemplate = await supertest(server.server)
+      .post("/api/workout-programs")
+      .set("Authorization", `Bearer ${personalToken}`)
+      .send({ name: "Segundo Programa" });
+
+    const r = await supertest(server.server)
+      .post(`/api/workout-programs/${outroTemplate.body.program.id}/apply`)
+      .set("Authorization", `Bearer ${personalToken}`)
+      .send({ alunoId: aluno1Id });
+
+    expect(r.status).toBe(409);
+    expect(r.body.error).toMatch(/já tem o programa/);
+  });
+
+  it("Fase 41: um aluno pode ter mais de um Personal — cada um pode aplicar o SEU próprio programa ao mesmo aluno", async () => {
+    const outroPersonal = await supertest(server.server)
+      .post("/api/auth/register")
+      .send({ email: "wp_outro_personal_multi@thunderafit.test", password: pw, role: "PERSONAL" });
+    const outroPersonalToken = (
+      await supertest(server.server)
+        .post("/api/auth/login")
+        .send({ email: "wp_outro_personal_multi@thunderafit.test", password: pw })
+    ).body.accessToken;
+
+    // Vincula o mesmo aluno1 a este segundo Personal (aluno com 2 Personals).
+    await supertest(server.server)
+      .post("/api/relations")
+      .set("Authorization", `Bearer ${outroPersonalToken}`)
+      .send({ alunoId: aluno1Id });
+
+    const seuProprioTemplate = await supertest(server.server)
+      .post("/api/workout-programs")
+      .set("Authorization", `Bearer ${outroPersonalToken}`)
+      .send({ name: "Programa do Segundo Personal" });
+    for (const letter of ["A"]) {
+      await supertest(server.server)
+        .post(`/api/workout-programs/${seuProprioTemplate.body.program.id}/sessions`)
+        .set("Authorization", `Bearer ${outroPersonalToken}`)
+        .send({ letter });
+    }
+
+    const r = await supertest(server.server)
+      .post(`/api/workout-programs/${seuProprioTemplate.body.program.id}/apply`)
+      .set("Authorization", `Bearer ${outroPersonalToken}`)
+      .send({ alunoId: aluno1Id });
+
+    // aluno1Id JÁ tem um programa aplicado pelo personalId original — mas
+    // este é um Personal DIFERENTE, então não deve ser bloqueado.
+    expect(r.status).toBe(201);
+
+    await prisma.setLog.deleteMany({
+      where: { workoutExercise: { workout: { program: { personalId: outroPersonal.body.user.id } } } },
+    });
+    await prisma.workoutExercise.deleteMany({
+      where: { workout: { program: { personalId: outroPersonal.body.user.id } } },
+    });
+    await prisma.workout.deleteMany({ where: { program: { personalId: outroPersonal.body.user.id } } });
+    await prisma.workoutProgram.deleteMany({ where: { personalId: outroPersonal.body.user.id } });
+    await prisma.clientRelation.deleteMany({ where: { personalId: outroPersonal.body.user.id } });
+    await prisma.user.deleteMany({ where: { email: "wp_outro_personal_multi@thunderafit.test" } });
+  });
+
   it("aplicar a um aluno NÃO vinculado retorna 403", async () => {
     const outro = await supertest(server.server)
       .post("/api/auth/register")
@@ -273,7 +370,7 @@ describe("Fase 16 BLOCO 3 — concluir sessão + suggestedNext ponta a ponta", (
     const applied = await supertest(server.server)
       .post(`/api/workout-programs/${tpl.body.program.id}/apply`)
       .set("Authorization", `Bearer ${personalToken}`)
-      .send({ alunoId: aluno1Id });
+      .send({ alunoId: aluno3Id });
     programId = applied.body.program.id;
     sessions = applied.body.program.workouts.sort((a: any, b: any) => a.letter.localeCompare(b.letter));
   });
@@ -281,7 +378,7 @@ describe("Fase 16 BLOCO 3 — concluir sessão + suggestedNext ponta a ponta", (
   it("sem nenhuma conclusão, sugere a sessão A", async () => {
     const r = await supertest(server.server)
       .get(`/api/workout-programs/${programId}`)
-      .set("Authorization", `Bearer ${aluno1Token}`);
+      .set("Authorization", `Bearer ${aluno3Token}`);
     expect(r.status).toBe(200);
     const suggested = r.body.program.workouts.filter((w: any) => w.suggestedNext);
     expect(suggested).toHaveLength(1);
@@ -292,13 +389,13 @@ describe("Fase 16 BLOCO 3 — concluir sessão + suggestedNext ponta a ponta", (
     const sessionB = sessions.find((s: any) => s.letter === "B");
     const c = await supertest(server.server)
       .post(`/api/workouts/${sessionB.id}/complete`)
-      .set("Authorization", `Bearer ${aluno1Token}`);
+      .set("Authorization", `Bearer ${aluno3Token}`);
     expect(c.status).toBe(200);
     expect(c.body.workout.lastCompletedAt).not.toBeNull();
 
     const r = await supertest(server.server)
       .get(`/api/workout-programs/${programId}`)
-      .set("Authorization", `Bearer ${aluno1Token}`);
+      .set("Authorization", `Bearer ${aluno3Token}`);
     const suggested = r.body.program.workouts.filter((w: any) => w.suggestedNext);
     expect(suggested).toHaveLength(1);
     // A e C nunca feitas; a de menor letra é A.
@@ -310,11 +407,11 @@ describe("Fase 16 BLOCO 3 — concluir sessão + suggestedNext ponta a ponta", (
       const s = sessions.find((x: any) => x.letter === letter);
       await supertest(server.server)
         .post(`/api/workouts/${s.id}/complete`)
-        .set("Authorization", `Bearer ${aluno1Token}`);
+        .set("Authorization", `Bearer ${aluno3Token}`);
     }
     const r = await supertest(server.server)
       .get(`/api/workout-programs/${programId}`)
-      .set("Authorization", `Bearer ${aluno1Token}`);
+      .set("Authorization", `Bearer ${aluno3Token}`);
     const suggested = r.body.program.workouts.filter((w: any) => w.suggestedNext);
     expect(suggested).toHaveLength(1);
     expect(suggested[0].letter).toBe("B");
@@ -402,7 +499,7 @@ describe("Fase 26 — esquema de sessão WEEKDAY (dias da semana)", () => {
     const r = await supertest(server.server)
       .post(`/api/workout-programs/${weekdayTemplateId}/apply`)
       .set("Authorization", `Bearer ${personalToken}`)
-      .send({ alunoId: aluno1Id });
+      .send({ alunoId: aluno4Id });
     expect(r.status).toBe(201);
     expect(r.body.program.sessionScheme).toBe("WEEKDAY");
     expect(r.body.program.workouts).toHaveLength(7);
@@ -434,14 +531,14 @@ describe("Fase 31 — excluir programa (template ou instância aplicada)", () =>
     const applied = await supertest(server.server)
       .post(`/api/workout-programs/${deletableTemplateId}/apply`)
       .set("Authorization", `Bearer ${personalToken}`)
-      .send({ alunoId: aluno1Id });
+      .send({ alunoId: aluno5Id });
     deletableInstanceId = applied.body.program.id;
     instanceSessionId = applied.body.program.workouts[0].id;
     instanceWorkoutExerciseId = applied.body.program.workouts[0].exercises[0].id;
 
     const log = await supertest(server.server)
       .post(`/api/workouts/${instanceSessionId}/exercises/${instanceWorkoutExerciseId}/logs`)
-      .set("Authorization", `Bearer ${aluno1Token}`)
+      .set("Authorization", `Bearer ${aluno5Token}`)
       .send({ setNumber: 1, repsDone: 10, weightKg: 50 });
     expect(log.status).toBe(201);
   });

@@ -5,6 +5,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { createSetLog } from "@/lib/api/workouts";
 import { ApiError } from "@/lib/api/client";
 import { toYoutubeEmbedUrl, toYoutubeThumbnail } from "@/lib/youtube";
+import { splitSetLogsBySessionBoundary } from "@/lib/utils";
 import type { WorkoutExercise } from "@/lib/types";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -14,11 +15,19 @@ import { VoltageBar } from "@/components/voltage-bar";
 export function ExerciseExecutionCard({
   workoutId,
   workoutExercise,
+  sessionBoundary,
   id,
   onMarkDone,
 }: {
   workoutId: string;
   workoutExercise: WorkoutExercise;
+  /**
+   * Fase 40: `Workout.lastCompletedAt` de ANTES desta sessão (null na
+   * primeiríssima vez) — separa as séries desta sessão das de ciclos
+   * anteriores, já que o mesmo `WorkoutExercise` é reaberto toda semana e
+   * `setLogs` traz o histórico inteiro, não só o de hoje.
+   */
+  sessionBoundary: string | null;
   /** id do elemento raiz — usado pelo container pra rolar até o próximo card. */
   id?: string;
   /** Fase 33.1: disparado ao marcar/desmarcar o checkbox "Concluído". */
@@ -35,9 +44,16 @@ export function ExerciseExecutionCard({
   // até o próximo card); não persiste no backend nem afeta setLogs/sets.
   const [markedDone, setMarkedDone] = useState(false);
 
-  const setLogs = workoutExercise.setLogs ?? [];
+  const { thisSession: setLogs, previous: previousSetLogs } = splitSetLogsBySessionBoundary(
+    workoutExercise.setLogs ?? [],
+    sessionBoundary
+  );
   const nextSetNumber = setLogs.length + 1;
   const isComplete = setLogs.length >= workoutExercise.sets;
+  // Referência pequena "da última vez" pra este número de série específico —
+  // pega o registro mais recente (ordenado asc, então o último match) de um
+  // ciclo anterior, sem poluir a tela com todo o histórico.
+  const lastTimeSameSet = [...previousSetLogs].reverse().find((l) => l.setNumber === nextSetNumber);
 
   const mutation = useMutation({
     mutationFn: () =>
@@ -200,48 +216,59 @@ export function ExerciseExecutionCard({
 
       {!isComplete && (
         <form
-          className="flex items-end gap-2 border-t border-border pt-3"
+          className="flex flex-col gap-2 border-t border-border pt-3"
           onSubmit={(e) => {
             e.preventDefault();
             mutation.mutate();
           }}
         >
-          <div className="flex flex-1 flex-col gap-1">
-            <label className="text-xs text-muted">Reps (série {nextSetNumber})</label>
-            <Input
-              type="number"
-              min={0}
-              max={99}
-              required
-              value={repsDone}
-              onChange={(e) => {
-                // Fase 38: ninguém faz mais de 99 reps numa série — 2 dígitos
-                // é o teto (também evita o campo crescer feio na tela). Ao
-                // completar 2 dígitos, pula o foco pro campo de carga
-                // seguinte, sem precisar tocar em Tab/Próximo.
-                const next = e.target.value.slice(0, 2);
-                setRepsDone(next);
-                if (next.length === 2) {
-                  weightInputRef.current?.focus();
-                }
-              }}
-            />
+          {/* Fase 40: referência bem discreta da última vez que este MESMO
+              número de série foi feito — só uma linha pequena, sem gráfico
+              nem card extra, pra não poluir. Some quando não há registro
+              anterior pra esse número (exercício novo, ou 1ª sessão). */}
+          {lastTimeSameSet && (
+            <p className="text-xs text-muted">
+              Última vez: {lastTimeSameSet.repsDone} reps × {lastTimeSameSet.weightKg}kg
+            </p>
+          )}
+          <div className="flex items-end gap-2">
+            <div className="flex flex-1 flex-col gap-1">
+              <label className="text-xs text-muted">Reps (série {nextSetNumber})</label>
+              <Input
+                type="number"
+                min={0}
+                max={99}
+                required
+                value={repsDone}
+                onChange={(e) => {
+                  // Fase 38: ninguém faz mais de 99 reps numa série — 2 dígitos
+                  // é o teto (também evita o campo crescer feio na tela). Ao
+                  // completar 2 dígitos, pula o foco pro campo de carga
+                  // seguinte, sem precisar tocar em Tab/Próximo.
+                  const next = e.target.value.slice(0, 2);
+                  setRepsDone(next);
+                  if (next.length === 2) {
+                    weightInputRef.current?.focus();
+                  }
+                }}
+              />
+            </div>
+            <div className="flex flex-1 flex-col gap-1">
+              <label className="text-xs text-muted">Carga (kg)</label>
+              <Input
+                type="number"
+                min={0}
+                step="0.5"
+                required
+                ref={weightInputRef}
+                value={weightKg}
+                onChange={(e) => setWeightKg(e.target.value)}
+              />
+            </div>
+            <Button type="submit" disabled={mutation.isPending}>
+              {mutation.isPending ? "..." : "Registrar"}
+            </Button>
           </div>
-          <div className="flex flex-1 flex-col gap-1">
-            <label className="text-xs text-muted">Carga (kg)</label>
-            <Input
-              type="number"
-              min={0}
-              step="0.5"
-              required
-              ref={weightInputRef}
-              value={weightKg}
-              onChange={(e) => setWeightKg(e.target.value)}
-            />
-          </div>
-          <Button type="submit" disabled={mutation.isPending}>
-            {mutation.isPending ? "..." : "Registrar"}
-          </Button>
         </form>
       )}
 
