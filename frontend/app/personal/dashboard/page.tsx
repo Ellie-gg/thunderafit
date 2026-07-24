@@ -44,7 +44,7 @@ function PersonalDashboardContent() {
   // templates ainda não foram prescritos a ninguém.
   const instances = (programsQuery.data?.programs ?? []).filter((p) => !p.isTemplate);
   const limite = billingQuery.data?.limiteAlunos ?? user?.limiteAlunos ?? 0;
-  const isPago = billingQuery.data?.planoAssinatura === "PAGO";
+  const isPago = billingQuery.data && billingQuery.data.planoAssinatura !== "FREE";
   const noLimite = alunos.length >= limite;
 
   return (
@@ -93,7 +93,8 @@ function PersonalDashboardContent() {
               href="/personal/upgrade"
               className="text-sm font-semibold text-accent-secondary hover:underline"
             >
-              Plano pago ativo · gerenciar assinatura →
+              Plano {billingQuery.data!.planoAssinatura === "PLUS" ? "Plus" : "Base"} ativo · gerenciar
+              assinatura →
             </Link>
           )}
 

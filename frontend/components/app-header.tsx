@@ -30,6 +30,7 @@ type NavLink = { href: string; label: string };
 const NAV_LINKS_BY_ROLE: Record<Role, NavLink[]> = {
   ALUNO: [
     { href: "/programas", label: "Programas" },
+    { href: "/meu-treino-pessoal", label: "Meu Treino Pessoal" },
     { href: "/evolucao", label: "Evolução" },
     { href: "/anamnese", label: "Anamnese" },
     { href: "/duvidas", label: "Dúvidas" },
@@ -47,6 +48,7 @@ const NAV_LINKS_BY_ROLE: Record<Role, NavLink[]> = {
   ADMIN: [
     { href: "/nimbus/usuarios", label: "Usuários" },
     { href: "/nimbus/exercicios", label: "Exercícios" },
+    { href: "/nimbus/treinos-pessoais", label: "Treinos Pessoais" },
     { href: "/nimbus/logins", label: "Logins" },
     { href: "/nimbus/suporte", label: "Suporte" },
     { href: "/nimbus/logs-acesso", label: "Logs de acesso" },

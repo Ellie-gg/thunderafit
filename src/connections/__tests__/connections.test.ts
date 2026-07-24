@@ -28,9 +28,22 @@ beforeAll(async () => {
   await reg("proCuritiba", "conn_pro_curitiba@thunderafit.test", "PERSONAL");
   await reg("proHidden", "conn_pro_hidden@thunderafit.test", "PERSONAL"); // não opta por disponível
   await reg("proFull", "conn_pro_full@thunderafit.test", "PERSONAL"); // vai ficar 3/3
+  await reg("proFree", "conn_pro_free@thunderafit.test", "PERSONAL"); // fica FREE de propósito
+  await reg("proPlus", "conn_pro_plus@thunderafit.test", "PERSONAL");
   await reg("aluno", "conn_aluno@thunderafit.test", "ALUNO");
   await reg("aluno2", "conn_aluno2@thunderafit.test", "ALUNO");
   for (let i = 0; i < 4; i++) await reg(`full${i}`, `conn_full_aluno${i}@thunderafit.test`, "ALUNO");
+
+  // availableForNewStudents agora exige Base+ (billing 3 degraus) — sobe pra
+  // Base os profissionais que vão ficar disponíveis neste teste, SEM tocar
+  // limiteAlunos (fica em 3 no proFull de propósito: o teste de limite 3/3
+  // mais abaixo e o gate de disponibilidade são preocupações independentes).
+  // proPlus sobe pra Plus especificamente para testar a prioridade no diretório.
+  await prisma.user.updateMany({
+    where: { id: { in: [ids.proPalhoca, ids.proCuritiba, ids.proFull] } },
+    data: { planoAssinatura: "BASE" },
+  });
+  await prisma.user.update({ where: { id: ids.proPlus }, data: { planoAssinatura: "PLUS" } });
 
   // Perfis: define disponibilidade + localização via o próprio endpoint.
   await supertest(server.server).put("/api/professionals/me").set(auth("proPalhoca"))
@@ -38,6 +51,8 @@ beforeAll(async () => {
   await supertest(server.server).put("/api/professionals/me").set(auth("proCuritiba"))
     .send({ availableForNewStudents: true, location: "Curitiba, PR", bio: "Musculação" });
   await supertest(server.server).put("/api/professionals/me").set(auth("proFull"))
+    .send({ availableForNewStudents: true, location: "Palhoça, SC" });
+  await supertest(server.server).put("/api/professionals/me").set(auth("proPlus"))
     .send({ availableForNewStudents: true, location: "Palhoça, SC" });
   // proHidden preenche localização mas NÃO ativa disponibilidade.
   await supertest(server.server).put("/api/professionals/me").set(auth("proHidden"))
@@ -68,6 +83,7 @@ describe("Fase 21 BLOCO 1 — busca de profissionais (opt-in + localização)", 
     const emails = r.body.professionals.map((p: any) => p.email);
     expect(emails).toContain("conn_pro_palhoca@thunderafit.test");
     expect(emails).toContain("conn_pro_full@thunderafit.test");
+    expect(emails).toContain("conn_pro_plus@thunderafit.test");
     expect(emails).not.toContain("conn_pro_curitiba@thunderafit.test");
     expect(emails).not.toContain("conn_pro_hidden@thunderafit.test"); // não disponível
   });
@@ -90,6 +106,56 @@ describe("Fase 21 BLOCO 1 — busca de profissionais (opt-in + localização)", 
     const r = await supertest(server.server).put("/api/professionals/me").set(auth("aluno"))
       .send({ availableForNewStudents: true });
     expect(r.status).toBe(403);
+  });
+});
+
+describe("Billing 3 degraus — gate de disponibilidade no diretório + prioridade Plus", () => {
+  it("Personal FREE não pode ATIVAR disponibilidade (403)", async () => {
+    const r = await supertest(server.server).put("/api/professionals/me").set(auth("proFree"))
+      .send({ availableForNewStudents: true });
+    expect(r.status).toBe(403);
+    expect(r.body.error).toMatch(/[Bb]ase/);
+
+    const check = await prisma.user.findUnique({ where: { id: ids.proFree } });
+    expect(check?.availableForNewStudents).toBe(false);
+  });
+
+  it("Personal FREE ainda pode salvar localização/bio (só a disponibilidade é bloqueada)", async () => {
+    const r = await supertest(server.server).put("/api/professionals/me").set(auth("proFree"))
+      .send({ location: "Palhoça, SC" });
+    expect(r.status).toBe(200);
+    expect(r.body.profile.location).toBe("Palhoça, SC");
+  });
+
+  it("Personal FREE nunca aparece no diretório mesmo que o campo já estivesse true no banco (defesa em profundidade)", async () => {
+    // Simula um registro inconsistente (ex: dado antigo de antes do gate existir).
+    await prisma.user.update({ where: { id: ids.proFree }, data: { availableForNewStudents: true } });
+    const r = await supertest(server.server).get("/api/professionals/search?location=palho").set(auth("aluno"));
+    const emails = r.body.professionals.map((p: any) => p.email);
+    expect(emails).not.toContain("conn_pro_free@thunderafit.test");
+    await prisma.user.update({ where: { id: ids.proFree }, data: { availableForNewStudents: false } });
+  });
+
+  it("desligar disponibilidade continua permitido em qualquer degrau (inclusive FREE)", async () => {
+    const r = await supertest(server.server).put("/api/professionals/me").set(auth("proFree"))
+      .send({ availableForNewStudents: false });
+    expect(r.status).toBe(200);
+  });
+
+  it("Plus aparece ANTES de Base nos resultados de busca (destaque/prioridade)", async () => {
+    const r = await supertest(server.server).get("/api/professionals/search?location=palho").set(auth("aluno"));
+    const emails = r.body.professionals.map((p: any) => p.email);
+    const plusIndex = emails.indexOf("conn_pro_plus@thunderafit.test");
+    const baseIndex = emails.indexOf("conn_pro_palhoca@thunderafit.test");
+    expect(plusIndex).toBeGreaterThanOrEqual(0);
+    expect(baseIndex).toBeGreaterThanOrEqual(0);
+    expect(plusIndex).toBeLessThan(baseIndex);
+  });
+
+  it("resultado da busca inclui planoAssinatura, pro frontend destacar o Plus", async () => {
+    const r = await supertest(server.server).get("/api/professionals/search?location=palho").set(auth("aluno"));
+    const plus = r.body.professionals.find((p: any) => p.email === "conn_pro_plus@thunderafit.test");
+    expect(plus.planoAssinatura).toBe("PLUS");
   });
 });
 

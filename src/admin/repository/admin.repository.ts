@@ -187,4 +187,68 @@ export const adminRepository = {
       take,
     });
   },
+
+  // --- Fase 34.5: templates SELF ("Meu treino pessoal") ---
+  // Curados pelo admin, sem Personal nenhum envolvido (origin: SELF,
+  // personalId: null) — o aluno só aplica (copia), nunca edita. Queries
+  // diretas via prisma aqui (não reaproveita workoutProgramsRepository do
+  // domínio fitness) pra manter os domínios desacoplados, mesmo padrão já
+  // usado no resto deste repository.
+
+  async listSelfTemplates() {
+    return prisma.workoutProgram.findMany({
+      where: { origin: "SELF" },
+      orderBy: { createdAt: "desc" },
+      include: { workouts: { select: { id: true, letter: true, name: true } } },
+    });
+  },
+
+  async createSelfTemplate(name: string, sessionScheme: "LETTER" | "WEEKDAY") {
+    return prisma.workoutProgram.create({
+      data: { name, origin: "SELF", personalId: null, isTemplate: true, sessionScheme },
+    });
+  },
+
+  async findSelfTemplateWithSessions(id: string) {
+    return prisma.workoutProgram.findFirst({
+      where: { id, origin: "SELF" },
+      include: {
+        workouts: {
+          orderBy: { letter: "asc" },
+          include: { exercises: { orderBy: { order: "asc" }, include: { exercise: true } } },
+        },
+      },
+    });
+  },
+
+  async addSessionToSelfTemplate(programId: string, name: string, letter: string) {
+    return prisma.workout.create({
+      data: { programId, personalId: null, alunoId: null, name, letter },
+    });
+  },
+
+  async addExerciseToSelfSession(
+    workoutId: string,
+    exerciseId: string,
+    sets: number,
+    repsRange: string,
+    restSeconds: number,
+    order: number,
+    notes: string | null = null
+  ) {
+    return prisma.workoutExercise.create({
+      data: { workoutId, exerciseId, sets, repsRange, restSeconds, order, notes },
+    });
+  },
+
+  /** Mesma cascata manual do domínio fitness (nenhuma FK tem onDelete: Cascade). */
+  async deleteSelfTemplate(programId: string) {
+    const workouts = await prisma.workout.findMany({ where: { programId }, select: { id: true } });
+    const workoutIds = workouts.map((w) => w.id);
+    await prisma.$transaction(async (tx) => {
+      await tx.workoutExercise.deleteMany({ where: { workoutId: { in: workoutIds } } });
+      await tx.workout.deleteMany({ where: { programId } });
+      await tx.workoutProgram.delete({ where: { id: programId } });
+    });
+  },
 };

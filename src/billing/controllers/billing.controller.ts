@@ -53,7 +53,7 @@ export async function billingWebhookHandler(request: FastifyRequest, reply: Fast
 }
 
 export async function checkoutSessionHandler(
-  request: FastifyRequest<{ Body: { interval?: "monthly" | "annual" } }>,
+  request: FastifyRequest<{ Body: { tier?: "BASE" | "PLUS"; interval?: "monthly" | "annual" } }>,
   reply: FastifyReply
 ) {
   const { sub, role } = (request as any).user;
@@ -63,9 +63,12 @@ export async function checkoutSessionHandler(
   if (role !== "PERSONAL" && role !== "NUTRICIONISTA") {
     return reply.status(403).send({ error: "Apenas profissionais podem assinar um plano." });
   }
+  if (request.body?.tier !== "BASE" && request.body?.tier !== "PLUS") {
+    return reply.status(400).send({ error: "tier deve ser BASE ou PLUS." });
+  }
   const interval = request.body?.interval === "annual" ? "annual" : "monthly";
   try {
-    const url = await billingService.createCheckoutSession(sub, interval);
+    const url = await billingService.createCheckoutSession(sub, request.body.tier, interval);
     return reply.status(200).send({ url });
   } catch (err) {
     return handleError(err, reply);

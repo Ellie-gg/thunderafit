@@ -23,4 +23,29 @@ export const relationsRepository = {
   async findAllByPersonal(personalId: string) {
     return prisma.clientRelation.findMany({ where: { personalId } });
   },
+
+  async updatePaymentReminder(
+    personalId: string,
+    alunoId: string,
+    dueDate: Date | null,
+    recurring: boolean
+  ) {
+    return prisma.clientRelation.update({
+      where: { personalId_alunoId: { personalId, alunoId } },
+      data: { paymentReminderDueDate: dueDate, paymentReminderRecurring: recurring },
+    });
+  },
+
+  async findDueRemindersForAluno(alunoId: string, now: Date) {
+    return prisma.clientRelation.findMany({
+      where: { alunoId, professionalType: "PERSONAL", paymentReminderDueDate: { lte: now } },
+    });
+  },
+
+  async advanceReminder(id: string, nextDueDate: Date | null) {
+    return prisma.clientRelation.update({
+      where: { id },
+      data: { paymentReminderDueDate: nextDueDate },
+    });
+  },
 };

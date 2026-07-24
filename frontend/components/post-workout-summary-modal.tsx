@@ -36,11 +36,14 @@ export function PostWorkoutSummaryModal({
   summary,
   alunoName,
   durationSeconds,
+  upsell,
   onClose,
 }: {
   summary: WorkoutCompletionSummary;
   alunoName: string;
   durationSeconds: number | null;
+  /** Fase 34.5: CTA opcional (ex: "convide um Personal") pra treinos "Meu treino pessoal". */
+  upsell?: React.ReactNode;
   onClose: () => void;
 }) {
   const cardRef = React.useRef<HTMLDivElement>(null);
@@ -144,6 +147,7 @@ export function PostWorkoutSummaryModal({
             Fechar
           </Button>
         </div>
+        {upsell}
       </div>
     </div>
   );

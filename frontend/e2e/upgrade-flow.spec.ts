@@ -2,10 +2,11 @@ import { test, expect } from "@playwright/test";
 import { loginViaUI } from "./auth-helpers";
 
 /**
- * Fase 20 — fluxo de upgrade (billing) na UI, SEM tocar no Stripe real:
- * Personal no limite (3/3) vê o aviso "faça upgrade", navega para a tela de
- * planos e vê os dois planos (mensal R$ 9,90 / anual R$ 95,04). Também
- * confirma o gating: /personal/upgrade é só para PERSONAL.
+ * Billing 3 degraus — fluxo de upgrade (billing) na UI, SEM tocar no Stripe
+ * real: Personal no limite (3/3) vê o aviso "faça upgrade", navega para a
+ * tela de planos e vê os 2 degraus pagos (Base/Plus), cada um com toggle
+ * mensal/anual. Também confirma o gating: /personal/upgrade é só para
+ * PERSONAL.
  *
  * O clique em "Assinar" (que redireciona para o Checkout hospedado do Stripe)
  * NÃO é exercido aqui: precisa de chaves de teste do Stripe no backend, que
@@ -26,7 +27,7 @@ async function backendJson(path: string, body: unknown, token?: string) {
   return res.json();
 }
 
-test("Personal no limite navega para os planos e vê mensal + anual", async ({ page }) => {
+test("Personal no limite navega para os planos e vê os 2 degraus (Base/Plus) com mensal + anual", async ({ page }) => {
   const stamp = Date.now();
   const personalEmail = `e2e_up_personal_${stamp}@thunderafit.test`;
   const password = "SenhaSegura@123";
@@ -49,10 +50,17 @@ test("Personal no limite navega para os planos e vê mensal + anual", async ({ p
 
   await expect(page).toHaveURL(/\/personal\/upgrade$/);
   await expect(page.getByRole("heading", { name: "Fazer upgrade" })).toBeVisible();
-  // Os dois planos com os preços corretos.
-  await expect(page.getByText("R$ 9,90")).toBeVisible();
-  await expect(page.getByText("R$ 95,04")).toBeVisible();
-  await expect(page.getByRole("button", { name: "Assinar" }).first()).toBeVisible();
+
+  // Os 2 degraus pagos, cada um com preço mensal por padrão.
+  await expect(page.getByText("R$ 19,90")).toBeVisible();
+  await expect(page.getByText("R$ 39,90")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Assinar Base" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Assinar Plus" })).toBeVisible();
+
+  // Alterna o card Base para anual — o preço anual aparece.
+  const baseCard = page.locator("div.rounded-xl", { hasText: "Assinar Base" });
+  await baseCard.getByRole("button", { name: "Anual" }).click();
+  await expect(page.getByText("R$ 190,80")).toBeVisible();
 });
 
 test("ALUNO não acessa /personal/upgrade (gating)", async ({ page }) => {

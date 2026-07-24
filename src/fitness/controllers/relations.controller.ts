@@ -27,6 +27,46 @@ export async function createRelationHandler(
   }
 }
 
+export async function setPaymentReminderHandler(
+  request: FastifyRequest<{
+    Params: { alunoId: string };
+    Body: { dueDate: string | null; recurring?: boolean };
+  }>,
+  reply: FastifyReply
+) {
+  const personalId = (request as any).user.sub;
+  const role = (request as any).user.role;
+  if (role !== "PERSONAL") {
+    return reply
+      .status(403)
+      .send({ error: "Apenas Personal Trainers podem configurar lembretes de pagamento." });
+  }
+
+  const { alunoId } = request.params;
+  const { dueDate, recurring } = request.body;
+
+  let parsedDate: Date | null = null;
+  if (dueDate) {
+    parsedDate = new Date(dueDate);
+    if (isNaN(parsedDate.getTime())) {
+      return reply.status(400).send({ error: "dueDate inválida." });
+    }
+  }
+
+  try {
+    const relation = await relationsService.setPaymentReminder(
+      personalId,
+      alunoId,
+      parsedDate,
+      !!recurring
+    );
+    return reply.status(200).send({ relation });
+  } catch (err: any) {
+    const status = (err as any).statusCode ?? 500;
+    return reply.status(status).send({ error: err.message });
+  }
+}
+
 export async function listRelationsHandler(
   request: FastifyRequest<{ Querystring: { personalId?: string } }>,
   reply: FastifyReply

@@ -12,6 +12,10 @@ import type {
   Exercise,
   ExerciseMediaType,
   Role,
+  SessionScheme,
+  Workout,
+  WorkoutExercise,
+  WorkoutProgram,
 } from "../types";
 
 export function getAdminOverview() {
@@ -87,4 +91,45 @@ export function updateUserRole(id: string, role: Role) {
 /** Reaproveita GET /api/anamnesis?alunoId= — o backend já aceita ADMIN e audita o acesso. */
 export function getAlunoAnamnesisAsAdmin(alunoId: string) {
   return apiFetch<{ anamnesis: Anamnesis }>(`/api/anamnesis?alunoId=${encodeURIComponent(alunoId)}`);
+}
+
+// --- Fase 34.5: curadoria de templates SELF ("Meu treino pessoal") ---
+
+export function listAdminSelfTemplates() {
+  return apiFetch<{ programs: WorkoutProgram[] }>("/api/admin/self-templates");
+}
+
+export function getAdminSelfTemplate(programId: string) {
+  return apiFetch<{ program: WorkoutProgram }>(`/api/admin/self-templates/${programId}`);
+}
+
+export function createAdminSelfTemplate(name: string, sessionScheme?: SessionScheme) {
+  return apiFetch<{ program: WorkoutProgram }>("/api/admin/self-templates", {
+    method: "POST",
+    body: { name, sessionScheme },
+  });
+}
+
+export function addSessionToAdminSelfTemplate(programId: string, letter: string) {
+  return apiFetch<{ session: Workout }>(`/api/admin/self-templates/${programId}/sessions`, {
+    method: "POST",
+    body: { letter },
+  });
+}
+
+export function addExerciseToAdminSelfSession(
+  programId: string,
+  sessionId: string,
+  input: { exerciseId: string; sets: number; repsRange: string; restSeconds: number; order: number; notes?: string }
+) {
+  return apiFetch<{ workoutExercise: WorkoutExercise }>(
+    `/api/admin/self-templates/${programId}/sessions/${sessionId}/exercises`,
+    { method: "POST", body: input }
+  );
+}
+
+export function deleteAdminSelfTemplate(programId: string) {
+  return apiFetch<Record<string, never>>(`/api/admin/self-templates/${programId}`, {
+    method: "DELETE",
+  });
 }

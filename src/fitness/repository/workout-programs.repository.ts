@@ -28,8 +28,11 @@ export const workoutProgramsRepository = {
     alunoId: string | null,
     sessionScheme: SessionScheme = "LETTER"
   ) {
+    // Sempre origin: PERSONAL — esta função é chamada só pelo fluxo do
+    // Personal (createTemplate). Templates origin: SELF são criados pelo
+    // admin, por uma função dedicada (Fase 34.5), nunca por esta.
     return prisma.workoutProgram.create({
-      data: { personalId, name, isTemplate, alunoId, sessionScheme },
+      data: { personalId, origin: "PERSONAL", name, isTemplate, alunoId, sessionScheme },
     });
   },
 
@@ -95,7 +98,16 @@ export const workoutProgramsRepository = {
    *   mesmo objeto `where`, não são exclusivos entre si.
    */
   async listByPersonal(personalId: string, type?: "template" | "instance", alunoId?: string) {
-    const where: { personalId: string; isTemplate?: boolean; alunoId?: string } = { personalId };
+    // Fase 34: origin: "PERSONAL" explícito — esta é A listagem do fluxo do
+    // Personal; nunca deve devolver um programa origin: SELF, mesmo que
+    // algum dia personalId pudesse coincidir por acidente. Defesa explícita,
+    // não implícita (não basta confiar em personalId nunca ser null aqui).
+    const where: {
+      personalId: string;
+      origin: "PERSONAL";
+      isTemplate?: boolean;
+      alunoId?: string;
+    } = { personalId, origin: "PERSONAL" };
     if (type === "template") where.isTemplate = true;
     if (type === "instance") where.isTemplate = false;
     if (alunoId) where.alunoId = alunoId;
@@ -115,7 +127,7 @@ export const workoutProgramsRepository = {
    */
   async findAppliedProgramForAlunoByPersonal(personalId: string, alunoId: string) {
     return prisma.workoutProgram.findFirst({
-      where: { personalId, alunoId, isTemplate: false },
+      where: { personalId, origin: "PERSONAL", alunoId, isTemplate: false },
     });
   },
 
@@ -145,6 +157,7 @@ export const workoutProgramsRepository = {
       const copy = await tx.workoutProgram.create({
         data: {
           personalId,
+          origin: "PERSONAL",
           alunoId,
           name: source.name,
           isTemplate: false,
@@ -200,6 +213,71 @@ export const workoutProgramsRepository = {
    *   chamou já validou (mesma divisão de responsabilidade de `applyToAluno`
    *   acima, que também não revalida posse).
    */
+  // --- Fase 34.5: "Meu treino pessoal" (templates origin: SELF) ---
+
+  /** Catálogo de templates SELF disponíveis pro aluno escolher e aplicar. */
+  async listSelfTemplates() {
+    return prisma.workoutProgram.findMany({
+      where: { origin: "SELF", isTemplate: true },
+      orderBy: { createdAt: "desc" },
+      include: { workouts: { select: { id: true, letter: true, name: true } } },
+    });
+  },
+
+  /**
+   * Aplica (COPIA) um template SELF pro próprio aluno — mesmo padrão de
+   * `applyToAluno` (cópia independente, não referência), mas sem Personal
+   * nenhum envolvido: a cópia também é origin: SELF, personalId null.
+   */
+  async applySelfTemplateToAluno(sourceProgramId: string, alunoId: string) {
+    const source = await prisma.workoutProgram.findFirst({
+      where: { id: sourceProgramId, origin: "SELF", isTemplate: true },
+      include: { workouts: { include: { exercises: true } } },
+    });
+    if (!source) return null;
+
+    return prisma.$transaction(async (tx) => {
+      const copy = await tx.workoutProgram.create({
+        data: {
+          personalId: null,
+          origin: "SELF",
+          alunoId,
+          name: source.name,
+          isTemplate: false,
+          sessionScheme: source.sessionScheme,
+        },
+      });
+      for (const w of source.workouts) {
+        const newWorkout = await tx.workout.create({
+          data: {
+            programId: copy.id,
+            personalId: null,
+            alunoId,
+            name: w.name,
+            letter: w.letter,
+          },
+        });
+        if (w.exercises.length > 0) {
+          await tx.workoutExercise.createMany({
+            data: w.exercises.map((e) => ({
+              workoutId: newWorkout.id,
+              exerciseId: e.exerciseId,
+              sets: e.sets,
+              repsRange: e.repsRange,
+              restSeconds: e.restSeconds,
+              order: e.order,
+              notes: e.notes,
+            })),
+          });
+        }
+      }
+      return tx.workoutProgram.findUnique({
+        where: { id: copy.id },
+        include: { workouts: { include: { exercises: true } } },
+      });
+    });
+  },
+
   async deleteProgram(programId: string) {
     const workouts = await prisma.workout.findMany({
       where: { programId },

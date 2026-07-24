@@ -190,3 +190,125 @@ describe("Fase 11 — Nutricionista como segundo tipo de profissional (limite po
     expect(r.status).toBe(403);
   });
 });
+
+describe("Lembrete de pagamento (ClientRelation)", () => {
+  // studentIds[0..2] já vinculados ao Personal (accessToken) no describe acima.
+  it("Personal configura um lembrete com vencimento no passado; login do aluno dispara UMA notificação e limpa a data (não-recorrente)", async () => {
+    const past = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+    const set = await supertest(server.server)
+      .put(`/api/relations/${studentIds[0]}/payment-reminder`)
+      .set("Authorization", `Bearer ${accessToken}`)
+      .send({ dueDate: past, recurring: false });
+    expect(set.status).toBe(200);
+    expect(set.body.relation.paymentReminderDueDate).toBeTruthy();
+
+    const login = await supertest(server.server)
+      .post("/api/auth/login")
+      .send({ email: "test_aluno1@thunderafit.test", password: "SenhaSegura@123" });
+    expect(login.status).toBe(200);
+
+    const notifs = await supertest(server.server)
+      .get("/api/notifications")
+      .set("Authorization", `Bearer ${login.body.accessToken}`);
+    const reminders = notifs.body.notifications.filter((n: any) => n.type === "payment_reminder");
+    expect(reminders).toHaveLength(1);
+
+    const relations = await supertest(server.server)
+      .get("/api/relations")
+      .set("Authorization", `Bearer ${accessToken}`);
+    const relation = relations.body.relations.find((r: any) => r.id === studentIds[0]);
+    expect(relation.paymentReminderDueDate).toBeNull();
+
+    // Segundo login: já foi limpo, não dispara de novo.
+    const login2 = await supertest(server.server)
+      .post("/api/auth/login")
+      .send({ email: "test_aluno1@thunderafit.test", password: "SenhaSegura@123" });
+    const notifs2 = await supertest(server.server)
+      .get("/api/notifications")
+      .set("Authorization", `Bearer ${login2.body.accessToken}`);
+    const reminders2 = notifs2.body.notifications.filter((n: any) => n.type === "payment_reminder");
+    expect(reminders2).toHaveLength(1);
+  });
+
+  it("lembrete recorrente avança ~1 mês em vez de zerar após disparar", async () => {
+    const past = new Date(Date.now() - 24 * 60 * 60 * 1000);
+    const set = await supertest(server.server)
+      .put(`/api/relations/${studentIds[1]}/payment-reminder`)
+      .set("Authorization", `Bearer ${accessToken}`)
+      .send({ dueDate: past.toISOString(), recurring: true });
+    expect(set.status).toBe(200);
+
+    await supertest(server.server)
+      .post("/api/auth/login")
+      .send({ email: "test_aluno2@thunderafit.test", password: "SenhaSegura@123" });
+
+    const relations = await supertest(server.server)
+      .get("/api/relations")
+      .set("Authorization", `Bearer ${accessToken}`);
+    const relation = relations.body.relations.find((r: any) => r.id === studentIds[1]);
+    expect(relation.paymentReminderDueDate).not.toBeNull();
+    expect(relation.paymentReminderRecurring).toBe(true);
+    const newDue = new Date(relation.paymentReminderDueDate);
+    expect(newDue.getTime()).toBeGreaterThan(past.getTime());
+  });
+
+  it("vencimento no futuro não dispara nada no login", async () => {
+    const future = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
+    await supertest(server.server)
+      .put(`/api/relations/${studentIds[2]}/payment-reminder`)
+      .set("Authorization", `Bearer ${accessToken}`)
+      .send({ dueDate: future, recurring: false });
+
+    const login = await supertest(server.server)
+      .post("/api/auth/login")
+      .send({ email: "test_aluno3@thunderafit.test", password: "SenhaSegura@123" });
+
+    const notifs = await supertest(server.server)
+      .get("/api/notifications")
+      .set("Authorization", `Bearer ${login.body.accessToken}`);
+    const reminders = notifs.body.notifications.filter((n: any) => n.type === "payment_reminder");
+    expect(reminders).toHaveLength(0);
+  });
+
+  it("ALUNO não pode configurar lembrete de pagamento (403)", async () => {
+    const loginAluno = await supertest(server.server)
+      .post("/api/auth/login")
+      .send({ email: "test_aluno1@thunderafit.test", password: "SenhaSegura@123" });
+    const r = await supertest(server.server)
+      .put(`/api/relations/${studentIds[0]}/payment-reminder`)
+      .set("Authorization", `Bearer ${loginAluno.body.accessToken}`)
+      .send({ dueDate: new Date().toISOString(), recurring: false });
+    expect(r.status).toBe(403);
+  });
+
+  it("Personal não pode configurar lembrete pra um aluno não vinculado a ele (404)", async () => {
+    const r = await supertest(server.server)
+      .put(`/api/relations/${studentIds[3]}/payment-reminder`)
+      .set("Authorization", `Bearer ${accessToken}`)
+      .send({ dueDate: new Date().toISOString(), recurring: false });
+    expect(r.status).toBe(404);
+  });
+
+  it("dueDate: null desativa o lembrete (não dispara mesmo já tendo vencido antes)", async () => {
+    const past = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+    await supertest(server.server)
+      .put(`/api/relations/${studentIds[2]}/payment-reminder`)
+      .set("Authorization", `Bearer ${accessToken}`)
+      .send({ dueDate: past, recurring: false });
+    const disable = await supertest(server.server)
+      .put(`/api/relations/${studentIds[2]}/payment-reminder`)
+      .set("Authorization", `Bearer ${accessToken}`)
+      .send({ dueDate: null, recurring: false });
+    expect(disable.status).toBe(200);
+    expect(disable.body.relation.paymentReminderDueDate).toBeNull();
+
+    const login = await supertest(server.server)
+      .post("/api/auth/login")
+      .send({ email: "test_aluno3@thunderafit.test", password: "SenhaSegura@123" });
+    const notifs = await supertest(server.server)
+      .get("/api/notifications")
+      .set("Authorization", `Bearer ${login.body.accessToken}`);
+    const reminders = notifs.body.notifications.filter((n: any) => n.type === "payment_reminder");
+    expect(reminders).toHaveLength(0);
+  });
+});

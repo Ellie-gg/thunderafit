@@ -1,5 +1,5 @@
 import type Stripe from "stripe";
-import { getStripe } from "../stripe";
+import { getStripe, stripePriceEnvVar, PlanTier, BillingInterval } from "../stripe";
 import { billingRepository } from "../repository/billing.repository";
 
 function httpError(message: string, statusCode: number) {
@@ -18,24 +18,48 @@ function frontendOrigin(): string {
   return process.env.ALLOWED_ORIGIN ?? "http://localhost:3001";
 }
 
-type Interval = "monthly" | "annual";
+type Interval = BillingInterval;
+
+function priceIdFor(tier: PlanTier, interval: Interval): string {
+  return requireEnv(stripePriceEnvVar(tier, interval));
+}
+
+/**
+ * Mapa reverso price ID -> degrau, usado quando o Stripe manda um evento que
+ * só traz o price atual da subscription (`customer.subscription.updated`,
+ * disparado inclusive quando o cliente TROCA de degrau pelo Portal do
+ * Cliente, fora do nosso fluxo de checkout) — não dá pra confiar em metadata
+ * setado na criação nesse caso, porque o Portal não reescreve ela ao trocar
+ * de price. Ignora silenciosamente um degrau cujas env vars não estão
+ * configuradas neste ambiente (ex: só BASE está ativo ainda).
+ */
+function tierForPriceId(priceId: string): PlanTier {
+  const tiers: PlanTier[] = ["BASE", "PLUS"];
+  const intervals: Interval[] = ["monthly", "annual"];
+  for (const tier of tiers) {
+    for (const interval of intervals) {
+      const envVar = stripePriceEnvVar(tier, interval);
+      if (process.env[envVar] === priceId) return tier;
+    }
+  }
+  // Price desconhecido (env não configurada ou price fora do catálogo atual)
+  // — concede o degrau pago mais conservador em vez de falhar a assinatura
+  // ativa inteira; nunca PLUS por adivinhação.
+  return "BASE";
+}
 
 export const billingService = {
   /**
    * Cria uma Stripe Checkout Session (hospedada) para o profissional
-   * autenticado assinar o plano pago. Reaproveita o Stripe Customer se já
-   * existir (evita cliente duplicado a cada tentativa). Nunca toca em dado de
-   * cartão — isso é 100% do Checkout do Stripe.
+   * autenticado assinar um degrau pago (BASE ou PLUS). Reaproveita o Stripe
+   * Customer se já existir (evita cliente duplicado a cada tentativa). Nunca
+   * toca em dado de cartão — isso é 100% do Checkout do Stripe.
    */
-  async createCheckoutSession(userId: string, interval: Interval): Promise<string> {
+  async createCheckoutSession(userId: string, tier: PlanTier, interval: Interval): Promise<string> {
     const user = await billingRepository.findUserById(userId);
     if (!user) throw httpError("Usuário não encontrado.", 404);
 
-    const priceId =
-      interval === "annual"
-        ? requireEnv("STRIPE_PRICE_ID_ANNUAL")
-        : requireEnv("STRIPE_PRICE_ID_MONTHLY");
-
+    const priceId = priceIdFor(tier, interval);
     const stripe = getStripe();
 
     // Reusa o customer se já houver; senão cria um com metadata do usuário.
@@ -54,8 +78,13 @@ export const billingService = {
       mode: "subscription",
       customer: customerId,
       // client_reference_id é o elo à prova de falha para mapear o
-      // checkout.session.completed de volta ao usuário do ThunderaFit.
+      // checkout.session.completed de volta ao usuário do ThunderaFit;
+      // metadata.tier é como o mesmo evento sabe qual DEGRAU foi comprado
+      // (o line_item por si só exigiria uma chamada extra à API pra expandir
+      // o price — metadata evita essa ida a mais, e o webhook lê session
+      // inteira, então já está ali de graça).
       client_reference_id: user.id,
+      metadata: { tier },
       line_items: [{ price: priceId, quantity: 1 }],
       success_url: `${origin}/personal/upgrade?status=success`,
       cancel_url: `${origin}/personal/upgrade?status=cancel`,
@@ -131,8 +160,9 @@ export const billingService = {
         const pago =
           session.payment_status === "paid" || session.payment_status === "no_payment_required";
         if (pago) {
+          const tier = session.metadata?.tier === "PLUS" ? "PLUS" : "BASE";
           if (customerId) await billingRepository.setStripeCustomerId(userId, customerId);
-          await billingRepository.applyPaidPlan(userId, subscriptionId);
+          await billingRepository.applyPaidPlan(userId, tier, subscriptionId);
         } else {
           // Pagamento pendente (ex: boleto/Pix): guarda os ids para casar os
           // eventos futuros, mas NÃO concede o plano ainda.
@@ -154,7 +184,13 @@ export const billingService = {
         if (user.stripeSubscriptionId !== sub.id) return;
         const ativo = sub.status === "active" || sub.status === "trialing";
         if (ativo) {
-          await billingRepository.applyPaidPlan(user.id, sub.id);
+          // Lê o price ATUAL da subscription (não metadata da criação): é o
+          // único jeito confiável de saber o degrau quando o cliente troca de
+          // plano pelo Portal do Cliente do Stripe, sem passar pelo nosso
+          // checkout de novo.
+          const priceId = sub.items?.data?.[0]?.price?.id;
+          const tier = priceId ? tierForPriceId(priceId) : "BASE";
+          await billingRepository.applyPaidPlan(user.id, tier, sub.id);
         } else {
           await billingRepository.applyFreePlan(user.id);
         }

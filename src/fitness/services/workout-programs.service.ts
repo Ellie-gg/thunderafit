@@ -23,7 +23,10 @@ export const workoutProgramsService = {
   async addSession(programId: string, personalId: string, name: string, letter: string) {
     const program = await workoutProgramsRepository.findProgramById(programId);
     if (!program) throw httpError("Programa não encontrado.", 404);
-    if (program.personalId !== personalId) {
+    // Fase 34: programas origin: SELF são geridos só pelo admin (Fase 34.5),
+    // nunca por esta rota do Personal — checagem explícita de origin, não só
+    // personalId (mesmo raciocínio de defesa explícita do apply() acima).
+    if (program.origin !== "PERSONAL" || program.personalId !== personalId) {
       throw httpError("Você não tem permissão para editar este programa.", 403);
     }
     const validKeys = orderFor(program.sessionScheme);
@@ -63,7 +66,11 @@ export const workoutProgramsService = {
     if (!alunoId) throw httpError("alunoId é obrigatório.", 400);
     const source = await workoutProgramsRepository.findProgramById(sourceProgramId);
     if (!source) throw httpError("Programa não encontrado.", 404);
-    if (source.personalId !== personalId) {
+    // Fase 34: defesa explícita — um programa origin: SELF nunca tem
+    // personalId preenchido, então já cairia no 403 abaixo por construção;
+    // mas checar origin também deixa a intenção clara e não depende só de
+    // personalId nunca coincidir por acidente.
+    if (source.origin !== "PERSONAL" || source.personalId !== personalId) {
       throw httpError("Você não tem permissão para aplicar este programa.", 403);
     }
 
@@ -117,7 +124,7 @@ export const workoutProgramsService = {
   async deleteProgram(programId: string, personalId: string) {
     const program = await workoutProgramsRepository.findProgramById(programId);
     if (!program) throw httpError("Programa não encontrado.", 404);
-    if (program.personalId !== personalId) {
+    if (program.origin !== "PERSONAL" || program.personalId !== personalId) {
       throw httpError("Você não tem permissão para excluir este programa.", 403);
     }
     await workoutProgramsRepository.deleteProgram(programId);
@@ -125,6 +132,18 @@ export const workoutProgramsService = {
 
   async listForAluno(alunoId: string) {
     return workoutProgramsRepository.listByAluno(alunoId);
+  },
+
+  // --- Fase 34.5: "Meu treino pessoal" ---
+
+  async listSelfTemplates() {
+    return workoutProgramsRepository.listSelfTemplates();
+  },
+
+  async applySelfTemplate(sourceProgramId: string, alunoId: string) {
+    const copy = await workoutProgramsRepository.applySelfTemplateToAluno(sourceProgramId, alunoId);
+    if (!copy) throw httpError("Template não encontrado.", 404);
+    return copy;
   },
 
   /**

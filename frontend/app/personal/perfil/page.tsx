@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { getMyProfile, updateMyProfile } from "@/lib/api/connections";
 import { ApiError } from "@/lib/api/client";
@@ -40,6 +41,9 @@ function PerfilContent() {
       queryClient.invalidateQueries({ queryKey: ["my-profile"] });
     },
   });
+
+  // Billing 3 degraus: disponibilidade no diretório é um recurso Base+.
+  const isFree = profileQuery.data?.profile.planoAssinatura === "FREE";
 
   return (
     <>
@@ -82,8 +86,9 @@ function PerfilContent() {
                   role="switch"
                   aria-checked={available}
                   aria-label="Disponível para novos alunos"
+                  disabled={isFree}
                   onClick={() => setAvailable((v) => !v)}
-                  className="relative h-6 w-11 shrink-0 rounded-full border border-border transition-colors"
+                  className="relative h-6 w-11 shrink-0 rounded-full border border-border transition-colors disabled:cursor-not-allowed disabled:opacity-50"
                   style={{ background: available ? "var(--accent)" : "var(--surface-raised)" }}
                 >
                   <span
@@ -93,6 +98,19 @@ function PerfilContent() {
                 </button>
               </div>
             </div>
+
+            {/* Billing 3 degraus: diretório é recurso Base+ — Free só vê o
+                convite de upgrade, sem chance de ligar o switch e levar um
+                403 do backend. */}
+            {isFree && (
+              <p className="text-xs text-muted">
+                Disponibilidade no diretório é um recurso dos planos Base e Plus.{" "}
+                <Link href="/personal/upgrade" className="font-semibold text-accent-secondary hover:underline">
+                  Fazer upgrade
+                </Link>
+                .
+              </p>
+            )}
 
             <div className="flex flex-col gap-1.5">
               <Label htmlFor="location">Localização (cidade/estado)</Label>

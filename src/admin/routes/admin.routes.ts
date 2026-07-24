@@ -11,6 +11,12 @@ import {
   updateExerciseHandler,
   deleteExerciseHandler,
   updateUserRoleHandler,
+  listSelfTemplatesHandler,
+  getSelfTemplateHandler,
+  createSelfTemplateHandler,
+  addSessionToSelfTemplateHandler,
+  addExerciseToSelfSessionHandler,
+  deleteSelfTemplateHandler,
 } from "../controllers/admin.controller";
 
 export async function adminRoutes(fastify: FastifyInstance) {
@@ -39,4 +45,16 @@ export async function adminRoutes(fastify: FastifyInstance) {
   fastify.delete("/api/admin/exercises/:id", auth, deleteExerciseHandler);
 
   fastify.put("/api/admin/users/:id/role", auth, updateUserRoleHandler);
+
+  // Fase 34.5: curadoria de templates SELF ("Meu treino pessoal").
+  fastify.get("/api/admin/self-templates", auth, listSelfTemplatesHandler);
+  fastify.get("/api/admin/self-templates/:id", auth, getSelfTemplateHandler);
+  fastify.post("/api/admin/self-templates", auth, createSelfTemplateHandler);
+  fastify.post("/api/admin/self-templates/:id/sessions", auth, addSessionToSelfTemplateHandler);
+  fastify.post(
+    "/api/admin/self-templates/:id/sessions/:sessionId/exercises",
+    auth,
+    addExerciseToSelfSessionHandler
+  );
+  fastify.delete("/api/admin/self-templates/:id", auth, deleteSelfTemplateHandler);
 }

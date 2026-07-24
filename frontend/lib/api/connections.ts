@@ -6,6 +6,9 @@ export interface ProfessionalPublic {
   role: "PERSONAL" | "NUTRICIONISTA";
   location: string | null;
   bio: string | null;
+  // Billing 3 degraus: nunca é "FREE" aqui (o backend já filtra quem aparece
+  // no diretório) — só serve pro frontend destacar quem é PLUS.
+  planoAssinatura: "FREE" | "BASE" | "PLUS";
 }
 
 export interface MyProfile {
@@ -15,6 +18,7 @@ export interface MyProfile {
   availableForNewStudents: boolean;
   location: string | null;
   bio: string | null;
+  planoAssinatura: "FREE" | "BASE" | "PLUS";
 }
 
 export type ConnectionStatus = "PENDENTE" | "ACEITA" | "RECUSADA";
