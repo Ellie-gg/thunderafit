@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import { useMutation } from "@tanstack/react-query";
 import { deleteAdminExercise } from "@/lib/api/admin";
 import { ApiError } from "@/lib/api/client";
@@ -19,6 +20,8 @@ export function DeleteExerciseButton({
   exerciseId: string;
   onDeleted?: () => void;
 }) {
+  const t = useTranslations("deleteExerciseButton");
+  const tCommon = useTranslations("common");
   const [confirming, setConfirming] = useState(false);
 
   const mutation = useMutation({
@@ -32,24 +35,22 @@ export function DeleteExerciseButton({
   if (!confirming) {
     return (
       <Button type="button" variant="ghost" size="sm" onClick={() => setConfirming(true)}>
-        Excluir
+        {t("delete")}
       </Button>
     );
   }
 
   return (
     <div className="flex flex-col items-end gap-1.5 rounded-md border border-danger/40 bg-danger/10 p-2">
-      <p className="text-xs text-danger">
-        Excluir este exercício do catálogo? Essa ação não pode ser desfeita.
-      </p>
+      <p className="text-xs text-danger">{t("confirmDelete")}</p>
       {mutation.isError && (
         <p className="text-xs text-danger">
-          {mutation.error instanceof ApiError ? mutation.error.message : "Erro ao excluir."}
+          {mutation.error instanceof ApiError ? mutation.error.message : t("deleteError")}
         </p>
       )}
       <div className="flex gap-2">
         <Button type="button" size="sm" onClick={() => setConfirming(false)}>
-          Cancelar
+          {tCommon("cancel")}
         </Button>
         <Button
           type="button"
@@ -58,7 +59,7 @@ export function DeleteExerciseButton({
           disabled={mutation.isPending}
           onClick={() => mutation.mutate()}
         >
-          {mutation.isPending ? "Excluindo..." : "Sim, excluir"}
+          {mutation.isPending ? t("deleting") : t("confirmDeleteYes")}
         </Button>
       </div>
     </div>

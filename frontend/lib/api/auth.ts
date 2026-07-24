@@ -42,3 +42,11 @@ export function updateAvatarRequest(avatarDataUrl: string | null) {
     body: { avatarDataUrl },
   });
 }
+
+// i18n: escolha explícita de idioma — sincroniza entre dispositivos. `null` volta à detecção automática.
+export function updateLocaleRequest(locale: "PT" | "EN" | "ES" | null) {
+  return apiFetch<{ user: User }>("/api/auth/me/locale", {
+    method: "PUT",
+    body: { locale },
+  });
+}

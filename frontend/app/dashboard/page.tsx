@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import { useQuery } from "@tanstack/react-query";
 import { listWorkoutPrograms, getWorkoutProgram } from "@/lib/api/workouts";
 import { listMyDietPlans, getDietPlan } from "@/lib/api/nutrition";
@@ -37,6 +38,7 @@ function estimateSessionMinutes(exercises: Array<{ sets: number; restSeconds: nu
 // ("Prescrito pelo seu Personal" e "Meus treinos") — só muda qual programa
 // (já carregado com detalhe via getWorkoutProgram) é passado.
 function NextSessionCard({ program }: { program: WorkoutProgram }) {
+  const t = useTranslations("alunoDashboard");
   const sessions = program.workouts ?? [];
   const nextSession = sessions.find((s) => s.suggestedNext) ?? sessions[0];
   if (!nextSession) return null;
@@ -53,61 +55,61 @@ function NextSessionCard({ program }: { program: WorkoutProgram }) {
           {program.name}
         </span>
         <span className="font-mono-nums text-xs text-muted">
-          {doneSets}/{totalSets} séries
+          {t("setsCount", { done: doneSets, total: totalSets })}
         </span>
       </div>
       <h2 className="font-display text-xl font-bold">
         {labelFor(program.sessionScheme, nextSession.letter)} — {nextSession.name}
       </h2>
       <p className="text-xs text-muted">
-        {nextExercises.length} exercício{nextExercises.length === 1 ? "" : "s"}
-        {estimatedMinutes > 0 && ` · ~${estimatedMinutes} min`}
+        {t("exerciseCount", { count: nextExercises.length })}
+        {estimatedMinutes > 0 && t("estimatedMinutesSuffix", { minutes: estimatedMinutes })}
       </p>
       <VoltageBar total={totalSets} filled={doneSets} role="ALUNO" />
       <Button asChild>
-        <Link href={`/treinos/${nextSession.id}`}>Começar treino</Link>
+        <Link href={`/treinos/${nextSession.id}`}>{t("startWorkout")}</Link>
       </Button>
     </Card>
   );
 }
 
-function buildPersonalInviteText() {
+function buildPersonalInviteText(t: ReturnType<typeof useTranslations>) {
   // Fase 24 (Parte 2): /register não existe mais — o cadastro acontece
   // dentro do fluxo unificado de e-mail em /login (mesma base do convite já
   // usado em VincularAlunoForm, Fase 12 — só muda a direção: aqui é o aluno
   // convidando um Personal, não o contrário).
   const loginUrl = typeof window !== "undefined" ? `${window.location.origin}/login` : "/login";
-  return `Oi! Quero treinar com você no ThunderaFit. Cria sua conta de Personal Trainer aqui: ${loginUrl}`;
+  return t("inviteText", { loginUrl });
 }
 
 // Fase 36: convite copiável quando o aluno ainda não tem nenhum Personal
 // vinculado — mesmo padrão de "copiar texto pronto + feedback de copiado"
 // já usado em VincularAlunoForm (Fase 12).
 function InvitePersonalCard() {
+  const t = useTranslations("alunoDashboard");
   const [copied, setCopied] = useState(false);
 
   return (
     <Card className="flex flex-col gap-3">
-      <h2 className="font-display text-lg font-bold">Ainda sem um Personal?</h2>
-      <p className="text-sm text-muted">
-        Convide seu Personal Trainer pra acompanhar seu treino de perto no ThunderaFit.
-      </p>
+      <h2 className="font-display text-lg font-bold">{t("noPersonalTitle")}</h2>
+      <p className="text-sm text-muted">{t("noPersonalDescription")}</p>
       <Button
         type="button"
         variant="secondary"
         onClick={async () => {
-          await navigator.clipboard.writeText(buildPersonalInviteText());
+          await navigator.clipboard.writeText(buildPersonalInviteText(t));
           setCopied(true);
           setTimeout(() => setCopied(false), 2000);
         }}
       >
-        {copied ? "Convite copiado!" : "Copiar convite para compartilhar"}
+        {copied ? t("inviteCopied") : t("copyInvite")}
       </Button>
     </Card>
   );
 }
 
 function DashboardContent() {
+  const t = useTranslations("alunoDashboard");
   const user = useAuthStore((s) => s.user);
 
   const programsQuery = useQuery({
@@ -184,12 +186,12 @@ function DashboardContent() {
       <main className="flex flex-1 flex-col gap-6 px-6 py-8">
         <div>
           <h1 className="font-display text-2xl font-bold tracking-tight">
-            Olá, {firstNameOrEmailPrefix(user)}
+            {t("greeting", { name: firstNameOrEmailPrefix(user) })}
           </h1>
-          <p className="text-sm text-muted">Pronto para descarregar o treino de hoje?</p>
+          <p className="text-sm text-muted">{t("subtitle")}</p>
         </div>
 
-        {programsQuery.isLoading && <p className="text-sm text-muted">Carregando treinos...</p>}
+        {programsQuery.isLoading && <p className="text-sm text-muted">{t("loadingWorkouts")}</p>}
 
         {programsQuery.isError && (
           <QueryError error={programsQuery.error} onRetry={() => programsQuery.refetch()} />
@@ -200,10 +202,7 @@ function DashboardContent() {
           !hasAnythingYet &&
           !hasPersonalRelation && (
             <Card>
-              <p className="text-sm text-muted">
-                Você ainda não tem nenhum treino ou plano de dieta. Convide seu Personal Trainer
-                logo abaixo, ou escolha um treino pronto em "Meus treinos".
-              </p>
+              <p className="text-sm text-muted">{t("noProgramsYet")}</p>
             </Card>
           )}
 
@@ -211,15 +210,13 @@ function DashboardContent() {
         {programsQuery.isSuccess && (
           <div className="flex flex-col gap-3">
             <span className="text-xs font-semibold uppercase tracking-wide text-muted">
-              Prescrito pelo seu Personal
+              {t("personalPrescribedLabel")}
             </span>
             {personalDetailPending ? null : personalProgramQuery.data?.program ? (
               <NextSessionCard program={personalProgramQuery.data.program} />
             ) : hasPersonalRelation ? (
               <Card>
-                <p className="text-sm text-muted">
-                  Seu Personal ainda não te prescreveu nenhum treino.
-                </p>
+                <p className="text-sm text-muted">{t("noPersonalPrescription")}</p>
               </Card>
             ) : (
               myPersonalsQuery.isSuccess && <InvitePersonalCard />
@@ -231,17 +228,15 @@ function DashboardContent() {
         {programsQuery.isSuccess && (
           <div className="flex flex-col gap-3">
             <span className="text-xs font-semibold uppercase tracking-wide text-muted">
-              Meus treinos
+              {t("myWorkoutsLabel")}
             </span>
             {selfDetailPending ? null : selfProgramQuery.data?.program ? (
               <NextSessionCard program={selfProgramQuery.data.program} />
             ) : (
               <Card className="flex flex-col gap-2">
-                <p className="text-sm text-muted">
-                  Escolha um treino pronto e comece a treinar por conta própria hoje mesmo.
-                </p>
+                <p className="text-sm text-muted">{t("selfWorkoutsEmpty")}</p>
                 <Button asChild variant="secondary">
-                  <Link href="/meu-treino-pessoal">Ver treinos disponíveis</Link>
+                  <Link href="/meu-treino-pessoal">{t("viewAvailableWorkouts")}</Link>
                 </Button>
               </Card>
             )}
@@ -251,7 +246,7 @@ function DashboardContent() {
         {weeklySummary && (
           <div className="flex flex-col gap-2">
             <span className="text-xs font-semibold uppercase tracking-wide text-muted">
-              Últimos 7 dias
+              {t("last7Days")}
             </span>
             <WeeklyVoltageBar days={weeklySummary.days} />
           </div>
@@ -259,7 +254,7 @@ function DashboardContent() {
 
         {allPrograms.length > 0 && (
           <Link href="/programas" className="text-sm font-semibold text-accent-secondary hover:underline">
-            Ver todos os meus programas →
+            {t("viewAllPrograms")}
           </Link>
         )}
 
@@ -271,20 +266,20 @@ function DashboardContent() {
           <Card className="flex flex-col gap-4 border-accent-secondary/40">
             <div className="flex items-center justify-between">
               <span className="text-xs font-semibold uppercase tracking-wide text-accent-secondary">
-                Plano alimentar de hoje
+                {t("todayDietPlan")}
               </span>
               <span className="font-mono-nums text-xs text-muted">
-                {dietPlan.totalMacros.kcal} kcal
+                {t("kcalLabel", { kcal: dietPlan.totalMacros.kcal })}
               </span>
             </div>
             <h2 className="font-display text-xl font-bold">{dietPlan.name}</h2>
             <div className="grid grid-cols-3 gap-2 font-mono-nums text-xs text-muted">
-              <span>{dietPlan.totalMacros.proteinG}g proteína</span>
-              <span>{dietPlan.totalMacros.carbsG}g carbo</span>
-              <span>{dietPlan.totalMacros.fatG}g gordura</span>
+              <span>{t("proteinLabel", { value: dietPlan.totalMacros.proteinG })}</span>
+              <span>{t("carbsLabel", { value: dietPlan.totalMacros.carbsG })}</span>
+              <span>{t("fatLabel", { value: dietPlan.totalMacros.fatG })}</span>
             </div>
             <Button asChild variant="secondary">
-              <Link href={`/dieta/${dietPlan.id}`}>Ver plano completo</Link>
+              <Link href={`/dieta/${dietPlan.id}`}>{t("viewFullPlan")}</Link>
             </Button>
           </Card>
         )}
@@ -299,9 +294,9 @@ function DashboardContent() {
             soltos), em violeta — claramente secundários ao hero. */}
         <div className="grid grid-cols-3 gap-2 border-t border-border pt-4 sm:hidden">
           {[
-            { href: "/evolucao", icon: "📈", label: "Evolução" },
-            { href: "/anamnese", icon: "📋", label: "Anamnese" },
-            { href: "/duvidas", icon: "💬", label: "Dúvidas" },
+            { href: "/evolucao", icon: "📈", label: t("shortcutEvolution") },
+            { href: "/anamnese", icon: "📋", label: t("shortcutAnamnesis") },
+            { href: "/duvidas", icon: "💬", label: t("shortcutQuestions") },
           ].map((item) => (
             <Link
               key={item.href}

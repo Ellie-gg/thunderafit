@@ -11,6 +11,9 @@ export interface User {
   planoAssinatura: "FREE" | "BASE" | "PLUS";
   limiteAlunos: number;
   avatarUrl: string | null;
+  // i18n: escolha explícita de idioma (tela de Configurações) — null quando o
+  // usuário nunca escolheu (o frontend detecta automaticamente nesse caso).
+  locale: "PT" | "EN" | "ES" | null;
   createdAt: string;
   updatedAt: string;
 }

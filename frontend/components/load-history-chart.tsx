@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import {
   ResponsiveContainer,
   LineChart,
@@ -25,6 +26,7 @@ function formatDateLabel(iso: string): string {
 }
 
 export function LoadHistoryChart({ history }: { history: LoadHistoryPoint[] }) {
+  const t = useTranslations("loadHistoryChart");
   const data = history.map((p) => ({ ...p, label: formatDateLabel(p.date) }));
 
   return (
@@ -55,7 +57,7 @@ export function LoadHistoryChart({ history }: { history: LoadHistoryPoint[] }) {
             }}
             labelStyle={{ color: "#EEF1F6" }}
             itemStyle={{ color: ACCENT }}
-            formatter={(value) => [`${value}kg`, "Carga máxima"]}
+            formatter={(value) => [`${value}kg`, t("tooltipLabel")]}
           />
           <Line
             type="monotone"

@@ -326,3 +326,62 @@ describe("PUT /api/auth/me/avatar (Fase 30)", () => {
     expect(r.body.user.avatarUrl).toBeNull();
   });
 });
+
+describe("PUT /api/auth/me/locale (i18n)", () => {
+  const email = "test_locale_user@thunderafit.test";
+  const password = "SenhaSegura@123";
+  let token: string;
+
+  beforeAll(async () => {
+    await supertest(app.server).post("/api/auth/register").send({ email, password, role: "ALUNO" });
+    const login = await supertest(app.server).post("/api/auth/login").send({ email, password });
+    token = login.body.accessToken;
+  });
+
+  it("novo usuário nasce com locale null (nunca escolheu — detecção automática no frontend)", async () => {
+    const login = await supertest(app.server).post("/api/auth/login").send({ email, password });
+    expect(login.body.user.locale).toBeNull();
+  });
+
+  it("sem autenticação retorna 401", async () => {
+    const r = await supertest(app.server).put("/api/auth/me/locale").send({ locale: "EN" });
+    expect(r.status).toBe(401);
+  });
+
+  it("sem o campo locale no body retorna 400", async () => {
+    const r = await supertest(app.server)
+      .put("/api/auth/me/locale")
+      .set("Authorization", `Bearer ${token}`)
+      .send({});
+    expect(r.status).toBe(400);
+  });
+
+  it("valor inválido (fora de PT/EN/ES) retorna 400", async () => {
+    const r = await supertest(app.server)
+      .put("/api/auth/me/locale")
+      .set("Authorization", `Bearer ${token}`)
+      .send({ locale: "FR" });
+    expect(r.status).toBe(400);
+  });
+
+  it("persiste a escolha explícita e reflete no login seguinte", async () => {
+    const r = await supertest(app.server)
+      .put("/api/auth/me/locale")
+      .set("Authorization", `Bearer ${token}`)
+      .send({ locale: "EN" });
+    expect(r.status).toBe(200);
+    expect(r.body.user.locale).toBe("EN");
+
+    const login = await supertest(app.server).post("/api/auth/login").send({ email, password });
+    expect(login.body.user.locale).toBe("EN");
+  });
+
+  it("locale: null volta à detecção automática", async () => {
+    const r = await supertest(app.server)
+      .put("/api/auth/me/locale")
+      .set("Authorization", `Bearer ${token}`)
+      .send({ locale: null });
+    expect(r.status).toBe(200);
+    expect(r.body.user.locale).toBeNull();
+  });
+});

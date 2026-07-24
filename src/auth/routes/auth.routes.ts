@@ -7,6 +7,7 @@ import {
   protectedHandler,
   checkEmailHandler,
   updateAvatarHandler,
+  updateLocaleHandler,
 } from "../controllers/auth.controller";
 
 type AuthenticateFn = (
@@ -47,6 +48,15 @@ export async function authRoutes(fastify: FastifyInstance) {
       preHandler: [(fastify as any).authenticate],
     },
     updateAvatarHandler
+  );
+
+  // i18n: escolha explícita de idioma (qualquer role autenticada)
+  fastify.put(
+    "/api/auth/me/locale",
+    {
+      preHandler: [(fastify as any).authenticate],
+    },
+    updateLocaleHandler
   );
 
   // Rota de teste para validar o middleware authenticate

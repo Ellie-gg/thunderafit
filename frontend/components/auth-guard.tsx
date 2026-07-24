@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { useAuthStore } from "@/lib/store/auth-store";
 import { onAuthExpired } from "@/lib/api/client";
 import { dashboardPathForRole } from "@/lib/auth/redirect";
@@ -16,6 +17,7 @@ export function AuthGuard({
   allowedRoles?: Role[];
 }) {
   const router = useRouter();
+  const t = useTranslations("common");
   const { user, isHydrated, hydrate, clearSession } = useAuthStore();
 
   useEffect(() => {
@@ -49,7 +51,7 @@ export function AuthGuard({
   if (!isHydrated || !isAuthorized) {
     return (
       <div className="flex flex-1 items-center justify-center">
-        <span className="text-sm text-muted">Carregando...</span>
+        <span className="text-sm text-muted">{t("loading")}</span>
       </div>
     );
   }

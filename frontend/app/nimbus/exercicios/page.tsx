@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { listAdminExercises } from "@/lib/api/admin";
@@ -16,6 +17,8 @@ import type { Exercise } from "@/lib/types";
 type FormState = { mode: "closed" } | { mode: "create" } | { mode: "edit"; exercise: Exercise };
 
 function ExerciciosContent() {
+  const t = useTranslations("nimbusExercicios");
+  const tCommon = useTranslations("common");
   const queryClient = useQueryClient();
   const exercisesQuery = useQuery({ queryKey: ["admin", "exercises"], queryFn: listAdminExercises });
   const [form, setForm] = useState<FormState>({ mode: "closed" });
@@ -39,16 +42,15 @@ function ExerciciosContent() {
         <div className="flex items-center justify-between gap-3">
           <div>
             <h1 className="font-display text-2xl font-bold tracking-tight">
-              Catálogo de Exercícios
+              {t("title")}
             </h1>
             <p className="text-sm text-muted">
-              {exercises.length} exercício(s). Excluir um exercício em uso numa prescrição não é
-              permitido.
+              {t("count", { count: exercises.length })}
             </p>
           </div>
-          {form.mode === "closed" && (
+          {form.mode === "closed" && exercisesQuery.isSuccess && (
             <Button type="button" onClick={() => setForm({ mode: "create" })}>
-              Novo exercício
+              {t("newExercise")}
             </Button>
           )}
         </div>
@@ -61,7 +63,7 @@ function ExerciciosContent() {
           />
         )}
 
-        {exercisesQuery.isLoading && <p className="text-sm text-muted">Carregando...</p>}
+        {exercisesQuery.isLoading && <p className="text-sm text-muted">{tCommon("loading")}</p>}
         {exercisesQuery.isError && (
           <QueryError error={exercisesQuery.error} onRetry={() => exercisesQuery.refetch()} />
         )}
@@ -80,7 +82,7 @@ function ExerciciosContent() {
                   <div className="flex items-center gap-2">
                     {ex.isFeatured && (
                       <span className="shrink-0 rounded-full border border-accent-secondary px-2 py-0.5 text-xs font-semibold text-accent-secondary">
-                        ★ Destaque
+                        {t("featured")}
                       </span>
                     )}
                     <DifficultyBadge level={ex.difficultyLevel} />
@@ -96,7 +98,7 @@ function ExerciciosContent() {
                         )
                       }
                     >
-                      {form.mode === "edit" && form.exercise.id === ex.id ? "Fechar" : "Editar"}
+                      {form.mode === "edit" && form.exercise.id === ex.id ? t("close") : t("edit")}
                     </Button>
                     <DeleteExerciseButton exerciseId={ex.id} onDeleted={refetchAndClose} />
                   </div>
@@ -114,7 +116,7 @@ function ExerciciosContent() {
               </div>
             ))}
             {exercises.length === 0 && (
-              <p className="text-sm text-muted">Nenhum exercício cadastrado.</p>
+              <p className="text-sm text-muted">{t("empty")}</p>
             )}
           </Card>
         )}

@@ -1,5 +1,7 @@
 import { render, screen } from "@testing-library/react";
+import { NextIntlClientProvider } from "next-intl";
 import { PostWorkoutSummaryCard } from "@/components/post-workout-summary-card";
+import ptMessages from "@/messages/pt.json";
 import type { WorkoutCompletionSummary } from "@/lib/types";
 
 const baseSummary: WorkoutCompletionSummary = {
@@ -18,11 +20,13 @@ const baseSummary: WorkoutCompletionSummary = {
 
 function renderCard(overrides: Partial<WorkoutCompletionSummary> = {}, durationSeconds: number | null = 754) {
   return render(
-    <PostWorkoutSummaryCard
-      summary={{ ...baseSummary, ...overrides }}
-      alunoName="João"
-      durationSeconds={durationSeconds}
-    />
+    <NextIntlClientProvider locale="pt" messages={ptMessages}>
+      <PostWorkoutSummaryCard
+        summary={{ ...baseSummary, ...overrides }}
+        alunoName="João"
+        durationSeconds={durationSeconds}
+      />
+    </NextIntlClientProvider>
   );
 }
 

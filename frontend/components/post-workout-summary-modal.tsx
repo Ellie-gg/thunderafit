@@ -6,6 +6,7 @@ import { Capacitor } from "@capacitor/core";
 import { Filesystem, Directory } from "@capacitor/filesystem";
 import { Share } from "@capacitor/share";
 import type { WorkoutCompletionSummary } from "@/lib/types";
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { PostWorkoutSummaryCard } from "@/components/post-workout-summary-card";
 
@@ -46,6 +47,7 @@ export function PostWorkoutSummaryModal({
   upsell?: React.ReactNode;
   onClose: () => void;
 }) {
+  const t = useTranslations("postWorkoutSummaryModal");
   const cardRef = React.useRef<HTMLDivElement>(null);
   // Feature-detect uma única vez: este componente só é montado no cliente
   // (dentro do modal aberto após a mutação de conclusão), nunca no SSR.
@@ -85,14 +87,14 @@ export function PostWorkoutSummaryModal({
       data: dataUrlToBase64(dataUrl),
       directory: Directory.Cache,
     });
-    await Share.share({ files: [uri], dialogTitle: "Compartilhar treino" });
+    await Share.share({ files: [uri], dialogTitle: t("shareDialogTitle") });
   }
 
   async function shareWeb(dataUrl: string) {
     const blob = await (await fetch(dataUrl)).blob();
     const file = new File([blob], "treino.png", { type: "image/png" });
     if (navigator.canShare?.({ files: [file] })) {
-      await navigator.share({ files: [file], title: "Meu treino no ThunderaFit" });
+      await navigator.share({ files: [file], title: t("shareTitle") });
     } else {
       await handleDownload();
     }
@@ -131,20 +133,20 @@ export function PostWorkoutSummaryModal({
         />
         {shareError && (
           <p className="text-sm text-danger">
-            Não foi possível compartilhar direto — baixamos a imagem pra você anexar manualmente.
+            {t("shareErrorMessage")}
           </p>
         )}
         <div className="flex gap-2">
           {canShare && (
             <Button onClick={handleShare} disabled={isExporting} className="flex-1">
-              Compartilhar
+              {t("shareButton")}
             </Button>
           )}
           <Button onClick={handleDownload} disabled={isExporting} variant="secondary" className="flex-1">
-            Baixar imagem
+            {t("downloadButton")}
           </Button>
           <Button onClick={onClose} variant="ghost">
-            Fechar
+            {t("closeButton")}
           </Button>
         </div>
         {upsell}

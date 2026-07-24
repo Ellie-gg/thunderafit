@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { listWorkoutPrograms, createWorkoutProgram } from "@/lib/api/workouts";
@@ -18,6 +19,8 @@ import { QueryError } from "@/components/query-error";
 import { DeleteProgramButton } from "@/components/delete-program-button";
 
 function ProgramasPersonalContent() {
+  const t = useTranslations("personalProgramasList");
+  const tCommon = useTranslations("common");
   const router = useRouter();
   const queryClient = useQueryClient();
   const programsQuery = useQuery({
@@ -53,15 +56,11 @@ function ProgramasPersonalContent() {
     <>
       <AppHeader />
       <main className="flex flex-1 flex-col gap-6 px-6 py-8">
-        <h1 className="font-display text-2xl font-bold tracking-tight">Programas de Treino</h1>
+        <h1 className="font-display text-2xl font-bold tracking-tight">{t("title")}</h1>
 
         <Card className="flex flex-col gap-3">
-          <h2 className="font-display text-lg font-bold">Novo programa</h2>
-          <p className="text-xs text-muted">
-            Crie o programa, adicione as sessões e depois aplique a um aluno — o
-            mesmo programa pode ser reaplicado a outros alunos vinculados quando
-            quiser, como um template reutilizável.
-          </p>
+          <h2 className="font-display text-lg font-bold">{t("newProgramTitle")}</h2>
+          <p className="text-xs text-muted">{t("newProgramDescription")}</p>
           <form
             className="flex flex-col gap-3"
             onSubmit={(e) => {
@@ -70,17 +69,17 @@ function ProgramasPersonalContent() {
             }}
           >
             <div className="flex flex-col gap-1.5">
-              <Label htmlFor="name">Nome do programa</Label>
+              <Label htmlFor="name">{t("programNameLabel")}</Label>
               <Input
                 id="name"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                placeholder="Ex: Foco em Peito"
+                placeholder={t("programNamePlaceholder")}
               />
             </div>
 
             <div className="flex flex-col gap-1.5">
-              <Label>Como nomear as sessões?</Label>
+              <Label>{t("sessionNamingLabel")}</Label>
               <div className="flex gap-2">
                 <button
                   type="button"
@@ -92,7 +91,7 @@ function ProgramasPersonalContent() {
                       : "flex-1 rounded-md border border-border px-3 py-2 text-sm text-muted hover:border-accent"
                   }
                 >
-                  Letras (A–E)
+                  {t("letterScheme")}
                 </button>
                 <button
                   type="button"
@@ -104,65 +103,66 @@ function ProgramasPersonalContent() {
                       : "flex-1 rounded-md border border-border px-3 py-2 text-sm text-muted hover:border-accent"
                   }
                 >
-                  Dias da semana
+                  {t("weekdayScheme")}
                 </button>
               </div>
               <p className="text-xs text-muted">
-                {sessionScheme === "WEEKDAY"
-                  ? "Até 7 sessões (Segunda a Domingo)."
-                  : "Até 5 sessões (A a E)."}{" "}
-                Você escolhe quantas quiser adicionar — não precisa preencher todas.
+                {sessionScheme === "WEEKDAY" ? t("upTo7Sessions") : t("upTo5Sessions")}{" "}
+                {t("chooseHowMany")}
               </p>
             </div>
 
             <div className="flex flex-col gap-1.5">
-              <Label htmlFor="targetAluno">Aluno-alvo (opcional)</Label>
+              <Label htmlFor="targetAluno">{t("targetAlunoLabel")}</Label>
               <select
                 id="targetAluno"
                 value={targetAlunoId}
                 onChange={(e) => setTargetAlunoId(e.target.value)}
                 className="h-11 rounded-md border border-border bg-surface px-3.5 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
               >
-                <option value="">Deixar como template puro (sem aluno)</option>
+                <option value="">{t("pureTemplateOption")}</option>
                 {relationsQuery.data?.relations.map((r) => (
                   <option key={r.id} value={r.id}>
                     {r.email}
                   </option>
                 ))}
               </select>
-              <p className="text-xs text-muted">
-                Só pré-seleciona esse aluno na hora de aplicar o programa depois de
-                montar as sessões — não cria vínculo nem aplica nada ainda.
-              </p>
+              <p className="text-xs text-muted">{t("targetAlunoHint")}</p>
             </div>
 
             {createMutation.isError && (
               <p className="text-sm text-danger">
                 {createMutation.error instanceof ApiError
                   ? createMutation.error.message
-                  : "Erro ao criar programa."}
+                  : t("createProgramError")}
               </p>
             )}
             <Button type="submit" disabled={createMutation.isPending || !name.trim()}>
-              {createMutation.isPending ? "Criando..." : "Criar programa"}
+              {createMutation.isPending ? t("creating") : t("createProgram")}
             </Button>
           </form>
         </Card>
 
-        {programsQuery.isLoading && <p className="text-sm text-muted">Carregando...</p>}
+        {programsQuery.isLoading && <p className="text-sm text-muted">{tCommon("loading")}</p>}
         {programsQuery.isError && (
           <QueryError error={programsQuery.error} onRetry={() => programsQuery.refetch()} />
         )}
 
         <section className="flex flex-col gap-3">
-          <h2 className="font-display text-lg font-bold">Templates ({templates.length})</h2>
-          {templates.length === 0 && <p className="text-sm text-muted">Nenhum template ainda.</p>}
+          <h2 className="font-display text-lg font-bold">
+            {t("templatesTitle", { count: templates.length })}
+          </h2>
+          {templates.length === 0 && (
+            <p className="text-sm text-muted">{t("noTemplatesYet")}</p>
+          )}
           {templates.map((p) => (
             <Link key={p.id} href={`/personal/programas/${p.id}`}>
               <Card className="flex items-center justify-between transition-colors hover:border-accent">
                 <div>
                   <span className="font-semibold">{p.name}</span>
-                  <p className="text-xs text-muted">{p.workouts?.length ?? 0} sessão(ões)</p>
+                  <p className="text-xs text-muted">
+                    {t("sessionsCount", { count: p.workouts?.length ?? 0 })}
+                  </p>
                 </div>
                 <div className="flex items-center gap-2">
                   <DeleteProgramButton
@@ -172,7 +172,7 @@ function ProgramasPersonalContent() {
                       queryClient.invalidateQueries({ queryKey: ["workout-programs", "personal"] })
                     }
                   />
-                  <span className="text-sm text-muted">Abrir →</span>
+                  <span className="text-sm text-muted">{t("open")}</span>
                 </div>
               </Card>
             </Link>
@@ -180,9 +180,11 @@ function ProgramasPersonalContent() {
         </section>
 
         <section className="flex flex-col gap-3">
-          <h2 className="font-display text-lg font-bold">Aplicados a alunos ({instances.length})</h2>
+          <h2 className="font-display text-lg font-bold">
+            {t("appliedToStudentsTitle", { count: instances.length })}
+          </h2>
           {instances.length === 0 && (
-            <p className="text-sm text-muted">Nenhum programa aplicado a alunos ainda.</p>
+            <p className="text-sm text-muted">{t("noAppliedProgramsYet")}</p>
           )}
           {instances.map((p) => (
             <Link key={p.id} href={`/personal/programas/${p.id}`}>
@@ -190,8 +192,8 @@ function ProgramasPersonalContent() {
                 <div>
                   <span className="font-semibold">{p.name}</span>
                   <p className="text-xs text-muted">
-                    {p.alunoId ? alunoEmailById.get(p.alunoId) ?? "aluno desvinculado" : "—"} ·{" "}
-                    {p.workouts?.length ?? 0} sessão(ões)
+                    {p.alunoId ? alunoEmailById.get(p.alunoId) ?? t("unlinkedStudent") : "—"} ·{" "}
+                    {t("sessionsCount", { count: p.workouts?.length ?? 0 })}
                   </p>
                 </div>
                 <div className="flex items-center gap-2">
@@ -202,7 +204,7 @@ function ProgramasPersonalContent() {
                       queryClient.invalidateQueries({ queryKey: ["workout-programs", "personal"] })
                     }
                   />
-                  <span className="text-sm text-muted">Abrir →</span>
+                  <span className="text-sm text-muted">{t("open")}</span>
                 </div>
               </Card>
             </Link>

@@ -67,10 +67,27 @@ model User {
   // enquanto o tamanho continuar nessa faixa. Tamanho e formato validados no
   // backend (auth.service.ts), nunca só confiando no cliente.
   avatarUrl        String?
+  // i18n: escolha EXPLÍCITA do usuário (tela de Configurações), persistida
+  // pra sincronizar entre dispositivos — null significa "nunca escolheu",
+  // caso em que o frontend detecta o idioma do sistema (Accept-Language/
+  // navigator.language) e usa cookie local, sem gravar aqui até uma escolha
+  // real acontecer. Nullable de propósito: não confundir "detectei PT" com
+  // "o usuário escolheu PT".
+  locale           Locale?
   createdAt        DateTime        @default(now())
   updatedAt        DateTime        @updatedAt
 
   @@map("users")
+}
+
+// i18n: 3 idiomas suportados. Maiúsculo por convenção deste schema (mesmo
+// padrão de todo outro enum fechado aqui — Role, PlanoAssinatura, etc.); o
+// frontend/next-intl usa os códigos minúsculos padrão (pt/en/es) — a
+// conversão de caixa acontece na borda da API, não no banco.
+enum Locale {
+  PT
+  EN
+  ES
 }
 
 enum Role {
@@ -182,12 +199,35 @@ model Exercise {
   createdAt       DateTime          @default(now())
   updatedAt       DateTime          @updatedAt
   workoutItems    WorkoutExercise[]
+  translations    ExerciseTranslation[]
 }
 
 enum DifficultyLevel {
   INICIANTE
   INTERMEDIARIO
   AVANCADO
+}
+
+// i18n: traduções de EN/ES sobre o catálogo de exercícios — NUNCA guarda uma
+// linha PT (o português já vive direto em `Exercise.name/muscleGroup/
+// description`, a fonte da verdade; duplicar aqui violaria o pedido
+// explícito de "não duplicar campos na tabela Exercise"). A API pública
+// resolve o locale ativo: PT lê `Exercise` direto (sem tocar nesta tabela);
+// EN/ES buscam aqui e caem pro valor PT de `Exercise` quando a tradução
+// ainda não existe pra aquele exercício — nunca quebra, nunca retorna vazio.
+// Cascade delete: se o exercício for apagado, a tradução não fica órfã.
+model ExerciseTranslation {
+  id          String   @id @default(uuid())
+  exerciseId  String
+  exercise    Exercise @relation(fields: [exerciseId], references: [id], onDelete: Cascade)
+  locale      Locale
+  name        String
+  muscleGroup String
+  description String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([exerciseId, locale])
 }
 
 // Fase 32: YOUTUBE = mediaUrl é um link do YouTube (comportamento antigo,

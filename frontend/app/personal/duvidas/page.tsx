@@ -9,8 +9,10 @@ import { AppHeader } from "@/components/app-header";
 import { QueryError } from "@/components/query-error";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { useTranslations } from "next-intl";
 
 function StatusBadge({ status }: { status: string }) {
+  const t = useTranslations("personalDuvidasList");
   const isRespondido = status === "RESPONDIDO";
   return (
     <span
@@ -18,12 +20,14 @@ function StatusBadge({ status }: { status: string }) {
         isRespondido ? "bg-success/15 text-success" : "bg-accent/15 text-accent"
       }`}
     >
-      {isRespondido ? "Respondido" : "Aberto"}
+      {isRespondido ? t("respondido") : t("aberto")}
     </span>
   );
 }
 
 function PersonalDuvidasContent() {
+  const t = useTranslations("personalDuvidasList");
+  const tc = useTranslations("common");
   const [filter, setFilter] = useState<"ABERTO" | "RESPONDIDO" | "TODAS">("ABERTO");
   const threadsQuery = useQuery({ queryKey: ["support-threads"], queryFn: listThreads });
 
@@ -36,8 +40,8 @@ function PersonalDuvidasContent() {
       <AppHeader />
       <main className="flex flex-1 flex-col gap-6 px-6 py-8">
         <div>
-          <h1 className="font-display text-2xl font-bold tracking-tight">Dúvidas dos alunos</h1>
-          <p className="text-sm text-muted">Perguntas enviadas pelos seus alunos.</p>
+          <h1 className="font-display text-2xl font-bold tracking-tight">{t("titulo")}</h1>
+          <p className="text-sm text-muted">{t("subtitulo")}</p>
         </div>
 
         <div className="flex gap-2">
@@ -46,25 +50,25 @@ function PersonalDuvidasContent() {
             variant={filter === "ABERTO" ? "default" : "secondary"}
             onClick={() => setFilter("ABERTO")}
           >
-            Abertas
+            {t("abertas")}
           </Button>
           <Button
             size="sm"
             variant={filter === "RESPONDIDO" ? "default" : "secondary"}
             onClick={() => setFilter("RESPONDIDO")}
           >
-            Respondidas
+            {t("respondidas")}
           </Button>
           <Button
             size="sm"
             variant={filter === "TODAS" ? "default" : "secondary"}
             onClick={() => setFilter("TODAS")}
           >
-            Todas
+            {t("todas")}
           </Button>
         </div>
 
-        {threadsQuery.isLoading && <p className="text-sm text-muted">Carregando...</p>}
+        {threadsQuery.isLoading && <p className="text-sm text-muted">{tc("loading")}</p>}
 
         {threadsQuery.isError && (
           <QueryError error={threadsQuery.error} onRetry={() => threadsQuery.refetch()} />
@@ -72,7 +76,7 @@ function PersonalDuvidasContent() {
 
         {threadsQuery.isSuccess && threads.length === 0 && (
           <Card>
-            <p className="text-sm text-muted">Nenhuma dúvida nesta categoria.</p>
+            <p className="text-sm text-muted">{t("nenhumaDuvida")}</p>
           </Card>
         )}
 

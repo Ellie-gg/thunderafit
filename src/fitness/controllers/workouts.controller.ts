@@ -5,6 +5,7 @@ import {
   WorkoutGoal,
   ExperienceLevel,
 } from "../services/workout-generator.service";
+import { resolveRequestLocale } from "../../lib/locale";
 
 export async function listWorkoutsHandler(
   request: FastifyRequest<{ Querystring: { alunoId?: string; personalId?: string } }>,
@@ -155,7 +156,7 @@ export async function getWorkoutHandler(
   const { id } = request.params;
 
   try {
-    const workout = await workoutsService.getWorkout(id, userId, role);
+    const workout = await workoutsService.getWorkout(id, userId, role, resolveRequestLocale(request));
     return reply.status(200).send({ workout });
   } catch (err: any) {
     const status = (err as any).statusCode ?? 500;

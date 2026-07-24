@@ -2,6 +2,7 @@
 
 import { useRef, useState } from "react";
 import { useMutation } from "@tanstack/react-query";
+import { useTranslations } from "next-intl";
 import { updateAvatarRequest } from "@/lib/api/auth";
 import { ApiError } from "@/lib/api/client";
 import { useAuthStore } from "@/lib/store/auth-store";
@@ -33,9 +34,9 @@ const JPEG_QUALITY = 0.82;
  * - pedir "image/webp" pode falhar silenciosamente em navegadores muito
  *   antigos (`toBlob` retorna null) — cai pra "image/jpeg" nesse caso.
  */
-async function resizeImageToSquareDataUrl(file: File): Promise<string> {
+async function resizeImageToSquareDataUrl(file: File, t: (key: string) => string): Promise<string> {
   if (!file.type.startsWith("image/")) {
-    throw new Error("Escolha um arquivo de imagem (PNG, JPEG ou WebP).");
+    throw new Error(t("errors.invalidType"));
   }
 
   const objectUrl = URL.createObjectURL(file);
@@ -43,7 +44,7 @@ async function resizeImageToSquareDataUrl(file: File): Promise<string> {
     const img = await new Promise<HTMLImageElement>((resolve, reject) => {
       const el = new Image();
       el.onload = () => resolve(el);
-      el.onerror = () => reject(new Error("Não foi possível ler a imagem."));
+      el.onerror = () => reject(new Error(t("errors.loadFailed")));
       el.src = objectUrl;
     });
 
@@ -55,7 +56,7 @@ async function resizeImageToSquareDataUrl(file: File): Promise<string> {
     canvas.width = AVATAR_SIZE_PX;
     canvas.height = AVATAR_SIZE_PX;
     const ctx = canvas.getContext("2d");
-    if (!ctx) throw new Error("Não foi possível processar a imagem.");
+    if (!ctx) throw new Error(t("errors.canvasFailed"));
     ctx.drawImage(img, sx, sy, side, side, 0, 0, AVATAR_SIZE_PX, AVATAR_SIZE_PX);
 
     const dataUrl = canvas.toDataURL("image/webp", JPEG_QUALITY);
@@ -76,6 +77,7 @@ async function resizeImageToSquareDataUrl(file: File): Promise<string> {
  * Usado tanto na tela de perfil do aluno quanto do Personal.
  */
 export function AvatarUpload() {
+  const t = useTranslations("avatarUpload");
   const user = useAuthStore((s) => s.user);
   const setSession = useAuthStore((s) => s.setSession);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -96,10 +98,10 @@ export function AvatarUpload() {
 
     setLocalError(null);
     try {
-      const dataUrl = await resizeImageToSquareDataUrl(file);
+      const dataUrl = await resizeImageToSquareDataUrl(file, t);
       mutation.mutate(dataUrl);
     } catch (err) {
-      setLocalError(err instanceof Error ? err.message : "Erro ao processar a imagem.");
+      setLocalError(err instanceof Error ? err.message : t("errors.processError"));
     }
   }
 
@@ -116,7 +118,7 @@ export function AvatarUpload() {
             disabled={mutation.isPending}
             onClick={() => fileInputRef.current?.click()}
           >
-            {mutation.isPending ? "Enviando..." : "Trocar foto"}
+            {mutation.isPending ? t("uploading") : t("changePhoto")}
           </Button>
           {user?.avatarUrl && (
             <Button
@@ -126,7 +128,7 @@ export function AvatarUpload() {
               disabled={mutation.isPending}
               onClick={() => mutation.mutate(null)}
             >
-              Remover
+              {t("remove")}
             </Button>
           )}
         </div>
@@ -142,7 +144,7 @@ export function AvatarUpload() {
             {localError ||
               (mutation.error instanceof ApiError
                 ? mutation.error.message
-                : "Erro ao salvar a foto.")}
+                : t("errors.saveError"))}
           </p>
         )}
       </div>

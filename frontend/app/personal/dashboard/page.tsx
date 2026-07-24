@@ -15,8 +15,13 @@ import { VoltageBar } from "@/components/voltage-bar";
 import { QueryError } from "@/components/query-error";
 import { DeleteProgramButton } from "@/components/delete-program-button";
 import { GenerateWorkoutModal } from "@/components/generate-workout-modal";
+import { useActiveIntlLocale } from "@/i18n/use-active-locale";
+import { useTranslations } from "next-intl";
 
 function PersonalDashboardContent() {
+  const t = useTranslations("personalDashboard");
+  const tc = useTranslations("common");
+  const intlLocale = useActiveIntlLocale();
   const user = useAuthStore((s) => s.user);
   const queryClient = useQueryClient();
   const [generatorOpen, setGeneratorOpen] = useState(false);
@@ -55,15 +60,15 @@ function PersonalDashboardContent() {
       <main className="flex flex-1 flex-col gap-6 px-6 py-8">
         <div>
           <h1 className="font-display text-2xl font-bold tracking-tight">
-            Olá, {user?.email.split("@")[0]}
+            {t("greeting", { nome: user?.email.split("@")[0] ?? "" })}
           </h1>
-          <p className="text-sm text-muted">Seus alunos e treinos prescritos.</p>
+          <p className="text-sm text-muted">{t("subtitle")}</p>
         </div>
 
         <Card className="flex flex-col gap-3">
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold uppercase tracking-wide text-accent-secondary">
-              Alunos vinculados
+              {t("alunosVinculados")}
             </span>
             <span className="font-mono-nums text-xs text-muted">
               {alunos.length}/{limite}
@@ -76,7 +81,7 @@ function PersonalDashboardContent() {
               href="/personal/upgrade"
               className="block rounded-md border border-danger/40 bg-danger/10 px-3 py-2 text-sm text-danger hover:border-danger"
             >
-              Limite de alunos atingido. <span className="font-semibold underline">Faça upgrade do plano →</span>
+              {t("limiteAtingido")} <span className="font-semibold underline">{t("fazerUpgrade")}</span>
             </Link>
           )}
 
@@ -87,7 +92,7 @@ function PersonalDashboardContent() {
               href="/personal/upgrade"
               className="text-sm font-semibold text-accent-secondary hover:underline"
             >
-              Precisa de mais alunos? Ver planos →
+              {t("verPlanos")}
             </Link>
           )}
           {isPago && (
@@ -95,12 +100,13 @@ function PersonalDashboardContent() {
               href="/personal/upgrade"
               className="text-sm font-semibold text-accent-secondary hover:underline"
             >
-              Plano {billingQuery.data!.planoAssinatura === "PLUS" ? "Plus" : "Base"} ativo · gerenciar
-              assinatura →
+              {t("planoAtivo", {
+                plano: billingQuery.data!.planoAssinatura === "PLUS" ? "Plus" : "Base",
+              })}
             </Link>
           )}
 
-          {relationsQuery.isLoading && <p className="text-sm text-muted">Carregando...</p>}
+          {relationsQuery.isLoading && <p className="text-sm text-muted">{tc("loading")}</p>}
 
           {relationsQuery.isError && (
             <QueryError error={relationsQuery.error} onRetry={() => relationsQuery.refetch()} />
@@ -115,7 +121,7 @@ function PersonalDashboardContent() {
                 <span className="text-sm">{a.email}</span>
                 <div className="flex items-center gap-3">
                   <span className="text-xs text-muted">
-                    desde {new Date(a.createdAt).toLocaleDateString("pt-BR")}
+                    {t("desde", { data: new Date(a.createdAt).toLocaleDateString(intlLocale) })}
                   </span>
                   {/* Fase 29: substitui o link direto de Anamnese — agora é
                       uma seção dentro do hub do aluno, junto com programas e
@@ -124,19 +130,19 @@ function PersonalDashboardContent() {
                     href={`/personal/alunos/${a.id}`}
                     className="text-xs font-semibold text-accent-secondary hover:underline"
                   >
-                    Gerenciar →
+                    {t("gerenciar")}
                   </Link>
                 </div>
               </div>
             ))}
             {relationsQuery.isSuccess && alunos.length === 0 && (
-              <p className="text-sm text-muted">Nenhum aluno vinculado ainda.</p>
+              <p className="text-sm text-muted">{t("nenhumAlunoVinculado")}</p>
             )}
           </div>
 
           <Button asChild variant={noLimite ? "secondary" : "default"} disabled={noLimite}>
             <Link href={noLimite ? "#" : "/personal/alunos/novo"}>
-              {noLimite ? "Limite atingido" : "Vincular novo aluno"}
+              {noLimite ? t("limiteAtingidoBotao") : t("vincularNovoAluno")}
             </Link>
           </Button>
         </Card>
@@ -144,11 +150,11 @@ function PersonalDashboardContent() {
         <Card className="flex flex-col gap-3">
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold uppercase tracking-wide text-accent-secondary">
-              Treinos prescritos
+              {t("treinosPrescritos")}
             </span>
           </div>
 
-          {programsQuery.isLoading && <p className="text-sm text-muted">Carregando...</p>}
+          {programsQuery.isLoading && <p className="text-sm text-muted">{tc("loading")}</p>}
 
           {programsQuery.isError && (
             <QueryError error={programsQuery.error} onRetry={() => programsQuery.refetch()} />
@@ -167,8 +173,8 @@ function PersonalDashboardContent() {
                   <div>
                     <span className="font-semibold">{p.name}</span>
                     <p className="text-xs text-muted">
-                      {p.alunoId ? alunoEmailById.get(p.alunoId) ?? "aluno desvinculado" : "—"} ·{" "}
-                      {p.workouts?.length ?? 0} sessão(ões)
+                      {p.alunoId ? alunoEmailById.get(p.alunoId) ?? t("alunoDesvinculado") : "—"} ·{" "}
+                      {t("sessoesCount", { count: p.workouts?.length ?? 0 })}
                     </p>
                   </div>
                   <div className="flex items-center gap-2">
@@ -179,13 +185,13 @@ function PersonalDashboardContent() {
                         queryClient.invalidateQueries({ queryKey: ["workout-programs", "personal"] })
                       }
                     />
-                    <span className="text-sm text-muted">Abrir →</span>
+                    <span className="text-sm text-muted">{t("abrir")}</span>
                   </div>
                 </Card>
               </Link>
             ))}
             {programsQuery.isSuccess && instances.length === 0 && (
-              <p className="text-sm text-muted">Nenhum programa aplicado a um aluno ainda.</p>
+              <p className="text-sm text-muted">{t("nenhumProgramaAplicado")}</p>
             )}
           </div>
 
@@ -196,12 +202,12 @@ function PersonalDashboardContent() {
               monta um rascunho revisável em segundos; quem prefere montar
               tudo à mão continua indo direto pra /personal/programas, sem
               nenhuma sugestão automática. */}
-          <Button onClick={() => setGeneratorOpen(true)}>⚡ Gerar Treino Rápido</Button>
+          <Button onClick={() => setGeneratorOpen(true)}>{t("gerarTreinoRapido")}</Button>
           <Link
             href="/personal/programas"
             className="self-start text-sm font-semibold text-accent-secondary hover:underline"
           >
-            ou monte um programa do zero →
+            {t("montarDoZero")}
           </Link>
         </Card>
 
@@ -213,7 +219,7 @@ function PersonalDashboardContent() {
           href="/personal/duvidas"
           className="text-sm font-semibold text-accent-secondary hover:underline sm:hidden"
         >
-          Ver dúvidas dos alunos →
+          {t("verDuvidas")}
         </Link>
       </main>
     </>

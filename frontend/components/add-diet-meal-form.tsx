@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { addDietMeal } from "@/lib/api/nutrition";
 import { ApiError } from "@/lib/api/client";
@@ -9,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 
 export function AddDietMealForm({ planId, nextOrder }: { planId: string; nextOrder: number }) {
+  const t = useTranslations("addDietMealForm");
   const queryClient = useQueryClient();
   const [name, setName] = useState("");
   const [time, setTime] = useState("12:00");
@@ -31,17 +33,17 @@ export function AddDietMealForm({ planId, nextOrder }: { planId: string; nextOrd
     >
       <div className="grid grid-cols-2 gap-2">
         <div className="flex flex-col gap-1.5">
-          <Label htmlFor="mealName">Nome da refeição</Label>
+          <Label htmlFor="mealName">{t("nomeRefeicaoLabel")}</Label>
           <Input
             id="mealName"
             required
             value={name}
             onChange={(e) => setName(e.target.value)}
-            placeholder="Almoço"
+            placeholder={t("namePlaceholder")}
           />
         </div>
         <div className="flex flex-col gap-1.5">
-          <Label htmlFor="mealTime">Horário</Label>
+          <Label htmlFor="mealTime">{t("horarioLabel")}</Label>
           <Input
             id="mealTime"
             type="time"
@@ -54,12 +56,12 @@ export function AddDietMealForm({ planId, nextOrder }: { planId: string; nextOrd
 
       {mutation.isError && (
         <p className="text-sm text-danger">
-          {mutation.error instanceof ApiError ? mutation.error.message : "Erro ao adicionar refeição."}
+          {mutation.error instanceof ApiError ? mutation.error.message : t("errorAdding")}
         </p>
       )}
 
       <Button type="submit" disabled={mutation.isPending}>
-        {mutation.isPending ? "Adicionando..." : "Adicionar refeição"}
+        {mutation.isPending ? t("adding") : t("addButton")}
       </Button>
     </form>
   );

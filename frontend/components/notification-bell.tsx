@@ -9,6 +9,8 @@ import {
   markNotificationRead,
   markAllNotificationsRead,
 } from "@/lib/api/notifications";
+import { useActiveIntlLocale } from "@/i18n/use-active-locale";
+import { useTranslations } from "next-intl";
 
 /**
  * In-app apenas (sino + lista) — sem push real (APNs/FCM) nesta fase, ver
@@ -17,6 +19,9 @@ import {
  * WebSocket para o recurso de Dúvidas.
  */
 export function NotificationBell() {
+  const intlLocale = useActiveIntlLocale();
+  const t = useTranslations("notificationBell");
+  const tCommon = useTranslations("common");
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const queryClient = useQueryClient();
@@ -65,7 +70,7 @@ export function NotificationBell() {
     <div className="relative" ref={containerRef}>
       <button
         type="button"
-        aria-label="Notificações"
+        aria-label={t("title")}
         onClick={() => setOpen((o) => !o)}
         className="relative flex h-9 w-9 items-center justify-center rounded-md text-foreground hover:bg-surface-raised"
       >
@@ -81,7 +86,7 @@ export function NotificationBell() {
         <div className="absolute right-0 top-11 z-10 w-80 max-w-[90vw] rounded-lg border border-border bg-surface p-2 shadow-lg">
           <div className="flex items-center justify-between px-2 py-1">
             <span className="text-xs font-semibold uppercase tracking-wide text-accent-secondary">
-              Notificações
+              {t("title")}
             </span>
             {unreadCount > 0 && (
               <button
@@ -89,16 +94,16 @@ export function NotificationBell() {
                 onClick={() => markAllMutation.mutate()}
                 className="text-xs text-muted hover:text-foreground hover:underline"
               >
-                Marcar todas como lidas
+                {t("markAllRead")}
               </button>
             )}
           </div>
 
           <div className="mt-1 flex max-h-80 flex-col gap-1 overflow-y-auto">
-            {listQuery.isLoading && <p className="px-2 py-2 text-sm text-muted">Carregando...</p>}
+            {listQuery.isLoading && <p className="px-2 py-2 text-sm text-muted">{tCommon("loading")}</p>}
 
             {listQuery.data?.notifications.length === 0 && (
-              <p className="px-2 py-2 text-sm text-muted">Nenhuma notificação ainda.</p>
+              <p className="px-2 py-2 text-sm text-muted">{t("empty")}</p>
             )}
 
             {listQuery.data?.notifications.map((n) => (
@@ -115,7 +120,7 @@ export function NotificationBell() {
                   {n.message}
                 </span>
                 <span className="text-xs text-muted">
-                  {new Date(n.createdAt).toLocaleString("pt-BR")}
+                  {new Date(n.createdAt).toLocaleString(intlLocale)}
                 </span>
               </button>
             ))}

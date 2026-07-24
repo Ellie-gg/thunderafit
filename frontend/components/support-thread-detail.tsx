@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { getThread, addThreadMessage } from "@/lib/api/support";
 import { ApiError } from "@/lib/api/client";
@@ -8,8 +9,12 @@ import { useAuthStore } from "@/lib/store/auth-store";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { QueryError } from "@/components/query-error";
+import { useActiveIntlLocale } from "@/i18n/use-active-locale";
 
 export function SupportThreadDetail({ threadId, backHref }: { threadId: string; backHref: string }) {
+  const t = useTranslations("supportThreadDetail");
+  const tCommon = useTranslations("common");
+  const intlLocale = useActiveIntlLocale();
   const user = useAuthStore((s) => s.user);
   const queryClient = useQueryClient();
   const [text, setText] = useState("");
@@ -34,7 +39,7 @@ export function SupportThreadDetail({ threadId, backHref }: { threadId: string; 
   if (threadQuery.isLoading) {
     return (
       <main className="flex flex-1 items-center justify-center">
-        <span className="text-sm text-muted">Carregando...</span>
+        <span className="text-sm text-muted">{tCommon("loading")}</span>
       </main>
     );
   }
@@ -54,7 +59,7 @@ export function SupportThreadDetail({ threadId, backHref }: { threadId: string; 
   return (
     <main className="flex flex-1 flex-col gap-4 px-6 py-8">
       <a href={backHref} className="text-sm font-semibold text-accent-secondary hover:underline">
-        ← Voltar
+        {t("back")}
       </a>
 
       <div>
@@ -63,7 +68,7 @@ export function SupportThreadDetail({ threadId, backHref }: { threadId: string; 
             thread.status === "RESPONDIDO" ? "bg-success/15 text-success" : "bg-accent/15 text-accent"
           }`}
         >
-          {thread.status === "RESPONDIDO" ? "Respondido" : "Aberto"}
+          {thread.status === "RESPONDIDO" ? t("status.respondido") : t("status.aberto")}
         </span>
         <h1 className="mt-2 font-display text-xl font-bold">{thread.subject}</h1>
       </div>
@@ -78,7 +83,7 @@ export function SupportThreadDetail({ threadId, backHref }: { threadId: string; 
             >
               <p className="text-sm">{m.text}</p>
               <p className="mt-1 text-xs text-muted">
-                {new Date(m.createdAt).toLocaleString("pt-BR")}
+                {new Date(m.createdAt).toLocaleString(intlLocale)}
               </p>
             </Card>
           );
@@ -98,16 +103,16 @@ export function SupportThreadDetail({ threadId, backHref }: { threadId: string; 
           onChange={(e) => setText(e.target.value)}
           rows={2}
           className="flex-1 rounded-md border border-border bg-surface px-3.5 py-2 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
-          placeholder="Escreva uma mensagem..."
+          placeholder={t("messagePlaceholder")}
         />
         <Button type="submit" disabled={mutation.isPending}>
-          {mutation.isPending ? "..." : "Enviar"}
+          {mutation.isPending ? t("sending") : t("send")}
         </Button>
       </form>
 
       {mutation.isError && (
         <p className="text-sm text-danger">
-          {mutation.error instanceof ApiError ? mutation.error.message : "Erro ao enviar mensagem."}
+          {mutation.error instanceof ApiError ? mutation.error.message : t("sendError")}
         </p>
       )}
     </main>

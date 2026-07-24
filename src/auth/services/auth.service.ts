@@ -1,6 +1,6 @@
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
-import { Role } from "@prisma/client";
+import { Role, Locale } from "@prisma/client";
 import { authRepository } from "../repository/auth.repository";
 import { relationsService } from "../../fitness/services/relations.service";
 
@@ -232,6 +232,25 @@ export async function updateAvatar(userId: string, avatarDataUrl: string | null)
   }
 
   const user = await authRepository.updateAvatar(userId, avatarDataUrl);
+  const { passwordHash: _ph, refreshTokenHash: _rth, ...safeUser } = user;
+  return safeUser;
+}
+
+const VALID_LOCALES: Locale[] = ["PT", "EN", "ES"];
+
+/**
+ * i18n: escolha explícita de idioma (tela de Configurações), pra sincronizar
+ * entre dispositivos. `null` volta a deixar o frontend detectar
+ * automaticamente (Accept-Language/navigator.language) — não é um erro, é
+ * o usuário "desfazendo" uma escolha anterior.
+ */
+export async function updateLocale(userId: string, locale: Locale | null) {
+  if (locale !== null && !VALID_LOCALES.includes(locale)) {
+    const err = new Error("locale deve ser PT, EN ou ES.");
+    (err as Error & { statusCode: number }).statusCode = 400;
+    throw err;
+  }
+  const user = await authRepository.updateLocale(userId, locale);
   const { passwordHash: _ph, refreshTokenHash: _rth, ...safeUser } = user;
   return safeUser;
 }
