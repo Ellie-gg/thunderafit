@@ -645,6 +645,28 @@ decisão/priorização futura):
     orquestrador, pra evitar os 2 agentes colidirem no mesmo arquivo). 319/319
     backend (18 testes novos), 48/48 Jest/RTL, `tsc --noEmit` limpo nos dois.*
 
+### Grupo I — Conteúdo de "Meu Treino Pessoal" (3 programas Casa + correções de banner + categoria "Treinos Prontos" + 3 programas Academia). ✅ CONCLUÍDA (2026-07-24, registrada como Fases 53/53.1/54 no STATUS.md).
+
+49. ✅ **3 programas curados "Treino em Casa"** + correção de tradução real
+    (37 exercícios reclassificados nas Fases 50/51 mantinham `muscleGroup`
+    traduzido EN/ES desatualizado — corrigido; catálogo inteiro, não só os
+    3 programas). Pendência sinalizada, não resolvida: `WorkoutProgram.name`/
+    `Workout.name` não têm nenhum mecanismo de tradução hoje.
+50. ✅ **3 correções no upload de banner**, achadas pelo fundador usando a
+    feature: recorte indevido (virou "contain" + fundo desfocado, nunca
+    corta a imagem), faixa visível por desvio mínimo de proporção (tolerância
+    de ~3% adicionada), e nome do template duplicado por cima do banner
+    (removido — o banner já tem o nome embutido na própria imagem).
+51. ✅ **Categoria "Treinos Prontos"** (`SelfTemplateCategory.PRONTOS`, migration
+    aditiva) substitui o antigo card estático "Crie seu treino do zero"
+    (inerte desde a Fase 34.5) — mesmo carrossel/banner de "Treino em Casa",
+    mas gratuito e sem cadeado. A tela de admin não precisou de nada novo
+    (já era genérica por categoria desde a Fase 52). 3 programas de academia
+    cadastrados (Glúteos & Coxas Definitivo, Corpo Esculpido & Tônus, Shape V:
+    Hipertrofia — 10 sessões, 61 linhas de exercício).
+    *Modelo: Sonnet 5. 319/319 backend, 48/48 Jest/RTL, `tsc --noEmit` limpo.
+    Seed idêntico em dev e produção (verificado antes/depois nos dois).*
+
 ### Backlog operacional herdado
 Ver Seção 7 acima (Neon, billing, Android, webhook).
 

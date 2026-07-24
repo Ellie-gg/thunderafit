@@ -262,11 +262,10 @@
     "applyTemplate": "Aplicar este entrenamiento",
     "emptyState": "Todavía no hay ninguna rutina personal disponible.",
     "applyError": "Error al aplicar el entrenamiento.",
-    "buildFromScratch": "Crea tu entrenamiento desde cero",
-    "comingSoon": "Próximamente",
-    "buildFromScratchDescription": "Arma tu propio entrenamiento, ejercicio por ejercicio, con acceso al catálogo completo.",
     "wantCloserFollowUp": "¿Quieres un seguimiento más de cerca?",
     "invitePersonal": "Invita a un Entrenador Personal",
+    "prontosSectionTitle": "Entrenamientos Listos",
+    "prontosSectionSubtitle": "Programas completos de gimnasio, gratis — elige uno y empieza a entrenar hoy mismo.",
     "homeSectionTitle": "Entrenamiento en Casa",
     "homeSectionSubtitle": "Sin equipo de gimnasio — entrenamientos pensados para hacer en casa.",
     "premiumSectionTitle": "Entrenamientos Premium",
@@ -870,7 +869,8 @@
     "categoryOption": {
       "GERAL": "General",
       "HOME": "Entrenamiento en Casa",
-      "PREMIUM": "Entrenamientos Premium"
+      "PREMIUM": "Entrenamientos Premium",
+      "PRONTOS": "Entrenamientos Listos"
     },
     "creating": "Creando...",
     "createTemplate": "Crear template",

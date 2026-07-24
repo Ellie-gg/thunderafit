@@ -347,6 +347,11 @@ enum SelfTemplateCategory {
   GERAL
   HOME
   PREMIUM
+  // Fase 54: "Treinos Prontos" — templates gratuitos (academia, aparelhos/
+  // polias/halteres/barra), mesmo carrossel/banner de HOME, sem cadeado.
+  // Substitui o antigo card estático "Crie seu treino do zero" na tela do
+  // aluno.
+  PRONTOS
 }
 
 model Workout {

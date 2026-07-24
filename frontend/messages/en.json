@@ -262,11 +262,10 @@
     "applyTemplate": "Apply this workout",
     "emptyState": "No self-guided workout available yet.",
     "applyError": "Error applying the workout.",
-    "buildFromScratch": "Build your workout from scratch",
-    "comingSoon": "Coming soon",
-    "buildFromScratchDescription": "Build your own workout, exercise by exercise, with access to the full catalog.",
     "wantCloserFollowUp": "Want closer guidance?",
     "invitePersonal": "Invite a Personal Trainer",
+    "prontosSectionTitle": "Ready-Made Workouts",
+    "prontosSectionSubtitle": "Full gym programs, free — pick one and start training today.",
     "homeSectionTitle": "Home Workouts",
     "homeSectionSubtitle": "No gym equipment needed — workouts designed to do at home.",
     "premiumSectionTitle": "Premium Workouts",
@@ -870,7 +869,8 @@
     "categoryOption": {
       "GERAL": "General",
       "HOME": "Home Workout",
-      "PREMIUM": "Premium Workouts"
+      "PREMIUM": "Premium Workouts",
+      "PRONTOS": "Ready-Made Workouts"
     },
     "creating": "Creating...",
     "createTemplate": "Create template",

@@ -30,7 +30,7 @@ const GIF_DATA_URL_REGEX = /^data:image\/gif;base64,[A-Za-z0-9+/]+=*$/;
 const MAX_TEMPLATE_BANNER_DATA_URL_LENGTH = 6_000_000;
 const TEMPLATE_BANNER_DATA_URL_REGEX = /^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/]+=*$/;
 
-const VALID_SELF_TEMPLATE_CATEGORIES = ["GERAL", "HOME", "PREMIUM"] as const;
+const VALID_SELF_TEMPLATE_CATEGORIES = ["GERAL", "HOME", "PREMIUM", "PRONTOS"] as const;
 type AdminSelfTemplateCategory = (typeof VALID_SELF_TEMPLATE_CATEGORIES)[number];
 
 // Fase 33: CRUD do catálogo de exercícios.

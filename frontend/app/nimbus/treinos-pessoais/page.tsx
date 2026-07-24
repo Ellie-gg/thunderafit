@@ -23,7 +23,7 @@ import { AddExerciseForm } from "@/components/add-exercise-form";
 import { TemplateBannerUpload } from "@/components/template-banner-upload";
 import type { SelfTemplateCategory, SessionScheme } from "@/lib/types";
 
-const CATEGORY_OPTIONS: SelfTemplateCategory[] = ["GERAL", "HOME", "PREMIUM"];
+const CATEGORY_OPTIONS: SelfTemplateCategory[] = ["GERAL", "HOME", "PREMIUM", "PRONTOS"];
 
 /**
  * Fase 34.5 — curadoria de templates "Meu treino pessoal" (origin: SELF).
