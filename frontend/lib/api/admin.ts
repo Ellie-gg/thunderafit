@@ -12,6 +12,7 @@ import type {
   Exercise,
   ExerciseMediaType,
   Role,
+  SelfTemplateCategory,
   SessionScheme,
   Workout,
   WorkoutExercise,
@@ -103,10 +104,23 @@ export function getAdminSelfTemplate(programId: string) {
   return apiFetch<{ program: WorkoutProgram }>(`/api/admin/self-templates/${programId}`);
 }
 
-export function createAdminSelfTemplate(name: string, sessionScheme?: SessionScheme) {
+export function createAdminSelfTemplate(
+  name: string,
+  sessionScheme?: SessionScheme,
+  category?: SelfTemplateCategory
+) {
   return apiFetch<{ program: WorkoutProgram }>("/api/admin/self-templates", {
     method: "POST",
-    body: { name, sessionScheme },
+    body: { name, sessionScheme, category },
+  });
+}
+
+// Fase 52: banner do carrossel de "Meu Treino Pessoal" — `bannerDataUrl: null`
+// remove o banner (o card volta pro fallback estático só-com-nome).
+export function uploadAdminSelfTemplateBanner(programId: string, bannerDataUrl: string | null) {
+  return apiFetch<{ program: WorkoutProgram }>(`/api/admin/self-templates/${programId}/banner`, {
+    method: "PUT",
+    body: { bannerDataUrl },
   });
 }
 

@@ -116,7 +116,7 @@ export async function listSelfTemplatesHandler(_request: FastifyRequest, reply: 
 }
 
 export async function applySelfTemplateHandler(
-  request: FastifyRequest<{ Params: { id: string } }>,
+  request: FastifyRequest<{ Params: { id: string }; Body: { replace?: boolean } }>,
   reply: FastifyReply
 ) {
   try {
@@ -126,9 +126,25 @@ export async function applySelfTemplateHandler(
       err.statusCode = 403;
       throw err;
     }
-    const program = await workoutProgramsService.applySelfTemplate(request.params.id, sub);
+    const program = await workoutProgramsService.applySelfTemplate(
+      request.params.id,
+      sub,
+      request.body?.replace === true
+    );
     return reply.status(201).send({ program });
-  } catch (err) {
+  } catch (err: any) {
+    // Fase 52: conflito de "1 treino pessoal ativo por vez" carrega dados
+    // extras (código + programa atual) pro frontend montar o diálogo de
+    // confirmação — o handleError genérico só devolve {error}, insuficiente
+    // aqui.
+    if (err.code === "SELF_PROGRAM_EXISTS") {
+      return reply.status(409).send({
+        error: err.message,
+        code: err.code,
+        existingProgramId: err.existingProgramId,
+        existingProgramName: err.existingProgramName,
+      });
+    }
     return handleError(err, reply);
   }
 }

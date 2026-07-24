@@ -615,6 +615,36 @@ decisão/priorização futura):
     *Modelo: Sonnet 5, 2 agentes de pesquisa em paralelo pra curadoria. 309/309 backend,
     `tsc --noEmit` limpo. Catálogo: 213 → 232 exercícios.*
 
+### Grupo H — "Meu Treino Pessoal": categorias em carrossel (Treino em Casa / Treinos Premium) + banner. ✅ CONCLUÍDA (2026-07-24, registrada como "Fase 52" no STATUS.md).
+
+47. ✅ **`WorkoutProgram.category` (`GERAL`|`HOME`|`PREMIUM`) + `bannerImageUrl`** —
+    campos novos (migration aditiva), só usados em templates `origin: SELF`.
+    `/meu-treino-pessoal` agrupa por categoria: a lista plana `GERAL` de sempre
+    (inalterada) + dois carrosséis novos, swipeable (CSS scroll-snap nativo,
+    sem lib) — **"Treino em Casa"** (funcional: aplica de verdade) e
+    **"Treinos Premium"** (todo slide com 🔒 decorativo — não existe conceito
+    de aluno pagante ainda, então o clique só mostra "em breve", sem chamar a
+    API; decisão confirmada com o fundador, não um esquecimento). Banner
+    (16:9, 1200×675) sobe pelo admin em `/nimbus/treinos-pessoais` (mesmo
+    bucket GCS de mídia de exercício, pasta separada) — sem banner, o slide
+    cai num card estático só com o nome, dentro do mesmo carrossel.
+48. ✅ **"1 treino pessoal ativo por vez" com substituição** — invariante que
+    não existia antes (diferente do fluxo do Personal, que já tinha o
+    equivalente por-Personal desde a Fase 41): aplicar um 2º template SELF
+    sem confirmar devolve 409 (`code: SELF_PROGRAM_EXISTS` + nome/id do
+    programa atual); o frontend abre um diálogo de confirmação e, se
+    aceito, reenvia com `replace: true` — o backend apaga o programa
+    anterior (cascata) e aplica o novo na mesma chamada, sem 2ª ida-e-volta.
+    **Achado de bug real, corrigido a caminho**: antes desta fase, um aluno
+    podia aplicar o MESMO template (ou vários diferentes) repetidamente sem
+    nenhum aviso — nenhuma trava existia. A regra "1 por vez" é NOVA, não uma
+    correção de uma trava quebrada.
+    *Modelo: Sonnet 5 (schema + backend, feito manualmente pela sensibilidade
+    da invariante) + 2 agentes em paralelo (frontend admin + frontend aluno,
+    arquivos compartilhados — tipos/API client — atualizados antes, pelo
+    orquestrador, pra evitar os 2 agentes colidirem no mesmo arquivo). 319/319
+    backend (18 testes novos), 48/48 Jest/RTL, `tsc --noEmit` limpo nos dois.*
+
 ### Backlog operacional herdado
 Ver Seção 7 acima (Neon, billing, Android, webhook).
 

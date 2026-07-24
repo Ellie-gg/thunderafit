@@ -191,13 +191,30 @@ export async function getSelfTemplateHandler(
 }
 
 export async function createSelfTemplateHandler(
-  request: FastifyRequest<{ Body: { name: string; sessionScheme?: string } }>,
+  request: FastifyRequest<{ Body: { name: string; sessionScheme?: string; category?: string } }>,
   reply: FastifyReply
 ) {
   try {
     assertAdmin(request);
-    const program = await adminService.createSelfTemplate(request.body.name, request.body.sessionScheme);
+    const program = await adminService.createSelfTemplate(
+      request.body.name,
+      request.body.sessionScheme,
+      request.body.category
+    );
     return reply.status(201).send({ program });
+  } catch (err: any) {
+    return handleError(err, reply);
+  }
+}
+
+export async function uploadSelfTemplateBannerHandler(
+  request: FastifyRequest<{ Params: { id: string }; Body: { bannerDataUrl: string | null } }>,
+  reply: FastifyReply
+) {
+  try {
+    assertAdmin(request);
+    const program = await adminService.uploadSelfTemplateBanner(request.params.id, request.body.bannerDataUrl);
+    return reply.status(200).send({ program });
   } catch (err: any) {
     return handleError(err, reply);
   }

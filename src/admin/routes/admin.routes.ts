@@ -17,6 +17,7 @@ import {
   addSessionToSelfTemplateHandler,
   addExerciseToSelfSessionHandler,
   deleteSelfTemplateHandler,
+  uploadSelfTemplateBannerHandler,
 } from "../controllers/admin.controller";
 
 export async function adminRoutes(fastify: FastifyInstance) {
@@ -57,4 +58,11 @@ export async function adminRoutes(fastify: FastifyInstance) {
     addExerciseToSelfSessionHandler
   );
   fastify.delete("/api/admin/self-templates/:id", auth, deleteSelfTemplateHandler);
+  // Fase 52: banner do carrossel — mesmo motivo de bodyLimit maior da mídia
+  // de exercício acima (base64 de imagem passa do default de 1MB).
+  fastify.put(
+    "/api/admin/self-templates/:id/banner",
+    { preHandler: [(fastify as any).authenticate], bodyLimit: 8_000_000 },
+    uploadSelfTemplateBannerHandler
+  );
 }

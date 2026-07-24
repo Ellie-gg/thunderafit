@@ -1,5 +1,5 @@
 import { adminRepository } from "../repository/admin.repository";
-import { uploadExerciseMedia } from "../../lib/storage";
+import { uploadExerciseMedia, uploadTemplateBanner } from "../../lib/storage";
 // Reaproveita só as funções de ordenação/validação de esquema (puras, sem
 // query) do domínio fitness — não importa o repository dele, pra manter os
 // dois domínios desacoplados (mesmo padrão já usado no resto do projeto).
@@ -22,6 +22,16 @@ const YOUTUBE_URL_REGEX = /(?:youtube\.com\/watch\?v=|youtu\.be\/)[\w-]{11}/;
 const MAX_EXERCISE_MEDIA_DATA_URL_LENGTH = 6_000_000;
 const VIDEO_DATA_URL_REGEX = /^data:video\/(mp4|webm);base64,[A-Za-z0-9+/]+=*$/;
 const GIF_DATA_URL_REGEX = /^data:image\/gif;base64,[A-Za-z0-9+/]+=*$/;
+
+// Fase 52: banner de template SELF ("Meu Treino Pessoal") — imagem estática
+// (não vídeo), mesmo teto de tamanho de mídia de exercício por simplicidade
+// (o frontend já redimensiona/comprime no cliente antes de enviar, como o
+// avatar — este limite é só a rede de segurança do backend).
+const MAX_TEMPLATE_BANNER_DATA_URL_LENGTH = 6_000_000;
+const TEMPLATE_BANNER_DATA_URL_REGEX = /^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/]+=*$/;
+
+const VALID_SELF_TEMPLATE_CATEGORIES = ["GERAL", "HOME", "PREMIUM"] as const;
+type AdminSelfTemplateCategory = (typeof VALID_SELF_TEMPLATE_CATEGORIES)[number];
 
 // Fase 33: CRUD do catálogo de exercícios.
 const VALID_DIFFICULTY_LEVELS = ["INICIANTE", "INTERMEDIARIO", "AVANCADO"] as const;
@@ -491,7 +501,7 @@ export const adminService = {
     return template;
   },
 
-  async createSelfTemplate(name: string, sessionScheme?: string) {
+  async createSelfTemplate(name: string, sessionScheme?: string, category?: string) {
     if (!name?.trim()) {
       const err = new Error("Nome do template é obrigatório.");
       (err as any).statusCode = 400;
@@ -503,7 +513,55 @@ export const adminService = {
       (err as any).statusCode = 400;
       throw err;
     }
-    return adminRepository.createSelfTemplate(name.trim(), scheme);
+    const cat = (category ?? "GERAL") as AdminSelfTemplateCategory;
+    if (!VALID_SELF_TEMPLATE_CATEGORIES.includes(cat)) {
+      const err = new Error("category deve ser GERAL, HOME ou PREMIUM.");
+      (err as any).statusCode = 400;
+      throw err;
+    }
+    return adminRepository.createSelfTemplate(name.trim(), scheme, cat);
+  },
+
+  /**
+   * Fase 52: banner do carrossel de "Meu Treino Pessoal" (Treino em Casa /
+   * Treinos Premium) — mesmo padrão de validação de updateExerciseMedia
+   * (tamanho ANTES de decodificar base64, formato via regex ANTES de separar
+   * header/payload, existência checada antes de gastar tempo com upload).
+   * `bannerDataUrl: null` remove o banner (o card volta pro fallback
+   * estático só-com-nome).
+   */
+  async uploadSelfTemplateBanner(programId: string, bannerDataUrl: string | null) {
+    const template = await adminRepository.findSelfTemplateWithSessions(programId);
+    if (!template) {
+      const err = new Error("Template não encontrado.");
+      (err as any).statusCode = 404;
+      throw err;
+    }
+
+    if (bannerDataUrl === null) {
+      return adminRepository.updateSelfTemplateBanner(programId, null);
+    }
+
+    if (bannerDataUrl.length > MAX_TEMPLATE_BANNER_DATA_URL_LENGTH) {
+      const err = new Error("Imagem muito grande. Envie um banner de até ~4MB.");
+      (err as any).statusCode = 400;
+      throw err;
+    }
+    if (!TEMPLATE_BANNER_DATA_URL_REGEX.test(bannerDataUrl)) {
+      const err = new Error("Formato inválido. Envie uma imagem PNG, JPEG ou WebP.");
+      (err as any).statusCode = 400;
+      throw err;
+    }
+
+    const commaIndex = bannerDataUrl.indexOf(",");
+    const header = bannerDataUrl.slice(0, commaIndex);
+    const base64Data = bannerDataUrl.slice(commaIndex + 1);
+    const contentType = header.slice(5, header.indexOf(";"));
+    const extension = contentType.split("/")[1];
+    const buffer = Buffer.from(base64Data, "base64");
+
+    const url = await uploadTemplateBanner(buffer, contentType, extension);
+    return adminRepository.updateSelfTemplateBanner(programId, url);
   },
 
   async addSessionToSelfTemplate(programId: string, name: string | undefined, letter: string) {

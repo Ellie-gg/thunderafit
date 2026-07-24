@@ -141,7 +141,45 @@ export const workoutProgramsService = {
     return workoutProgramsRepository.listSelfTemplates();
   },
 
-  async applySelfTemplate(sourceProgramId: string, alunoId: string) {
+  /**
+   * Fase 52: "1 treino pessoal (SELF) ativo por vez" — mesmo espírito do
+   * `apply()` do Personal acima (Fase 41), mas aqui com SUBSTITUIÇÃO
+   * automática em vez de exigir que o aluno delete manualmente primeiro: o
+   * aluno pede a troca explicitamente (`replace: true`) depois de confirmar
+   * um aviso na UI, então a troca acontece na mesma chamada (apaga o
+   * anterior, aplica o novo), sem uma segunda ida-e-volta ao backend.
+   *
+   * Sem `replace`, um SELF já aplicado gera 409 com `code:
+   * "SELF_PROGRAM_EXISTS"` + o nome/id do programa atual, pro frontend
+   * montar o diálogo de confirmação (mesmo texto de aviso de perda de
+   * histórico já usado no delete manual do Personal).
+   */
+  async applySelfTemplate(sourceProgramId: string, alunoId: string, replace = false) {
+    // Nota: `existing` (se houver) é sempre uma INSTÂNCIA aplicada
+    // (isTemplate: false), nunca o mesmo registro do `sourceProgramId`
+    // (sempre um TEMPLATE, isTemplate: true) — não há atalho de "mesmo id",
+    // toda aplicação (mesmo do mesmo template de novo) sempre gera uma cópia
+    // nova e conta como substituição se já houver uma instância ativa.
+    const existing = await workoutProgramsRepository.findAppliedSelfProgramForAluno(alunoId);
+    if (existing) {
+      if (!replace) {
+        const err = httpError(
+          `Você já tem o treino pessoal "${existing.name}" ativo. Substituir pelo novo?`,
+          409
+        ) as any;
+        err.code = "SELF_PROGRAM_EXISTS";
+        err.existingProgramId = existing.id;
+        err.existingProgramName = existing.name;
+        throw err;
+      }
+      // Mesma operação de exclusão usada no fluxo manual do Personal
+      // (`deleteProgram` do repository, sem as checagens de posse daquele
+      // service — já sabemos que `existing` é deste `alunoId` porque veio da
+      // busca acima escopada por ele) — apaga séries/exercícios/sessões em
+      // transação antes de aplicar o novo.
+      await workoutProgramsRepository.deleteProgram(existing.id);
+    }
+
     const copy = await workoutProgramsRepository.applySelfTemplateToAluno(sourceProgramId, alunoId);
     if (!copy) throw httpError("Template não encontrado.", 404);
     return copy;

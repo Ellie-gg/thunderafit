@@ -223,9 +223,22 @@ export const adminRepository = {
     });
   },
 
-  async createSelfTemplate(name: string, sessionScheme: "LETTER" | "WEEKDAY") {
+  async createSelfTemplate(
+    name: string,
+    sessionScheme: "LETTER" | "WEEKDAY",
+    category: "GERAL" | "HOME" | "PREMIUM"
+  ) {
     return prisma.workoutProgram.create({
-      data: { name, origin: "SELF", personalId: null, isTemplate: true, sessionScheme },
+      data: { name, origin: "SELF", personalId: null, isTemplate: true, sessionScheme, category },
+    });
+  },
+
+  // Fase 52: banner do carrossel de "Meu Treino Pessoal" — `bannerImageUrl:
+  // null` remove o banner (o card volta pro fallback estático só-com-nome).
+  async updateSelfTemplateBanner(id: string, bannerImageUrl: string | null) {
+    return prisma.workoutProgram.update({
+      where: { id },
+      data: { bannerImageUrl },
     });
   },
 

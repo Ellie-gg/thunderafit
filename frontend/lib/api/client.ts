@@ -16,9 +16,16 @@ import { getClientLocale } from "@/i18n/client-locale";
 
 export class ApiError extends Error {
   status: number;
-  constructor(status: number, message: string) {
+  // Fase 52: corpo completo da resposta de erro — a maioria dos call sites só
+  // usa `message`, mas alguns endpoints (ex: conflito de "1 treino pessoal
+  // ativo") devolvem campos extras (`code`, ids) que o caller precisa ler pra
+  // decidir a UI (ex: abrir um diálogo de confirmação em vez de só mostrar
+  // o erro).
+  data: Record<string, unknown>;
+  constructor(status: number, message: string, data: Record<string, unknown> = {}) {
     super(message);
     this.status = status;
+    this.data = data;
   }
 }
 
@@ -95,7 +102,7 @@ export async function apiFetch<T>(path: string, options: RequestOptions = {}): P
   const data = await res.json().catch(() => ({}));
 
   if (!res.ok) {
-    throw new ApiError(res.status, data.error ?? "Erro inesperado na requisição.");
+    throw new ApiError(res.status, data.error ?? "Erro inesperado na requisição.", data);
   }
 
   return data as T;

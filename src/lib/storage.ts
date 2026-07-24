@@ -16,11 +16,7 @@ const storage = new Storage();
  * - nome de objeto colidindo entre uploads — timestamp + sufixo aleatório
  *   evita sobrescrever mídia de outro exercício por coincidência.
  */
-export async function uploadExerciseMedia(
-  buffer: Buffer,
-  contentType: string,
-  extension: string
-): Promise<string> {
+async function uploadToBucket(folder: string, buffer: Buffer, contentType: string, extension: string): Promise<string> {
   const bucketName = process.env.GCS_BUCKET_NAME;
   if (!bucketName) {
     throw new Error(
@@ -28,7 +24,7 @@ export async function uploadExerciseMedia(
     );
   }
 
-  const objectName = `exercises/${Date.now()}-${Math.random().toString(36).slice(2)}.${extension}`;
+  const objectName = `${folder}/${Date.now()}-${Math.random().toString(36).slice(2)}.${extension}`;
   const bucket = storage.bucket(bucketName);
   const file = bucket.file(objectName);
 
@@ -40,4 +36,26 @@ export async function uploadExerciseMedia(
   });
 
   return `https://storage.googleapis.com/${bucketName}/${objectName}`;
+}
+
+export async function uploadExerciseMedia(
+  buffer: Buffer,
+  contentType: string,
+  extension: string
+): Promise<string> {
+  return uploadToBucket("exercises", buffer, contentType, extension);
+}
+
+/**
+ * Fase 52: banner do carrossel de "Meu Treino Pessoal" (templates SELF
+ * Treino em Casa/Premium) — mesmo bucket/mecanismo de uploadExerciseMedia,
+ * só muda o prefixo do objeto (pasta separada, não mistura com mídia de
+ * exercício).
+ */
+export async function uploadTemplateBanner(
+  buffer: Buffer,
+  contentType: string,
+  extension: string
+): Promise<string> {
+  return uploadToBucket("banners", buffer, contentType, extension);
 }
