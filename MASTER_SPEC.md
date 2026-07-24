@@ -430,6 +430,149 @@ previa — a implementação corrigiu suposições que não se sustentaram na re
     há duplicação de trabalho real a corrigir ainda (fica registrado como risco latente,
     não bug).
 
+### Grupo E — Performance, rodada 2 (triagem 2026-07-24, mais profunda que o Grupo D). Parcialmente ✅ CONCLUÍDA (2026-07-24, registrada como "Fase 49" no STATUS.md) — os 2 itens de maior impacto/velocidade implementados + tarefas agregáveis; o restante fica documentado abaixo, separado por tarefa, para uma fase futura.
+
+Segunda triagem (4 agentes de pesquisa em paralelo, sem código — cache/HTTP,
+escala de query, waterfalls de frontend, bundle/carregamento inicial), mais
+funda que o Grupo D: não repetiu N+1/índices/payload óbvios já corrigidos, foi
+atrás do que só aparece com VOLUME (tabelas sem índice que só doem depois de
+milhares de linhas) e de padrões repetidos entre domínios (fetch-tudo-e-reduz-
+em-JS onde o Postgres deveria agregar).
+
+**✅ Implementado nesta fase** (as 2 tarefas de maior impacto/velocidade +
+tarefas agregáveis com elas — 3 agentes em paralelo sobre arquivos sem
+sobreposição, migration feita manualmente à parte):
+
+26. ✅ **Migration aditiva de índices** (só `CREATE INDEX`, mesma classe seguro
+    do Grupo D) em 5 tabelas append-only/muito-joinadas que ficaram de fora da
+    1ª triagem: `WorkoutExercise(workoutId)` + `WorkoutExercise(exerciseId)`
+    (zero índice antes, apesar de joinada em toda leitura de treino/programa
+    e no gate de delete do admin), `LoginLog(createdAt)`,
+    `AdminAccessLog(createdAt)`, `AdminAuditLog(createdAt)` (as 3 sempre lidas
+    como `ORDER BY createdAt DESC LIMIT N` sem índice de apoio — Postgres
+    ordenava a tabela inteira), `SupportMessage(threadId)` (o include de
+    mensagens em `findThreadById` era scan completo), `users(createdAt)`
+    (apoia `newUsersLast30Days` e a paginação do admin), `SupportThread(status,
+    createdAt)` (SLA do admin filtrava sem índice).
+27. ✅ **Detecção de PR movida pra agregação SQL** (`workout-summary.repository.ts`)
+    — `detectPersonalRecord` (chamado a CADA série logada, o caminho de
+    escrita mais quente do app) trazia TODO o histórico do aluno pro exercício
+    só pra tirar um `Math.max` em JS; virou `aggregate`/`MAX` no Postgres (só o
+    número atravessa a rede). `buildPersonalRecords` (batelado, ao concluir
+    sessão) tinha o mesmo formato pra múltiplos exercícios — virou `$queryRaw`
+    com `GROUP BY` via join `SetLog→WorkoutExercise→Workout` (Prisma `groupBy`
+    não agrupa por campo de relação), `Prisma.join` no `IN (...)` pra não
+    concatenar string.
+28. ✅ **`getLoadHistory` (domínio progress) movido pra agregação SQL** — mesmo
+    formato (fetch-tudo-e-reduz-em-JS) pro gráfico de evolução de carga;
+    virou `$queryRaw` com `date_trunc('day', ...)` + `MAX` + `GROUP BY`
+    (mesmo padrão já usado em `admin.repository.ts#newUsersLast30Days`).
+    Verificado explicitamente que `SetLog.loggedAt` é `timestamp` SEM timezone
+    (não `timestamptz`) — `date_trunc` trunca os componentes armazenados
+    direto, sem aplicar offset, então não há divergência com o `toISOString().
+    slice(0,10)` que já era usado; o código continua formatando o dia em JS
+    (não confia em string formatada pelo SQL) por segurança.
+29. ✅ **`GET /api/setlogs` (histórico avulso) ganhou o mesmo cap de 100** que
+    `workouts.repository.ts`/`workout-programs.repository.ts` já aplicavam no
+    MESMO relacionamento `setLogs` — inconsistência entre domínios onde o
+    caminho irmão tinha ficado sem cap.
+30. ✅ **Cache em memória do catálogo de exercícios** (`exercises.repository.ts`)
+    — catálogo (~171, near-estático, só muda via CRUD do admin) parava de
+    fazer `findMany` a cada request; TTL de 5min (espelha o `staleTime` já
+    usado no frontend pro mesmo catálogo) + invalidação explícita chamada
+    pelo admin após cada create/update/delete/media. Consulta por grupo
+    muscular filtra o array cacheado em memória em vez de nova query — isso
+    também resolveu de graça o problema da Montagem Inteligente (1 query por
+    grupo selecionado, ver item 33 abaixo). Traduções EN/ES
+    (`exercise-translations.repository.ts`) ganharam o mesmo cache por
+    locale, beneficiando também os endpoints de treino/programa que traduzem
+    exercícios aninhados, não só a listagem do catálogo. `GET /api/exercises`
+    ganhou `ETag`/`If-None-Match` (304 sem corpo) + `Cache-Control: private,
+    max-age=60` (privado — a rota fica atrás de `authenticate`).
+    **Achado real durante a implementação**: um teste existente
+    (`exercise-translation.test.ts`) escrevia uma tradução direto via Prisma
+    (contornando o admin) e esperava vê-la refletida na mesma execução —
+    corrigido chamando `invalidateCache()` explicitamente após a escrita
+    direta do teste, já que o caminho de teste não passa pelo admin (única
+    fonte real de invalidação em produção).
+    *Modelo: Sonnet 5 (índices, migration manual) + 3 agentes em paralelo
+    (Sonnet 5) pros itens 27-30. 309/309 backend, `tsc --noEmit` limpo.*
+
+**📋 Documentado, NÃO implementado nesta fase** (separado por tarefa, pra
+decisão/priorização futura):
+
+31. **Frontend: `completeWorkout` invalida o prefixo `["workout-program"]`
+    inteiro** (`frontend/app/treinos/[id]/page.tsx`) em vez de só
+    `["workout-program", programId]` — refetch em cascata de todo cache de
+    programa no app a cada conclusão de treino. `programId` já está disponível
+    no workout carregado. Config pura, baixo risco.
+32. **Frontend: dados quase-estáticos ainda no `staleTime` global de 30s**
+    (`["billing-status"]`, `["relations"]`, `["my-profile"]`, listas de
+    programas, `["self-templates"]`) — todos só mudam via ação que já
+    invalida a própria chave; `staleTime` de minutos (ou `Infinity` pra
+    profile/billing) cortaria a maioria dos refetches de navegação sem risco
+    de dado desatualizado.
+33. ~~Montagem Inteligente com 1 query de catálogo por grupo muscular~~ —
+    **resolvido de graça pelo item 30** (o loop já reusa o cache em memória);
+    só ganhou um comentário no código, sem mudança funcional.
+34. **Frontend: `html-to-image` e `recharts` embarcados eager** nas rotas mais
+    usadas (execução de treino e evolução/hub do aluno) — ambos só precisam
+    carregar após interação/dado resolvido; `next/dynamic({ ssr: false })`
+    resolveria os dois. `html-to-image` em particular bate direto no webview
+    do Capacitor na tela que o aluno mais abre.
+35. **Backend: sem response schemas do Fastify** em nenhuma rota — payloads
+    grandes (catálogo, `getProgram`/`getWorkout` com até 100 setLogs por
+    exercício) pagam serialização JSON genérica em vez do `fast-json-
+    stringify` compilado. Cross-cutting, sem mudança de comportamento.
+36. **Backend: listas de programa/treino sem paginação** (`workout-programs.
+    repository.ts#listByPersonal/listByAluno`, `workouts.repository.ts#
+    findAllByAluno/findAllByPersonal`) — cresce sem teto pra um Personal
+    veterano. **[CONTRATO-API]** — mesma classe dos endpoints já adiados no
+    Grupo D (mudança de contrato HTTP, não só otimização de query).
+37. **Backend+Frontend: waterfall do dashboard do aluno** (3 queries de
+    detalhe — programa do Personal, self, dieta — esperam a lista resolver
+    pra ler `[0].id`) é dependência real de dado, só removível com um
+    endpoint novo tipo `GET /api/dashboard` devolvendo os programas ativos já
+    com exercícios aninhados numa resposta só. **[CONTRATO-API]** — mesma
+    classe adiada no Grupo D; frontend puro só consegue mascarar com
+    `placeholderData` da lista (ver item 39), não eliminar o hop.
+38. **Frontend: bundle de mensagens i18n (~700 chaves, ~38KB) inteiro
+    enviado ao cliente em toda rota** via `NextIntlClientProvider` sem prop
+    `messages` — o carregamento por-locale já está correto (só o locale
+    ativo, não os 3), falta escopar por namespace/rota.
+39. **Frontend: navegação lista→detalhe não semeia o cache do detalhe a
+    partir da lista** (`["workout-programs",...]` → `["workout-program",
+    id]`) — `placeholderData` da lista eliminaria o flash de loading pra dado
+    já em memória (o fetch de verdade ainda dispara, a lista não tem os
+    `exercises` aninhados).
+40. **Backend: `addSession` carrega o mesmo `WorkoutProgram` 2× no mesmo
+    request** (`workout-programs.service.ts`) — `findProgramById` seguido de
+    `findProgramWithSessions`, sendo que o 2º já tem tudo que o 1º usa.
+    **[AUTHZ]** — mexe no código que faz a checagem de posse; preservar a
+    ordem existência-antes-de-posse (404 antes de 403) na implementação.
+41. **Backend: `admin.getOverview` faz `groupBy` na `ClientRelation` inteira +
+    fetch de todos os profissionais** pra contar quem bateu o limite freemium
+    em memória — cresce com o tamanho total da plataforma, não por-tenant.
+    **[AUTHZ/BILLING]** — qualquer reescrita precisa preservar a semântica
+    exata do `limiteAlunos` por profissional.
+42. **Backend: `getFrequency`/`getWeeklySummary` (domínio progress) ainda
+    buscam a janela inteira de `SetLog` pra contar/agregar em memória** — o
+    trim de `select` (item 28) já cortou colunas desnecessárias, mas a
+    contagem de dias-com-atividade (streak) e o bucket mensal continuam
+    percorrendo linha por linha em JS. Decisão consciente de escopo: mover
+    isso pra SQL exigiria reescrever a lógica de sequência/streak (stateful,
+    não é um `GROUP BY` simples) — risco maior que o retorno nesta rodada
+    rápida; janela de 90 dias hoje, não cresce sem teto.
+43. **Baixo impacto, registrado sem ação**: Map do rate-limiter de login
+    cresce sem eviction (mitigado por instância única + restart no deploy);
+    checagem de nome parecido do admin roda Levenshtein O(N) por escrita
+    (só ~171 nomes, admin-only); avatar em base64 infla o payload de `/me` +
+    `localStorage`; sino de notificação faz poll de 30s em toda página
+    autenticada (pausa corretamente em aba oculta); app inteiro é `"use
+    client"` (nenhum layout aninhado além do root, estrutural — refatoração
+    grande, não uma config rápida); 3 famílias de fonte no layout raiz; sem
+    bundle analyzer configurado pra medir os ganhos dos itens 34/38 no CI.
+
 ### Backlog operacional herdado
 Ver Seção 7 acima (Neon, billing, Android, webhook).
 

@@ -1,5 +1,11 @@
 import prisma from "../../lib/prisma";
 
+// Mesmo teto e mesma razão de workouts.repository.ts / workout-programs.repository.ts
+// ::SET_LOG_HISTORY_LIMIT — sem isso, esta listagem (ao contrário das leituras
+// aninhadas irmãs, que já tinham o cap) crescia sem limite pra sempre pra um
+// usuário de longo prazo.
+const SET_LOG_HISTORY_LIMIT = 100;
+
 export const setlogsRepository = {
   async findWorkoutExerciseById(workoutExerciseId: string) {
     return prisma.workoutExercise.findUnique({ where: { id: workoutExerciseId } });
@@ -12,9 +18,14 @@ export const setlogsRepository = {
   },
 
   async findAllByWorkoutExercise(workoutExerciseId: string) {
-    return prisma.setLog.findMany({
+    // desc + take = "os N mais recentes"; revertido pra asc logo abaixo (o
+    // frontend depende dessa ordem — ver SET_LOG_HISTORY_LIMIT acima), mesmo
+    // padrão já usado pelas leituras aninhadas irmãs.
+    const setLogs = await prisma.setLog.findMany({
       where: { workoutExerciseId },
-      orderBy: { loggedAt: "asc" },
+      orderBy: { loggedAt: "desc" },
+      take: SET_LOG_HISTORY_LIMIT,
     });
+    return setLogs.reverse();
   },
 };

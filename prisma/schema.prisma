@@ -81,6 +81,10 @@ model User {
   // (diretório de descoberta) — filtra por role+disponibilidade antes de
   // qualquer outra coisa, ainda sem índice explícito.
   @@index([role, availableForNewStudents])
+  // Perf (triagem 2 — 2026-07-24): apoia admin.newUsersLast30Days (WHERE
+  // createdAt >= ...) e a ordenação de findUsersPage (ORDER BY createdAt
+  // DESC) — sem índice, ambas escaneavam/ordenavam a tabela inteira.
+  @@index([createdAt])
   @@map("users")
 }
 
@@ -378,6 +382,14 @@ model WorkoutExercise {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
   setLogs      SetLog[]
+
+  // Perf (triagem 2 — 2026-07-24): tabela sem nenhum índice além do @id, mas
+  // filtrada/joinada o tempo todo por workoutId (toda leitura de treino/
+  // programa, cascade de delete) e por exerciseId (gate de delete do admin,
+  // scans de PR/progresso) — cada uma virava sequential scan da tabela
+  // inteira, que só cresce (copiada a cada `apply` de programa).
+  @@index([workoutId])
+  @@index([exerciseId])
 }
 
 model SetLog {
@@ -446,6 +458,10 @@ model SupportThread {
   // updatedAt.
   @@index([alunoId, updatedAt])
   @@index([personalId, updatedAt])
+  // Perf (triagem 2 — 2026-07-24): openThreadsOldestFirst (SLA do admin)
+  // filtra por status ABERTO sem nenhum índice que cubra — scan da tabela
+  // inteira de threads.
+  @@index([status, createdAt])
 }
 
 enum SupportThreadStatus {
@@ -460,6 +476,12 @@ model SupportMessage {
   authorId  String
   text      String
   createdAt DateTime      @default(now())
+
+  // Perf (triagem 2 — 2026-07-24): sem índice, o include de mensagens em
+  // findThreadById (usado até só pra checar posse antes de responder) era
+  // scan da tabela inteira de mensagens, que cresce com toda thread da
+  // plataforma.
+  @@index([threadId])
 }
 
 // ============================================================
@@ -567,6 +589,12 @@ model LoginLog {
   userId    String
   ipAddress String?
   createdAt DateTime @default(now())
+
+  // Perf (triagem 2 — 2026-07-24): recentLogins (admin) é sempre ORDER BY
+  // createdAt DESC LIMIT N; sem índice, Postgres ordena a tabela inteira —
+  // e esta é a que mais cresce das 3 tabelas de log (1 linha por login
+  // bem-sucedido, de todo usuário, pra sempre).
+  @@index([createdAt])
 }
 
 // AdminAccessLog audita especificamente o acesso de um ADMIN a dado de
@@ -578,6 +606,10 @@ model AdminAccessLog {
   resourceType String
   alunoId      String
   createdAt    DateTime @default(now())
+
+  // Perf (triagem 2 — 2026-07-24): mesmo padrão de LoginLog — recentAccessLogs
+  // é ORDER BY createdAt DESC LIMIT N sem índice de apoio.
+  @@index([createdAt])
 }
 
 // Fase 33: auditoria genérica de ações administrativas de escrita sensíveis
@@ -593,4 +625,8 @@ model AdminAuditLog {
   targetUserId String
   details      String
   createdAt    DateTime @default(now())
+
+  // Perf (triagem 2 — 2026-07-24): mesmo padrão de LoginLog/AdminAccessLog —
+  // recentAuditLogs é ORDER BY createdAt DESC LIMIT N sem índice de apoio.
+  @@index([createdAt])
 }
