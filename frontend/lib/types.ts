@@ -119,7 +119,7 @@ export type WorkoutProgramOrigin = "PERSONAL" | "SELF";
 // Fase 52: só relevante em templates SELF (isTemplate: true, origin: SELF) —
 // "Meu Treino Pessoal" agrupa em carrossel por categoria. GERAL = lista plana
 // de sempre (default de todo programa não-SELF também, sem uso ali).
-export type SelfTemplateCategory = "GERAL" | "HOME" | "PREMIUM";
+export type SelfTemplateCategory = "GERAL" | "HOME" | "PREMIUM" | "PRONTOS";
 
 export interface WorkoutProgram {
   id: string;
