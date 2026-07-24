@@ -55,6 +55,14 @@ export const relationsService = {
 
   async listRelations(personalId: string) {
     const relations = await relationsRepository.findAllByPersonal(personalId);
+    // Antes fazia 1 findUnique por aluno (N+1) — agora é uma única query
+    // batelada por todos os IDs de uma vez, com o resultado indexado num Map
+    // pra preservar a ordem de `relations` na montagem final.
+    const alunos = await prisma.user.findMany({
+      where: { id: { in: relations.map((rel) => rel.alunoId) } },
+    });
+    const alunoById = new Map(alunos.map((aluno) => [aluno.id, aluno]));
+
     const result: Array<{
       id: string;
       email: string;
@@ -64,7 +72,7 @@ export const relationsService = {
       paymentReminderRecurring: boolean;
     }> = [];
     for (const rel of relations) {
-      const aluno = await prisma.user.findUnique({ where: { id: rel.alunoId } });
+      const aluno = alunoById.get(rel.alunoId);
       if (aluno) {
         result.push({
           id: aluno.id,
@@ -107,8 +115,19 @@ export const relationsService = {
   async checkAndFireDueReminders(alunoId: string) {
     const now = new Date();
     const due = await relationsRepository.findDueRemindersForAluno(alunoId, now);
+    if (due.length === 0) return;
+
+    // Antes fazia 1 findUnique por lembrete vencido (N+1) — agora é uma
+    // única query batelada por todos os personalId de uma vez, mesmo padrão
+    // já usado em listRelations. notify()/advanceReminder() continuam
+    // sequenciais por relação (escritas com efeito colateral, não leitura).
+    const personals = await prisma.user.findMany({
+      where: { id: { in: due.map((relation) => relation.personalId) } },
+    });
+    const personalById = new Map(personals.map((personal) => [personal.id, personal]));
+
     for (const relation of due) {
-      const personal = await prisma.user.findUnique({ where: { id: relation.personalId } });
+      const personal = personalById.get(relation.personalId);
       const label = personal?.name?.trim() || personal?.email || "seu Personal";
       await notificationsService.notify(
         alunoId,

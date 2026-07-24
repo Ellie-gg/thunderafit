@@ -35,7 +35,7 @@ beforeEach(() => {
 describe("workoutSummaryService.buildCompletionSummary — comparação de volume", () => {
   it("primeira conclusão do Workout (sem lastCompletedAt anterior) → hasHistory false", async () => {
     mockedRepo.findSetLogsForWorkoutInWindow.mockResolvedValueOnce([log({ weightKg: 50, repsDone: 10 })]);
-    mockedRepo.findHistoricalSetLogsForExercise.mockResolvedValueOnce([]);
+    mockedRepo.findHistoricalSetLogsForExercises.mockResolvedValueOnce([]);
 
     const completedAt = new Date("2026-07-21T12:30:00.000Z");
     const result = await workoutSummaryService.buildCompletionSummary(WORKOUT, null, completedAt);
@@ -51,7 +51,7 @@ describe("workoutSummaryService.buildCompletionSummary — comparação de volum
     mockedRepo.findSetLogsForWorkoutInWindow
       .mockResolvedValueOnce([log({ weightKg: 50, repsDone: 10 })]) // esta sessão
       .mockResolvedValueOnce([]); // sessão anterior, sem logs
-    mockedRepo.findHistoricalSetLogsForExercise.mockResolvedValueOnce([]);
+    mockedRepo.findHistoricalSetLogsForExercises.mockResolvedValueOnce([]);
 
     const previous = new Date("2026-07-14T12:00:00.000Z");
     const completedAt = new Date("2026-07-21T12:30:00.000Z");
@@ -66,7 +66,9 @@ describe("workoutSummaryService.buildCompletionSummary — comparação de volum
     mockedRepo.findSetLogsForWorkoutInWindow
       .mockResolvedValueOnce([log({ weightKg: 60, repsDone: 10 })]) // esta sessão: 600
       .mockResolvedValueOnce([log({ weightKg: 50, repsDone: 10 })]); // anterior: 500
-    mockedRepo.findHistoricalSetLogsForExercise.mockResolvedValueOnce([{ weightKg: 55 }]);
+    mockedRepo.findHistoricalSetLogsForExercises.mockResolvedValueOnce([
+      { weightKg: 55, workoutExercise: { exerciseId: "exercise-1" } },
+    ]);
 
     const previous = new Date("2026-07-14T12:00:00.000Z");
     const completedAt = new Date("2026-07-21T12:30:00.000Z");
@@ -80,7 +82,9 @@ describe("workoutSummaryService.buildCompletionSummary — comparação de volum
     mockedRepo.findSetLogsForWorkoutInWindow
       .mockResolvedValueOnce([log({ weightKg: 40, repsDone: 10 })]) // esta sessão: 400
       .mockResolvedValueOnce([log({ weightKg: 50, repsDone: 10 })]); // anterior: 500
-    mockedRepo.findHistoricalSetLogsForExercise.mockResolvedValueOnce([{ weightKg: 55 }]);
+    mockedRepo.findHistoricalSetLogsForExercises.mockResolvedValueOnce([
+      { weightKg: 55, workoutExercise: { exerciseId: "exercise-1" } },
+    ]);
 
     const previous = new Date("2026-07-14T12:00:00.000Z");
     const completedAt = new Date("2026-07-21T12:30:00.000Z");
@@ -107,7 +111,7 @@ describe("workoutSummaryService.buildCompletionSummary — comparação de volum
 
   it("usa o teto de 6h quando não há conclusão anterior recente o bastante", async () => {
     mockedRepo.findSetLogsForWorkoutInWindow.mockResolvedValueOnce([]);
-    mockedRepo.findHistoricalSetLogsForExercise.mockResolvedValue([]);
+    mockedRepo.findHistoricalSetLogsForExercises.mockResolvedValue([]);
 
     const completedAt = new Date("2026-07-21T12:30:00.000Z");
     await workoutSummaryService.buildCompletionSummary(WORKOUT, null, completedAt);
@@ -124,10 +128,14 @@ describe("workoutSummaryService.buildCompletionSummary — PRs", () => {
       log({ weightKg: 60, exerciseId: "remada", exerciseName: "Remada Curvada" }),
       log({ weightKg: 40, exerciseId: "rosca", exerciseName: "Rosca Direta" }),
     ]);
-    mockedRepo.findHistoricalSetLogsForExercise
-      .mockResolvedValueOnce([{ weightKg: 80 }]) // supino: PR (82.5 > 80)
-      .mockResolvedValueOnce([{ weightKg: 65 }]) // remada: não é PR (60 < 65)
-      .mockResolvedValueOnce([{ weightKg: 35 }]); // rosca: PR (40 > 35)
+    // Uma única chamada batelada agora (antes eram 3 mockResolvedValueOnce em
+    // sequência, um por exercício) — os 3 exercícios da sessão vêm juntos,
+    // cada um com seu próprio máximo histórico via `workoutExercise.exerciseId`.
+    mockedRepo.findHistoricalSetLogsForExercises.mockResolvedValueOnce([
+      { weightKg: 80, workoutExercise: { exerciseId: "supino" } }, // supino: PR (82.5 > 80)
+      { weightKg: 65, workoutExercise: { exerciseId: "remada" } }, // remada: não é PR (60 < 65)
+      { weightKg: 35, workoutExercise: { exerciseId: "rosca" } }, // rosca: PR (40 > 35)
+    ]);
 
     const completedAt = new Date("2026-07-21T12:30:00.000Z");
     const result = await workoutSummaryService.buildCompletionSummary(WORKOUT, null, completedAt);
@@ -138,7 +146,9 @@ describe("workoutSummaryService.buildCompletionSummary — PRs", () => {
 
   it("nenhum PR quando nenhum exercício supera o histórico", async () => {
     mockedRepo.findSetLogsForWorkoutInWindow.mockResolvedValueOnce([log({ weightKg: 50, exerciseId: "supino" })]);
-    mockedRepo.findHistoricalSetLogsForExercise.mockResolvedValueOnce([{ weightKg: 55 }]);
+    mockedRepo.findHistoricalSetLogsForExercises.mockResolvedValueOnce([
+      { weightKg: 55, workoutExercise: { exerciseId: "supino" } },
+    ]);
 
     const completedAt = new Date("2026-07-21T12:30:00.000Z");
     const result = await workoutSummaryService.buildCompletionSummary(WORKOUT, null, completedAt);
@@ -148,7 +158,7 @@ describe("workoutSummaryService.buildCompletionSummary — PRs", () => {
 
   it("exercício sem NENHUM histórico não conta como PR (evita spam em exercício novo do programa)", async () => {
     mockedRepo.findSetLogsForWorkoutInWindow.mockResolvedValueOnce([log({ weightKg: 20, exerciseId: "exercicio-novo" })]);
-    mockedRepo.findHistoricalSetLogsForExercise.mockResolvedValueOnce([]);
+    mockedRepo.findHistoricalSetLogsForExercises.mockResolvedValueOnce([]);
 
     const completedAt = new Date("2026-07-21T12:30:00.000Z");
     const result = await workoutSummaryService.buildCompletionSummary(WORKOUT, null, completedAt);
@@ -160,13 +170,13 @@ describe("workoutSummaryService.buildCompletionSummary — PRs", () => {
     mockedRepo.findSetLogsForWorkoutInWindow
       .mockResolvedValueOnce([log({ weightKg: 20, exerciseId: "supino" })]) // esta sessão
       .mockResolvedValueOnce([]); // sessão anterior
-    mockedRepo.findHistoricalSetLogsForExercise.mockResolvedValueOnce([]);
+    mockedRepo.findHistoricalSetLogsForExercises.mockResolvedValueOnce([]);
 
     const previous = new Date("2026-07-21T08:00:00.000Z");
     const completedAt = new Date("2026-07-21T12:30:00.000Z");
     await workoutSummaryService.buildCompletionSummary(WORKOUT, previous, completedAt);
 
-    expect(mockedRepo.findHistoricalSetLogsForExercise).toHaveBeenCalledWith("aluno-1", "supino", previous);
+    expect(mockedRepo.findHistoricalSetLogsForExercises).toHaveBeenCalledWith("aluno-1", ["supino"], previous);
   });
 });
 

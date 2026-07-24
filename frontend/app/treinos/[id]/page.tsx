@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useTranslations } from "next-intl";
@@ -43,6 +43,15 @@ function ExecucaoContent() {
     queryKey: ["workout", workoutId],
     queryFn: () => getWorkout(workoutId),
   });
+
+  // Fase 33.1: ordem estável usada tanto pra renderizar quanto pra saber
+  // qual card vem "abaixo" de cada exercício, pro auto-scroll ao marcar
+  // "Concluído". O último exercício rola até o card "Concluir sessão" — fim
+  // natural do fluxo, em vez de não fazer nada.
+  const sortedExercises = useMemo(() => {
+    const exercises = workoutQuery.data?.workout.exercises ?? [];
+    return [...exercises].sort((a, b) => a.order - b.order);
+  }, [workoutQuery.data]);
 
   const completeMutation = useMutation({
     mutationFn: () => completeWorkout(workoutId),
@@ -94,11 +103,6 @@ function ExecucaoContent() {
   );
   const allSetsDone = totalSets > 0 && doneSets >= totalSets;
 
-  // Fase 33.1: ordem estável usada tanto pra renderizar quanto pra saber
-  // qual card vem "abaixo" de cada exercício, pro auto-scroll ao marcar
-  // "Concluído". O último exercício rola até o card "Concluir sessão" — fim
-  // natural do fluxo, em vez de não fazer nada.
-  const sortedExercises = [...exercises].sort((a, b) => a.order - b.order);
   const exerciseCardId = (exerciseId: string) => `exercise-card-${exerciseId}`;
   const COMPLETE_SESSION_CARD_ID = "complete-session-card";
 

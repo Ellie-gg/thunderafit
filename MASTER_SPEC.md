@@ -346,6 +346,90 @@ nesta seção — registrados como **Fase 43** e **Fase 44** no STATUS.md:
     pode ser feito a qualquer momento direto nos respectivos consoles.** Estratégia de
     backup ainda sem escopo detalhado — marcador de pendência.
 
+### Grupo D — Performance (triagem 2026-07-24). ✅ CONCLUÍDA (2026-07-24, registrada como
+### "Fase 47" no STATUS.md).
+
+Triagem de performance (não auditoria exaustiva) sobre backend (Fastify+Prisma+Postgres)
+e frontend (Next.js+TanStack Query), domínio de nutrição excluído por ser dormente. Todos
+os itens de alto impacto foram implementados, junto com a maioria dos de médio/baixo —
+2 agentes em paralelo (backend mecânico + frontend mecânico) sobre arquivos sem
+sobreposição, migration de índices feita manualmente à parte por exigir mais cuidado.
+Deviações registradas por item abaixo (nem tudo saiu exatamente como o plano original
+previa — a implementação corrigiu suposições que não se sustentaram na revisão do código real).
+
+**Alto impacto — todos ✅ implementados:**
+
+15. ✅ **N+1 corrigidos em `relations.service.listRelations` e em
+    `workout-summary.service.buildPersonalRecords`.** Loop de `findUnique`/query por
+    exercício virou 1 query batelada (`findMany({ id/exerciseId: { in } })`) com
+    agrupamento em memória — mesmo formato de saída, sem migration.
+16. ✅ **`staleTime` global de 30s no `QueryClient`** (`frontend/app/providers.tsx`, antes
+    `0` implícito) **+ override de 5min no catálogo de exercícios**
+    (`add-exercise-form.tsx`/`generate-workout-modal.tsx`).
+17. ✅ **Waterfall no hub do aluno corrigido** — as 3 queries que esperavam `!!aluno`
+    resolver agora disparam junto com `relationsQuery`, gateadas só pelo `alunoId` do
+    `useParams` (a posse já era validada no backend via `ClientRelation`, independente de
+    quando o client dispara a chamada). **Opção (a) escolhida na implementação**: o
+    over-fetch da lista inteira de alunos pra achar 1 via `.find()` foi mantido de
+    propósito — endpoint dedicado "buscar 1 vínculo" (opção b) ficou fora de escopo por
+    ser mudança de contrato de API, não uma otimização de query.
+18. ✅ **Histórico de `SetLog` limitado a 100 séries mais recentes** por exercício
+    prescrito (`workout-programs.repository.findProgramWithSessions`,
+    `workouts.repository.findByIdWithExercises` — `orderBy desc + take 100`, revertido
+    pra `asc` antes de devolver, já que o frontend depende dessa ordem). Teto generoso o
+    bastante (cobre muitos meses de histórico) pra não mudar nenhum comportamento visível
+    de `splitSetLogsBySessionBoundary` — confirmado pelos testes existentes de
+    `setlogs.test.ts`/`workout-programs.test.ts` (contagens bem abaixo de 100).
+
+**Médio impacto:**
+
+19. ✅ **`select` explícito em `exercises.repository.findAll`** — manteve `description`
+    (usada de verdade e coberta por teste de contrato HTTP em
+    `exercise-translation.test.ts`), cortou só `createdAt`/`updatedAt` (nunca lidos).
+    **Checagem de nome parecido do admin**: ganhou repositório dedicado
+    `adminRepository.listAllExerciseNames()` (`select: {id, name}`), já que a função
+    antiga era compartilhada com a listagem completa da tabela do admin.
+20. ✅ **`checkAndFireDueReminders` batelado** (mesmo padrão de `listRelations`) e
+    **tradução por sessão em `workout-programs.service.getProgram` batelada** — todas as
+    sessões flatMap'adas numa única chamada a `translateNested`, redistribuídas de volta
+    por sessão preservando ordem.
+21. ✅ **Índices adicionados** (migration puramente aditiva, só `CREATE INDEX`):
+    `Workout(alunoId, createdAt)`, `Workout(personalId, createdAt)`, `Workout(programId)`,
+    `WorkoutProgram(personalId, createdAt)`, `WorkoutProgram(alunoId, createdAt)`,
+    `SetLog(workoutExerciseId, loggedAt)`, `ConnectionRequest(alunoId, createdAt)`,
+    `ConnectionRequest(professionalId, createdAt)`, `Notification(userId, createdAt)`,
+    `Notification(userId, read)`, `SupportThread(alunoId, updatedAt)`,
+    `SupportThread(personalId, updatedAt)`, `ClientRelation(alunoId)`,
+    `users(role, availableForNewStudents)` (esta última também cobre o item 25/
+    `searchProfessionals`, adicionada junto por já estar na mesma migration).
+22. ✅ **`React.memo` na lista de `/nimbus/exercicios`** (linha extraída em componente
+    próprio, `useCallback` nos handlers pra não invalidar a memoização) **+ dedup de
+    `listRelations()`** confirmada — todas as 6+ páginas já usam a mesma `queryKey:
+    ["relations"]`, então o `staleTime` do item 16 já as faz compartilhar cache sem
+    nenhuma mudança de código adicional.
+23. ⏭️ **`personal/programas/[id]/page.tsx`: SEM MUDANÇA (verificado, não se aplicava).**
+    O card de "aplicar a aluno" é renderizado incondicionalmente sempre que o programa
+    carrega — não existe uma condição de visibilidade real pra gatear `enabled`, então
+    forçar um gate aqui não traria ganho nenhum (só atrasaria uma busca que já é
+    necessária de imediato).
+24. ✅ **`sessoes/[sessionId]/page.tsx`: reprocessamento evitado com `useMemo`** — a
+    derivação de "a sessão atual" (find + sort sobre o programa inteiro) parou de rodar
+    em todo re-render. Endpoint dedicado "buscar 1 sessão" (que eliminaria o over-fetch
+    de verdade) continua fora de escopo — mudança de contrato de API.
+
+**Baixo impacto:**
+
+25. ✅ **`admin.repository.updateUserRole`** ganhou `findUserRoleById` dedicado
+    (`select: {id, role}`) em vez de carregar o `User` inteiro. **`useMemo` adicionado**
+    em `dashboard/page.tsx` (filtros de origem + busca de plano ativo),
+    `sessoes/[sessionId]/page.tsx` (item 24), `treinos/[id]/page.tsx` (sort de
+    exercícios) e `profissionais/page.tsx` (`Map` de status). `connections.repository.
+    searchProfessionals` ganhou índice de apoio junto do item 21. **`progress.service`
+    (janelas sobrepostas de `getWeeklySummary`/`getFrequency`): sem mudança** —
+    confirmado que as duas rotas não são chamadas juntas na mesma request hoje, então não
+    há duplicação de trabalho real a corrigir ainda (fica registrado como risco latente,
+    não bug).
+
 ### Backlog operacional herdado
 Ver Seção 7 acima (Neon, billing, Android, webhook).
 

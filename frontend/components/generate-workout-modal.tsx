@@ -62,7 +62,13 @@ export function GenerateWorkoutModal({ onClose }: { onClose: () => void }) {
   const isLastKey = currentKeyIndex === keys.length - 1;
   const doneKeys = new Set(completedSessions.map((s) => s.key));
 
-  const exercisesQuery = useQuery({ queryKey: ["exercises"], queryFn: () => listExercises() });
+  // staleTime alto: mesmo catálogo estático de add-exercise-form.tsx — reusa
+  // o cache entre os dois em vez de refazer o fetch a cada abertura do modal.
+  const exercisesQuery = useQuery({
+    queryKey: ["exercises"],
+    queryFn: () => listExercises(),
+    staleTime: 5 * 60_000,
+  });
   const muscleGroups = useMemo(() => {
     const set = new Set((exercisesQuery.data?.exercises ?? []).map((e) => e.muscleGroup));
     return [...set].sort((a, b) => a.localeCompare(b, "pt-BR"));

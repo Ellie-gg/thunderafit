@@ -302,7 +302,7 @@ export const adminService = {
   }) {
     validateExerciseInput(input);
 
-    const existing = await adminRepository.listAllExercises();
+    const existing = await adminRepository.listAllExerciseNames();
     const exactMatch = existing.find(
       (ex) => normalizeExerciseName(ex.name) === normalizeExerciseName(input.name) && ex.name === input.name
     );
@@ -349,7 +349,7 @@ export const adminService = {
 
     validateExerciseInput(input);
 
-    const existing = await adminRepository.listAllExercises();
+    const existing = await adminRepository.listAllExerciseNames();
     const exactMatch = existing.find(
       (ex) =>
         ex.id !== exerciseId &&
@@ -430,7 +430,7 @@ export const adminService = {
       throw err;
     }
 
-    const target = await adminRepository.findUserById(targetUserId);
+    const target = await adminRepository.findUserRoleById(targetUserId);
     if (!target) {
       const err = new Error("Usuário não encontrado.");
       (err as any).statusCode = 404;

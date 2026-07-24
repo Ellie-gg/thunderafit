@@ -77,6 +77,10 @@ model User {
   createdAt        DateTime        @default(now())
   updatedAt        DateTime        @updatedAt
 
+  // Perf (triagem 2026-07-24): apoia connections.repository.searchProfessionals
+  // (diretório de descoberta) — filtra por role+disponibilidade antes de
+  // qualquer outra coisa, ainda sem índice explícito.
+  @@index([role, availableForNewStudents])
   @@map("users")
 }
 
@@ -135,6 +139,10 @@ model ClientRelation {
   paymentReminderRecurring Boolean   @default(false)
 
   @@unique([personalId, alunoId])
+  // Perf (triagem 2026-07-24): findDueRemindersForAluno filtra só por
+  // alunoId — o @@unique acima só serve consultas que também informam
+  // personalId (ou o usam sozinho, como prefixo), não alunoId isolado.
+  @@index([alunoId])
 }
 
 enum ProfessionalType {
@@ -163,6 +171,12 @@ model ConnectionRequest {
   // Um par aluno↔profissional tem no máximo uma solicitação (re-solicitar
   // após recusa reusa a mesma linha, voltando a PENDENTE).
   @@unique([alunoId, professionalId])
+  // Perf (triagem 2026-07-24): findRequestsForAluno/findRequestsForProfessional
+  // filtram cada um por só uma das duas colunas (+ orderBy createdAt) — o
+  // @@unique acima só cobre bem o lado alunoId (prefixo), não professionalId
+  // isolado.
+  @@index([alunoId, createdAt])
+  @@index([professionalId, createdAt])
 }
 
 enum ConnectionRequestStatus {
@@ -301,6 +315,11 @@ model WorkoutProgram {
   workouts      Workout[]
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
+
+  // Perf (triagem 2026-07-24): listByPersonal/listByAluno filtram por uma
+  // dessas colunas + orderBy createdAt — nenhuma tinha índice antes.
+  @@index([personalId, createdAt])
+  @@index([alunoId, createdAt])
 }
 
 model Workout {
@@ -332,6 +351,13 @@ model Workout {
   exercises       WorkoutExercise[]
   createdAt       DateTime          @default(now())
   updatedAt       DateTime          @updatedAt
+
+  // Perf (triagem 2026-07-24): findAllByAluno/findAllByPersonal filtram por
+  // uma dessas colunas + orderBy createdAt; programId é usado em vários
+  // lugares (ex: deleteProgram) pra achar todas as sessões de um programa.
+  @@index([alunoId, createdAt])
+  @@index([personalId, createdAt])
+  @@index([programId])
 }
 
 model WorkoutExercise {
@@ -362,6 +388,13 @@ model SetLog {
   repsDone           Int
   weightKg           Float
   loggedAt           DateTime        @default(now())
+
+  // Perf (triagem 2026-07-24): toda consulta de SetLog passa por
+  // workoutExerciseId (join a partir de WorkoutExercise) combinado com um
+  // filtro de intervalo em loggedAt (janela de sessão, histórico, streak) —
+  // sem índice antes, cada leitura fazia um scan sequencial da tabela
+  // inteira de séries.
+  @@index([workoutExerciseId, loggedAt])
 }
 
 
@@ -407,6 +440,12 @@ model SupportThread {
   createdAt  DateTime             @default(now())
   updatedAt  DateTime             @updatedAt
   messages   SupportMessage[]
+
+  // Perf (triagem 2026-07-24): findThreadsForUser filtra por UMA dessas
+  // colunas por vez (aluno vê as suas, profissional vê as dele) + orderBy
+  // updatedAt.
+  @@index([alunoId, updatedAt])
+  @@index([personalId, updatedAt])
 }
 
 enum SupportThreadStatus {
@@ -500,6 +539,12 @@ model Notification {
   message   String
   read      Boolean  @default(false)
   createdAt DateTime @default(now())
+
+  // Perf (triagem 2026-07-24): o sino de notificação roda em toda página
+  // autenticada — findAllByUser (userId + orderBy createdAt) e countUnread
+  // (userId + read=false) são as duas queries mais frequentes do app inteiro.
+  @@index([userId, createdAt])
+  @@index([userId, read])
 }
 
 // ============================================================

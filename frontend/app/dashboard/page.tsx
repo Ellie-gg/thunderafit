@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { useQuery } from "@tanstack/react-query";
@@ -122,8 +122,14 @@ function DashboardContent() {
   // (prescrito pelo Personal + templates "Meu treino pessoal" aplicados) —
   // o dashboard os separa em 2 blocos claros (Fase 36), cada um com sua
   // própria "próxima sessão".
-  const personalPrograms = allPrograms.filter((p) => p.origin === "PERSONAL");
-  const selfPrograms = allPrograms.filter((p) => p.origin === "SELF");
+  const personalPrograms = useMemo(
+    () => allPrograms.filter((p) => p.origin === "PERSONAL"),
+    [allPrograms]
+  );
+  const selfPrograms = useMemo(
+    () => allPrograms.filter((p) => p.origin === "SELF"),
+    [allPrograms]
+  );
   const activePersonalProgramId = personalPrograms[0]?.id;
   const activeSelfProgramId = selfPrograms[0]?.id;
 
@@ -157,8 +163,10 @@ function DashboardContent() {
     queryFn: listMyDietPlans,
   });
 
-  const activePlanId =
-    (dietPlansQuery.data?.plans.find((p) => p.isActive) ?? dietPlansQuery.data?.plans[0])?.id;
+  const activePlanId = useMemo(
+    () => (dietPlansQuery.data?.plans.find((p) => p.isActive) ?? dietPlansQuery.data?.plans[0])?.id,
+    [dietPlansQuery.data]
+  );
 
   const dietPlanDetailQuery = useQuery({
     queryKey: ["diet-plan", activePlanId],

@@ -1,5 +1,11 @@
 import prisma from "../../lib/prisma";
 
+// Mesmo teto e mesma razão de workout-programs.repository.ts::SET_LOG_HISTORY_LIMIT
+// — sem isso, `setLogs` cresce sem limite pra sempre pra um usuário de longo
+// prazo, e aqui é o MESMO padrão de include (exercise + setLogs) usado pela
+// tela de execução de treino.
+const SET_LOG_HISTORY_LIMIT = 100;
+
 export const workoutsRepository = {
   // Criar um treino "avulso" (fluxo legado da Fase 3, ainda usado pela UI e
   // pelos testes) cria, de forma transparente, um WorkoutProgram de 1 sessão
@@ -34,7 +40,7 @@ export const workoutsRepository = {
   },
 
   async findByIdWithExercises(id: string) {
-    return prisma.workout.findUnique({
+    const workout = await prisma.workout.findUnique({
       where: { id },
       include: {
         // Fase 34.5: só o origin do programa — o frontend usa isso pra
@@ -45,11 +51,18 @@ export const workoutsRepository = {
           orderBy: { order: "asc" },
           include: {
             exercise: true,
-            setLogs: { orderBy: { loggedAt: "asc" } },
+            // desc + take = "os N mais recentes"; revertido pra asc logo
+            // abaixo (o frontend depende dessa ordem — ver SET_LOG_HISTORY_LIMIT).
+            setLogs: { orderBy: { loggedAt: "desc" }, take: SET_LOG_HISTORY_LIMIT },
           },
         },
       },
     });
+    if (!workout) return workout;
+    for (const workoutExercise of workout.exercises) {
+      workoutExercise.setLogs.reverse();
+    }
+    return workout;
   },
 
   async addExercise(

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -53,7 +53,10 @@ function ProfissionaisContent() {
 
   const requests = requestsQuery.data?.requests ?? [];
   // id do profissional -> status da minha solicitação (para rotular os resultados)
-  const statusByPro = new Map(requests.map((r) => [r.counterpart.id, r.status]));
+  const statusByPro = useMemo(
+    () => new Map(requests.map((r) => [r.counterpart.id, r.status])),
+    [requests]
+  );
 
   return (
     <>

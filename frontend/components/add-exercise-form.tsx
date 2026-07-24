@@ -53,7 +53,14 @@ export function AddExerciseForm({
   // Carrega o catálogo inteiro uma vez e filtra no cliente. O backend também
   // aceita ?muscleGroup= (usado por outros clientes/testes), mas com ~150
   // itens carregar tudo uma vez e alternar grupos sem refetch é mais fluido.
-  const exercisesQuery = useQuery({ queryKey: ["exercises"], queryFn: () => listExercises() });
+  // staleTime alto: catálogo é dado de referência (só o admin edita, raro) —
+  // sem isso, reabrir este formulário refazia o fetch dos ~170 exercícios
+  // toda vez, mesmo já tendo acabado de carregar segundos antes.
+  const exercisesQuery = useQuery({
+    queryKey: ["exercises"],
+    queryFn: () => listExercises(),
+    staleTime: 5 * 60_000,
+  });
 
   const [group, setGroup] = useState(ALL_GROUPS);
   const [filter, setFilter] = useState("");
