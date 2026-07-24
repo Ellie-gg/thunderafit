@@ -116,10 +116,13 @@ function PersonalDashboardContent() {
             {alunos.map((a) => (
               <div
                 key={a.id}
-                className="flex items-center justify-between rounded-md border border-border px-3 py-2"
+                className="flex items-center justify-between gap-3 rounded-md border border-border px-3 py-2"
               >
-                <span className="text-sm">{a.email}</span>
-                <div className="flex items-center gap-3">
+                {/* min-w-0 + break-all: sem isso, um e-mail longo não quebra
+                    linha (string sem espaços) e empurra o grupo da direita
+                    pra fora do card — mesmo padrão do hub do aluno. */}
+                <span className="min-w-0 flex-1 break-all text-sm">{a.email}</span>
+                <div className="flex shrink-0 items-center gap-3">
                   <span className="text-xs text-muted">
                     {t("desde", { data: new Date(a.createdAt).toLocaleDateString(intlLocale) })}
                   </span>
@@ -169,15 +172,18 @@ function PersonalDashboardContent() {
           <div className="flex flex-col gap-3">
             {instances.map((p) => (
               <Link key={p.id} href={`/personal/programas/${p.id}`}>
-                <Card className="flex items-center justify-between transition-colors hover:border-accent">
-                  <div>
-                    <span className="font-semibold">{p.name}</span>
-                    <p className="text-xs text-muted">
+                <Card className="flex items-center justify-between gap-3 transition-colors hover:border-accent">
+                  {/* min-w-0 pra truncate funcionar dentro do flex row — sem
+                      isso, um nome de programa ou e-mail longo empurra o
+                      grupo de ações pra fora do card. */}
+                  <div className="min-w-0 flex-1">
+                    <span className="block truncate font-semibold">{p.name}</span>
+                    <p className="truncate text-xs text-muted">
                       {p.alunoId ? alunoEmailById.get(p.alunoId) ?? t("alunoDesvinculado") : "—"} ·{" "}
                       {t("sessoesCount", { count: p.workouts?.length ?? 0 })}
                     </p>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex shrink-0 items-center gap-2">
                     <DeleteProgramButton
                       programId={p.id}
                       isTemplate={false}

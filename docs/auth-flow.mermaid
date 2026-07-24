@@ -1,0 +1,32 @@
+%% ThunderaFit — auth flow (complementary diagram)
+%% Login + JWT/refresh lifecycle. See src/auth/AGENTS.md for authorization
+%% rules and gotchas; this file is only the request/response shape.
+
+sequenceDiagram
+    participant C as Client
+    participant API as "Fastify (src/auth)"
+    participant DB as "Postgres (User)"
+
+    C->>API: POST /api/auth/login (email, password)
+    API->>DB: find User by email
+    API->>API: bcrypt compare passwordHash
+    API->>DB: store refreshTokenHash, lastLoginAt
+    API-->>C: Set-Cookie: access (JWT, 15min) + refresh (7d), both httpOnly
+
+    Note over C,API: Every subsequent request
+
+    C->>API: request + cookie (access)
+    API->>API: verify JWT (cookie takes priority over Authorization header —<br/>prod proxy injects a Google ID token there)
+    API-->>C: 200 (or 401 if expired)
+
+    Note over C,API: Access token expired
+
+    C->>API: POST /api/auth/refresh (cookie: refresh)
+    API->>DB: compare refresh token hash
+    alt hash matches
+        API->>DB: rotate — new refreshTokenHash
+        API-->>C: new access + refresh cookies
+    else hash mismatch (reuse of an old/rotated token)
+        API->>DB: invalidate refreshTokenHash (force full re-login)
+        API-->>C: 401 — theft/reuse detected
+    end

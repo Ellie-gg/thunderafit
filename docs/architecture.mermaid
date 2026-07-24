@@ -1,0 +1,47 @@
+%% ThunderaFit — domain architecture (main diagram)
+%% Scope: domain-to-domain relationships only — NOT database entities/FKs.
+%% Every domain's models reference `auth`'s User for identity/roles; that
+%% universal dependency is omitted below to keep the diagram readable —
+%% only arrows below represent an ACTUAL cross-domain service call or
+%% write into another domain's table.
+%%
+%% See also: auth-flow.mermaid, billing-flow.mermaid (focused complements).
+%% Keep in sync with AGENTS.md / src/<domain>/AGENTS.md when a domain's
+%% cross-domain calls change.
+
+flowchart TB
+    Auth[["auth<br/>User identity, roles, sessions"]]
+
+    subgraph Core["Core product"]
+        Fitness["fitness<br/>Exercises · programs · workouts · relations"]
+        Connections["connections<br/>Discovery + connection requests"]
+        Progress["progress<br/>Load/frequency aggregation"]
+        Anamnesis["anamnesis<br/>Health intake"]
+        Support["support<br/>Aluno ↔ Personal Q&A"]
+        Notifications["notifications<br/>In-app bell"]
+    end
+
+    Billing["billing<br/>Stripe subscriptions"]
+    Admin["admin<br/>/nimbus internal panel"]
+    Nutrition["nutrition<br/>(dormant, no UI)"]
+
+    Billing -->|"webhook writes plan + Stripe fields"| Auth
+    Admin -->|"user list, role edit, login history"| Auth
+
+    Connections -->|"accept ⇒ creates ClientRelation"| Fitness
+    Support -->|"authz: requires ClientRelation"| Fitness
+    Anamnesis -->|"authz: requires ClientRelation"| Fitness
+    Progress -->|"reads SetLog / Workout history"| Fitness
+    Admin -->|"exercise CRUD, SELF templates, freemium stats"| Fitness
+
+    Connections -->|"notify: request/accept/reject"| Notifications
+    Support -->|"notify: new thread/reply"| Notifications
+    Fitness -->|"notify: payment reminder"| Notifications
+
+    Anamnesis -->|"writes AdminAccessLog on admin read"| Admin
+    Admin -->|"SLA dashboard reads threads"| Support
+
+    Nutrition -.->|"isolated — no active callers"| Auth
+
+    classDef dormant fill:#eee,stroke:#999,color:#888,stroke-dasharray: 4 3;
+    class Nutrition dormant;
