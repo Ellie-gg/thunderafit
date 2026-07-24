@@ -13,17 +13,27 @@ import { Button } from "@/components/ui/button";
 const BANNER_WIDTH_PX = 1200;
 const BANNER_HEIGHT_PX = 675;
 const IMAGE_QUALITY = 0.85;
+// Achado real: ferramentas de geração de imagem raramente batem o pixel
+// exato pedido (ex: um "1200x675" gerado por IA costuma sair 1200x668,
+// 1210x680 etc.) — sem essa tolerância, esse desvio mínimo já disparava o
+// "contain" e deixava uma faixa fina e visível no topo/base. Diferença de
+// proporção dentro de ~3% é imperceptível esticada (cobre o quadro inteiro,
+// sem faixa); só uma imagem genuinamente fora de 16:9 (retrato, quadrada)
+// passa a usar o "contain" com fundo desfocado.
+const ASPECT_RATIO_TOLERANCE = 0.03;
 
 /**
  * Redimensiona a imagem escolhida pra um retângulo 16:9 de BANNER_WIDTH_PX x
- * BANNER_HEIGHT_PX, inteiramente no navegador (canvas) — SEM recortar nada
- * do original (achado real: a versão anterior fazia center-crop tipo
- * "cover", cortando as bordas de qualquer foto que não fosse já 16:9, o que
- * o fundador reportou como "não mostra completamente a imagem"). A imagem
- * inteira é desenhada em "contain" (encaixada, nunca cortada) centralizada
- * sobre um fundo desfocado/escurecido da MESMA imagem esticada pra preencher
- * o quadro (mesma técnica de capa do Instagram Stories/YouTube) — evita
- * barras pretas lisas sem nunca perder conteúdo da foto original.
+ * BANNER_HEIGHT_PX, inteiramente no navegador (canvas). Dois caminhos:
+ * - Proporção já (quase) 16:9 (dentro de ASPECT_RATIO_TOLERANCE): "cover"
+ *   simples — preenche o quadro inteiro, sem faixa nenhuma; o corte é
+ *   imperceptível (poucos % da imagem).
+ * - Proporção genuinamente diferente (retrato, quadrada etc.): "contain" —
+ *   a imagem INTEIRA, sem cortar nada, centralizada sobre um fundo
+ *   desfocado/escurecido da mesma imagem preenchendo o quadro (mesma
+ *   técnica de capa do Instagram Stories/YouTube) — achado real: a versão
+ *   anterior sempre cortava tipo "cover", tirando pedaço de qualquer foto
+ *   que não fosse já 16:9 ("não mostra completamente a imagem").
  */
 async function resizeImageToBannerDataUrl(file: File, t: (key: string) => string): Promise<string> {
   if (!file.type.startsWith("image/")) {
@@ -47,40 +57,55 @@ async function resizeImageToBannerDataUrl(file: File, t: (key: string) => string
 
     const targetRatio = BANNER_WIDTH_PX / BANNER_HEIGHT_PX;
     const srcRatio = img.naturalWidth / img.naturalHeight;
+    const isCloseToTarget = Math.abs(srcRatio - targetRatio) / targetRatio <= ASPECT_RATIO_TOLERANCE;
 
-    // Camada de fundo: preenche o quadro inteiro (mesma lógica de "cover" de
-    // antes), só que desfocada/escurecida — decorativa, não é onde o
-    // conteúdo real da foto precisa ficar visível.
-    let bgWidth = img.naturalWidth;
-    let bgHeight = img.naturalHeight;
-    if (srcRatio > targetRatio) {
-      bgWidth = Math.round(img.naturalHeight * targetRatio);
+    if (isCloseToTarget) {
+      // Já é (quase) 16:9 — "cover" simples, preenche o quadro inteiro sem
+      // faixa nenhuma. O corte aqui é de no máximo ~3% da imagem, imperceptível.
+      let cropWidth = img.naturalWidth;
+      let cropHeight = img.naturalHeight;
+      if (srcRatio > targetRatio) {
+        cropWidth = Math.round(img.naturalHeight * targetRatio);
+      } else {
+        cropHeight = Math.round(img.naturalWidth / targetRatio);
+      }
+      const sx = Math.round((img.naturalWidth - cropWidth) / 2);
+      const sy = Math.round((img.naturalHeight - cropHeight) / 2);
+      ctx.drawImage(img, sx, sy, cropWidth, cropHeight, 0, 0, BANNER_WIDTH_PX, BANNER_HEIGHT_PX);
     } else {
-      bgHeight = Math.round(img.naturalWidth / targetRatio);
-    }
-    const bgSx = Math.round((img.naturalWidth - bgWidth) / 2);
-    const bgSy = Math.round((img.naturalHeight - bgHeight) / 2);
-    ctx.save();
-    // ctx.filter pode não existir em navegadores muito antigos — nesse caso
-    // o fundo só fica sem blur/escurecido (ainda preenchido, nunca quebra).
-    if ("filter" in ctx) {
-      ctx.filter = "blur(24px) brightness(0.55)";
-    }
-    ctx.drawImage(img, bgSx, bgSy, bgWidth, bgHeight, -20, -20, BANNER_WIDTH_PX + 40, BANNER_HEIGHT_PX + 40);
-    ctx.restore();
+      // Proporção genuinamente diferente — fundo desfocado/escurecido
+      // preenchendo o quadro (mesma lógica de "cover" acima, só decorativa)...
+      let bgWidth = img.naturalWidth;
+      let bgHeight = img.naturalHeight;
+      if (srcRatio > targetRatio) {
+        bgWidth = Math.round(img.naturalHeight * targetRatio);
+      } else {
+        bgHeight = Math.round(img.naturalWidth / targetRatio);
+      }
+      const bgSx = Math.round((img.naturalWidth - bgWidth) / 2);
+      const bgSy = Math.round((img.naturalHeight - bgHeight) / 2);
+      ctx.save();
+      // ctx.filter pode não existir em navegadores muito antigos — nesse
+      // caso o fundo só fica sem blur/escurecido (ainda preenchido).
+      if ("filter" in ctx) {
+        ctx.filter = "blur(24px) brightness(0.55)";
+      }
+      ctx.drawImage(img, bgSx, bgSy, bgWidth, bgHeight, -20, -20, BANNER_WIDTH_PX + 40, BANNER_HEIGHT_PX + 40);
+      ctx.restore();
 
-    // Camada principal: a imagem INTEIRA ("contain"), sem cortar nada,
-    // centralizada por cima do fundo.
-    let drawWidth = BANNER_WIDTH_PX;
-    let drawHeight = BANNER_HEIGHT_PX;
-    if (srcRatio > targetRatio) {
-      drawHeight = Math.round(BANNER_WIDTH_PX / srcRatio);
-    } else {
-      drawWidth = Math.round(BANNER_HEIGHT_PX * srcRatio);
+      // ...e a imagem INTEIRA ("contain"), sem cortar nada, centralizada
+      // por cima do fundo.
+      let drawWidth = BANNER_WIDTH_PX;
+      let drawHeight = BANNER_HEIGHT_PX;
+      if (srcRatio > targetRatio) {
+        drawHeight = Math.round(BANNER_WIDTH_PX / srcRatio);
+      } else {
+        drawWidth = Math.round(BANNER_HEIGHT_PX * srcRatio);
+      }
+      const dx = Math.round((BANNER_WIDTH_PX - drawWidth) / 2);
+      const dy = Math.round((BANNER_HEIGHT_PX - drawHeight) / 2);
+      ctx.drawImage(img, 0, 0, img.naturalWidth, img.naturalHeight, dx, dy, drawWidth, drawHeight);
     }
-    const dx = Math.round((BANNER_WIDTH_PX - drawWidth) / 2);
-    const dy = Math.round((BANNER_HEIGHT_PX - drawHeight) / 2);
-    ctx.drawImage(img, 0, 0, img.naturalWidth, img.naturalHeight, dx, dy, drawWidth, drawHeight);
 
     const dataUrl = canvas.toDataURL("image/webp", IMAGE_QUALITY);
     // Alguns navegadores antigos ignoram "image/webp" e devolvem PNG (bem
