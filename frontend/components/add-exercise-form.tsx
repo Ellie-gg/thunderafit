@@ -14,6 +14,11 @@ import { DifficultyBadge } from "@/components/difficulty-badge";
 const ALL_GROUPS = "Todos";
 // Fase 27: mesmo limite validado no backend (workouts.service.ts).
 const MAX_NOTES_LENGTH = 500;
+// Fase 51.1: "treino em casa" não é um muscleGroup — é um corte por
+// equipment (Fase 50/51 curou exercícios com esses 2 valores especificamente
+// pra funcionar sem ida à academia). Combina com o filtro de grupo muscular
+// em vez de substituí-lo (ex: "Peito" + "treino em casa" juntos).
+const HOME_EQUIPMENT = new Set(["Peso Corporal", "Itens Domésticos"]);
 
 type AddExerciseInput = {
   exerciseId: string;
@@ -63,6 +68,7 @@ export function AddExerciseForm({
   });
 
   const [group, setGroup] = useState(ALL_GROUPS);
+  const [homeOnly, setHomeOnly] = useState(false);
   const [filter, setFilter] = useState("");
   const [exerciseId, setExerciseId] = useState("");
   const [sets, setSets] = useState("3");
@@ -89,10 +95,11 @@ export function AddExerciseForm({
     const q = filter.trim().toLowerCase();
     return all.filter((e) => {
       if (group !== ALL_GROUPS && e.muscleGroup !== group) return false;
+      if (homeOnly && !HOME_EQUIPMENT.has(e.equipment)) return false;
       if (!q) return true;
       return e.name.toLowerCase().includes(q) || e.muscleGroup.toLowerCase().includes(q);
     });
-  }, [all, group, filter]);
+  }, [all, group, homeOnly, filter]);
 
   const submit = addExerciseFn ?? addWorkoutExercise;
 
@@ -156,6 +163,23 @@ export function AddExerciseForm({
             );
           })}
         </div>
+      </div>
+
+      {/* Fase 51.1: filtro por equipment (não é muscleGroup) — combina com o
+          filtro de grupo acima em vez de ser mais uma aba de grupo. */}
+      <div className="flex flex-col gap-1.5">
+        <button
+          type="button"
+          onClick={() => setHomeOnly((v) => !v)}
+          aria-pressed={homeOnly}
+          className={
+            homeOnly
+              ? "self-start rounded-full border border-accent bg-accent/10 px-3 py-1 text-xs font-semibold text-accent"
+              : "self-start rounded-full border border-border px-3 py-1 text-xs text-muted hover:border-accent"
+          }
+        >
+          🏠 {t("homeWorkoutFilterLabel")}
+        </button>
       </div>
 
       <div className="flex flex-col gap-1.5">

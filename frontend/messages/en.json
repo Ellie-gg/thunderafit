@@ -652,6 +652,7 @@
     "loadingCatalog": "Loading catalog...",
     "muscleGroupLabel": "Muscle group",
     "allGroups": "All",
+    "homeWorkoutFilterLabel": "Home workout (no gym equipment)",
     "searchByNameLabel": "Search by name",
     "searchByNamePlaceholder": "E.g.: bench press, squat...",
     "exerciseLabel": "Exercise ({count})",

@@ -652,6 +652,7 @@
     "loadingCatalog": "Carregando catálogo...",
     "muscleGroupLabel": "Grupo muscular",
     "allGroups": "Todos",
+    "homeWorkoutFilterLabel": "Treino em casa (sem equipamento de academia)",
     "searchByNameLabel": "Buscar por nome",
     "searchByNamePlaceholder": "Ex: supino, agachamento...",
     "exerciseLabel": "Exercício ({count})",
