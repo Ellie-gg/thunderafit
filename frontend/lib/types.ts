@@ -116,6 +116,11 @@ export type SessionScheme = "LETTER" | "WEEKDAY";
 // personalId é null exatamente quando origin é SELF.
 export type WorkoutProgramOrigin = "PERSONAL" | "SELF";
 
+// Fase 52: só relevante em templates SELF (isTemplate: true, origin: SELF) —
+// "Meu Treino Pessoal" agrupa em carrossel por categoria. GERAL = lista plana
+// de sempre (default de todo programa não-SELF também, sem uso ali).
+export type SelfTemplateCategory = "GERAL" | "HOME" | "PREMIUM";
+
 export interface WorkoutProgram {
   id: string;
   personalId: string | null;
@@ -124,6 +129,8 @@ export interface WorkoutProgram {
   isTemplate: boolean;
   alunoId: string | null;
   sessionScheme: SessionScheme;
+  category: SelfTemplateCategory;
+  bannerImageUrl: string | null;
   createdAt: string;
   updatedAt: string;
   workouts?: Workout[];

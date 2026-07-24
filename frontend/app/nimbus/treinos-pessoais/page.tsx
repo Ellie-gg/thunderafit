@@ -20,7 +20,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { QueryError } from "@/components/query-error";
 import { AddExerciseForm } from "@/components/add-exercise-form";
-import type { SessionScheme } from "@/lib/types";
+import { TemplateBannerUpload } from "@/components/template-banner-upload";
+import type { SelfTemplateCategory, SessionScheme } from "@/lib/types";
+
+const CATEGORY_OPTIONS: SelfTemplateCategory[] = ["GERAL", "HOME", "PREMIUM"];
 
 /**
  * Fase 34.5 — curadoria de templates "Meu treino pessoal" (origin: SELF).
@@ -40,6 +43,7 @@ function TreinosPessoaisContent() {
 
   const [name, setName] = useState("");
   const [scheme, setScheme] = useState<SessionScheme>("LETTER");
+  const [category, setCategory] = useState<SelfTemplateCategory>("GERAL");
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
   // Fase 34.5: a listagem só traz {id, letter, name} por sessão (sem
@@ -57,7 +61,7 @@ function TreinosPessoaisContent() {
   }
 
   const createMutation = useMutation({
-    mutationFn: () => createAdminSelfTemplate(name.trim(), scheme),
+    mutationFn: () => createAdminSelfTemplate(name.trim(), scheme, category),
     onSuccess: (data) => {
       setName("");
       invalidate();
@@ -122,6 +126,21 @@ function TreinosPessoaisContent() {
                 <option value="WEEKDAY">{t("schemeOption.weekday")}</option>
               </select>
             </div>
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="category">{t("categoryLabel")}</Label>
+              <select
+                id="category"
+                value={category}
+                onChange={(e) => setCategory(e.target.value as SelfTemplateCategory)}
+                className="h-11 rounded-md border border-border bg-surface px-3.5 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+              >
+                {CATEGORY_OPTIONS.map((c) => (
+                  <option key={c} value={c}>
+                    {t(`categoryOption.${c}`)}
+                  </option>
+                ))}
+              </select>
+            </div>
             <Button type="submit" disabled={createMutation.isPending}>
               {createMutation.isPending ? t("creating") : t("createTemplate")}
             </Button>
@@ -152,6 +171,8 @@ function TreinosPessoaisContent() {
                     <h3 className="font-display text-lg font-bold">{tpl.name}</h3>
                     <p className="text-xs text-muted">
                       {t("sessionCount", { count: tpl.workouts?.length ?? 0 })}
+                      {" · "}
+                      {t(`categoryOption.${tpl.category}`)}
                     </p>
                   </div>
                   <div className="flex gap-2">
@@ -178,6 +199,12 @@ function TreinosPessoaisContent() {
                     </Button>
                   </div>
                 </div>
+
+                <TemplateBannerUpload
+                  programId={tpl.id}
+                  currentBannerUrl={tpl.bannerImageUrl}
+                  onUpdated={invalidate}
+                />
 
                 {expanded && (
                   <div className="flex flex-col gap-4 border-t border-border pt-3">
