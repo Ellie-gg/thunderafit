@@ -3,12 +3,11 @@ import { loginViaUI } from "./auth-helpers";
 
 /**
  * "Montagem Inteligente" (gerador de treino determinístico, sem IA externa) +
- * CTA de destaque no dashboard do Personal. Ponta a ponta pela UI: Personal
- * loga, clica "⚡ Gerar Treino Rápido" (agora o CTA principal do dashboard —
- * antes só um botão secundário "Criar novo programa", pouco descoberto),
- * escolhe grupos musculares + objetivo, revisa o rascunho (removendo uma
- * linha), confirma, e cai na tela do programa recém-criado com a sessão e
- * os exercícios de verdade.
+ * CTA de destaque no dashboard do Personal. Gera o PROGRAMA inteiro (não uma
+ * sessão avulsa): setup (nome + esquema + objetivo) → wizard por sessão
+ * (grupos musculares → gerar/revisar → "Próximo treino →" ou "Salvar
+ * programa de treinamento"). Ponta a ponta pela UI real, backend + Postgres
+ * reais.
  */
 
 const BACKEND_URL = process.env.E2E_BACKEND_URL ?? "http://localhost:3000";
@@ -25,13 +24,13 @@ async function backendJson(path: string, body: unknown, token?: string) {
   return res.json();
 }
 
-test("Personal gera um treino pela Montagem Inteligente, revisa, remove uma linha e cria o programa", async ({
+test("Personal gera um PROGRAMA com 2 sessões (A e B) pela Montagem Inteligente e para antes da E", async ({
   page,
 }) => {
   const stamp = Date.now();
   const personalEmail = `e2e_gen_personal_${stamp}@thunderafit.test`;
   const password = "SenhaSegura@123";
-  const sessionName = `Sessão Gerada E2E ${stamp}`;
+  const programName = `Programa Gerado E2E ${stamp}`;
 
   await backendJson("/api/auth/register", { email: personalEmail, password, role: "PERSONAL" });
 
@@ -43,25 +42,60 @@ test("Personal gera um treino pela Montagem Inteligente, revisa, remove uma linh
   await expect(generateButton).toBeVisible();
   await generateButton.click();
 
+  // --- Setup: nome + esquema (Letras, padrão) + objetivo ---
   await expect(page.getByRole("heading", { name: "⚡ Gerar Treino Rápido" })).toBeVisible();
-  await page.locator("#generate-name").fill(sessionName);
-  // Peito primeiro (principal, 3 exercícios) + Costas depois (secundário, 2).
+  await page.locator("#generate-program-name").fill(programName);
+  await page.locator("#generate-goal").selectOption("forca");
+  await page.getByRole("button", { name: "Avançar" }).click();
+
+  // --- Sessão A: Peito (principal, 3) + Costas (secundário, 2) = 5 ---
+  await expect(page.getByRole("heading", { name: "Sessão A" })).toBeVisible();
   await page.getByRole("button", { name: "Peito", exact: true }).click();
   await page.getByRole("button", { name: "Costas", exact: true }).click();
-  await page.locator("#generate-goal").selectOption("forca");
   await page.getByRole("button", { name: "Gerar sugestão" }).click();
-
-  // Revisão: 5 linhas (3 + 2), cada uma com botão "Remover".
   await expect(page.getByRole("button", { name: "Remover" })).toHaveCount(5);
   await page.getByRole("button", { name: "Remover" }).first().click();
   await expect(page.getByRole("button", { name: "Remover" })).toHaveCount(4);
+  await page.getByRole("button", { name: "Próximo treino →" }).click();
 
-  await page.getByRole("button", { name: "Criar treino" }).click();
+  // --- Sessão B: Pernas (principal, 3) ---
+  await expect(page.getByRole("heading", { name: "Sessão B" })).toBeVisible();
+  await page.getByRole("button", { name: "Pernas", exact: true }).click();
+  await page.getByRole("button", { name: "Gerar sugestão" }).click();
+  await expect(page.getByRole("button", { name: "Remover" })).toHaveCount(3);
+
+  // Para aqui de propósito (não vai até E) — "Salvar" precisa funcionar mesmo assim.
+  await page.getByRole("button", { name: "Salvar programa de treinamento" }).click();
 
   await expect(page).toHaveURL(/\/personal\/programas\/[a-f0-9-]+$/);
-  await expect(page.getByRole("heading", { name: sessionName })).toBeVisible();
-  await expect(page.getByText(`${sessionName}`).first()).toBeVisible();
+  await expect(page.getByRole("heading", { name: programName })).toBeVisible();
+  await expect(page.getByText("2/5 sessão(ões)")).toBeVisible();
   await expect(page.getByText("4 exercício(s)")).toBeVisible();
+  await expect(page.getByText("3 exercício(s)")).toBeVisible();
+});
+
+test("Pular uma sessão gera 0 exercícios nela, sem travar o fluxo", async ({ page }) => {
+  const stamp = Date.now();
+  const personalEmail = `e2e_gen_skip_${stamp}@thunderafit.test`;
+  const password = "SenhaSegura@123";
+  const programName = `Programa Pulado E2E ${stamp}`;
+
+  await backendJson("/api/auth/register", { email: personalEmail, password, role: "PERSONAL" });
+  await loginViaUI(page, personalEmail, password);
+  await expect(page).toHaveURL(/\/personal\/dashboard$/);
+
+  await page.getByRole("button", { name: "⚡ Gerar Treino Rápido" }).click();
+  await page.locator("#generate-program-name").fill(programName);
+  await page.getByRole("button", { name: "Avançar" }).click();
+
+  await expect(page.getByRole("heading", { name: "Sessão A" })).toBeVisible();
+  await page.getByRole("button", { name: "Pular esta sessão" }).click();
+  await expect(page.getByText("Sessão sem exercícios (pulada).")).toBeVisible();
+  await page.getByRole("button", { name: "Salvar programa de treinamento" }).click();
+
+  await expect(page).toHaveURL(/\/personal\/programas\/[a-f0-9-]+$/);
+  await expect(page.getByText("1/5 sessão(ões)")).toBeVisible();
+  await expect(page.getByText("0 exercício(s)")).toBeVisible();
 });
 
 test("Fluxo manual continua disponível: link 'ou monte um programa do zero' leva pra /personal/programas", async ({

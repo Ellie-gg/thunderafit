@@ -7,7 +7,6 @@ import { listRelations } from "@/lib/api/relations";
 import { listWorkoutPrograms } from "@/lib/api/workouts";
 import { getBillingStatus } from "@/lib/api/billing";
 import { useAuthStore } from "@/lib/store/auth-store";
-import { sortByScheme, labelFor } from "@/lib/session-scheme";
 import { AuthGuard } from "@/components/auth-guard";
 import { AppHeader } from "@/components/app-header";
 import { Card } from "@/components/ui/card";
@@ -155,18 +154,24 @@ function PersonalDashboardContent() {
             <QueryError error={programsQuery.error} onRetry={() => programsQuery.refetch()} />
           )}
 
+          {/* Só o nome do programa + quantas sessões tem — clicar nele abre a
+              tela própria do programa (/personal/programas/[id]), onde cada
+              dia/letra é editado individualmente. Antes cada card já vinha
+              com TODAS as sessões expandidas inline aqui mesmo, duplicando o
+              que aquela tela já mostra bem e deixando o dashboard poluído
+              com vários alunos vinculados. */}
           <div className="flex flex-col gap-3">
-            {instances.map((p) => {
-              const sessions = sortByScheme(p.workouts ?? [], p.sessionScheme);
-              return (
-                <div key={p.id} className="rounded-md border border-border p-3">
-                  <div className="mb-2 flex items-center justify-between gap-2">
-                    <div>
-                      <span className="font-semibold">{p.name}</span>
-                      {p.alunoId && (
-                        <p className="text-xs text-muted">{alunoEmailById.get(p.alunoId) ?? "aluno desvinculado"}</p>
-                      )}
-                    </div>
+            {instances.map((p) => (
+              <Link key={p.id} href={`/personal/programas/${p.id}`}>
+                <Card className="flex items-center justify-between transition-colors hover:border-accent">
+                  <div>
+                    <span className="font-semibold">{p.name}</span>
+                    <p className="text-xs text-muted">
+                      {p.alunoId ? alunoEmailById.get(p.alunoId) ?? "aluno desvinculado" : "—"} ·{" "}
+                      {p.workouts?.length ?? 0} sessão(ões)
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2">
                     <DeleteProgramButton
                       programId={p.id}
                       isTemplate={false}
@@ -174,25 +179,11 @@ function PersonalDashboardContent() {
                         queryClient.invalidateQueries({ queryKey: ["workout-programs", "personal"] })
                       }
                     />
+                    <span className="text-sm text-muted">Abrir →</span>
                   </div>
-                  <div className="flex flex-col gap-1.5">
-                    {sessions.map((s) => (
-                      <Link key={s.id} href={`/personal/treinos/${s.id}`}>
-                        <div className="flex items-center justify-between rounded-md border border-border/60 bg-surface px-3 py-2 transition-colors hover:border-accent">
-                          <span className="text-sm">
-                            <span className="font-display font-bold text-accent">
-                              {labelFor(p.sessionScheme, s.letter)}
-                            </span>{" "}
-                            {s.name}
-                          </span>
-                          <span className="text-xs text-muted">Ver →</span>
-                        </div>
-                      </Link>
-                    ))}
-                  </div>
-                </div>
-              );
-            })}
+                </Card>
+              </Link>
+            ))}
             {programsQuery.isSuccess && instances.length === 0 && (
               <p className="text-sm text-muted">Nenhum programa aplicado a um aluno ainda.</p>
             )}

@@ -4,7 +4,11 @@ import { loginViaUI } from "./auth-helpers";
 /**
  * Fase 31:
  * 1) o dashboard do Personal agrupa "Treinos prescritos" por programa (não
- *    mais uma lista plana de sessões soltas);
+ *    mais uma lista plana de sessões soltas) — cada card mostra só o nome do
+ *    programa + quantas sessões tem; clicar abre a tela própria do programa
+ *    (as sessões individuais deixaram de aparecer expandidas inline aqui,
+ *    correção de UX pedida pelo fundador: card repetido por aluno vinculado
+ *    ficava poluído);
  * 2) excluir um template (com confirmação) — some da lista de Templates;
  * 3) excluir uma instância aplicada a um aluno a partir do hub (com
  *    confirmação) — o backend realmente apaga tudo (programa, sessão,
@@ -25,7 +29,7 @@ async function backendJson(path: string, body: unknown, token?: string) {
   return res.json();
 }
 
-test("dashboard agrupa treinos prescritos por programa, com sessões aninhadas", async ({ page }) => {
+test("dashboard agrupa treinos prescritos por programa, sem expandir sessões inline", async ({ page }) => {
   const stamp = Date.now();
   const personalEmail = `e2e_consol_personal_${stamp}@thunderafit.test`;
   const alunoEmail = `e2e_consol_aluno_${stamp}@thunderafit.test`;
@@ -38,24 +42,32 @@ test("dashboard agrupa treinos prescritos por programa, com sessões aninhadas",
   await backendJson("/api/relations", { alunoId: aluno.user.id }, personalLogin.accessToken);
 
   const program = await backendJson("/api/workout-programs", { name: programName }, personalLogin.accessToken);
-  const programId = program.program.id;
-  await backendJson(`/api/workout-programs/${programId}/sessions`, { letter: "A" }, personalLogin.accessToken);
-  await backendJson(`/api/workout-programs/${programId}/sessions`, { letter: "B" }, personalLogin.accessToken);
-  await backendJson(`/api/workout-programs/${programId}/apply`, { alunoId: aluno.user.id }, personalLogin.accessToken);
+  const templateId = program.program.id;
+  await backendJson(`/api/workout-programs/${templateId}/sessions`, { letter: "A" }, personalLogin.accessToken);
+  await backendJson(`/api/workout-programs/${templateId}/sessions`, { letter: "B" }, personalLogin.accessToken);
+  // apply() cria uma CÓPIA (instância) com id PRÓPRIO, diferente do template
+  // — é essa cópia que aparece no dashboard, não o template original.
+  const applied = await backendJson(
+    `/api/workout-programs/${templateId}/apply`,
+    { alunoId: aluno.user.id },
+    personalLogin.accessToken
+  );
+  const instanceId = applied.program.id;
 
   await loginViaUI(page, personalEmail, password);
   await expect(page).toHaveURL(/\/personal\/dashboard$/);
 
-  // O nome do programa aparece como agrupador, com as 2 sessões aninhadas
-  // dentro, cada uma com seu próprio "Ver →" — não mais uma lista plana.
-  const group = page.locator("div").filter({ hasText: programName }).first();
+  // O card mostra só o nome do programa + quantas sessões tem — as sessões
+  // individuais NÃO aparecem expandidas aqui (isso fica pra dentro da tela
+  // do programa, aberta ao clicar). "2 sessão(ões)" confirma a contagem sem
+  // precisar de um link por sessão.
+  const group = page.locator("a", { hasText: programName }).first();
   await expect(group).toBeVisible({ timeout: 15000 });
-  // O e-mail do aluno aparece 2x (lista de "Alunos vinculados" + cabeçalho do
-  // grupo do programa) — checa só dentro do próprio grupo pra evitar o
-  // "strict mode violation" do Playwright por match ambíguo.
   await expect(group.getByText(alunoEmail)).toBeVisible();
-  const sessionLinks = page.locator(`a[href^="/personal/treinos/"]`);
-  await expect(sessionLinks).toHaveCount(2);
+  await expect(group.getByText("2 sessão(ões)")).toBeVisible();
+
+  await group.click();
+  await expect(page).toHaveURL(new RegExp(`/personal/programas/${instanceId}$`));
 });
 
 test("Personal exclui um template com confirmação — some da lista", async ({ page }) => {

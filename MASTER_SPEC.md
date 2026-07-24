@@ -298,21 +298,24 @@ nesta seção — registrados como **Fase 43** e **Fase 44** no STATUS.md:
   checkout; `price.id` atual da subscription pra trocas via Portal do Cliente). Bug
   corrigido: downgrade pra Free agora desliga `availableForNewStudents` (antes ficava
   ligado pra sempre). Valores em R$ são placeholder.
-- ✅ **Montagem Inteligente + CTA de destaque no dashboard do Personal.** Registrada
-  como **Fase 45** no STATUS.md. Substitui a Fase 39 (cancelada acima). `POST
-  /api/workouts/generate` — motor de regras determinístico (sem IA), gera um RASCUNHO
-  (nada persistido) de exercícios a partir de grupos musculares (1º = principal, 3
-  exercícios; demais = secundários, 2 cada) + objetivo (hipertrofia/força/resistência →
-  séries/reps/descanso fixos). `level` é aceito mas não filtra o catálogo de forma
-  rígida (a maioria dos ~170 exercícios não é curada por nível) — só reordena
-  preferência, evitando esvaziar grupos musculares inteiros pra iniciante/avançado.
-  Dashboard do Personal ganhou o botão "⚡ Gerar Treino Rápido" como CTA PRINCIPAL
-  (resolve o pedido do fundador de tornar a criação de templates mais descobrível —
-  antes só existia um botão secundário "Criar novo programa"); o fluxo 100% manual
-  continua disponível via link menor. Revisão em lote no frontend (rascunho só em
-  memória, editável/removível linha a linha) — um clique final cria o programa + a
-  sessão + todos os exercícios em sequência, reusando os 3 endpoints que já existiam
-  (sem endpoint novo de gravação em lote).
+- ✅ **Montagem Inteligente (gera o PROGRAMA inteiro) + CTA de destaque no dashboard do
+  Personal + card de programa simplificado.** Registrada como **Fase 45** no STATUS.md.
+  Substitui a Fase 39 (cancelada acima). Correção de escopo no mesmo dia: a 1ª versão só
+  gerava uma sessão avulsa — "gerar treino rápido" significa montar TODAS as sessões do
+  esquema escolhido. `POST /api/workouts/generate` continua determinístico e por-sessão
+  (grupos musculares, 1º = principal 3 exercícios, demais = secundários 2 cada +
+  objetivo → séries/reps/descanso fixos; `level` só reordena preferência, não filtra
+  rígido), mas o frontend agora o chama num wizard: setup (nome do programa + esquema
+  Letras/Dias + objetivo, fixo pra todas as sessões) → por sessão, na sequência do
+  esquema, gera/revisa/edita (ou pula, 0 exercícios) → "Próximo treino →" ou "Salvar
+  programa de treinamento" (persiste tudo montado até ali, mesmo parando antes da
+  última sessão). Dashboard do Personal ganhou o botão "⚡ Gerar Treino Rápido" como CTA
+  PRINCIPAL; fluxo 100% manual continua via link menor. Card de "Treinos prescritos"
+  simplificado — parou de expandir todas as sessões inline (poluía a tela com vários
+  alunos); mostra só nome + contagem de sessões, abre a tela do programa pra editar cada
+  dia/letra individualmente. Nada persiste até o "Salvar" final — reusa os mesmos 3
+  endpoints que já existiam em sequência (programa → sessão por sessão montada →
+  exercício por exercício), sem endpoint novo de gravação em lote.
 
 ### Grupo C — pesquisa (sem código)
 
