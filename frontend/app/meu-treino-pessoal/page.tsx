@@ -20,15 +20,20 @@ import { ReplaceSelfTemplateDialog } from "@/components/replace-self-template-di
  * Fase 34.5 — "Meu treino pessoal": templates curados pelo admin (origin:
  * SELF), sem Personal nenhum envolvido. O aluno só escolhe e aplica (cópia,
  * mesmo padrão de sempre) — sem acesso ao catálogo completo de exercícios
- * nem montagem livre nesta fase. "Crie seu treino do zero" é só um
- * placeholder visual ("em breve"): não decidimos ainda se vira feature paga.
+ * nem montagem livre nesta fase.
  *
  * Fase 52: além da lista plana (categoria GERAL, comportamento inalterado),
- * dois carrosséis novos agrupados por `category` — "Treino em Casa" (HOME,
+ * carrosséis novos agrupados por `category` — "Treino em Casa" (HOME,
  * funcional: aplica de verdade, com fluxo de confirmação de troca via 409
  * SELF_PROGRAM_EXISTS) e "Treinos Premium" (PREMIUM, decorativo: todo slide
  * tem cadeado e o clique só mostra "em breve", sem chamar a API — não existe
  * conceito de aluno pagante ainda).
+ *
+ * Fase 54: "Crie seu treino do zero" (placeholder inerte, "em breve") foi
+ * REMOVIDO — no lugar dele entra "Treinos Prontos" (PRONTOS), mesmo
+ * carrossel/banner de HOME, também totalmente funcional (sem cadeado,
+ * gratuito) — templates de academia (aparelhos/polias/halteres/barra)
+ * disponibilizados pelo fundador.
  */
 function MeuTreinoPessoalContent() {
   const t = useTranslations("meuTreinoPessoal");
@@ -75,6 +80,26 @@ function MeuTreinoPessoalContent() {
     },
   });
 
+  // Fase 54: mesmo fluxo funcional do carrossel "Treino em Casa" (aplica de
+  // verdade, mesma trava de "1 treino pessoal ativo por vez" com diálogo de
+  // confirmação de troca) — mutation própria só pra procurar o template na
+  // lista certa (prontosTemplates) quando o 409 acontece.
+  const prontosApplyMutation = useMutation({
+    mutationFn: (programId: string) => applySelfTemplate(programId),
+    onSuccess: onApplySuccess,
+    onError: (error, programId) => {
+      if (error instanceof ApiError && error.status === 409 && error.data?.code === "SELF_PROGRAM_EXISTS") {
+        const template = prontosTemplates.find((tpl) => tpl.id === programId);
+        if (template) {
+          setPendingReplace({
+            template,
+            existingProgramName: String(error.data.existingProgramName ?? ""),
+          });
+        }
+      }
+    },
+  });
+
   const replaceMutation = useMutation({
     mutationFn: (programId: string) => applySelfTemplate(programId, true),
     onSuccess: (data) => {
@@ -85,8 +110,14 @@ function MeuTreinoPessoalContent() {
 
   const templates = templatesQuery.data?.programs ?? [];
   const geralTemplates = templates.filter((tpl) => tpl.category === "GERAL");
+  const prontosTemplates = templates.filter((tpl) => tpl.category === "PRONTOS");
   const homeTemplates = templates.filter((tpl) => tpl.category === "HOME");
   const premiumTemplates = templates.filter((tpl) => tpl.category === "PREMIUM");
+
+  function handleSelectProntos(template: WorkoutProgram) {
+    setPremiumNotice(false);
+    prontosApplyMutation.mutate(template.id);
+  }
 
   function handleSelectHome(template: WorkoutProgram) {
     setPremiumNotice(false);
@@ -145,20 +176,30 @@ function MeuTreinoPessoalContent() {
           </p>
         )}
 
-        {/* Placeholder visual — sem lógica por trás, "em breve". Não decide
-            ainda se vira feature paga (ver STATUS.md, Fase 34.5). */}
-        <Card className="flex flex-col gap-2 border-dashed opacity-70">
-          <div className="flex items-center justify-between gap-3">
-            <h2 className="font-display text-lg font-bold">{t("buildFromScratch")}</h2>
-            <span className="shrink-0 rounded-full border border-border px-2.5 py-0.5 text-xs font-semibold text-muted">
-              {t("comingSoon")}
-            </span>
+        {/* Fase 54: "Treinos Prontos" — carrossel funcional, substitui o
+            antigo card estático "Crie seu treino do zero". */}
+        <div className="flex flex-col gap-3">
+          <div>
+            <h2 className="font-display text-lg font-bold">{t("prontosSectionTitle")}</h2>
+            <p className="text-sm text-muted">{t("prontosSectionSubtitle")}</p>
           </div>
-          <p className="text-sm text-muted">{t("buildFromScratchDescription")}</p>
-          <Button type="button" disabled>
-            {t("comingSoon")}
-          </Button>
-        </Card>
+          {templatesQuery.isSuccess && prontosTemplates.length === 0 && (
+            <p className="text-sm text-muted">{t("emptyState")}</p>
+          )}
+          <SelfTemplateCarousel templates={prontosTemplates} onSelect={handleSelectProntos} />
+          {prontosApplyMutation.isError &&
+            !(
+              prontosApplyMutation.error instanceof ApiError &&
+              prontosApplyMutation.error.status === 409 &&
+              prontosApplyMutation.error.data?.code === "SELF_PROGRAM_EXISTS"
+            ) && (
+              <p className="text-sm text-danger">
+                {prontosApplyMutation.error instanceof ApiError
+                  ? prontosApplyMutation.error.message
+                  : t("applyError")}
+              </p>
+            )}
+        </div>
 
         {/* Fase 52: "Treino em Casa" — carrossel funcional. */}
         <div className="flex flex-col gap-3">

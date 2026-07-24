@@ -226,7 +226,7 @@ export const adminRepository = {
   async createSelfTemplate(
     name: string,
     sessionScheme: "LETTER" | "WEEKDAY",
-    category: "GERAL" | "HOME" | "PREMIUM"
+    category: "GERAL" | "HOME" | "PREMIUM" | "PRONTOS"
   ) {
     return prisma.workoutProgram.create({
       data: { name, origin: "SELF", personalId: null, isTemplate: true, sessionScheme, category },
