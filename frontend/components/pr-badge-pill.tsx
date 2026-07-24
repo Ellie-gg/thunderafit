@@ -1,3 +1,4 @@
+import { useTranslations } from "next-intl";
 import type { WorkoutSummaryPR } from "@/lib/types";
 
 /**
@@ -23,9 +24,10 @@ export function PrBadgePill({ pr }: { pr: WorkoutSummaryPR }) {
 }
 
 export function PrOverflowPill({ count }: { count: number }) {
+  const t = useTranslations("prBadgePill");
   return (
     <span className="inline-flex items-center gap-1.5 rounded-full border border-border px-2.5 py-1 text-xs font-semibold text-muted">
-      +{count} recorde{count > 1 ? "s" : ""}
+      {t("overflowCount", { count })}
     </span>
   );
 }

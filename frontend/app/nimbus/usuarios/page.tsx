@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useState } from "react";
 import Link from "next/link";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -11,17 +12,10 @@ import { AppHeader } from "@/components/app-header";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { QueryError } from "@/components/query-error";
+import { useActiveIntlLocale } from "@/i18n/use-active-locale";
 import type { AdminUser, Role } from "@/lib/types";
 
 const PAGE_SIZE = 20;
-
-const ROLE_FILTERS: Array<{ value: Role | ""; label: string }> = [
-  { value: "", label: "Todos os papéis" },
-  { value: "PERSONAL", label: "Personal Trainers" },
-  { value: "ALUNO", label: "Alunos" },
-  { value: "NUTRICIONISTA", label: "Nutricionistas" },
-  { value: "ADMIN", label: "Admins" },
-];
 
 const EDITABLE_ROLES: Role[] = ["PERSONAL", "ALUNO", "NUTRICIONISTA", "ADMIN"];
 
@@ -33,6 +27,8 @@ const EDITABLE_ROLES: Role[] = ["PERSONAL", "ALUNO", "NUTRICIONISTA", "ADMIN"];
  * isso, mas escondemos o controle de propósito pra não convidar o clique.
  */
 function RoleEditor({ user, onChanged }: { user: AdminUser; onChanged: () => void }) {
+  const t = useTranslations("nimbusUsuarios");
+  const tCommon = useTranslations("common");
   const currentUserId = useAuthStore((s) => s.user?.id);
   const [editing, setEditing] = useState(false);
   const [pendingRole, setPendingRole] = useState<Role>(user.role);
@@ -50,7 +46,7 @@ function RoleEditor({ user, onChanged }: { user: AdminUser; onChanged: () => voi
   if (!editing) {
     return (
       <Button type="button" variant="ghost" size="sm" onClick={() => setEditing(true)}>
-        Editar role
+        {t("roleEditor.edit")}
       </Button>
     );
   }
@@ -70,17 +66,17 @@ function RoleEditor({ user, onChanged }: { user: AdminUser; onChanged: () => voi
       </select>
       {pendingRole !== user.role && (
         <p className="text-xs text-accent-secondary">
-          Confirma alterar {user.email} de {user.role} para {pendingRole}?
+          {t("roleEditor.confirmMessage", { email: user.email, currentRole: user.role, newRole: pendingRole })}
         </p>
       )}
       {mutation.isError && (
         <p className="text-xs text-danger">
-          {mutation.error instanceof ApiError ? mutation.error.message : "Erro ao alterar role."}
+          {mutation.error instanceof ApiError ? mutation.error.message : t("roleEditor.genericError")}
         </p>
       )}
       <div className="flex gap-2">
         <Button type="button" size="sm" onClick={() => setEditing(false)}>
-          Cancelar
+          {tCommon("cancel")}
         </Button>
         <Button
           type="button"
@@ -89,7 +85,7 @@ function RoleEditor({ user, onChanged }: { user: AdminUser; onChanged: () => voi
           disabled={mutation.isPending || pendingRole === user.role}
           onClick={() => mutation.mutate(pendingRole)}
         >
-          {mutation.isPending ? "Salvando..." : "Confirmar"}
+          {mutation.isPending ? t("roleEditor.saving") : t("roleEditor.confirmButton")}
         </Button>
       </div>
     </div>
@@ -97,9 +93,20 @@ function RoleEditor({ user, onChanged }: { user: AdminUser; onChanged: () => voi
 }
 
 function UsersContent() {
+  const t = useTranslations("nimbusUsuarios");
+  const tCommon = useTranslations("common");
+  const intlLocale = useActiveIntlLocale();
   const queryClient = useQueryClient();
   const [role, setRole] = useState<Role | "">("");
   const [page, setPage] = useState(1);
+
+  const ROLE_FILTERS: Array<{ value: Role | ""; label: string }> = [
+    { value: "", label: t("roleFilter.all") },
+    { value: "PERSONAL", label: t("roleFilter.personal") },
+    { value: "ALUNO", label: t("roleFilter.aluno") },
+    { value: "NUTRICIONISTA", label: t("roleFilter.nutricionista") },
+    { value: "ADMIN", label: t("roleFilter.admin") },
+  ];
 
   const usersQuery = useQuery({
     queryKey: ["admin", "users", role, page],
@@ -114,11 +121,8 @@ function UsersContent() {
       <AppHeader />
       <main className="flex flex-1 flex-col gap-6 px-6 py-8">
         <div>
-          <h1 className="font-display text-2xl font-bold tracking-tight">Usuários</h1>
-          <p className="text-sm text-muted">
-            Alunos sem nenhum vínculo (nem Personal, nem Nutricionista) aparecem marcados como
-            &ldquo;órfão&rdquo;.
-          </p>
+          <h1 className="font-display text-2xl font-bold tracking-tight">{t("title")}</h1>
+          <p className="text-sm text-muted">{t("description")}</p>
         </div>
 
         <select
@@ -136,7 +140,7 @@ function UsersContent() {
           ))}
         </select>
 
-        {usersQuery.isLoading && <p className="text-sm text-muted">Carregando...</p>}
+        {usersQuery.isLoading && <p className="text-sm text-muted">{tCommon("loading")}</p>}
         {usersQuery.isError && (
           <QueryError error={usersQuery.error} onRetry={() => usersQuery.refetch()} />
         )}
@@ -152,26 +156,26 @@ function UsersContent() {
                 <div className="flex flex-col">
                   <span className="text-sm font-semibold">{u.email}</span>
                   <span className="text-xs text-muted">
-                    {u.role} · desde {new Date(u.createdAt).toLocaleDateString("pt-BR")}
+                    {u.role} · {t("linkedSince", { date: new Date(u.createdAt).toLocaleDateString(intlLocale) })}
                   </span>
                 </div>
                 <div className="flex items-center gap-2">
                   {u.isOrphanAluno && (
                     <span className="rounded-full border border-danger/40 bg-danger/10 px-2 py-0.5 text-xs font-semibold text-danger">
-                      órfão
+                      {t("orphanBadge")}
                     </span>
                   )}
                   <span className="text-xs text-muted">
                     {u.lastLoginAt
-                      ? `último login ${new Date(u.lastLoginAt).toLocaleString("pt-BR")}`
-                      : "nunca logou"}
+                      ? t("lastLogin", { date: new Date(u.lastLoginAt).toLocaleString(intlLocale) })
+                      : t("neverLoggedIn")}
                   </span>
                   {u.role === "ALUNO" && (
                     <Link
                       href={`/nimbus/alunos/${u.id}/anamnese`}
                       className="text-xs font-semibold text-accent-secondary hover:underline"
                     >
-                      Ver anamnese
+                      {t("viewAnamnesis")}
                     </Link>
                   )}
                   <RoleEditor
@@ -181,11 +185,11 @@ function UsersContent() {
                 </div>
               </div>
             ))}
-            {data.users.length === 0 && <p className="text-sm text-muted">Nenhum usuário encontrado.</p>}
+            {data.users.length === 0 && <p className="text-sm text-muted">{t("empty")}</p>}
 
             <div className="flex items-center justify-between pt-2">
               <span className="text-xs text-muted">
-                Página {data.page} de {totalPages} · {data.total} usuário(s)
+                {t("pagination", { page: data.page, totalPages, total: data.total })}
               </span>
               <div className="flex gap-2">
                 <Button
@@ -194,7 +198,7 @@ function UsersContent() {
                   disabled={page <= 1}
                   onClick={() => setPage((p) => p - 1)}
                 >
-                  Anterior
+                  {t("previous")}
                 </Button>
                 <Button
                   variant="secondary"
@@ -202,7 +206,7 @@ function UsersContent() {
                   disabled={page >= totalPages}
                   onClick={() => setPage((p) => p + 1)}
                 >
-                  Próxima
+                  {t("next")}
                 </Button>
               </div>
             </div>

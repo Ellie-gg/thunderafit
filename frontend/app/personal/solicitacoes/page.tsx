@@ -13,18 +13,22 @@ import { AppHeader } from "@/components/app-header";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { QueryError } from "@/components/query-error";
+import { useTranslations } from "next-intl";
 
 function StatusBadge({ status }: { status: ConnectionStatus }) {
+  const t = useTranslations("personalSolicitacoes");
   const map: Record<ConnectionStatus, { label: string; cls: string }> = {
-    PENDENTE: { label: "Pendente", cls: "bg-accent/15 text-accent" },
-    ACEITA: { label: "Aceita", cls: "bg-success/15 text-success" },
-    RECUSADA: { label: "Recusada", cls: "bg-danger/15 text-danger" },
+    PENDENTE: { label: t("pendente"), cls: "bg-accent/15 text-accent" },
+    ACEITA: { label: t("aceita"), cls: "bg-success/15 text-success" },
+    RECUSADA: { label: t("recusada"), cls: "bg-danger/15 text-danger" },
   };
   const m = map[status];
   return <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${m.cls}`}>{m.label}</span>;
 }
 
 function SolicitacoesContent() {
+  const t = useTranslations("personalSolicitacoes");
+  const tc = useTranslations("common");
   const queryClient = useQueryClient();
   const requestsQuery = useQuery({ queryKey: ["connection-requests"], queryFn: listConnectionRequests });
 
@@ -46,27 +50,29 @@ function SolicitacoesContent() {
       <main className="flex flex-1 flex-col gap-6 px-6 py-8">
         <div>
           <span className="text-xs font-semibold uppercase tracking-wide text-accent-secondary">
-            Solicitações
+            {t("solicitacoes")}
           </span>
-          <h1 className="font-display text-2xl font-bold tracking-tight">Solicitações de vínculo</h1>
-          <p className="text-sm text-muted">Alunos que pediram para treinar com você.</p>
+          <h1 className="font-display text-2xl font-bold tracking-tight">{t("titulo")}</h1>
+          <p className="text-sm text-muted">{t("subtitulo")}</p>
         </div>
 
-        {requestsQuery.isLoading && <p className="text-sm text-muted">Carregando...</p>}
+        {requestsQuery.isLoading && <p className="text-sm text-muted">{tc("loading")}</p>}
         {requestsQuery.isError && (
           <QueryError error={requestsQuery.error} onRetry={() => requestsQuery.refetch()} />
         )}
 
         {activeError && (
           <p className="rounded-md border border-danger/40 bg-danger/10 px-3 py-2 text-sm text-danger">
-            {activeError instanceof ApiError ? activeError.message : "Erro ao responder a solicitação."}
+            {activeError instanceof ApiError ? activeError.message : t("erroResponder")}
           </p>
         )}
 
         <section className="flex flex-col gap-3">
-          <h2 className="font-display text-lg font-bold">Pendentes ({pendentes.length})</h2>
+          <h2 className="font-display text-lg font-bold">
+            {t("pendentes", { count: pendentes.length })}
+          </h2>
           {requestsQuery.isSuccess && pendentes.length === 0 && (
-            <p className="text-sm text-muted">Nenhuma solicitação pendente.</p>
+            <p className="text-sm text-muted">{t("nenhumaPendente")}</p>
           )}
           {pendentes.map((r) => (
             <Card key={r.id} className="flex flex-col gap-3">
@@ -79,14 +85,16 @@ function SolicitacoesContent() {
                   disabled={acceptMutation.isPending || rejectMutation.isPending}
                   onClick={() => acceptMutation.mutate(r.id)}
                 >
-                  {acceptMutation.isPending && acceptMutation.variables === r.id ? "Aceitando..." : "Aceitar"}
+                  {acceptMutation.isPending && acceptMutation.variables === r.id
+                    ? t("aceitando")
+                    : t("aceitar")}
                 </Button>
                 <Button
                   variant="secondary"
                   disabled={acceptMutation.isPending || rejectMutation.isPending}
                   onClick={() => rejectMutation.mutate(r.id)}
                 >
-                  Recusar
+                  {t("recusar")}
                 </Button>
               </div>
             </Card>
@@ -95,7 +103,7 @@ function SolicitacoesContent() {
 
         {respondidas.length > 0 && (
           <section className="flex flex-col gap-3 border-t border-border pt-6">
-            <h2 className="font-display text-lg font-bold">Histórico</h2>
+            <h2 className="font-display text-lg font-bold">{t("historico")}</h2>
             {respondidas.map((r) => (
               <Card key={r.id} className="flex items-center justify-between">
                 <span className="text-sm">{r.counterpart.email}</span>

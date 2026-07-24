@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useTranslations } from "next-intl";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { listFoods, addDietFood } from "@/lib/api/nutrition";
 import { ApiError } from "@/lib/api/client";
@@ -10,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { QueryError } from "@/components/query-error";
 
 export function AddDietFoodForm({ planId, mealId }: { planId: string; mealId: string }) {
+  const t = useTranslations("addDietFoodForm");
   const queryClient = useQueryClient();
   const foodsQuery = useQuery({ queryKey: ["foods"], queryFn: listFoods });
 
@@ -40,25 +42,25 @@ export function AddDietFoodForm({ planId, mealId }: { planId: string; mealId: st
         mutation.mutate();
       }}
     >
-      {foodsQuery.isLoading && <p className="text-xs text-muted">Carregando catálogo...</p>}
+      {foodsQuery.isLoading && <p className="text-xs text-muted">{t("loadingCatalog")}</p>}
 
       {foodsQuery.isError && (
         <QueryError error={foodsQuery.error} onRetry={() => foodsQuery.refetch()} />
       )}
 
       <div className="flex flex-col gap-1.5">
-        <Label htmlFor={`filter-${mealId}`}>Buscar alimento</Label>
+        <Label htmlFor={`filter-${mealId}`}>{t("buscarAlimento")}</Label>
         <Input
           id={`filter-${mealId}`}
           value={filter}
           onChange={(e) => setFilter(e.target.value)}
-          placeholder="Ex: frango, arroz..."
+          placeholder={t("searchPlaceholder")}
         />
       </div>
 
       <div className="grid grid-cols-[1fr_auto] gap-2">
         <div className="flex flex-col gap-1.5">
-          <Label htmlFor={`food-${mealId}`}>Alimento</Label>
+          <Label htmlFor={`food-${mealId}`}>{t("alimentoLabel")}</Label>
           <select
             id={`food-${mealId}`}
             required
@@ -67,7 +69,7 @@ export function AddDietFoodForm({ planId, mealId }: { planId: string; mealId: st
             className="h-11 rounded-md border border-border bg-surface px-3.5 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
           >
             <option value="" disabled>
-              {filtered.length} alimento(s) — selecione
+              {t("selectOption", { count: filtered.length })}
             </option>
             {filtered.map((f) => (
               <option key={f.id} value={f.id}>
@@ -77,7 +79,7 @@ export function AddDietFoodForm({ planId, mealId }: { planId: string; mealId: st
           </select>
         </div>
         <div className="flex flex-col gap-1.5">
-          <Label htmlFor={`qty-${mealId}`}>Porções</Label>
+          <Label htmlFor={`qty-${mealId}`}>{t("porcoesLabel")}</Label>
           <Input
             id={`qty-${mealId}`}
             type="number"
@@ -93,12 +95,12 @@ export function AddDietFoodForm({ planId, mealId }: { planId: string; mealId: st
 
       {mutation.isError && (
         <p className="text-sm text-danger">
-          {mutation.error instanceof ApiError ? mutation.error.message : "Erro ao adicionar alimento."}
+          {mutation.error instanceof ApiError ? mutation.error.message : t("errorAdding")}
         </p>
       )}
 
       <Button type="submit" disabled={mutation.isPending || !foodId} variant="secondary">
-        {mutation.isPending ? "Adicionando..." : "Adicionar alimento"}
+        {mutation.isPending ? t("adding") : t("addButton")}
       </Button>
     </form>
   );

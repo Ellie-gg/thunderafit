@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { ResponsiveContainer, BarChart, Bar, CartesianGrid, XAxis, YAxis, Tooltip } from "recharts";
 import type { FrequencyMonth } from "@/lib/types";
 
@@ -7,16 +8,26 @@ const ACCENT = "#FFC93C";
 const MUTED = "#7C8797";
 const GRID = "#262D3D";
 
-const MONTH_LABELS = [
-  "Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez",
-];
-
-function formatMonthLabel(monthKey: string): string {
-  const [, month] = monthKey.split("-");
-  return MONTH_LABELS[Number(month) - 1];
-}
-
 export function FrequencyChart({ months }: { months: FrequencyMonth[] }) {
+  const t = useTranslations("frequencyChart");
+  const monthLabels = [
+    t("months.jan"),
+    t("months.fev"),
+    t("months.mar"),
+    t("months.abr"),
+    t("months.mai"),
+    t("months.jun"),
+    t("months.jul"),
+    t("months.ago"),
+    t("months.set"),
+    t("months.out"),
+    t("months.nov"),
+    t("months.dez"),
+  ];
+  const formatMonthLabel = (monthKey: string): string => {
+    const [, month] = monthKey.split("-");
+    return monthLabels[Number(month) - 1];
+  };
   const data = months.map((m) => ({ ...m, label: formatMonthLabel(m.month) }));
 
   return (
@@ -48,7 +59,7 @@ export function FrequencyChart({ months }: { months: FrequencyMonth[] }) {
             }}
             labelStyle={{ color: "#EEF1F6" }}
             itemStyle={{ color: ACCENT }}
-            formatter={(value) => [`${value}`, "Treinos"]}
+            formatter={(value) => [`${value}`, t("tooltipLabel")]}
           />
           <Bar dataKey="workoutCount" fill={ACCENT} radius={[4, 4, 0, 0]} maxBarSize={32} />
         </BarChart>

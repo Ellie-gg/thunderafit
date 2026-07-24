@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
@@ -19,6 +20,8 @@ function Field({ label, value }: { label: string; value: string | number | null 
 }
 
 function AdminAlunoAnamneseContent() {
+  const t = useTranslations("nimbusAnamneseView");
+  const tCommon = useTranslations("common");
   const params = useParams<{ alunoId: string }>();
   const alunoId = params.alunoId;
 
@@ -32,8 +35,8 @@ function AdminAlunoAnamneseContent() {
       <AppHeader />
       <main className="flex flex-1 flex-col gap-6 px-6 py-8">
         <div>
-          <h1 className="font-display text-2xl font-bold tracking-tight">Anamnese do aluno</h1>
-          <p className="text-sm text-muted">Somente leitura — dado de saúde do aluno.</p>
+          <h1 className="font-display text-2xl font-bold tracking-tight">{t("title")}</h1>
+          <p className="text-sm text-muted">{t("description")}</p>
         </div>
 
         <Card
@@ -42,35 +45,36 @@ function AdminAlunoAnamneseContent() {
         >
           <span aria-hidden>🔒</span>
           <p className="text-sm">
-            Este acesso está sendo registrado (quem, quando, qual aluno) — visível a qualquer admin
-            em{" "}
-            <Link href="/nimbus/logs-acesso" className="font-semibold underline">
-              Logs de acesso
-            </Link>
-            , por ser dado sensível de saúde.
+            {t.rich("accessNotice", {
+              link: (chunks) => (
+                <Link href="/nimbus/logs-acesso" className="font-semibold underline">
+                  {chunks}
+                </Link>
+              ),
+            })}
           </p>
         </Card>
 
-        {query.isLoading && <p className="text-sm text-muted">Carregando...</p>}
+        {query.isLoading && <p className="text-sm text-muted">{tCommon("loading")}</p>}
 
         {query.isError && <QueryError error={query.error} onRetry={() => query.refetch()} />}
 
         {query.data?.anamnesis && (
           <>
             <Card className="grid grid-cols-2 gap-4 sm:grid-cols-3">
-              <Field label="Nome completo" value={query.data.anamnesis.fullName} />
-              <Field label="Nascimento" value={query.data.anamnesis.birthDate?.slice(0, 10)} />
-              <Field label="Altura (cm)" value={query.data.anamnesis.heightCm} />
-              <Field label="Peso (kg)" value={query.data.anamnesis.weightKg} />
+              <Field label={t("fields.fullName")} value={query.data.anamnesis.fullName} />
+              <Field label={t("fields.birthDate")} value={query.data.anamnesis.birthDate?.slice(0, 10)} />
+              <Field label={t("fields.heightCm")} value={query.data.anamnesis.heightCm} />
+              <Field label={t("fields.weightKg")} value={query.data.anamnesis.weightKg} />
             </Card>
             <Card className="flex flex-col gap-4">
-              <Field label="Objetivos" value={query.data.anamnesis.goals} />
-              <Field label="Condições de saúde" value={query.data.anamnesis.healthConditions} />
-              <Field label="Medicamentos" value={query.data.anamnesis.medications} />
-              <Field label="Nível de atividade" value={query.data.anamnesis.activityLevel} />
-              <Field label="Experiência anterior" value={query.data.anamnesis.pastExperience} />
-              <Field label="Preferências de treino" value={query.data.anamnesis.trainingPreferences} />
-              <Field label="Lesões/restrições" value={query.data.anamnesis.injuries} />
+              <Field label={t("fields.goals")} value={query.data.anamnesis.goals} />
+              <Field label={t("fields.healthConditions")} value={query.data.anamnesis.healthConditions} />
+              <Field label={t("fields.medications")} value={query.data.anamnesis.medications} />
+              <Field label={t("fields.activityLevel")} value={query.data.anamnesis.activityLevel} />
+              <Field label={t("fields.pastExperience")} value={query.data.anamnesis.pastExperience} />
+              <Field label={t("fields.trainingPreferences")} value={query.data.anamnesis.trainingPreferences} />
+              <Field label={t("fields.injuries")} value={query.data.anamnesis.injuries} />
             </Card>
           </>
         )}

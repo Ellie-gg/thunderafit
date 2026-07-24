@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import { useMutation } from "@tanstack/react-query";
 import { deleteWorkoutProgram } from "@/lib/api/workouts";
 import { ApiError } from "@/lib/api/client";
@@ -23,6 +24,8 @@ export function DeleteProgramButton({
   isTemplate: boolean;
   onDeleted?: () => void;
 }) {
+  const t = useTranslations("deleteProgramButton");
+  const tCommon = useTranslations("common");
   const [confirming, setConfirming] = useState(false);
 
   const mutation = useMutation({
@@ -51,7 +54,7 @@ export function DeleteProgramButton({
           setConfirming(true);
         }}
       >
-        Excluir
+        {t("delete")}
       </Button>
     );
   }
@@ -62,18 +65,16 @@ export function DeleteProgramButton({
       className="flex flex-col items-end gap-1.5 rounded-md border border-danger/40 bg-danger/10 p-2"
     >
       <p className="text-xs text-danger">
-        {isTemplate
-          ? "Excluir este template? As sessões e exercícios dele somem — instâncias já aplicadas a alunos não são afetadas."
-          : "Excluir este programa aplicado? O histórico de séries registradas pelo aluno nele será perdido. Essa ação não pode ser desfeita."}
+        {isTemplate ? t("confirmDeleteTemplate") : t("confirmDeleteApplied")}
       </p>
       {mutation.isError && (
         <p className="text-xs text-danger">
-          {mutation.error instanceof ApiError ? mutation.error.message : "Erro ao excluir."}
+          {mutation.error instanceof ApiError ? mutation.error.message : t("deleteError")}
         </p>
       )}
       <div className="flex gap-2">
         <Button type="button" size="sm" onClick={(e) => { stop(e); setConfirming(false); }}>
-          Cancelar
+          {tCommon("cancel")}
         </Button>
         <Button
           type="button"
@@ -85,7 +86,7 @@ export function DeleteProgramButton({
             mutation.mutate();
           }}
         >
-          {mutation.isPending ? "Excluindo..." : "Sim, excluir"}
+          {mutation.isPending ? t("deleting") : t("confirmDelete")}
         </Button>
       </div>
     </div>

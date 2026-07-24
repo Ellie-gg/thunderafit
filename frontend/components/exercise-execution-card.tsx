@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
+import { useTranslations } from "next-intl";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { createSetLog } from "@/lib/api/workouts";
 import { ApiError } from "@/lib/api/client";
@@ -33,6 +34,7 @@ export function ExerciseExecutionCard({
   /** Fase 33.1: disparado ao marcar/desmarcar o checkbox "Concluído". */
   onMarkDone?: (done: boolean) => void;
 }) {
+  const t = useTranslations("exerciseExecutionCard");
   const queryClient = useQueryClient();
   const [repsDone, setRepsDone] = useState("");
   const [weightKg, setWeightKg] = useState("");
@@ -89,13 +91,15 @@ export function ExerciseExecutionCard({
               setMarkedDone(done);
               onMarkDone?.(done);
             }}
-            aria-label={`Marcar ${workoutExercise.exercise?.name ?? "exercício"} como concluído`}
+            aria-label={t("markAsDoneAriaLabel", {
+              name: workoutExercise.exercise?.name ?? t("genericExercise"),
+            })}
             className="h-5 w-5 shrink-0 rounded border-border accent-accent"
           />
           <h3 className="font-display text-lg font-bold">{workoutExercise.exercise?.name}</h3>
         </label>
         <span className="font-mono-nums shrink-0 text-xs text-muted">
-          {setLogs.length}/{workoutExercise.sets} séries
+          {t("setsCount", { done: setLogs.length, total: workoutExercise.sets })}
         </span>
       </div>
 
@@ -126,7 +130,7 @@ export function ExerciseExecutionCard({
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={mediaUrl}
-            alt={`Demonstração de ${workoutExercise.exercise?.name ?? "exercício"}`}
+            alt={t("demoAlt", { name: workoutExercise.exercise?.name ?? t("genericExercise") })}
             loading="lazy"
             className="w-full"
           />
@@ -147,7 +151,9 @@ export function ExerciseExecutionCard({
               <button
                 type="button"
                 onClick={() => setPlaying(true)}
-                aria-label={`Reproduzir vídeo de ${workoutExercise.exercise?.name ?? "exercício"}`}
+                aria-label={t("playVideoAriaLabel", {
+                  name: workoutExercise.exercise?.name ?? t("genericExercise"),
+                })}
                 className="group absolute inset-0 h-full w-full"
               >
                 {thumbnailUrl && (
@@ -177,7 +183,7 @@ export function ExerciseExecutionCard({
             rel="noopener noreferrer"
             className="text-sm font-semibold text-accent-secondary hover:underline"
           >
-            ▶ Ver vídeo de demonstração no YouTube
+            {t("viewDemoOnYoutube")}
           </a>
         )
       )}
@@ -185,15 +191,18 @@ export function ExerciseExecutionCard({
       <p className="text-sm text-muted">{workoutExercise.exercise?.description}</p>
 
       <p className="text-xs text-muted">
-        Prescrito: {workoutExercise.sets}x {workoutExercise.repsRange} · descanso{" "}
-        {workoutExercise.restSeconds}s
+        {t("prescribedInfo", {
+          sets: workoutExercise.sets,
+          repsRange: workoutExercise.repsRange,
+          restSeconds: workoutExercise.restSeconds,
+        })}
       </p>
 
       {/* Fase 27: observação do Personal sobre esta prescrição específica —
           diferente da descrição do catálogo acima. */}
       {workoutExercise.notes && (
         <p className="rounded-md border border-accent-secondary/30 bg-accent-secondary/10 px-3 py-2 text-sm text-foreground">
-          <span className="font-semibold text-accent-secondary">Observação do seu Personal: </span>
+          <span className="font-semibold text-accent-secondary">{t("personalNoteLabel")}</span>
           {workoutExercise.notes}
         </p>
       )}
@@ -205,10 +214,8 @@ export function ExerciseExecutionCard({
               key={log.id}
               className="flex items-center justify-between font-mono-nums text-sm text-foreground"
             >
-              <span className="text-muted">Série {log.setNumber}</span>
-              <span>
-                {log.repsDone} reps × {log.weightKg}kg
-              </span>
+              <span className="text-muted">{t("setLabel", { number: log.setNumber })}</span>
+              <span>{t("repsWeight", { reps: log.repsDone, weight: log.weightKg })}</span>
             </div>
           ))}
         </div>
@@ -228,12 +235,12 @@ export function ExerciseExecutionCard({
               anterior pra esse número (exercício novo, ou 1ª sessão). */}
           {lastTimeSameSet && (
             <p className="text-xs text-muted">
-              Última vez: {lastTimeSameSet.repsDone} reps × {lastTimeSameSet.weightKg}kg
+              {t("lastTime", { reps: lastTimeSameSet.repsDone, weight: lastTimeSameSet.weightKg })}
             </p>
           )}
           <div className="flex items-end gap-2">
             <div className="flex flex-1 flex-col gap-1">
-              <label className="text-xs text-muted">Reps (série {nextSetNumber})</label>
+              <label className="text-xs text-muted">{t("repsLabel", { number: nextSetNumber })}</label>
               <Input
                 type="number"
                 min={0}
@@ -254,7 +261,7 @@ export function ExerciseExecutionCard({
               />
             </div>
             <div className="flex flex-1 flex-col gap-1">
-              <label className="text-xs text-muted">Carga (kg)</label>
+              <label className="text-xs text-muted">{t("loadLabel")}</label>
               <Input
                 type="number"
                 min={0}
@@ -266,7 +273,7 @@ export function ExerciseExecutionCard({
               />
             </div>
             <Button type="submit" disabled={mutation.isPending}>
-              {mutation.isPending ? "..." : "Registrar"}
+              {mutation.isPending ? t("registering") : t("registerButton")}
             </Button>
           </div>
         </form>
@@ -276,7 +283,7 @@ export function ExerciseExecutionCard({
         <p className="text-sm text-danger">
           {mutation.error instanceof ApiError
             ? mutation.error.message
-            : "Erro ao registrar série."}
+            : t("registerError")}
         </p>
       )}
     </Card>

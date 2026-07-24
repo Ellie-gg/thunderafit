@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useMutation } from "@tanstack/react-query";
+import { useTranslations } from "next-intl";
 import { checkEmailRequest, loginRequest, registerRequest } from "@/lib/api/auth";
 import { ApiError } from "@/lib/api/client";
 import { useAuthStore } from "@/lib/store/auth-store";
@@ -21,19 +22,15 @@ import type { Role } from "@/lib/types";
 type Step = "email" | "login" | "signup-role" | "signup-details";
 type SignupRole = Extract<Role, "ALUNO" | "PERSONAL">;
 
-const SIGNUP_ROLE_COPY: Record<SignupRole, { chip: string; description: string }> = {
-  ALUNO: {
-    chip: "Treinar",
-    description: "Monte seus próprios treinos ou acompanhe o que seu Personal te passou.",
-  },
-  PERSONAL: {
-    chip: "Personal",
-    description: "Entre para gerenciar seus alunos, prescrever e acompanhar treinos.",
-  },
-};
+// i18n: guarda a CHAVE de tradução (namespace "login"), não o texto — resolvido
+// dentro de cada componente via `t(...)`, já que este mapeamento vive fora de
+// qualquer componente (sem acesso a hooks).
+function roleTranslationKey(role: SignupRole): "aluno" | "personal" {
+  return role === "ALUNO" ? "aluno" : "personal";
+}
 
-function errorMessage(error: unknown): string {
-  return error instanceof ApiError ? error.message : "Não foi possível conectar ao servidor.";
+function errorMessage(error: unknown, fallback: string): string {
+  return error instanceof ApiError ? error.message : fallback;
 }
 
 // Fase 32.1: alterna a senha entre oculta/visível — útil pra conferir o que
@@ -50,6 +47,7 @@ function PasswordField({
   onChange: (value: string) => void;
   minLength?: number;
 }) {
+  const t = useTranslations("login");
   const [visible, setVisible] = useState(false);
 
   return (
@@ -68,9 +66,9 @@ function PasswordField({
         type="button"
         onClick={() => setVisible((v) => !v)}
         className="absolute inset-y-0 right-0 px-3 text-xs font-semibold text-muted hover:text-foreground"
-        aria-label={visible ? "Ocultar senha" : "Mostrar senha"}
+        aria-label={visible ? t("passwordField.hideAria") : t("passwordField.showAria")}
       >
-        {visible ? "Ocultar" : "Mostrar"}
+        {visible ? t("passwordField.hide") : t("passwordField.show")}
       </button>
     </div>
   );
@@ -85,6 +83,7 @@ function RoleChip({
   active: boolean;
   onClick: () => void;
 }) {
+  const t = useTranslations("login");
   const activeClasses =
     signupRole === "PERSONAL"
       ? "border-accent bg-accent/10 text-accent"
@@ -98,12 +97,13 @@ function RoleChip({
         active ? activeClasses : "border-border text-muted hover:border-foreground/30"
       }`}
     >
-      {SIGNUP_ROLE_COPY[signupRole].chip}
+      {t(`roles.${roleTranslationKey(signupRole)}.chip`)}
     </button>
   );
 }
 
 export default function LoginPage() {
+  const t = useTranslations("login");
   const router = useRouter();
   const setSession = useAuthStore((s) => s.setSession);
 
@@ -164,11 +164,9 @@ export default function LoginPage() {
           style={{ borderTopWidth: "4px", borderTopColor: "var(--accent)" }}
         >
           <h2 className="mb-1 font-display text-xl font-bold text-foreground">
-            Entrar ou criar conta
+            {t("emailStep.title")}
           </h2>
-          <p className="mb-5 text-sm text-muted">
-            Digite seu e-mail pra começar. A gente identifica o resto.
-          </p>
+          <p className="mb-5 text-sm text-muted">{t("emailStep.subtitle")}</p>
 
           <form
             className="flex flex-col gap-4"
@@ -178,19 +176,21 @@ export default function LoginPage() {
             }}
           >
             <div className="flex flex-col gap-1.5">
-              <Label htmlFor="email">E-mail</Label>
+              <Label htmlFor="email">{t("emailStep.emailLabel")}</Label>
               <Input
                 id="email"
                 type="email"
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="voce@exemplo.com"
+                placeholder={t("emailStep.emailPlaceholder")}
               />
             </div>
 
             {checkEmailMutation.isError && (
-              <p className="text-sm text-danger">{errorMessage(checkEmailMutation.error)}</p>
+              <p className="text-sm text-danger">
+                {errorMessage(checkEmailMutation.error, t("connectionError"))}
+              </p>
             )}
 
             <Button
@@ -198,7 +198,7 @@ export default function LoginPage() {
               disabled={!emailLooksValid || checkEmailMutation.isPending}
               className="mt-2"
             >
-              {checkEmailMutation.isPending ? "Verificando..." : "Continuar"}
+              {checkEmailMutation.isPending ? t("emailStep.submitting") : t("continue")}
             </Button>
           </form>
         </Card>
@@ -214,14 +214,16 @@ export default function LoginPage() {
             onClick={backToEmail}
             className="mb-4 text-xs font-semibold text-muted hover:text-foreground"
           >
-            ← trocar e-mail
+            {t("backToEmail")}
           </button>
 
           <span className="mb-4 inline-block rounded-full border border-accent/50 bg-accent/10 px-3 py-1 text-xs font-bold uppercase tracking-widest text-accent">
-            Bem-vindo de volta
+            {t("loginStep.badge")}
           </span>
 
-          <h2 className="mb-1 font-display text-xl font-bold text-foreground">Entrar</h2>
+          <h2 className="mb-1 font-display text-xl font-bold text-foreground">
+            {t("loginStep.title")}
+          </h2>
           <p className="mb-5 text-sm text-muted">{email}</p>
 
           <form
@@ -232,16 +234,18 @@ export default function LoginPage() {
             }}
           >
             <div className="flex flex-col gap-1.5">
-              <Label htmlFor="password">Senha</Label>
+              <Label htmlFor="password">{t("loginStep.passwordLabel")}</Label>
               <PasswordField id="password" value={password} onChange={setPassword} />
             </div>
 
             {loginMutation.isError && (
-              <p className="text-sm text-danger">{errorMessage(loginMutation.error)}</p>
+              <p className="text-sm text-danger">
+                {errorMessage(loginMutation.error, t("connectionError"))}
+              </p>
             )}
 
             <Button type="submit" disabled={loginMutation.isPending} className="mt-2">
-              {loginMutation.isPending ? "Entrando..." : "Entrar"}
+              {loginMutation.isPending ? t("loginStep.submitting") : t("loginStep.submit")}
             </Button>
           </form>
         </Card>
@@ -257,20 +261,18 @@ export default function LoginPage() {
             onClick={backToEmail}
             className="mb-4 text-xs font-semibold text-muted hover:text-foreground"
           >
-            ← trocar e-mail
+            {t("backToEmail")}
           </button>
 
           <span className="mb-4 inline-block rounded-full border border-accent-secondary/50 bg-accent-secondary/10 px-3 py-1 text-xs font-bold uppercase tracking-widest text-accent-secondary">
-            Esse e-mail ainda não tem conta
+            {t("signupRoleStep.badge")}
           </span>
 
           <h2 className="mb-1 font-display text-xl font-bold text-foreground">
-            Vamos criar sua conta
+            {t("signupRoleStep.title")}
           </h2>
           <p className="mb-1 text-sm text-muted">{email}</p>
-          <p className="mb-5 text-sm text-muted">
-            Você é Personal Trainer ou está aqui pra treinar?
-          </p>
+          <p className="mb-5 text-sm text-muted">{t("signupRoleStep.question")}</p>
 
           <div className="mb-2 flex gap-3">
             <RoleChip
@@ -285,7 +287,7 @@ export default function LoginPage() {
             />
           </div>
           <p className="mb-5 min-h-10 text-xs text-muted">
-            {signupRole ? SIGNUP_ROLE_COPY[signupRole].description : " "}
+            {signupRole ? t(`roles.${roleTranslationKey(signupRole)}.description`) : " "}
           </p>
 
           <Button
@@ -294,7 +296,7 @@ export default function LoginPage() {
             disabled={!signupRole}
             onClick={() => setStep("signup-details")}
           >
-            Continuar
+            {t("continue")}
           </Button>
         </Card>
       )}
@@ -309,14 +311,16 @@ export default function LoginPage() {
             onClick={() => setStep("signup-role")}
             className="mb-4 text-xs font-semibold text-muted hover:text-foreground"
           >
-            ← trocar perfil
+            {t("backToRole")}
           </button>
 
           <span className="mb-4 inline-block rounded-full border border-accent-secondary/50 bg-accent-secondary/10 px-3 py-1 text-xs font-bold uppercase tracking-widest text-accent-secondary">
-            {SIGNUP_ROLE_COPY[signupRole].chip}
+            {t(`roles.${roleTranslationKey(signupRole)}.chip`)}
           </span>
 
-          <h2 className="mb-1 font-display text-xl font-bold text-foreground">Criar conta</h2>
+          <h2 className="mb-1 font-display text-xl font-bold text-foreground">
+            {t("signupDetailsStep.title")}
+          </h2>
           <p className="mb-5 text-sm text-muted">{email}</p>
 
           <form
@@ -327,23 +331,25 @@ export default function LoginPage() {
             }}
           >
             <div className="flex flex-col gap-1.5">
-              <Label htmlFor="name">Nome</Label>
+              <Label htmlFor="name">{t("signupDetailsStep.nameLabel")}</Label>
               <Input
                 id="name"
                 required
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                placeholder="Como podemos te chamar?"
+                placeholder={t("signupDetailsStep.namePlaceholder")}
               />
             </div>
 
             <div className="flex flex-col gap-1.5">
-              <Label htmlFor="password">Senha</Label>
+              <Label htmlFor="password">{t("signupDetailsStep.passwordLabel")}</Label>
               <PasswordField id="password" value={password} onChange={setPassword} minLength={8} />
             </div>
 
             {registerMutation.isError && (
-              <p className="text-sm text-danger">{errorMessage(registerMutation.error)}</p>
+              <p className="text-sm text-danger">
+                {errorMessage(registerMutation.error, t("connectionError"))}
+              </p>
             )}
 
             <Button
@@ -352,7 +358,9 @@ export default function LoginPage() {
               disabled={registerMutation.isPending}
               className="mt-2"
             >
-              {registerMutation.isPending ? "Criando conta..." : "Criar conta"}
+              {registerMutation.isPending
+                ? t("signupDetailsStep.submitting")
+                : t("signupDetailsStep.submit")}
             </Button>
           </form>
         </Card>

@@ -1,6 +1,7 @@
 "use client";
 
 import { useParams } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { useQuery } from "@tanstack/react-query";
 import { getDietPlan } from "@/lib/api/nutrition";
 import { AuthGuard } from "@/components/auth-guard";
@@ -12,6 +13,7 @@ import { AddDietMealForm } from "@/components/add-diet-meal-form";
 import { AddDietFoodForm } from "@/components/add-diet-food-form";
 
 function NutricionistaPlanoContent() {
+  const t = useTranslations("planoDietaDetail");
   const params = useParams<{ id: string }>();
   const planId = params.id;
 
@@ -23,7 +25,7 @@ function NutricionistaPlanoContent() {
   if (planQuery.isLoading) {
     return (
       <main className="flex flex-1 items-center justify-center">
-        <span className="text-sm text-muted">Carregando plano...</span>
+        <span className="text-sm text-muted">{t("loadingPlan")}</span>
       </main>
     );
   }
@@ -45,7 +47,7 @@ function NutricionistaPlanoContent() {
     <main className="flex flex-1 flex-col gap-6 px-6 py-8">
       <div>
         <h1 className="font-display text-2xl font-bold tracking-tight">{plan.name}</h1>
-        <p className="text-sm text-muted">{plan.meals.length} refeição(ões) prescrita(s)</p>
+        <p className="text-sm text-muted">{t("mealsCount", { count: plan.meals.length })}</p>
       </div>
 
       <DietPlanView plan={plan} />
@@ -53,14 +55,14 @@ function NutricionistaPlanoContent() {
       {plan.meals.map((meal) => (
         <Card key={meal.id} className="flex flex-col gap-3">
           <h2 className="font-display text-sm font-bold">
-            Adicionar alimento — {meal.name} ({meal.time})
+            {t("addFoodHeading", { name: meal.name, time: meal.time })}
           </h2>
           <AddDietFoodForm planId={planId} mealId={meal.id} />
         </Card>
       ))}
 
       <Card>
-        <h2 className="mb-3 font-display text-lg font-bold">Adicionar refeição</h2>
+        <h2 className="mb-3 font-display text-lg font-bold">{t("addMealHeading")}</h2>
         <AddDietMealForm planId={planId} nextOrder={nextOrder} />
       </Card>
     </main>

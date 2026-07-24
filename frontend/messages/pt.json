@@ -1,0 +1,931 @@
+{
+  "common": {
+    "loading": "Carregando...",
+    "save": "Salvar",
+    "cancel": "Cancelar",
+    "back": "Voltar",
+    "genericError": "Erro inesperado. Tente novamente."
+  },
+  "nav": {
+    "settings": "Configurações",
+    "programs": "Programas",
+    "myPersonalWorkout": "Meu Treino Pessoal",
+    "progress": "Evolução",
+    "anamnesis": "Anamnese",
+    "questions": "Dúvidas",
+    "findPersonal": "Encontrar Personal",
+    "profile": "Perfil",
+    "requests": "Solicitações",
+    "plans": "Planos",
+    "users": "Usuários",
+    "exercises": "Exercícios",
+    "personalWorkouts": "Treinos Pessoais",
+    "logins": "Logins",
+    "support": "Suporte",
+    "accessLogs": "Logs de acesso",
+    "logout": "Sair"
+  },
+  "appHeader": {
+    "profilePhoto": "Foto de perfil",
+    "openNavMenu": "Abrir menu de navegação"
+  },
+  "settings": {
+    "title": "Configurações",
+    "subtitle": "Preferências do aplicativo.",
+    "language": {
+      "title": "Idioma",
+      "description": "Escolha o idioma do aplicativo. Sua escolha é salva e sincronizada entre seus dispositivos.",
+      "pt": "Português",
+      "en": "English",
+      "es": "Español",
+      "saveError": "Não foi possível salvar o idioma. Tente novamente."
+    }
+  },
+  "queryError": {
+    "connectionError": "Não foi possível conectar ao servidor.",
+    "retry": "Tentar novamente"
+  },
+  "avatarUpload": {
+    "uploading": "Enviando...",
+    "changePhoto": "Trocar foto",
+    "remove": "Remover",
+    "errors": {
+      "invalidType": "Escolha um arquivo de imagem (PNG, JPEG ou WebP).",
+      "loadFailed": "Não foi possível ler a imagem.",
+      "canvasFailed": "Não foi possível processar a imagem.",
+      "processError": "Erro ao processar a imagem.",
+      "saveError": "Erro ao salvar a foto."
+    }
+  },
+  "availabilityBadge": {
+    "full": "Lotado",
+    "openForNewStudents": "Aberto para novos alunos"
+  },
+  "difficultyBadge": {
+    "iniciante": "Iniciante",
+    "intermediario": "Intermediário",
+    "avancado": "Avançado"
+  },
+  "weeklyVoltageBar": {
+    "ariaLabel": "Frequência dos últimos 7 dias",
+    "todaySuffix": " (hoje)",
+    "activeSuffix": " — treino registrado",
+    "weekday": {
+      "sun": "D",
+      "mon": "S",
+      "tue": "T",
+      "wed": "Q",
+      "thu": "Q",
+      "fri": "S",
+      "sat": "S"
+    }
+  },
+  "login": {
+    "connectionError": "Não foi possível conectar ao servidor.",
+    "continue": "Continuar",
+    "backToEmail": "← trocar e-mail",
+    "backToRole": "← trocar perfil",
+    "passwordField": {
+      "show": "Mostrar",
+      "hide": "Ocultar",
+      "showAria": "Mostrar senha",
+      "hideAria": "Ocultar senha"
+    },
+    "roles": {
+      "aluno": {
+        "chip": "Treinar",
+        "description": "Monte seus próprios treinos ou acompanhe o que seu Personal te passou."
+      },
+      "personal": {
+        "chip": "Personal",
+        "description": "Entre para gerenciar seus alunos, prescrever e acompanhar treinos."
+      }
+    },
+    "emailStep": {
+      "title": "Entrar ou criar conta",
+      "subtitle": "Digite seu e-mail pra começar. A gente identifica o resto.",
+      "emailLabel": "E-mail",
+      "emailPlaceholder": "voce@exemplo.com",
+      "submitting": "Verificando..."
+    },
+    "loginStep": {
+      "badge": "Bem-vindo de volta",
+      "title": "Entrar",
+      "passwordLabel": "Senha",
+      "submitting": "Entrando...",
+      "submit": "Entrar"
+    },
+    "signupRoleStep": {
+      "badge": "Esse e-mail ainda não tem conta",
+      "title": "Vamos criar sua conta",
+      "question": "Você é Personal Trainer ou está aqui pra treinar?"
+    },
+    "signupDetailsStep": {
+      "title": "Criar conta",
+      "nameLabel": "Nome",
+      "namePlaceholder": "Como podemos te chamar?",
+      "passwordLabel": "Senha",
+      "submitting": "Criando conta...",
+      "submit": "Criar conta"
+    }
+  },
+  "alunoProfile": {
+    "eyebrow": "Perfil",
+    "title": "Meu perfil",
+    "photoTitle": "Foto de perfil"
+  },
+  "personalProfile": {
+    "eyebrow": "Perfil",
+    "title": "Perfil público",
+    "subtitle": "Ative a disponibilidade para aparecer na busca de alunos. Você aprova cada solicitação manualmente.",
+    "photoTitle": "Foto de perfil",
+    "availability": {
+      "title": "Disponível para novos alunos",
+      "description": "Quando ligado, seu perfil aparece na busca por localização.",
+      "toggleAria": "Disponível para novos alunos"
+    },
+    "freeNotice": {
+      "text": "Disponibilidade no diretório é um recurso dos planos Base e Plus.",
+      "upgradeLink": "Fazer upgrade"
+    },
+    "locationLabel": "Localização (cidade/estado)",
+    "locationPlaceholder": "Ex: Palhoça, SC",
+    "bioLabel": "Bio / especialidade",
+    "bioPlaceholder": "Ex: Especialista em treino funcional e reabilitação.",
+    "saveError": "Não foi possível salvar.",
+    "saveSuccess": "Perfil salvo.",
+    "saving": "Salvando...",
+    "saveButton": "Salvar perfil"
+  },
+  "vincularAlunoForm": {
+    "title": "Vincular novo aluno",
+    "emailLabel": "E-mail do aluno",
+    "emailPlaceholder": "aluno@exemplo.com",
+    "submitting": "Vinculando...",
+    "submit": "Vincular aluno",
+    "errors": {
+      "connection": "Não foi possível conectar ao servidor.",
+      "alreadyLinked": "Esse aluno já está vinculado a você.",
+      "planLimit": "Você atingiu o limite de alunos do seu plano. Faça upgrade para vincular mais."
+    },
+    "notFound": {
+      "message": "Esse e-mail ainda não tem conta no ThunderaFit. Peça para seu aluno se cadastrar primeiro.",
+      "copied": "Convite copiado!",
+      "copyButton": "Copiar convite para compartilhar",
+      "inviteText": "Oi! Te convidei pra usar o ThunderaFit comigo como seu(sua) {professionalLabel}. Cria sua conta de aluno aqui: {loginUrl}"
+    }
+  },
+  "alunoDashboard": {
+    "greeting": "Olá, {name}",
+    "subtitle": "Pronto para descarregar o treino de hoje?",
+    "loadingWorkouts": "Carregando treinos...",
+    "noProgramsYet": "Você ainda não tem nenhum treino ou plano de dieta. Convide seu Personal Trainer logo abaixo, ou escolha um treino pronto em \"Meus treinos\".",
+    "personalPrescribedLabel": "Prescrito pelo seu Personal",
+    "noPersonalPrescription": "Seu Personal ainda não te prescreveu nenhum treino.",
+    "myWorkoutsLabel": "Meus treinos",
+    "selfWorkoutsEmpty": "Escolha um treino pronto e comece a treinar por conta própria hoje mesmo.",
+    "viewAvailableWorkouts": "Ver treinos disponíveis",
+    "last7Days": "Últimos 7 dias",
+    "viewAllPrograms": "Ver todos os meus programas →",
+    "todayDietPlan": "Plano alimentar de hoje",
+    "kcalLabel": "{kcal} kcal",
+    "proteinLabel": "{value}g proteína",
+    "carbsLabel": "{value}g carbo",
+    "fatLabel": "{value}g gordura",
+    "viewFullPlan": "Ver plano completo",
+    "shortcutEvolution": "Evolução",
+    "shortcutAnamnesis": "Anamnese",
+    "shortcutQuestions": "Dúvidas",
+    "setsCount": "{done}/{total} séries",
+    "exerciseCount": "{count, plural, one {# exercício} other {# exercícios}}",
+    "estimatedMinutesSuffix": " · ~{minutes} min",
+    "startWorkout": "Começar treino",
+    "noPersonalTitle": "Ainda sem um Personal?",
+    "noPersonalDescription": "Convide seu Personal Trainer pra acompanhar seu treino de perto no ThunderaFit.",
+    "inviteCopied": "Convite copiado!",
+    "copyInvite": "Copiar convite para compartilhar",
+    "inviteText": "Oi! Quero treinar com você no ThunderaFit. Cria sua conta de Personal Trainer aqui: {loginUrl}"
+  },
+  "alunoProgramsList": {
+    "title": "Meus Programas",
+    "emptyState": "Nenhum programa atribuído ainda.",
+    "sessionCount": "{count} sessão(ões)",
+    "open": "Abrir →"
+  },
+  "programaDetail": {
+    "neverCompleted": "nunca concluída",
+    "programLabel": "Programa",
+    "sessionCountSubtitle": "{count} sessão(ões) · escolha qualquer uma para treinar",
+    "lastCompleted": "Última conclusão: {date}",
+    "suggested": "Sugerida",
+    "open": "Abrir →"
+  },
+  "treinosList": {
+    "title": "Meus Treinos",
+    "emptyState": "Nenhum treino prescrito ainda.",
+    "open": "Abrir →"
+  },
+  "execucaoTreino": {
+    "loadingWorkout": "Carregando treino...",
+    "loadError": "Erro ao carregar o treino.",
+    "workoutLabel": "Treino {letter}",
+    "lastCompleted": "Última conclusão: {date}",
+    "completing": "Concluindo...",
+    "sessionCompleted": "Sessão concluída ✓",
+    "completeSession": "Concluir sessão",
+    "completeError": "Não foi possível concluir a sessão.",
+    "upsellQuestion": "Gostou de treinar sozinho?",
+    "upsellLinkText": "Convide um Personal",
+    "upsellSuffix": "pra te acompanhar de perto."
+  },
+  "meuTreinoPessoal": {
+    "title": "Meu Treino Pessoal",
+    "subtitle": "Templates prontos, sem precisar de um Personal. Escolha um e comece a treinar hoje mesmo.",
+    "sessionCountScheme": "{count} sessão(ões) · {scheme}",
+    "schemeWeekday": "dias da semana",
+    "schemeLetter": "letras",
+    "applying": "Aplicando...",
+    "applyTemplate": "Aplicar este treino",
+    "emptyState": "Nenhum treino pessoal disponível ainda.",
+    "applyError": "Erro ao aplicar o treino.",
+    "buildFromScratch": "Crie seu treino do zero",
+    "comingSoon": "Em breve",
+    "buildFromScratchDescription": "Montar seu próprio treino, exercício por exercício, com acesso ao catálogo completo.",
+    "wantCloserFollowUp": "Quer um acompanhamento mais de perto?",
+    "invitePersonal": "Convide um Personal"
+  },
+  "evolucao": {
+    "noPreviousComparison": "Sem comparação anterior ainda",
+    "comparisonText": "{arrow} {sign}{value}% vs sessão anterior",
+    "title": "Evolução",
+    "subtitle": "Seu histórico de carga e frequência de treinos.",
+    "maxLoadPerExercise": "Carga máxima por exercício",
+    "loadingExercises": "Carregando exercícios...",
+    "noSetsLoggedYet": "Você ainda não registrou nenhuma série. Execute um treino primeiro para ver sua evolução aqui.",
+    "loadingHistory": "Carregando histórico...",
+    "noHistoryForExercise": "Ainda não há séries registradas para este exercício.",
+    "viewAsTable": "Ver como tabela",
+    "dateColumn": "Data",
+    "maxLoadColumn": "Carga máxima",
+    "workoutFrequency": "Frequência de treinos (últimos 6 meses)",
+    "workoutsInPeriod": "{count} treino(s) no período"
+  },
+  "anamneseAluno": {
+    "personalDataHeading": "Dados Pessoais",
+    "fullNameLabel": "Nome completo",
+    "birthDateLabel": "Nascimento",
+    "heightLabel": "Altura (cm)",
+    "weightLabel": "Peso (kg)",
+    "goalsHeading": "Objetivos",
+    "goalsLabel": "Objetivos",
+    "goalsPlaceholder": "Ex: emagrecimento, hipertrofia, condicionamento...",
+    "healthHistoryHeading": "Histórico de Saúde",
+    "healthConditionsLabel": "Condições de saúde",
+    "healthConditionsPlaceholder": "Ex: hipertensão, diabetes...",
+    "medicationsLabel": "Medicamentos em uso",
+    "physicalActivityHeading": "Atividade Física",
+    "activityLevelLabel": "Nível de atividade atual",
+    "activityLevelPlaceholder": "Ex: sedentário, leve, moderado, intenso",
+    "pastExperienceLabel": "Experiência anterior com treinos",
+    "preferencesHeading": "Preferências e Restrições",
+    "trainingPreferencesLabel": "Preferências de treino",
+    "trainingPreferencesPlaceholder": "Ex: dias disponíveis, tipo preferido...",
+    "injuriesLabel": "Lesões/restrições",
+    "injuriesPlaceholder": "Ex: nenhuma",
+    "connectionError": "Não foi possível conectar ao servidor.",
+    "saveSuccess": "Anamnese salva com sucesso.",
+    "saving": "Salvando...",
+    "saveAnamnesis": "Salvar anamnese",
+    "title": "Anamnese",
+    "subtitle": "Seu histórico de saúde e objetivos — seu Personal Trainer pode ver essas informações, mas só você pode editar."
+  },
+  "profissionais": {
+    "statusPending": "Pendente",
+    "statusAccepted": "Aceita",
+    "statusRejected": "Recusada",
+    "discover": "Descobrir",
+    "title": "Encontrar Personal",
+    "subtitle": "Busque por cidade/estado e solicite vínculo. O profissional aprova manualmente.",
+    "locationLabel": "Localização (cidade/estado)",
+    "locationPlaceholder": "Ex: Palhoça, SC",
+    "searchButton": "Buscar",
+    "searching": "Buscando...",
+    "noResultsFound": "Nenhum profissional disponível{location}. Tente outra localização ou deixe o campo vazio para ver todos.",
+    "inLocationSuffix": " em \"{location}\"",
+    "sending": "Enviando...",
+    "requestConnection": "Solicitar vínculo",
+    "sendRequestError": "Não foi possível enviar a solicitação.",
+    "myRequests": "Minhas solicitações",
+    "noRequestsSent": "Você ainda não enviou nenhuma solicitação."
+  },
+  "exerciseExecutionCard": {
+    "markAsDoneAriaLabel": "Marcar {name} como concluído",
+    "genericExercise": "exercício",
+    "demoAlt": "Demonstração de {name}",
+    "playVideoAriaLabel": "Reproduzir vídeo de {name}",
+    "viewDemoOnYoutube": "▶ Ver vídeo de demonstração no YouTube",
+    "prescribedInfo": "Prescrito: {sets}x {repsRange} · descanso {restSeconds}s",
+    "personalNoteLabel": "Observação do seu Personal: ",
+    "setLabel": "Série {number}",
+    "repsWeight": "{reps} reps × {weight}kg",
+    "lastTime": "Última vez: {reps} reps × {weight}kg",
+    "repsLabel": "Reps (série {number})",
+    "loadLabel": "Carga (kg)",
+    "registering": "...",
+    "registerButton": "Registrar",
+    "registerError": "Erro ao registrar série.",
+    "setsCount": "{done}/{total} séries"
+  },
+  "exerciseReorderButtons": {
+    "moveUpAriaLabel": "Mover exercício para cima",
+    "moveDownAriaLabel": "Mover exercício para baixo",
+    "moveError": "Erro ao mover."
+  },
+  "duvidasList": {
+    "title": "Dúvidas",
+    "subtitle": "Converse com seu Personal Trainer.",
+    "newQuestion": "Nova dúvida",
+    "empty": "Nenhuma dúvida enviada ainda.",
+    "truncationEllipsis": "...",
+    "status": {
+      "respondido": "Respondido",
+      "aberto": "Aberto"
+    },
+    "form": {
+      "noPersonals": "Você precisa estar vinculado a um Personal Trainer ou Nutricionista para enviar uma dúvida.",
+      "recipientFor": "Para: {type} ({email})",
+      "typeNutricionista": "Nutricionista",
+      "typePersonal": "Personal",
+      "recipientLabel": "Destinatário",
+      "selectOption": "Selecione",
+      "recipientOption": "{type} — {email}",
+      "subjectLabel": "Assunto",
+      "subjectPlaceholder": "Ex: Dor no ombro durante o supino",
+      "messageLabel": "Mensagem",
+      "messagePlaceholder": "Descreva sua dúvida...",
+      "connectionError": "Não foi possível conectar ao servidor.",
+      "sending": "Enviando...",
+      "submit": "Enviar dúvida"
+    }
+  },
+  "dietaDetail": {
+    "loading": "Carregando plano...",
+    "kicker": "Plano alimentar"
+  },
+  "supportThreadDetail": {
+    "back": "← Voltar",
+    "status": {
+      "respondido": "Respondido",
+      "aberto": "Aberto"
+    },
+    "messagePlaceholder": "Escreva uma mensagem...",
+    "sending": "...",
+    "send": "Enviar",
+    "sendError": "Erro ao enviar mensagem."
+  },
+  "frequencyChart": {
+    "tooltipLabel": "Treinos",
+    "months": {
+      "jan": "Jan",
+      "fev": "Fev",
+      "mar": "Mar",
+      "abr": "Abr",
+      "mai": "Mai",
+      "jun": "Jun",
+      "jul": "Jul",
+      "ago": "Ago",
+      "set": "Set",
+      "out": "Out",
+      "nov": "Nov",
+      "dez": "Dez"
+    }
+  },
+  "loadHistoryChart": {
+    "tooltipLabel": "Carga máxima"
+  },
+  "weeklyStats": {
+    "setsThisWeek": "Séries na semana",
+    "streak": "Sequência",
+    "days": "dia(s)"
+  },
+  "dietPlanView": {
+    "totalOfDay": "Total do dia",
+    "macros": {
+      "protein": "{value}g P",
+      "carbs": "{value}g C",
+      "fat": "{value}g G",
+      "kcal": "{value} kcal"
+    },
+    "noFoods": "Nenhum alimento adicionado ainda.",
+    "noMeals": "Nenhuma refeição adicionada ainda."
+  },
+  "personalDashboard": {
+    "greeting": "Olá, {nome}",
+    "subtitle": "Seus alunos e treinos prescritos.",
+    "alunosVinculados": "Alunos vinculados",
+    "limiteAtingido": "Limite de alunos atingido.",
+    "fazerUpgrade": "Faça upgrade do plano →",
+    "verPlanos": "Precisa de mais alunos? Ver planos →",
+    "planoAtivo": "Plano {plano} ativo · gerenciar assinatura →",
+    "desde": "desde {data}",
+    "gerenciar": "Gerenciar →",
+    "nenhumAlunoVinculado": "Nenhum aluno vinculado ainda.",
+    "limiteAtingidoBotao": "Limite atingido",
+    "vincularNovoAluno": "Vincular novo aluno",
+    "treinosPrescritos": "Treinos prescritos",
+    "alunoDesvinculado": "aluno desvinculado",
+    "sessoesCount": "{count} sessão(ões)",
+    "nenhumProgramaAplicado": "Nenhum programa aplicado a um aluno ainda.",
+    "gerarTreinoRapido": "⚡ Gerar Treino Rápido",
+    "montarDoZero": "ou monte um programa do zero →",
+    "verDuvidas": "Ver dúvidas dos alunos →",
+    "abrir": "Abrir →"
+  },
+  "paymentReminderCard": {
+    "titulo": "Lembrete de pagamento",
+    "descricao": "Na data escolhida, o aluno recebe uma notificação no próximo login — não processa nenhum pagamento de verdade.",
+    "proximoLembrete": "Próximo lembrete: {data}",
+    "repeteTodoMes": " · repete todo mês",
+    "proximaCobranca": "Próxima cobrança",
+    "repetirTodoMes": "Repetir todo mês",
+    "atualizarLembrete": "Atualizar lembrete",
+    "salvarLembrete": "Salvar lembrete",
+    "desativar": "Desativar",
+    "erroSalvar": "Erro ao salvar o lembrete."
+  },
+  "alunoHub": {
+    "naoVinculado": "Este aluno não está vinculado a você (ou o link está incorreto).",
+    "aluno": "Aluno",
+    "vinculadoDesde": "Vinculado desde {data}",
+    "verAnamnese": "Ver anamnese →",
+    "programasDeTreino": "Programas de treino",
+    "nenhumProgramaAplicado": "Nenhum programa aplicado a este aluno ainda.",
+    "sessoesCount": "{count} sessão(ões)",
+    "abrir": "Abrir →",
+    "evolucao": "Evolução",
+    "semSeriesRegistradas": "Este aluno ainda não registrou nenhuma série de treino.",
+    "carregandoHistorico": "Carregando histórico...",
+    "semSeriesParaExercicio": "Ainda não há séries registradas para este exercício.",
+    "treinosUltimos6Meses": "{count} treino(s) nos últimos 6 meses"
+  },
+  "personalAnamneseView": {
+    "titulo": "Anamnese do aluno",
+    "subtitulo": "Somente leitura — o aluno é quem edita a própria anamnese.",
+    "nomeCompleto": "Nome completo",
+    "nascimento": "Nascimento",
+    "alturaCm": "Altura (cm)",
+    "pesoKg": "Peso (kg)",
+    "objetivos": "Objetivos",
+    "condicoesDeSaude": "Condições de saúde",
+    "medicamentos": "Medicamentos",
+    "nivelDeAtividade": "Nível de atividade",
+    "experienciaAnterior": "Experiência anterior",
+    "preferenciasDeTreino": "Preferências de treino",
+    "lesoesRestricoes": "Lesões/restrições"
+  },
+  "personalDuvidasList": {
+    "titulo": "Dúvidas dos alunos",
+    "subtitulo": "Perguntas enviadas pelos seus alunos.",
+    "abertas": "Abertas",
+    "respondidas": "Respondidas",
+    "todas": "Todas",
+    "nenhumaDuvida": "Nenhuma dúvida nesta categoria.",
+    "respondido": "Respondido",
+    "aberto": "Aberto"
+  },
+  "personalSolicitacoes": {
+    "solicitacoes": "Solicitações",
+    "titulo": "Solicitações de vínculo",
+    "subtitulo": "Alunos que pediram para treinar com você.",
+    "erroResponder": "Erro ao responder a solicitação.",
+    "pendentes": "Pendentes ({count})",
+    "nenhumaPendente": "Nenhuma solicitação pendente.",
+    "aceitando": "Aceitando...",
+    "aceitar": "Aceitar",
+    "recusar": "Recusar",
+    "historico": "Histórico",
+    "pendente": "Pendente",
+    "aceita": "Aceita",
+    "recusada": "Recusada"
+  },
+  "personalUpgrade": {
+    "planoEyebrow": "Plano",
+    "suaAssinatura": "Sua assinatura",
+    "fazerUpgradeTitulo": "Fazer upgrade",
+    "assinaturaAtivaComLimite": "Você está no plano {plano} — {limite}.",
+    "limiteIlimitado": "alunos ilimitados",
+    "limiteAte20": "até 20 alunos vinculados",
+    "planoGratuito": "Plano gratuito: até 3 alunos. Faça upgrade para vincular mais e aparecer no diretório de profissionais.",
+    "pagamentoConcluido": "Pagamento concluído! Sua assinatura está sendo ativada — pode levar alguns segundos para o limite atualizar.",
+    "checkoutCancelado": "Checkout cancelado. Nenhuma cobrança foi feita.",
+    "gerenciarAssinatura": "Gerenciar assinatura",
+    "gerenciarAssinaturaDescricao": "Altere o método de pagamento, veja faturas, troque de degrau ou cancele pelo portal seguro do Stripe. Ao cancelar, seus alunos já vinculados continuam — só novos vínculos acima do limite do plano gratuito ficam bloqueados após o fim do período pago.",
+    "erroAbrirPortal": "Não foi possível abrir o portal.",
+    "abrindo": "Abrindo...",
+    "gerenciarCancelarAssinatura": "Gerenciar / cancelar assinatura",
+    "erroIniciarCheckout": "Não foi possível iniciar o checkout.",
+    "maisPopular": "Mais popular",
+    "mensal": "Mensal",
+    "anual": "Anual",
+    "redirecionando": "Redirecionando...",
+    "assinar": "Assinar {nome}",
+    "tierBaseBeneficio1": "Até 20 alunos vinculados",
+    "tierBaseBeneficio2": "Apareça no diretório de profissionais",
+    "tierPlusBeneficio1": "Alunos ilimitados",
+    "tierPlusBeneficio2": "Destaque e prioridade no diretório de profissionais",
+    "sufixoMes": "/mês",
+    "sufixoAno": "/ano",
+    "notaMensal": "Cobrança mensal, cancele quando quiser.",
+    "notaAnualBase": "Equivale a R$ 15,90/mês — 20% de desconto.",
+    "notaAnualPlus": "Equivale a R$ 31,90/mês — 20% de desconto."
+  },
+  "personalProgramasList": {
+    "title": "Programas de Treino",
+    "newProgramTitle": "Novo programa",
+    "newProgramDescription": "Crie o programa, adicione as sessões e depois aplique a um aluno — o mesmo programa pode ser reaplicado a outros alunos vinculados quando quiser, como um template reutilizável.",
+    "programNameLabel": "Nome do programa",
+    "programNamePlaceholder": "Ex: Foco em Peito",
+    "sessionNamingLabel": "Como nomear as sessões?",
+    "letterScheme": "Letras (A–E)",
+    "weekdayScheme": "Dias da semana",
+    "upTo7Sessions": "Até 7 sessões (Segunda a Domingo).",
+    "upTo5Sessions": "Até 5 sessões (A a E).",
+    "chooseHowMany": "Você escolhe quantas quiser adicionar — não precisa preencher todas.",
+    "targetAlunoLabel": "Aluno-alvo (opcional)",
+    "pureTemplateOption": "Deixar como template puro (sem aluno)",
+    "targetAlunoHint": "Só pré-seleciona esse aluno na hora de aplicar o programa depois de montar as sessões — não cria vínculo nem aplica nada ainda.",
+    "createProgramError": "Erro ao criar programa.",
+    "creating": "Criando...",
+    "createProgram": "Criar programa",
+    "templatesTitle": "Templates ({count})",
+    "noTemplatesYet": "Nenhum template ainda.",
+    "appliedToStudentsTitle": "Aplicados a alunos ({count})",
+    "noAppliedProgramsYet": "Nenhum programa aplicado a alunos ainda.",
+    "unlinkedStudent": "aluno desvinculado",
+    "sessionsCount": "{count} sessão(ões)",
+    "open": "Abrir →"
+  },
+  "personalProgramaDetail": {
+    "template": "Template",
+    "appliedToStudent": "Aplicado a aluno",
+    "sessionsProgress": "{current}/{max} sessão(ões)",
+    "exercisesCount": "{count} exercício(s)",
+    "open": "Abrir →",
+    "addSessionLabel": "Adicionar sessão",
+    "addSessionError": "Erro ao adicionar sessão.",
+    "applyToStudentTitle": "Aplicar a um aluno",
+    "applyToStudentDescription": "Cria uma cópia independente deste programa para o aluno. Editar este programa depois não afeta cópias já aplicadas — e você pode aplicar este mesmo template a outros alunos vinculados quantas vezes quiser.",
+    "selectStudent": "Selecione um aluno",
+    "applyError": "Erro ao aplicar.",
+    "applySuccess": "Programa aplicado ao aluno.",
+    "applying": "Aplicando...",
+    "applyProgram": "Aplicar programa"
+  },
+  "personalSessaoEditor": {
+    "sessionNotFound": "Sessão não encontrada neste programa.",
+    "backToProgram": "← Voltar ao programa",
+    "sessionTitle": "Sessão {label}",
+    "notes": "Obs: {notes}",
+    "nextSession": "Próximo: {label} →",
+    "creating": "Criando...",
+    "nextSessionError": "Erro ao criar a próxima sessão."
+  },
+  "personalTreinoDetail": {
+    "loadingWorkout": "Carregando treino...",
+    "loadWorkoutError": "Erro ao carregar o treino.",
+    "workoutLetter": "Treino {letter}",
+    "exercisesPrescribedCount": "{count} exercício(s) prescrito(s)",
+    "notes": "Obs: {notes}",
+    "addExerciseTitle": "Adicionar exercício"
+  },
+  "generateWorkoutModal": {
+    "modalTitle": "⚡ Gerar Treino Rápido",
+    "closeAriaLabel": "Fechar",
+    "programNameLabel": "Nome do programa",
+    "programNamePlaceholder": "Ex: Treino de Hipertrofia - Julho",
+    "sessionSchemeLabel": "Esquema de sessões",
+    "letterScheme": "Letras (A-E)",
+    "weekdayScheme": "Dias da semana",
+    "goalLabel": "Objetivo",
+    "goals": {
+      "hipertrofia": "Hipertrofia",
+      "forca": "Força",
+      "resistencia": "Resistência"
+    },
+    "goalHint": "Vale pra todas as sessões do programa.",
+    "advance": "Avançar",
+    "sessionTitle": "Sessão {label}",
+    "muscleGroupsLabel": "Grupos musculares desta sessão",
+    "muscleGroupsHint": "O 1º grupo marcado é o principal (mais exercícios); os demais entram como secundários.",
+    "generateError": "Não foi possível gerar a sugestão.",
+    "generating": "Gerando...",
+    "generateSuggestion": "Gerar sugestão",
+    "skipSession": "Pular esta sessão",
+    "reviewHint": "Revise, ajuste ou remova qualquer linha — nada foi salvo ainda.",
+    "noExercisesSkipped": "Sessão sem exercícios (pulada).",
+    "removeRow": "Remover",
+    "setsLabel": "Séries",
+    "repsLabel": "Reps",
+    "restLabel": "Descanso (s)",
+    "adjustGroups": "← Ajustar grupos musculares / gerar de novo",
+    "saveError": "Não foi possível criar o programa.",
+    "nextWorkout": "Próximo treino →",
+    "saving": "Salvando...",
+    "saveProgram": "Salvar programa de treinamento"
+  },
+  "deleteProgramButton": {
+    "delete": "Excluir",
+    "confirmDeleteTemplate": "Excluir este template? As sessões e exercícios dele somem — instâncias já aplicadas a alunos não são afetadas.",
+    "confirmDeleteApplied": "Excluir este programa aplicado? O histórico de séries registradas pelo aluno nele será perdido. Essa ação não pode ser desfeita.",
+    "deleteError": "Erro ao excluir.",
+    "deleting": "Excluindo...",
+    "confirmDelete": "Sim, excluir"
+  },
+  "deleteExerciseButton": {
+    "delete": "Excluir",
+    "confirmDelete": "Excluir este exercício do catálogo? Essa ação não pode ser desfeita.",
+    "deleteError": "Erro ao excluir.",
+    "deleting": "Excluindo...",
+    "confirmDeleteYes": "Sim, excluir"
+  },
+  "addExerciseForm": {
+    "loadingCatalog": "Carregando catálogo...",
+    "muscleGroupLabel": "Grupo muscular",
+    "allGroups": "Todos",
+    "searchByNameLabel": "Buscar por nome",
+    "searchByNamePlaceholder": "Ex: supino, agachamento...",
+    "exerciseLabel": "Exercício ({count})",
+    "exercisesAriaLabel": "Exercícios",
+    "videoLink": "▶ vídeo",
+    "noExercisesInFilter": "Nenhum exercício neste filtro.",
+    "setsLabel": "Séries",
+    "repsLabel": "Reps",
+    "restLabel": "Descanso (s)",
+    "notesLabel": "Observações (opcional)",
+    "notesPlaceholder": "Ex: cadência lenta na descida, trocar se sentir dor no ombro...",
+    "addExerciseError": "Erro ao adicionar exercício.",
+    "adding": "Adicionando...",
+    "addExerciseButton": "Adicionar exercício (posição {position})",
+    "exerciseAddedToast": "✓ Exercício adicionado"
+  },
+  "adminExerciseForm": {
+    "mediaProcessingError": "Erro ao processar o arquivo de mídia.",
+    "nameLabel": "Nome",
+    "categoryLabel": "Categoria (grupo muscular)",
+    "newCategoryOption": "+ Nova categoria...",
+    "newCategoryPlaceholder": "Nome da nova categoria",
+    "equipmentLabel": "Equipamento",
+    "descriptionLabel": "Descrição",
+    "difficultyLabel": "Dificuldade",
+    "difficulty": {
+      "INICIANTE": "Iniciante",
+      "INTERMEDIARIO": "Intermediário",
+      "AVANCADO": "Avançado"
+    },
+    "featuredLabel": "Destaque",
+    "featuredHint": "(aparece primeiro dentro do grupo muscular, com selo ☆)",
+    "mediaLabelEdit": "Mídia (deixe em branco pra manter a atual)",
+    "mediaLabelNew": "Mídia (opcional)",
+    "similarNamesPrefix": "Já existe(m) exercício(s) com nome parecido:",
+    "similarNamesConfirm": "Salvar mesmo assim?",
+    "saveSimilarAnyway": "Salvar mesmo assim",
+    "saveError": "Erro ao salvar exercício.",
+    "saving": "Salvando..."
+  },
+  "nutricionistaDashboard": {
+    "greeting": "Olá, {name}",
+    "subtitle": "Seus alunos e planos alimentares prescritos.",
+    "alunosVinculados": "Alunos vinculados",
+    "limiteAtingidoMsg": "Limite de alunos atingido. Faça upgrade do plano para vincular mais alunos.",
+    "anamneseLink": "Anamnese",
+    "desde": "desde {date}",
+    "nenhumAluno": "Nenhum aluno vinculado ainda.",
+    "limiteAtingidoBtn": "Limite atingido",
+    "vincularNovoAluno": "Vincular novo aluno",
+    "planosDietaPrescritos": "Planos de dieta prescritos",
+    "ver": "Ver →",
+    "nenhumPlano": "Nenhum plano de dieta criado ainda.",
+    "criarNovoPlano": "Criar novo plano de dieta"
+  },
+  "nutricionistaAnamneseView": {
+    "title": "Anamnese do aluno",
+    "subtitle": "Somente leitura — o aluno é quem edita a própria anamnese.",
+    "fields": {
+      "fullName": "Nome completo",
+      "birthDate": "Nascimento",
+      "heightCm": "Altura (cm)",
+      "weightKg": "Peso (kg)",
+      "goals": "Objetivos",
+      "healthConditions": "Condições de saúde",
+      "medications": "Medicamentos",
+      "activityLevel": "Nível de atividade",
+      "pastExperience": "Experiência anterior",
+      "trainingPreferences": "Preferências de treino",
+      "injuries": "Lesões/restrições"
+    }
+  },
+  "nutricionistaVincularAluno": {
+    "professionalLabel": "Nutricionista"
+  },
+  "nutricionistaDuvidasList": {
+    "title": "Dúvidas dos alunos",
+    "subtitle": "Perguntas enviadas pelos seus alunos.",
+    "filterAbertas": "Abertas",
+    "filterRespondidas": "Respondidas",
+    "filterTodas": "Todas",
+    "nenhumaDuvida": "Nenhuma dúvida nesta categoria.",
+    "truncationEllipsis": "...",
+    "status": {
+      "respondido": "Respondido",
+      "aberto": "Aberto"
+    }
+  },
+  "planoDietaDetail": {
+    "loadingPlan": "Carregando plano...",
+    "mealsCount": "{count} refeição(ões) prescrita(s)",
+    "addFoodHeading": "Adicionar alimento — {name} ({time})",
+    "addMealHeading": "Adicionar refeição"
+  },
+  "planoDietaNovo": {
+    "heading": "Criar novo plano de dieta",
+    "loadingAlunos": "Carregando alunos...",
+    "alunoLabel": "Aluno",
+    "selecioneAluno": "Selecione um aluno",
+    "noAlunos": "Você ainda não tem alunos vinculados — vincule um antes de criar um plano.",
+    "nomeLabel": "Nome do plano",
+    "namePlaceholder": "Plano de Cutting - Semana 1",
+    "genericServerError": "Não foi possível conectar ao servidor.",
+    "creating": "Criando...",
+    "criarPlano": "Criar plano"
+  },
+  "addDietFoodForm": {
+    "loadingCatalog": "Carregando catálogo...",
+    "buscarAlimento": "Buscar alimento",
+    "searchPlaceholder": "Ex: frango, arroz...",
+    "alimentoLabel": "Alimento",
+    "selectOption": "{count} alimento(s) — selecione",
+    "porcoesLabel": "Porções",
+    "errorAdding": "Erro ao adicionar alimento.",
+    "adding": "Adicionando...",
+    "addButton": "Adicionar alimento"
+  },
+  "addDietMealForm": {
+    "nomeRefeicaoLabel": "Nome da refeição",
+    "namePlaceholder": "Almoço",
+    "horarioLabel": "Horário",
+    "errorAdding": "Erro ao adicionar refeição.",
+    "adding": "Adicionando...",
+    "addButton": "Adicionar refeição"
+  },
+  "nimbusDashboard": {
+    "title": "Painel Administrativo",
+    "description": "Visão agregada da plataforma. Nenhum dado aqui identifica conteúdo sensível — anamnese fica em uma tela própria, com acesso auditado.",
+    "roleLabel": {
+      "personal": "Personal Trainers",
+      "aluno": "Alunos",
+      "nutricionista": "Nutricionistas",
+      "admin": "Admins"
+    },
+    "freemiumLimitTitle": "Profissionais no limite Freemium (3/3)",
+    "freemiumLimitTotal": " / {total} profissionais",
+    "freemiumLimitDescription": "Sinal de oportunidade de upgrade: Personal Trainers e Nutricionistas que já esgotaram o plano gratuito.",
+    "newUsersTitle": "Novos usuários — últimos 30 dias",
+    "newUsersEmpty": "Nenhum usuário novo no período.",
+    "dayBarTitle": "{day}: {count} novo(s)"
+  },
+  "nimbusExercicios": {
+    "title": "Catálogo de Exercícios",
+    "count": "{count} exercício(s). Excluir um exercício em uso numa prescrição não é permitido.",
+    "newExercise": "Novo exercício",
+    "featured": "★ Destaque",
+    "close": "Fechar",
+    "edit": "Editar",
+    "empty": "Nenhum exercício cadastrado."
+  },
+  "nimbusLogins": {
+    "title": "Logins recentes",
+    "description": "Histórico de logins bem-sucedidos (os 50 mais recentes). Tentativas falhas não entram aqui — só alimentam o bloqueio temporário por força bruta.",
+    "unknownIp": "IP desconhecido",
+    "empty": "Nenhum login registrado ainda."
+  },
+  "nimbusLogsAcesso": {
+    "resourceLabel": {
+      "anamnesis": "Anamnese"
+    },
+    "title": "Logs de acesso",
+    "description": "Transparência interna: todo acesso de um admin a dado sensível (hoje, anamnese) fica registrado aqui — quem, quando, qual aluno.",
+    "adminPrefix": "admin: ",
+    "alunoPrefix": "aluno: ",
+    "empty": "Nenhum acesso a dado sensível registrado ainda.",
+    "auditTitle": "Ações administrativas",
+    "auditEmpty": "Nenhuma ação administrativa registrada ainda."
+  },
+  "nimbusSuporte": {
+    "title": "SLA de Suporte",
+    "description": "Dúvidas em aberto, ordenadas da mais antiga para a mais recente — o que está há mais tempo sem resposta do Personal aparece primeiro.",
+    "openLessThanHour": "aberta há menos de 1h",
+    "openHours": "aberta há {hours}h",
+    "since": "desde {date}",
+    "empty": "Nenhuma dúvida em aberto agora — tudo respondido."
+  },
+  "nimbusTreinosPessoais": {
+    "title": "Treinos Pessoais (Meu Treino Pessoal)",
+    "description": "Templates que qualquer aluno pode escolher e aplicar direto, sem precisar de um Personal. {count} template(s) cadastrado(s).",
+    "newTemplate": "Novo template",
+    "nameLabel": "Nome",
+    "namePlaceholder": "Ex: Full Body Iniciante",
+    "schemeLabel": "Esquema",
+    "schemeOption": {
+      "letter": "Letras (A-E)",
+      "weekday": "Dias da semana"
+    },
+    "schemeName": {
+      "letter": "Letras"
+    },
+    "creating": "Criando...",
+    "createTemplate": "Criar template",
+    "createError": "Erro ao criar template.",
+    "sessionCount": "{count} sessão(ões)",
+    "close": "Fechar",
+    "edit": "Editar",
+    "delete": "Excluir",
+    "deleteConfirm": "Excluir o template \"{name}\"? Não tem volta.",
+    "loadingSessions": "Carregando sessões...",
+    "sessionTitle": "Sessão {label}",
+    "empty": "Nenhum template pessoal cadastrado ainda."
+  },
+  "nimbusUsuarios": {
+    "title": "Usuários",
+    "description": "Alunos sem nenhum vínculo (nem Personal, nem Nutricionista) aparecem marcados como “órfão”.",
+    "orphanBadge": "órfão",
+    "roleFilter": {
+      "all": "Todos os papéis",
+      "personal": "Personal Trainers",
+      "aluno": "Alunos",
+      "nutricionista": "Nutricionistas",
+      "admin": "Admins"
+    },
+    "neverLoggedIn": "nunca logou",
+    "lastLogin": "último login {date}",
+    "viewAnamnesis": "Ver anamnese",
+    "empty": "Nenhum usuário encontrado.",
+    "pagination": "Página {page} de {totalPages} · {total} usuário(s)",
+    "previous": "Anterior",
+    "next": "Próxima",
+    "roleEditor": {
+      "edit": "Editar role",
+      "confirmMessage": "Confirma alterar {email} de {currentRole} para {newRole}?",
+      "genericError": "Erro ao alterar role.",
+      "saving": "Salvando...",
+      "confirmButton": "Confirmar"
+    },
+    "linkedSince": "desde {date}"
+  },
+  "nimbusAnamneseView": {
+    "title": "Anamnese do aluno",
+    "description": "Somente leitura — dado de saúde do aluno.",
+    "accessNotice": "Este acesso está sendo registrado (quem, quando, qual aluno) — visível a qualquer admin em <link>Logs de acesso</link>, por ser dado sensível de saúde.",
+    "fields": {
+      "fullName": "Nome completo",
+      "birthDate": "Nascimento",
+      "heightCm": "Altura (cm)",
+      "weightKg": "Peso (kg)",
+      "goals": "Objetivos",
+      "healthConditions": "Condições de saúde",
+      "medications": "Medicamentos",
+      "activityLevel": "Nível de atividade",
+      "pastExperience": "Experiência anterior",
+      "trainingPreferences": "Preferências de treino",
+      "injuries": "Lesões/restrições"
+    }
+  },
+  "notificationBell": {
+    "title": "Notificações",
+    "markAllRead": "Marcar todas como lidas",
+    "empty": "Nenhuma notificação ainda."
+  },
+  "postWorkoutSummaryCard": {
+    "workoutHeader": "Treino {workoutLetter} · {workoutName}",
+    "greeting": "{alunoName} mandou bem no treino! 💪",
+    "setsLoggedLabel": "Séries registradas",
+    "durationLabel": "Duração",
+    "volumeLabel": "Peso levantado Hoje",
+    "streakLabel": "Dias seguidos",
+    "volumeComparison": "{arrow} {percent}% de peso vs. treino anterior",
+    "firstWorkout": "Primeiro treino de {workoutName} registrado 💪"
+  },
+  "postWorkoutSummaryModal": {
+    "shareDialogTitle": "Compartilhar treino",
+    "shareTitle": "Meu treino no ThunderaFit",
+    "shareErrorMessage": "Não foi possível compartilhar direto — baixamos a imagem pra você anexar manualmente.",
+    "shareButton": "Compartilhar",
+    "downloadButton": "Baixar imagem",
+    "closeButton": "Fechar"
+  },
+  "prBadgePill": {
+    "overflowCount": "{count, plural, one {+# recorde} other {+# recordes}}"
+  },
+  "personalVincularAluno": {
+    "professionalLabel": "Personal Trainer"
+  }
+}

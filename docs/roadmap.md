@@ -18,6 +18,11 @@ ao inves de volume da semana na tela inicial do aluno coloque Quantidade de seri
 
 ao abrir o botao de notificação quando tem uma notificação nova a tela da notificação não parece responsiva, tente centralizar melhor a notificação ou reduzir o tamanho de caracteres da notificação.
 
+
+-----------------------------------------------------------------
+crie um novo arquivo na pasta docs com a visão arquitetural completa e detalhada do projeto. Esse deverá ser um documento vivo da arquitetura atual, esse documento tem como finalidade o uso de outra IA, vc mesmo ou outra LLM, lendo esse arquivo a IA devera ser capaz de entender a arquitetura, estrutura de arquivos, funções. a finalidade é agilidade na implementação de novas features, redução de tokens, reaprendendo os contextos de arquivos. a partir de agora, todas as alterações estruturais na aplicação devem ser inseridas aqui para que a IA possa entender o projeto.
+
+
 rate limit
 
 gerador de treinos com IA ( ver se tem alguma api gratis ou montar um rag, o escopo é limitado, tudo por combo box 

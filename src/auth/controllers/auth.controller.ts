@@ -1,5 +1,5 @@
 import { FastifyRequest, FastifyReply } from "fastify";
-import { Role } from "@prisma/client";
+import { Role, Locale } from "@prisma/client";
 import * as authService from "../services/auth.service";
 import * as loginRateLimiter from "../services/login-rate-limiter";
 
@@ -184,6 +184,31 @@ export async function updateAvatarHandler(
 
   try {
     const updatedUser = await authService.updateAvatar(user.sub, request.body.avatarDataUrl);
+    return reply.status(200).send({ user: updatedUser });
+  } catch (err) {
+    const error = err as Error & { statusCode?: number };
+    return reply.status(error.statusCode ?? 500).send({ error: error.message });
+  }
+}
+
+/**
+ * i18n: escolha explícita de idioma (tela de Configurações) — sincroniza
+ * entre dispositivos. Qualquer role autenticada. `locale: null` volta a
+ * detectar automaticamente.
+ */
+export async function updateLocaleHandler(
+  request: FastifyRequest<{ Body: { locale?: Locale | null } }>,
+  reply: FastifyReply
+) {
+  const user = (request as FastifyRequest & { user?: { sub: string } }).user;
+  if (!user) {
+    return reply.status(401).send({ error: "Não autenticado." });
+  }
+  if (request.body?.locale === undefined) {
+    return reply.status(400).send({ error: "locale é obrigatório (ou null para voltar à detecção automática)." });
+  }
+  try {
+    const updatedUser = await authService.updateLocale(user.sub, request.body.locale);
     return reply.status(200).send({ user: updatedUser });
   } catch (err) {
     const error = err as Error & { statusCode?: number };

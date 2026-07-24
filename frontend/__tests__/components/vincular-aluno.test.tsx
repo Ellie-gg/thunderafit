@@ -1,9 +1,11 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { NextIntlClientProvider } from "next-intl";
 import VincularAlunoPage from "@/app/personal/alunos/novo/page";
 import { lookupAlunoByEmail, createRelation } from "@/lib/api/relations";
 import { ApiError } from "@/lib/api/client";
+import ptMessages from "@/messages/pt.json";
 
 const push = jest.fn();
 
@@ -30,9 +32,11 @@ const mockedCreateRelation = createRelation as jest.Mock;
 function renderPage() {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } });
   return render(
-    <QueryClientProvider client={queryClient}>
-      <VincularAlunoPage />
-    </QueryClientProvider>
+    <NextIntlClientProvider locale="pt" messages={ptMessages}>
+      <QueryClientProvider client={queryClient}>
+        <VincularAlunoPage />
+      </QueryClientProvider>
+    </NextIntlClientProvider>
   );
 }
 

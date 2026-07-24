@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { getWorkout, completeWorkout } from "@/lib/api/workouts";
 import { ApiError } from "@/lib/api/client";
@@ -15,9 +16,12 @@ import { Button } from "@/components/ui/button";
 import { VoltageBar } from "@/components/voltage-bar";
 import { ExerciseExecutionCard } from "@/components/exercise-execution-card";
 import { PostWorkoutSummaryModal } from "@/components/post-workout-summary-modal";
+import { useActiveIntlLocale } from "@/i18n/use-active-locale";
 import type { WorkoutCompletionSummary } from "@/lib/types";
 
 function ExecucaoContent() {
+  const t = useTranslations("execucaoTreino");
+  const intlLocale = useActiveIntlLocale();
   const params = useParams<{ id: string }>();
   const workoutId = params.id;
   const user = useAuthStore((s) => s.user);
@@ -54,7 +58,7 @@ function ExecucaoContent() {
   if (workoutQuery.isLoading) {
     return (
       <main className="flex flex-1 items-center justify-center">
-        <span className="text-sm text-muted">Carregando treino...</span>
+        <span className="text-sm text-muted">{t("loadingWorkout")}</span>
       </main>
     );
   }
@@ -63,7 +67,7 @@ function ExecucaoContent() {
     const message =
       workoutQuery.error instanceof ApiError
         ? workoutQuery.error.message
-        : "Erro ao carregar o treino.";
+        : t("loadError");
     return (
       <main className="flex flex-1 items-center justify-center px-6">
         <Card>
@@ -110,7 +114,7 @@ function ExecucaoContent() {
     <main className="flex flex-1 flex-col gap-6 px-6 py-8">
       <div>
         <span className="text-xs font-semibold uppercase tracking-wide text-accent-secondary">
-          Treino {workout.letter}
+          {t("workoutLabel", { letter: workout.letter })}
         </span>
         <h1 className="font-display text-2xl font-bold tracking-tight">{workout.name}</h1>
         <div className="mt-2 flex items-center gap-3">
@@ -142,7 +146,7 @@ function ExecucaoContent() {
       <Card id={COMPLETE_SESSION_CARD_ID} className="flex flex-col gap-2">
         {workout.lastCompletedAt && (
           <p className="text-xs text-muted">
-            Última conclusão: {new Date(workout.lastCompletedAt).toLocaleString("pt-BR")}
+            {t("lastCompleted", { date: new Date(workout.lastCompletedAt).toLocaleString(intlLocale) })}
           </p>
         )}
         <Button
@@ -151,13 +155,13 @@ function ExecucaoContent() {
           variant={allSetsDone ? "default" : "secondary"}
         >
           {completeMutation.isPending
-            ? "Concluindo..."
+            ? t("completing")
             : completeMutation.isSuccess
-              ? "Sessão concluída ✓"
-              : "Concluir sessão"}
+              ? t("sessionCompleted")
+              : t("completeSession")}
         </Button>
         {completeMutation.isError && (
-          <p className="text-sm text-danger">Não foi possível concluir a sessão.</p>
+          <p className="text-sm text-danger">{t("completeError")}</p>
         )}
       </Card>
 
@@ -173,11 +177,11 @@ function ExecucaoContent() {
           upsell={
             workout.program?.origin === "SELF" ? (
               <p className="text-center text-sm text-foreground">
-                Gostou de treinar sozinho?{" "}
+                {t("upsellQuestion")}{" "}
                 <Link href="/profissionais" className="font-semibold text-accent-secondary hover:underline">
-                  Convide um Personal
+                  {t("upsellLinkText")}
                 </Link>{" "}
-                pra te acompanhar de perto.
+                {t("upsellSuffix")}
               </p>
             ) : null
           }

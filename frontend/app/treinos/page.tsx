@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import { useQuery } from "@tanstack/react-query";
 import { listMyWorkouts } from "@/lib/api/workouts";
 import { AuthGuard } from "@/components/auth-guard";
@@ -9,6 +10,8 @@ import { Card } from "@/components/ui/card";
 import { QueryError } from "@/components/query-error";
 
 function TreinosContent() {
+  const t = useTranslations("treinosList");
+  const tCommon = useTranslations("common");
   const workoutsQuery = useQuery({
     queryKey: ["workouts"],
     queryFn: listMyWorkouts,
@@ -18,9 +21,9 @@ function TreinosContent() {
     <>
       <AppHeader />
       <main className="flex flex-1 flex-col gap-4 px-6 py-8">
-        <h1 className="font-display text-2xl font-bold tracking-tight">Meus Treinos</h1>
+        <h1 className="font-display text-2xl font-bold tracking-tight">{t("title")}</h1>
 
-        {workoutsQuery.isLoading && <p className="text-sm text-muted">Carregando...</p>}
+        {workoutsQuery.isLoading && <p className="text-sm text-muted">{tCommon("loading")}</p>}
 
         {workoutsQuery.isError && (
           <QueryError error={workoutsQuery.error} onRetry={() => workoutsQuery.refetch()} />
@@ -28,7 +31,7 @@ function TreinosContent() {
 
         {workoutsQuery.isSuccess && workoutsQuery.data.workouts.length === 0 && (
           <Card>
-            <p className="text-sm text-muted">Nenhum treino prescrito ainda.</p>
+            <p className="text-sm text-muted">{t("emptyState")}</p>
           </Card>
         )}
 
@@ -40,7 +43,7 @@ function TreinosContent() {
                   <span className="font-display text-lg font-bold text-accent">{w.letter}</span>{" "}
                   <span className="font-semibold">{w.name}</span>
                 </div>
-                <span className="text-sm text-muted">Abrir →</span>
+                <span className="text-sm text-muted">{t("open")}</span>
               </Card>
             </Link>
           ))}

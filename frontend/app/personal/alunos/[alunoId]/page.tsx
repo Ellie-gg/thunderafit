@@ -19,6 +19,8 @@ import { LoadHistoryChart } from "@/components/load-history-chart";
 import { FrequencyChart } from "@/components/frequency-chart";
 import { DeleteProgramButton } from "@/components/delete-program-button";
 import { UserAvatar } from "@/components/user-avatar";
+import { useActiveIntlLocale } from "@/i18n/use-active-locale";
+import { useTranslations } from "next-intl";
 
 // Fase 42 (MASTER_SPEC) — lembrete de pagamento: o Personal define uma
 // próxima data de cobrança (com recorrência mensal opcional); o aluno recebe
@@ -27,6 +29,8 @@ import { UserAvatar } from "@/components/user-avatar";
 // existe à parte: disparar sempre avança (recorrente) ou limpa (não-recorrente)
 // a própria data no backend, então o form aqui só reflete o estado atual.
 function PaymentReminderCard({ alunoId, aluno }: { alunoId: string; aluno: RelationAluno }) {
+  const t = useTranslations("paymentReminderCard");
+  const intlLocale = useActiveIntlLocale();
   const queryClient = useQueryClient();
   const hasActiveReminder = !!aluno.paymentReminderDueDate;
   const [dueDate, setDueDate] = useState(aluno.paymentReminderDueDate?.slice(0, 10) ?? "");
@@ -42,16 +46,15 @@ function PaymentReminderCard({ alunoId, aluno }: { alunoId: string; aluno: Relat
 
   return (
     <Card className="flex flex-col gap-3">
-      <h2 className="font-display text-lg font-bold">Lembrete de pagamento</h2>
-      <p className="text-xs text-muted">
-        Na data escolhida, o aluno recebe uma notificação no próximo login — não processa
-        nenhum pagamento de verdade.
-      </p>
+      <h2 className="font-display text-lg font-bold">{t("titulo")}</h2>
+      <p className="text-xs text-muted">{t("descricao")}</p>
 
       {hasActiveReminder && (
         <p className="text-sm text-foreground">
-          Próximo lembrete: {new Date(aluno.paymentReminderDueDate!).toLocaleDateString("pt-BR")}
-          {aluno.paymentReminderRecurring && " · repete todo mês"}
+          {t("proximoLembrete", {
+            data: new Date(aluno.paymentReminderDueDate!).toLocaleDateString(intlLocale),
+          })}
+          {aluno.paymentReminderRecurring && t("repeteTodoMes")}
         </p>
       )}
 
@@ -64,7 +67,7 @@ function PaymentReminderCard({ alunoId, aluno }: { alunoId: string; aluno: Relat
         }}
       >
         <div className="flex flex-col gap-1.5">
-          <Label htmlFor={`payment-reminder-date-${alunoId}`}>Próxima cobrança</Label>
+          <Label htmlFor={`payment-reminder-date-${alunoId}`}>{t("proximaCobranca")}</Label>
           <Input
             id={`payment-reminder-date-${alunoId}`}
             type="date"
@@ -79,11 +82,11 @@ function PaymentReminderCard({ alunoId, aluno }: { alunoId: string; aluno: Relat
             onChange={(e) => setRecurring(e.target.checked)}
             className="h-4 w-4 rounded border-border accent-accent"
           />
-          Repetir todo mês
+          {t("repetirTodoMes")}
         </label>
         <div className="flex gap-2">
           <Button type="submit" disabled={mutation.isPending || !dueDate}>
-            {hasActiveReminder ? "Atualizar lembrete" : "Salvar lembrete"}
+            {hasActiveReminder ? t("atualizarLembrete") : t("salvarLembrete")}
           </Button>
           {hasActiveReminder && (
             <Button
@@ -96,7 +99,7 @@ function PaymentReminderCard({ alunoId, aluno }: { alunoId: string; aluno: Relat
                 mutation.mutate({ dueDate: null, recurring: false });
               }}
             >
-              Desativar
+              {t("desativar")}
             </Button>
           )}
         </div>
@@ -104,7 +107,7 @@ function PaymentReminderCard({ alunoId, aluno }: { alunoId: string; aluno: Relat
 
       {mutation.isError && (
         <p className="text-sm text-danger">
-          {mutation.error instanceof ApiError ? mutation.error.message : "Erro ao salvar o lembrete."}
+          {mutation.error instanceof ApiError ? mutation.error.message : t("erroSalvar")}
         </p>
       )}
     </Card>
@@ -121,6 +124,9 @@ function PaymentReminderCard({ alunoId, aluno }: { alunoId: string; aluno: Relat
  * existente desde a Fase 17) — nada duplicado.
  */
 function AlunoHubContent() {
+  const t = useTranslations("alunoHub");
+  const tc = useTranslations("common");
+  const intlLocale = useActiveIntlLocale();
   const params = useParams<{ alunoId: string }>();
   const alunoId = params.alunoId;
   const queryClient = useQueryClient();
@@ -159,16 +165,14 @@ function AlunoHubContent() {
     <>
       <AppHeader />
       <main className="flex flex-1 flex-col gap-6 px-6 py-8">
-        {relationsQuery.isLoading && <p className="text-sm text-muted">Carregando...</p>}
+        {relationsQuery.isLoading && <p className="text-sm text-muted">{tc("loading")}</p>}
         {relationsQuery.isError && (
           <QueryError error={relationsQuery.error} onRetry={() => relationsQuery.refetch()} />
         )}
 
         {relationsQuery.isSuccess && !aluno && (
           <Card>
-            <p className="text-sm text-danger">
-              Este aluno não está vinculado a você (ou o link está incorreto).
-            </p>
+            <p className="text-sm text-danger">{t("naoVinculado")}</p>
           </Card>
         )}
 
@@ -178,7 +182,7 @@ function AlunoHubContent() {
               <UserAvatar email={aluno.email} avatarUrl={aluno.avatarUrl} size={56} />
               <div className="min-w-0">
                 <span className="text-xs font-semibold uppercase tracking-wide text-accent-secondary">
-                  Aluno
+                  {t("aluno")}
                 </span>
                 {/* break-all: e-mail é uma string sem espaços — sem isso ela
                     estoura a largura da tela no celular em vez de quebrar linha. */}
@@ -186,7 +190,9 @@ function AlunoHubContent() {
                   {aluno.email}
                 </h1>
                 <p className="text-sm text-muted">
-                  Vinculado desde {new Date(aluno.createdAt).toLocaleDateString("pt-BR")}
+                  {t("vinculadoDesde", {
+                    data: new Date(aluno.createdAt).toLocaleDateString(intlLocale),
+                  })}
                 </p>
               </div>
             </div>
@@ -195,19 +201,19 @@ function AlunoHubContent() {
               href={`/personal/alunos/${alunoId}/anamnese`}
               className="text-sm font-semibold text-accent-secondary hover:underline"
             >
-              Ver anamnese →
+              {t("verAnamnese")}
             </Link>
 
             <PaymentReminderCard alunoId={alunoId} aluno={aluno} />
 
             <Card className="flex flex-col gap-3">
-              <h2 className="font-display text-lg font-bold">Programas de treino</h2>
-              {programsQuery.isLoading && <p className="text-sm text-muted">Carregando...</p>}
+              <h2 className="font-display text-lg font-bold">{t("programasDeTreino")}</h2>
+              {programsQuery.isLoading && <p className="text-sm text-muted">{tc("loading")}</p>}
               {programsQuery.isError && (
                 <QueryError error={programsQuery.error} onRetry={() => programsQuery.refetch()} />
               )}
               {programsQuery.isSuccess && programsQuery.data.programs.length === 0 && (
-                <p className="text-sm text-muted">Nenhum programa aplicado a este aluno ainda.</p>
+                <p className="text-sm text-muted">{t("nenhumProgramaAplicado")}</p>
               )}
               <div className="flex flex-col gap-2">
                 {programsQuery.data?.programs.map((p) => (
@@ -215,7 +221,9 @@ function AlunoHubContent() {
                     <div className="flex items-center justify-between rounded-md border border-border px-3 py-2 transition-colors hover:border-accent">
                       <div>
                         <span className="font-semibold">{p.name}</span>
-                        <p className="text-xs text-muted">{p.workouts?.length ?? 0} sessão(ões)</p>
+                        <p className="text-xs text-muted">
+                          {t("sessoesCount", { count: p.workouts?.length ?? 0 })}
+                        </p>
                       </div>
                       <div className="flex items-center gap-2">
                         <DeleteProgramButton
@@ -227,7 +235,7 @@ function AlunoHubContent() {
                             })
                           }
                         />
-                        <span className="text-sm text-muted">Abrir →</span>
+                        <span className="text-sm text-muted">{t("abrir")}</span>
                       </div>
                     </div>
                   </Link>
@@ -236,16 +244,14 @@ function AlunoHubContent() {
             </Card>
 
             <Card className="flex flex-col gap-4">
-              <h2 className="font-display text-lg font-bold">Evolução</h2>
+              <h2 className="font-display text-lg font-bold">{t("evolucao")}</h2>
 
-              {exercisesQuery.isLoading && <p className="text-sm text-muted">Carregando...</p>}
+              {exercisesQuery.isLoading && <p className="text-sm text-muted">{tc("loading")}</p>}
               {exercisesQuery.isError && (
                 <QueryError error={exercisesQuery.error} onRetry={() => exercisesQuery.refetch()} />
               )}
               {exercisesQuery.isSuccess && exercises.length === 0 && (
-                <p className="text-sm text-muted">
-                  Este aluno ainda não registrou nenhuma série de treino.
-                </p>
+                <p className="text-sm text-muted">{t("semSeriesRegistradas")}</p>
               )}
 
               {exercises.length > 0 && (
@@ -263,15 +269,13 @@ function AlunoHubContent() {
                   </select>
 
                   {loadHistoryQuery.isLoading && (
-                    <p className="text-sm text-muted">Carregando histórico...</p>
+                    <p className="text-sm text-muted">{t("carregandoHistorico")}</p>
                   )}
                   {loadHistoryQuery.isError && (
                     <QueryError error={loadHistoryQuery.error} onRetry={() => loadHistoryQuery.refetch()} />
                   )}
                   {loadHistoryQuery.data && loadHistoryQuery.data.history.length === 0 && (
-                    <p className="text-sm text-muted">
-                      Ainda não há séries registradas para este exercício.
-                    </p>
+                    <p className="text-sm text-muted">{t("semSeriesParaExercicio")}</p>
                   )}
                   {loadHistoryQuery.data && loadHistoryQuery.data.history.length > 0 && (
                     <LoadHistoryChart history={loadHistoryQuery.data.history} />
@@ -279,14 +283,14 @@ function AlunoHubContent() {
                 </>
               )}
 
-              {frequencyQuery.isLoading && <p className="text-sm text-muted">Carregando...</p>}
+              {frequencyQuery.isLoading && <p className="text-sm text-muted">{tc("loading")}</p>}
               {frequencyQuery.isError && (
                 <QueryError error={frequencyQuery.error} onRetry={() => frequencyQuery.refetch()} />
               )}
               {frequencyQuery.data && (
                 <>
                   <p className="font-mono-nums text-sm text-muted">
-                    {frequencyQuery.data.totalWorkouts} treino(s) nos últimos 6 meses
+                    {t("treinosUltimos6Meses", { count: frequencyQuery.data.totalWorkouts })}
                   </p>
                   <FrequencyChart months={frequencyQuery.data.months} />
                 </>

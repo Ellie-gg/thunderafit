@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useTranslations } from "next-intl";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { listExercises, addWorkoutExercise } from "@/lib/api/workouts";
 import { ApiError } from "@/lib/api/client";
@@ -48,6 +49,7 @@ export function AddExerciseForm({
    */
   addExerciseFn?: (workoutId: string, input: AddExerciseInput) => Promise<unknown>;
 }) {
+  const t = useTranslations("addExerciseForm");
   // Carrega o catálogo inteiro uma vez e filtra no cliente. O backend também
   // aceita ?muscleGroup= (usado por outros clientes/testes), mas com ~150
   // itens carregar tudo uma vez e alternar grupos sem refetch é mais fluido.
@@ -117,7 +119,7 @@ export function AddExerciseForm({
         mutation.mutate();
       }}
     >
-      {exercisesQuery.isLoading && <p className="text-sm text-muted">Carregando catálogo...</p>}
+      {exercisesQuery.isLoading && <p className="text-sm text-muted">{t("loadingCatalog")}</p>}
 
       {exercisesQuery.isError && (
         <QueryError error={exercisesQuery.error} onRetry={() => exercisesQuery.refetch()} />
@@ -126,7 +128,7 @@ export function AddExerciseForm({
       {/* Filtro por grupo muscular (tabs roláveis) — 150 itens num dropdown único
           seria ruim de navegar (Fase 15). */}
       <div className="flex flex-col gap-1.5">
-        <Label>Grupo muscular</Label>
+        <Label>{t("muscleGroupLabel")}</Label>
         <div className="flex flex-wrap gap-2">
           {groups.map((g) => {
             const active = g === group;
@@ -142,7 +144,7 @@ export function AddExerciseForm({
                     : "rounded-full border border-border px-3 py-1 text-xs text-muted hover:border-accent"
                 }
               >
-                {g}
+                {g === ALL_GROUPS ? t("allGroups") : g}
               </button>
             );
           })}
@@ -150,21 +152,21 @@ export function AddExerciseForm({
       </div>
 
       <div className="flex flex-col gap-1.5">
-        <Label htmlFor="filter">Buscar por nome</Label>
+        <Label htmlFor="filter">{t("searchByNameLabel")}</Label>
         <Input
           id="filter"
           value={filter}
           onChange={(e) => setFilter(e.target.value)}
-          placeholder="Ex: supino, agachamento..."
+          placeholder={t("searchByNamePlaceholder")}
         />
       </div>
 
       <div className="flex flex-col gap-1.5">
-        <Label>Exercício ({filtered.length})</Label>
+        <Label>{t("exerciseLabel", { count: filtered.length })}</Label>
         <div
           className="flex max-h-72 flex-col gap-1.5 overflow-y-auto rounded-md border border-border p-2"
           role="listbox"
-          aria-label="Exercícios"
+          aria-label={t("exercisesAriaLabel")}
         >
           {filtered.map((ex) => {
             const selected = ex.id === exerciseId;
@@ -214,21 +216,21 @@ export function AddExerciseForm({
                     className="shrink-0 text-xs font-semibold text-accent-secondary hover:underline"
                     onClick={(e) => e.stopPropagation()}
                   >
-                    ▶ vídeo
+                    {t("videoLink")}
                   </a>
                 )}
               </div>
             );
           })}
           {exercisesQuery.isSuccess && filtered.length === 0 && (
-            <p className="px-2 py-3 text-sm text-muted">Nenhum exercício neste filtro.</p>
+            <p className="px-2 py-3 text-sm text-muted">{t("noExercisesInFilter")}</p>
           )}
         </div>
       </div>
 
       <div className="grid grid-cols-3 gap-2">
         <div className="flex flex-col gap-1.5">
-          <Label htmlFor="sets">Séries</Label>
+          <Label htmlFor="sets">{t("setsLabel")}</Label>
           <Input
             id="sets"
             type="number"
@@ -239,7 +241,7 @@ export function AddExerciseForm({
           />
         </div>
         <div className="flex flex-col gap-1.5">
-          <Label htmlFor="repsRange">Reps</Label>
+          <Label htmlFor="repsRange">{t("repsLabel")}</Label>
           <Input
             id="repsRange"
             required
@@ -249,7 +251,7 @@ export function AddExerciseForm({
           />
         </div>
         <div className="flex flex-col gap-1.5">
-          <Label htmlFor="rest">Descanso (s)</Label>
+          <Label htmlFor="rest">{t("restLabel")}</Label>
           <Input
             id="rest"
             type="number"
@@ -262,14 +264,14 @@ export function AddExerciseForm({
       </div>
 
       <div className="flex flex-col gap-1.5">
-        <Label htmlFor="notes">Observações (opcional)</Label>
+        <Label htmlFor="notes">{t("notesLabel")}</Label>
         <textarea
           id="notes"
           rows={3}
           maxLength={MAX_NOTES_LENGTH}
           value={notes}
           onChange={(e) => setNotes(e.target.value)}
-          placeholder="Ex: cadência lenta na descida, trocar se sentir dor no ombro..."
+          placeholder={t("notesPlaceholder")}
           className="w-full rounded-md border border-border bg-surface px-3.5 py-2 text-sm text-foreground placeholder:text-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
         />
         <span className="self-end text-xs text-muted">
@@ -279,14 +281,12 @@ export function AddExerciseForm({
 
       {mutation.isError && (
         <p className="text-sm text-danger">
-          {mutation.error instanceof ApiError
-            ? mutation.error.message
-            : "Erro ao adicionar exercício."}
+          {mutation.error instanceof ApiError ? mutation.error.message : t("addExerciseError")}
         </p>
       )}
 
       <Button type="submit" disabled={mutation.isPending || !exerciseId}>
-        {mutation.isPending ? "Adicionando..." : `Adicionar exercício (posição ${nextOrder})`}
+        {mutation.isPending ? t("adding") : t("addExerciseButton", { position: nextOrder })}
       </Button>
 
       {showAddedToast && (
@@ -294,7 +294,7 @@ export function AddExerciseForm({
           role="status"
           className="fixed left-1/2 top-[35%] z-50 -translate-x-1/2 -translate-y-1/2 rounded-xl border border-success/40 bg-surface px-8 py-5 text-lg font-semibold text-success shadow-2xl"
         >
-          ✓ Exercício adicionado
+          {t("exerciseAddedToast")}
         </div>
       )}
     </form>
