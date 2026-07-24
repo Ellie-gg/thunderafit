@@ -1,0 +1,31 @@
+%% ThunderaFit — billing flow (complementary diagram)
+%% Stripe Checkout + webhook. See src/billing/AGENTS.md for the tier-gating
+%% pattern and BILLING_SETUP.md for env/product setup. Billing owns no
+%% Prisma tables — all state lives on auth's User (planoAssinatura,
+%% stripeCustomerId, stripeSubscriptionId).
+
+sequenceDiagram
+    participant C as "Client (frontend)"
+    participant API as "Fastify (src/billing)"
+    participant Stripe
+    participant DB as "Postgres (User, in src/auth)"
+
+    C->>API: POST /api/billing/checkout (tier: BASE|PLUS, interval)
+    API->>Stripe: create Checkout Session (metadata.tier)
+    Stripe-->>C: redirect to hosted Checkout page
+    C->>Stripe: pays
+
+    Stripe->>API: webhook: checkout.session.completed (signed, raw body)
+    API->>API: verify signature (rawBody stashed by app.ts content-type parser)
+    API->>DB: set stripeCustomerId, stripeSubscriptionId, planoAssinatura = tier
+
+    Note over Stripe,API: Later — plan change via customer portal
+
+    Stripe->>API: webhook: customer.subscription.updated
+    API->>API: map price.id -> tier (unknown price -> BASE, never guessed PLUS)
+    API->>DB: update planoAssinatura
+
+    Stripe->>API: webhook: customer.subscription.deleted
+    API->>DB: planoAssinatura = FREE, availableForNewStudents = false
+
+    Note over API: STRIPE_* env unset -> checkout/webhook inert,<br/>rest of the app works normally (billing is opt-in infra)
