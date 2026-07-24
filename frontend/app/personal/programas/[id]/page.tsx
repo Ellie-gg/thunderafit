@@ -2,6 +2,7 @@
 
 import { Suspense, useState } from "react";
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { getWorkoutProgram, addProgramSession, applyProgram } from "@/lib/api/workouts";
@@ -16,6 +17,8 @@ import { Button } from "@/components/ui/button";
 import { QueryError } from "@/components/query-error";
 
 function ProgramaDetalheContent() {
+  const t = useTranslations("personalProgramaDetail");
+  const tCommon = useTranslations("common");
   const params = useParams<{ id: string }>();
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -63,7 +66,7 @@ function ProgramaDetalheContent() {
     <>
       <AppHeader />
       <main className="flex flex-1 flex-col gap-6 px-6 py-8">
-        {programQuery.isLoading && <p className="text-sm text-muted">Carregando...</p>}
+        {programQuery.isLoading && <p className="text-sm text-muted">{tCommon("loading")}</p>}
         {programQuery.isError && (
           <QueryError error={programQuery.error} onRetry={() => programQuery.refetch()} />
         )}
@@ -72,11 +75,11 @@ function ProgramaDetalheContent() {
           <>
             <div>
               <span className="text-xs font-semibold uppercase tracking-wide text-accent-secondary">
-                {program.isTemplate ? "Template" : "Aplicado a aluno"}
+                {program.isTemplate ? t("template") : t("appliedToStudent")}
               </span>
               <h1 className="font-display text-2xl font-bold tracking-tight">{program.name}</h1>
               <p className="text-sm text-muted">
-                {sessions.length}/{maxSessions} sessão(ões)
+                {t("sessionsProgress", { current: sessions.length, max: maxSessions })}
               </p>
             </div>
 
@@ -90,9 +93,11 @@ function ProgramaDetalheContent() {
                         {labelFor(scheme, s.letter)}
                       </span>{" "}
                       <span className="font-semibold">{s.name}</span>
-                      <p className="text-xs text-muted">{s.exercises?.length ?? 0} exercício(s)</p>
+                      <p className="text-xs text-muted">
+                        {t("exercisesCount", { count: s.exercises?.length ?? 0 })}
+                      </p>
                     </div>
-                    <span className="text-sm text-muted">Abrir →</span>
+                    <span className="text-sm text-muted">{t("open")}</span>
                   </Card>
                 </Link>
               ))}
@@ -101,7 +106,7 @@ function ProgramaDetalheContent() {
             {/* Adicionar sessão */}
             {availableKeys.length > 0 && (
               <Card className="flex flex-col gap-2">
-                <Label>Adicionar sessão</Label>
+                <Label>{t("addSessionLabel")}</Label>
                 <div className="flex flex-wrap gap-2">
                   {availableKeys.map((key) => (
                     <Button
@@ -116,26 +121,22 @@ function ProgramaDetalheContent() {
                   ))}
                 </div>
                 {addSessionMutation.isError && (
-                  <p className="text-sm text-danger">Erro ao adicionar sessão.</p>
+                  <p className="text-sm text-danger">{t("addSessionError")}</p>
                 )}
               </Card>
             )}
 
             {/* Aplicar a aluno */}
             <Card className="flex flex-col gap-3">
-              <h2 className="font-display text-lg font-bold">Aplicar a um aluno</h2>
-              <p className="text-xs text-muted">
-                Cria uma cópia independente deste programa para o aluno. Editar este
-                programa depois não afeta cópias já aplicadas — e você pode aplicar
-                este mesmo template a outros alunos vinculados quantas vezes quiser.
-              </p>
+              <h2 className="font-display text-lg font-bold">{t("applyToStudentTitle")}</h2>
+              <p className="text-xs text-muted">{t("applyToStudentDescription")}</p>
               <select
                 value={applyAlunoId}
                 onChange={(e) => setApplyAlunoId(e.target.value)}
                 className="h-11 rounded-md border border-border bg-surface px-3.5 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
               >
                 <option value="" disabled>
-                  Selecione um aluno
+                  {t("selectStudent")}
                 </option>
                 {relationsQuery.data?.relations.map((r) => (
                   <option key={r.id} value={r.id}>
@@ -147,17 +148,17 @@ function ProgramaDetalheContent() {
                 <p className="text-sm text-danger">
                   {applyMutation.error instanceof ApiError
                     ? applyMutation.error.message
-                    : "Erro ao aplicar."}
+                    : t("applyError")}
                 </p>
               )}
               {applyMutation.isSuccess && (
-                <p className="text-sm text-success">Programa aplicado ao aluno.</p>
+                <p className="text-sm text-success">{t("applySuccess")}</p>
               )}
               <Button
                 disabled={!applyAlunoId || applyMutation.isPending || sessions.length === 0}
                 onClick={() => applyMutation.mutate()}
               >
-                {applyMutation.isPending ? "Aplicando..." : "Aplicar programa"}
+                {applyMutation.isPending ? t("applying") : t("applyProgram")}
               </Button>
             </Card>
           </>

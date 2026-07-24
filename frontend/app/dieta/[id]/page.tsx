@@ -1,6 +1,7 @@
 "use client";
 
 import { useParams } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { useQuery } from "@tanstack/react-query";
 import { getDietPlan } from "@/lib/api/nutrition";
 import { AuthGuard } from "@/components/auth-guard";
@@ -9,6 +10,7 @@ import { QueryError } from "@/components/query-error";
 import { DietPlanView } from "@/components/diet-plan-view";
 
 function DietaContent() {
+  const t = useTranslations("dietaDetail");
   const params = useParams<{ id: string }>();
   const planId = params.id;
 
@@ -20,7 +22,7 @@ function DietaContent() {
   if (planQuery.isLoading) {
     return (
       <main className="flex flex-1 items-center justify-center">
-        <span className="text-sm text-muted">Carregando plano...</span>
+        <span className="text-sm text-muted">{t("loading")}</span>
       </main>
     );
   }
@@ -41,7 +43,7 @@ function DietaContent() {
     <main className="flex flex-1 flex-col gap-6 px-6 py-8">
       <div>
         <span className="text-xs font-semibold uppercase tracking-wide text-accent-secondary">
-          Plano alimentar
+          {t("kicker")}
         </span>
         <h1 className="font-display text-2xl font-bold tracking-tight">{plan.name}</h1>
       </div>

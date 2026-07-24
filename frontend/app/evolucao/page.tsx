@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import { useQuery } from "@tanstack/react-query";
 import { listLoggedExercises, getLoadHistory, getFrequency } from "@/lib/api/progress";
 import { AuthGuard } from "@/components/auth-guard";
@@ -11,8 +12,9 @@ import { FrequencyChart } from "@/components/frequency-chart";
 import { QueryError } from "@/components/query-error";
 
 function PercentBadge({ value }: { value: number | null }) {
+  const t = useTranslations("evolucao");
   if (value === null) {
-    return <span className="text-sm text-muted">Sem comparação anterior ainda</span>;
+    return <span className="text-sm text-muted">{t("noPreviousComparison")}</span>;
   }
   const isUp = value > 0;
   const isFlat = value === 0;
@@ -20,13 +22,18 @@ function PercentBadge({ value }: { value: number | null }) {
   const arrow = isFlat ? "→" : isUp ? "▲" : "▼";
   return (
     <span className={`font-mono-nums text-sm font-semibold ${color}`}>
-      {arrow} {isUp && !isFlat ? "+" : ""}
-      {value.toFixed(2)}% vs sessão anterior
+      {t("comparisonText", {
+        arrow,
+        sign: isUp && !isFlat ? "+" : "",
+        value: value.toFixed(2),
+      })}
     </span>
   );
 }
 
 function EvolucaoContent() {
+  const t = useTranslations("evolucao");
+  const tCommon = useTranslations("common");
   const [selectedExerciseId, setSelectedExerciseId] = useState<string>("");
 
   const exercisesQuery = useQuery({
@@ -55,28 +62,25 @@ function EvolucaoContent() {
       <AppHeader />
       <main className="flex flex-1 flex-col gap-6 px-6 py-8">
         <div>
-          <h1 className="font-display text-2xl font-bold tracking-tight">Evolução</h1>
-          <p className="text-sm text-muted">Seu histórico de carga e frequência de treinos.</p>
+          <h1 className="font-display text-2xl font-bold tracking-tight">{t("title")}</h1>
+          <p className="text-sm text-muted">{t("subtitle")}</p>
         </div>
 
         <Card className="flex flex-col gap-4">
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold uppercase tracking-wide text-accent-secondary">
-              Carga máxima por exercício
+              {t("maxLoadPerExercise")}
             </span>
           </div>
 
-          {exercisesQuery.isLoading && <p className="text-sm text-muted">Carregando exercícios...</p>}
+          {exercisesQuery.isLoading && <p className="text-sm text-muted">{t("loadingExercises")}</p>}
 
           {exercisesQuery.isError && (
             <QueryError error={exercisesQuery.error} onRetry={() => exercisesQuery.refetch()} />
           )}
 
           {exercisesQuery.isSuccess && exercises.length === 0 && (
-            <p className="text-sm text-muted">
-              Você ainda não registrou nenhuma série. Execute um treino primeiro para ver sua
-              evolução aqui.
-            </p>
+            <p className="text-sm text-muted">{t("noSetsLoggedYet")}</p>
           )}
 
           {exercises.length > 0 && (
@@ -94,7 +98,7 @@ function EvolucaoContent() {
               </select>
 
               {loadHistoryQuery.isLoading && (
-                <p className="text-sm text-muted">Carregando histórico...</p>
+                <p className="text-sm text-muted">{t("loadingHistory")}</p>
               )}
 
               {loadHistoryQuery.isError && (
@@ -102,9 +106,7 @@ function EvolucaoContent() {
               )}
 
               {loadHistoryQuery.data && loadHistoryQuery.data.history.length === 0 && (
-                <p className="text-sm text-muted">
-                  Ainda não há séries registradas para este exercício.
-                </p>
+                <p className="text-sm text-muted">{t("noHistoryForExercise")}</p>
               )}
 
               {loadHistoryQuery.data && loadHistoryQuery.data.history.length > 0 && (
@@ -113,12 +115,12 @@ function EvolucaoContent() {
                   <LoadHistoryChart history={loadHistoryQuery.data.history} />
 
                   <details className="text-sm text-muted">
-                    <summary className="cursor-pointer select-none">Ver como tabela</summary>
+                    <summary className="cursor-pointer select-none">{t("viewAsTable")}</summary>
                     <table className="mt-2 w-full text-left font-mono-nums text-xs">
                       <thead>
                         <tr className="border-b border-border text-muted">
-                          <th className="py-1 pr-4 font-normal">Data</th>
-                          <th className="py-1 font-normal">Carga máxima</th>
+                          <th className="py-1 pr-4 font-normal">{t("dateColumn")}</th>
+                          <th className="py-1 font-normal">{t("maxLoadColumn")}</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -139,10 +141,10 @@ function EvolucaoContent() {
 
         <Card className="flex flex-col gap-4">
           <span className="text-xs font-semibold uppercase tracking-wide text-accent-secondary">
-            Frequência de treinos (últimos 6 meses)
+            {t("workoutFrequency")}
           </span>
 
-          {frequencyQuery.isLoading && <p className="text-sm text-muted">Carregando...</p>}
+          {frequencyQuery.isLoading && <p className="text-sm text-muted">{tCommon("loading")}</p>}
 
           {frequencyQuery.isError && (
             <QueryError error={frequencyQuery.error} onRetry={() => frequencyQuery.refetch()} />
@@ -151,7 +153,7 @@ function EvolucaoContent() {
           {frequencyQuery.data && (
             <>
               <p className="font-mono-nums text-sm text-muted">
-                {frequencyQuery.data.totalWorkouts} treino(s) no período
+                {t("workoutsInPeriod", { count: frequencyQuery.data.totalWorkouts })}
               </p>
               <FrequencyChart months={frequencyQuery.data.months} />
             </>

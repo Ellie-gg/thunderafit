@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { getMyProfile, updateMyProfile } from "@/lib/api/connections";
 import { ApiError } from "@/lib/api/client";
@@ -16,6 +17,8 @@ import { AvailabilityBadge } from "@/components/availability-badge";
 import { AvatarUpload } from "@/components/avatar-upload";
 
 function PerfilContent() {
+  const t = useTranslations("personalProfile");
+  const tCommon = useTranslations("common");
   const queryClient = useQueryClient();
   const profileQuery = useQuery({ queryKey: ["my-profile"], queryFn: getMyProfile });
 
@@ -51,21 +54,18 @@ function PerfilContent() {
       <main className="flex flex-1 flex-col gap-6 px-6 py-8">
         <div>
           <span className="text-xs font-semibold uppercase tracking-wide text-accent-secondary">
-            Perfil
+            {t("eyebrow")}
           </span>
-          <h1 className="font-display text-2xl font-bold tracking-tight">Perfil público</h1>
-          <p className="text-sm text-muted">
-            Ative a disponibilidade para aparecer na busca de alunos. Você aprova cada
-            solicitação manualmente.
-          </p>
+          <h1 className="font-display text-2xl font-bold tracking-tight">{t("title")}</h1>
+          <p className="text-sm text-muted">{t("subtitle")}</p>
         </div>
 
         <Card>
-          <h2 className="mb-3 font-display text-lg font-bold">Foto de perfil</h2>
+          <h2 className="mb-3 font-display text-lg font-bold">{t("photoTitle")}</h2>
           <AvatarUpload />
         </Card>
 
-        {profileQuery.isLoading && <p className="text-sm text-muted">Carregando...</p>}
+        {profileQuery.isLoading && <p className="text-sm text-muted">{tCommon("loading")}</p>}
         {profileQuery.isError && (
           <QueryError error={profileQuery.error} onRetry={() => profileQuery.refetch()} />
         )}
@@ -74,10 +74,8 @@ function PerfilContent() {
           <Card className="flex flex-col gap-5">
             <div className="flex items-center justify-between gap-3">
               <div>
-                <p className="font-semibold">Disponível para novos alunos</p>
-                <p className="text-xs text-muted">
-                  Quando ligado, seu perfil aparece na busca por localização.
-                </p>
+                <p className="font-semibold">{t("availability.title")}</p>
+                <p className="text-xs text-muted">{t("availability.description")}</p>
               </div>
               <div className="flex items-center gap-3">
                 <AvailabilityBadge available={available} />
@@ -85,7 +83,7 @@ function PerfilContent() {
                   type="button"
                   role="switch"
                   aria-checked={available}
-                  aria-label="Disponível para novos alunos"
+                  aria-label={t("availability.toggleAria")}
                   disabled={isFree}
                   onClick={() => setAvailable((v) => !v)}
                   className="relative h-6 w-11 shrink-0 rounded-full border border-border transition-colors disabled:cursor-not-allowed disabled:opacity-50"
@@ -104,33 +102,33 @@ function PerfilContent() {
                 403 do backend. */}
             {isFree && (
               <p className="text-xs text-muted">
-                Disponibilidade no diretório é um recurso dos planos Base e Plus.{" "}
+                {t("freeNotice.text")}{" "}
                 <Link href="/personal/upgrade" className="font-semibold text-accent-secondary hover:underline">
-                  Fazer upgrade
+                  {t("freeNotice.upgradeLink")}
                 </Link>
                 .
               </p>
             )}
 
             <div className="flex flex-col gap-1.5">
-              <Label htmlFor="location">Localização (cidade/estado)</Label>
+              <Label htmlFor="location">{t("locationLabel")}</Label>
               <Input
                 id="location"
                 value={location}
                 onChange={(e) => setLocation(e.target.value)}
-                placeholder="Ex: Palhoça, SC"
+                placeholder={t("locationPlaceholder")}
               />
             </div>
 
             <div className="flex flex-col gap-1.5">
-              <Label htmlFor="bio">Bio / especialidade</Label>
+              <Label htmlFor="bio">{t("bioLabel")}</Label>
               <textarea
                 id="bio"
                 value={bio}
                 onChange={(e) => setBio(e.target.value)}
                 rows={3}
                 className="rounded-md border border-border bg-surface px-3.5 py-2 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
-                placeholder="Ex: Especialista em treino funcional e reabilitação."
+                placeholder={t("bioPlaceholder")}
               />
             </div>
 
@@ -138,13 +136,13 @@ function PerfilContent() {
               <p className="text-sm text-danger">
                 {saveMutation.error instanceof ApiError
                   ? saveMutation.error.message
-                  : "Não foi possível salvar."}
+                  : t("saveError")}
               </p>
             )}
-            {saveMutation.isSuccess && <p className="text-sm text-success">Perfil salvo.</p>}
+            {saveMutation.isSuccess && <p className="text-sm text-success">{t("saveSuccess")}</p>}
 
             <Button onClick={() => saveMutation.mutate()} disabled={saveMutation.isPending} className="self-start">
-              {saveMutation.isPending ? "Salvando..." : "Salvar perfil"}
+              {saveMutation.isPending ? t("saving") : t("saveButton")}
             </Button>
           </Card>
         )}

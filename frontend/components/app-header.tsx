@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { useAuthStore } from "@/lib/store/auth-store";
 import { logoutRequest } from "@/lib/api/auth";
 import { dashboardPathForRole } from "@/lib/auth/redirect";
@@ -19,7 +20,7 @@ const ROLE_ACCENT_VAR: Record<Role, string> = {
   ADMIN: "var(--role-admin)",
 };
 
-type NavLink = { href: string; label: string };
+type NavLink = { href: string; key: string };
 
 // Fase 33.2: fonte única dos links por papel — antes só existiam como
 // `hidden ... sm:inline` no header, então no celular (a maioria do uso real,
@@ -27,36 +28,47 @@ type NavLink = { href: string; label: string };
 // (Programas/Evolução/Anamnese/etc) além do botão voltar do navegador. Os
 // mesmos itens agora alimentam a barra desktop (`sm:flex`, texto inline) E o
 // menu hambúrguer mobile (visível só abaixo de `sm`).
+// i18n: guarda a CHAVE de tradução (namespace "nav"), não o texto — resolvido
+// dentro do componente via `t(key)`, já que este array vive fora de qualquer
+// componente (sem acesso a hooks).
 const NAV_LINKS_BY_ROLE: Record<Role, NavLink[]> = {
   ALUNO: [
-    { href: "/programas", label: "Programas" },
-    { href: "/meu-treino-pessoal", label: "Meu Treino Pessoal" },
-    { href: "/evolucao", label: "Evolução" },
-    { href: "/anamnese", label: "Anamnese" },
-    { href: "/duvidas", label: "Dúvidas" },
-    { href: "/profissionais", label: "Encontrar Personal" },
-    { href: "/perfil", label: "Perfil" },
+    { href: "/programas", key: "programs" },
+    { href: "/meu-treino-pessoal", key: "myPersonalWorkout" },
+    { href: "/evolucao", key: "progress" },
+    { href: "/anamnese", key: "anamnesis" },
+    { href: "/duvidas", key: "questions" },
+    { href: "/profissionais", key: "findPersonal" },
+    { href: "/perfil", key: "profile" },
+    { href: "/configuracoes", key: "settings" },
   ],
   PERSONAL: [
-    { href: "/personal/programas", label: "Programas" },
-    { href: "/personal/solicitacoes", label: "Solicitações" },
-    { href: "/personal/duvidas", label: "Dúvidas" },
-    { href: "/personal/upgrade", label: "Planos" },
-    { href: "/personal/perfil", label: "Perfil" },
+    { href: "/personal/programas", key: "programs" },
+    { href: "/personal/solicitacoes", key: "requests" },
+    { href: "/personal/duvidas", key: "questions" },
+    { href: "/personal/upgrade", key: "plans" },
+    { href: "/personal/perfil", key: "profile" },
+    { href: "/configuracoes", key: "settings" },
   ],
-  NUTRICIONISTA: [{ href: "/nutricionista/duvidas", label: "Dúvidas" }],
+  NUTRICIONISTA: [
+    { href: "/nutricionista/duvidas", key: "questions" },
+    { href: "/configuracoes", key: "settings" },
+  ],
   ADMIN: [
-    { href: "/nimbus/usuarios", label: "Usuários" },
-    { href: "/nimbus/exercicios", label: "Exercícios" },
-    { href: "/nimbus/treinos-pessoais", label: "Treinos Pessoais" },
-    { href: "/nimbus/logins", label: "Logins" },
-    { href: "/nimbus/suporte", label: "Suporte" },
-    { href: "/nimbus/logs-acesso", label: "Logs de acesso" },
+    { href: "/nimbus/usuarios", key: "users" },
+    { href: "/nimbus/exercicios", key: "exercises" },
+    { href: "/nimbus/treinos-pessoais", key: "personalWorkouts" },
+    { href: "/nimbus/logins", key: "logins" },
+    { href: "/nimbus/suporte", key: "support" },
+    { href: "/nimbus/logs-acesso", key: "accessLogs" },
+    { href: "/configuracoes", key: "settings" },
   ],
 };
 
 export function AppHeader() {
   const router = useRouter();
+  const tNav = useTranslations("nav");
+  const tHeader = useTranslations("appHeader");
   const { user, clearSession } = useAuthStore();
   // Fase 31: o link "Perfil" só aparecia a partir do breakpoint sm — no
   // celular não havia NENHUM jeito de chegar em /perfil pra trocar a foto.
@@ -107,7 +119,7 @@ export function AppHeader() {
             href={link.href}
             className="hidden text-sm font-semibold text-accent-secondary hover:underline sm:inline"
           >
-            {link.label}
+            {tNav(link.key)}
           </Link>
         ))}
         {user && <NotificationBell />}
@@ -115,7 +127,7 @@ export function AppHeader() {
           <div className="relative">
             <button
               type="button"
-              aria-label="Foto de perfil"
+              aria-label={tHeader("profilePhoto")}
               aria-expanded={avatarMenuOpen}
               onClick={() => setAvatarMenuOpen((v) => !v)}
               className="rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
@@ -146,7 +158,7 @@ export function AppHeader() {
           <div className="relative sm:hidden">
             <button
               type="button"
-              aria-label="Abrir menu de navegação"
+              aria-label={tHeader("openNavMenu")}
               aria-expanded={mobileMenuOpen}
               onClick={() => setMobileMenuOpen((v) => !v)}
               className="flex h-9 w-9 items-center justify-center rounded-md border border-border text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
@@ -171,7 +183,7 @@ export function AppHeader() {
                       onClick={() => setMobileMenuOpen(false)}
                       className="rounded-md px-3 py-2 text-sm font-semibold text-accent-secondary hover:bg-surface-raised"
                     >
-                      {link.label}
+                      {tNav(link.key)}
                     </Link>
                   ))}
                 </nav>
@@ -193,7 +205,7 @@ export function AppHeader() {
             }
           }}
         >
-          Sair
+          {tNav("logout")}
         </Button>
       </div>
     </header>

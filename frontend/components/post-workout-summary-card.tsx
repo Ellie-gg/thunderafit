@@ -2,6 +2,8 @@ import * as React from "react";
 import type { WorkoutCompletionSummary } from "@/lib/types";
 import { BoltMark } from "@/components/bolt-mark";
 import { PrBadgePill, PrOverflowPill } from "@/components/pr-badge-pill";
+import { useActiveIntlLocale } from "@/i18n/use-active-locale";
+import { useTranslations } from "next-intl";
 
 // Fase 39: formato Horas:Min:Segundos pedido explicitamente — sempre com a
 // hora (mesmo "0:12:34"), não só MM:SS, pra treinos que passam de 1h também
@@ -28,6 +30,8 @@ export const PostWorkoutSummaryCard = React.forwardRef<
   HTMLDivElement,
   { summary: WorkoutCompletionSummary; alunoName: string; durationSeconds: number | null }
 >(function PostWorkoutSummaryCard({ summary, alunoName, durationSeconds }, ref) {
+  const intlLocale = useActiveIntlLocale();
+  const t = useTranslations("postWorkoutSummaryCard");
   const { hasHistory, volumeChangePercent, personalRecords } = summary;
   const visiblePRs = personalRecords.slice(0, 2);
   const overflowCount = personalRecords.length - visiblePRs.length;
@@ -39,13 +43,13 @@ export const PostWorkoutSummaryCard = React.forwardRef<
     >
       <header>
         <span className="text-xs font-semibold uppercase tracking-wide text-accent-secondary">
-          Treino {summary.workoutLetter} · {summary.workoutName}
+          {t("workoutHeader", { workoutLetter: summary.workoutLetter, workoutName: summary.workoutName })}
         </span>
         {/* Fase 39: header personalizado — substitui o antigo "Treino A"
             como texto principal. Cai pro prefixo do e-mail quando o aluno
             não tem nome cadastrado (ver firstNameOrEmailPrefix). */}
         <h2 className="font-display text-lg font-bold tracking-tight text-foreground">
-          {alunoName} mandou bem no treino! 💪
+          {t("greeting", { alunoName })}
         </h2>
       </header>
 
@@ -53,28 +57,30 @@ export const PostWorkoutSummaryCard = React.forwardRef<
           de verdade" mais direto de comunicar), não mais o volume — volume
           desce pra métrica secundária, relabelado "Peso levantado Hoje". */}
       <section className="flex flex-col gap-2">
-        <p className="text-xs uppercase tracking-wide text-muted">Séries registradas</p>
+        <p className="text-xs uppercase tracking-wide text-muted">{t("setsLoggedLabel")}</p>
         <p className="font-mono-nums font-display text-6xl font-bold text-accent-secondary">
           {summary.setsLogged}
         </p>
 
         <div className="grid grid-cols-3 gap-2">
           <SecondaryMetric
-            label="Duração"
+            label={t("durationLabel")}
             value={durationSeconds !== null ? formatDuration(durationSeconds) : "—"}
           />
-          <SecondaryMetric label="Peso levantado Hoje" value={`${summary.volumeKg.toLocaleString("pt-BR")} kg`} />
-          <SecondaryMetric label="Dias seguidos" value={`${summary.streakDays}`} accent="accent" />
+          <SecondaryMetric label={t("volumeLabel")} value={`${summary.volumeKg.toLocaleString(intlLocale)} kg`} />
+          <SecondaryMetric label={t("streakLabel")} value={`${summary.streakDays}`} accent="accent" />
         </div>
 
         {hasHistory ? (
           <p className={volumeChangePercent! >= 0 ? "text-accent-secondary" : "text-muted"}>
-            {volumeChangePercent! >= 0 ? "▲" : "▼"} {Math.abs(volumeChangePercent!)}% de peso vs.
-            treino anterior
+            {t("volumeComparison", {
+              arrow: volumeChangePercent! >= 0 ? "▲" : "▼",
+              percent: Math.abs(volumeChangePercent!),
+            })}
           </p>
         ) : (
           <p className="text-accent-secondary">
-            Primeiro treino de {summary.workoutName} registrado 💪
+            {t("firstWorkout", { workoutName: summary.workoutName })}
           </p>
         )}
       </section>

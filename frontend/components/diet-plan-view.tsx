@@ -1,25 +1,30 @@
+"use client";
+
+import { useTranslations } from "next-intl";
 import type { DietPlanDetail } from "@/lib/types";
 import { Card } from "@/components/ui/card";
 
 function MacroRow({ macros }: { macros: DietPlanDetail["totalMacros"] }) {
+  const t = useTranslations("dietPlanView");
   return (
     <div className="grid grid-cols-4 gap-2 font-mono-nums text-xs text-muted">
-      <span>{macros.proteinG}g P</span>
-      <span>{macros.carbsG}g C</span>
-      <span>{macros.fatG}g G</span>
-      <span>{macros.kcal} kcal</span>
+      <span>{t("macros.protein", { value: macros.proteinG })}</span>
+      <span>{t("macros.carbs", { value: macros.carbsG })}</span>
+      <span>{t("macros.fat", { value: macros.fatG })}</span>
+      <span>{t("macros.kcal", { value: macros.kcal })}</span>
     </div>
   );
 }
 
 export function DietPlanView({ plan }: { plan: DietPlanDetail }) {
+  const t = useTranslations("dietPlanView");
   const meals = [...plan.meals].sort((a, b) => a.order - b.order);
 
   return (
     <div className="flex flex-col gap-4">
       <Card className="flex flex-col gap-2 border-accent/40">
         <span className="text-xs font-semibold uppercase tracking-wide text-accent-secondary">
-          Total do dia
+          {t("totalOfDay")}
         </span>
         <MacroRow macros={plan.totalMacros} />
       </Card>
@@ -43,13 +48,15 @@ export function DietPlanView({ plan }: { plan: DietPlanDetail }) {
                       ({f.quantity}x {f.portionDescription})
                     </span>
                   </span>
-                  <span className="font-mono-nums text-xs text-muted">{f.macros.kcal} kcal</span>
+                  <span className="font-mono-nums text-xs text-muted">
+                    {t("macros.kcal", { value: f.macros.kcal })}
+                  </span>
                 </div>
               ))}
             </div>
           )}
           {meal.foods.length === 0 && (
-            <p className="text-sm text-muted">Nenhum alimento adicionado ainda.</p>
+            <p className="text-sm text-muted">{t("noFoods")}</p>
           )}
 
           <MacroRow macros={meal.macros} />
@@ -58,7 +65,7 @@ export function DietPlanView({ plan }: { plan: DietPlanDetail }) {
 
       {meals.length === 0 && (
         <Card>
-          <p className="text-sm text-muted">Nenhuma refeição adicionada ainda.</p>
+          <p className="text-sm text-muted">{t("noMeals")}</p>
         </Card>
       )}
     </div>

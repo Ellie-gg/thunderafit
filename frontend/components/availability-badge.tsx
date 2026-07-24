@@ -1,3 +1,7 @@
+"use client";
+
+import { useTranslations } from "next-intl";
+
 /**
  * Fase 21 — elemento de assinatura para o conceito de "descoberta".
  *
@@ -8,11 +12,12 @@
  * vaga de energia disponível, coerente com a Barra de Voltagem.
  */
 export function AvailabilityBadge({ available }: { available: boolean }) {
+  const t = useTranslations("availabilityBadge");
   if (!available) {
     return (
       <span className="inline-flex items-center gap-1.5 rounded-full border border-border px-2.5 py-0.5 text-xs font-semibold text-muted">
         <span className="h-1.5 w-1.5 rounded-full bg-[var(--muted)]" aria-hidden />
-        Lotado
+        {t("full")}
       </span>
     );
   }
@@ -31,7 +36,7 @@ export function AvailabilityBadge({ available }: { available: boolean }) {
         style={{ background: "var(--accent)", boxShadow: "0 0 6px 0 var(--accent)" }}
         aria-hidden
       />
-      Aberto para novos alunos
+      {t("openForNewStudents")}
     </span>
   );
 }

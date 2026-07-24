@@ -1,9 +1,11 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { NextIntlClientProvider } from "next-intl";
 import { ExerciseExecutionCard } from "@/components/exercise-execution-card";
 import { createSetLog } from "@/lib/api/workouts";
 import { ApiError } from "@/lib/api/client";
+import ptMessages from "@/messages/pt.json";
 import type { WorkoutExercise } from "@/lib/types";
 
 jest.mock("@/lib/api/workouts", () => ({
@@ -40,13 +42,15 @@ const baseWorkoutExercise: WorkoutExercise = {
 function renderCard(workoutExercise: WorkoutExercise, sessionBoundary: string | null = null) {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } });
   return render(
-    <QueryClientProvider client={queryClient}>
-      <ExerciseExecutionCard
-        workoutId="w-1"
-        workoutExercise={workoutExercise}
-        sessionBoundary={sessionBoundary}
-      />
-    </QueryClientProvider>
+    <NextIntlClientProvider locale="pt" messages={ptMessages}>
+      <QueryClientProvider client={queryClient}>
+        <ExerciseExecutionCard
+          workoutId="w-1"
+          workoutExercise={workoutExercise}
+          sessionBoundary={sessionBoundary}
+        />
+      </QueryClientProvider>
+    </NextIntlClientProvider>
   );
 }
 

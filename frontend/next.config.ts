@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import createNextIntlPlugin from "next-intl/plugin";
 
 // Fase 19 (spike Capacitor): `CAPACITOR_EXPORT=true` troca para export
 // estático. NÃO é usado por este spike (server.url carrega a produção remota,
@@ -23,4 +24,12 @@ const nextConfig: NextConfig = {
   // do Google por request. Ver o route.ts para o motivo completo.
 };
 
-export default nextConfig;
+// i18n: SEM roteamento por URL (nada de /en/, /es/ na rota) — decisão
+// registrada com o fundador, dado que não há público web/SEO relevante
+// (Capacitor carrega a própria produção via server.url) e URL-prefixing
+// exigiria reescrever todo Link/router.push do app pros wrappers do
+// next-intl. `i18n/request.ts` resolve o locale via cookie, sem `routing.ts`
+// nem `[locale]` de segmento nenhum.
+const withNextIntl = createNextIntlPlugin("./i18n/request.ts");
+
+export default withNextIntl(nextConfig);

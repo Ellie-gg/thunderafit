@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import {
@@ -21,11 +22,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { QueryError } from "@/components/query-error";
 
-const GOAL_OPTIONS: Array<{ value: WorkoutGoal; label: string }> = [
-  { value: "hipertrofia", label: "Hipertrofia" },
-  { value: "forca", label: "Força" },
-  { value: "resistencia", label: "Resistência" },
-];
+const GOAL_VALUES: WorkoutGoal[] = ["hipertrofia", "forca", "resistencia"];
 
 type DraftRow = GeneratedExercise & { removed?: boolean };
 type CompletedSession = { key: string; exercises: DraftRow[] };
@@ -44,6 +41,8 @@ type CompletedSession = { key: string; exercises: DraftRow[] };
  * novo de gravação em lote.
  */
 export function GenerateWorkoutModal({ onClose }: { onClose: () => void }) {
+  const t = useTranslations("generateWorkoutModal");
+  const tCommon = useTranslations("common");
   const router = useRouter();
   const [step, setStep] = useState<"setup" | "session">("setup");
 
@@ -131,11 +130,11 @@ export function GenerateWorkoutModal({ onClose }: { onClose: () => void }) {
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
       <Card className="flex max-h-[90vh] w-full max-w-lg flex-col gap-4 overflow-y-auto">
         <div className="flex items-center justify-between">
-          <h2 className="font-display text-lg font-bold">⚡ Gerar Treino Rápido</h2>
+          <h2 className="font-display text-lg font-bold">{t("modalTitle")}</h2>
           <button
             type="button"
             onClick={onClose}
-            aria-label="Fechar"
+            aria-label={t("closeAriaLabel")}
             className="text-sm text-muted hover:text-foreground"
           >
             ✕
@@ -151,18 +150,18 @@ export function GenerateWorkoutModal({ onClose }: { onClose: () => void }) {
             }}
           >
             <div className="flex flex-col gap-1.5">
-              <Label htmlFor="generate-program-name">Nome do programa</Label>
+              <Label htmlFor="generate-program-name">{t("programNameLabel")}</Label>
               <Input
                 id="generate-program-name"
                 required
                 value={programName}
                 onChange={(e) => setProgramName(e.target.value)}
-                placeholder="Ex: Treino de Hipertrofia - Julho"
+                placeholder={t("programNamePlaceholder")}
               />
             </div>
 
             <div className="flex flex-col gap-1.5">
-              <Label>Esquema de sessões</Label>
+              <Label>{t("sessionSchemeLabel")}</Label>
               <div className="flex gap-2">
                 <Button
                   type="button"
@@ -170,7 +169,7 @@ export function GenerateWorkoutModal({ onClose }: { onClose: () => void }) {
                   onClick={() => setScheme("LETTER")}
                   className="flex-1"
                 >
-                  Letras (A-E)
+                  {t("letterScheme")}
                 </Button>
                 <Button
                   type="button"
@@ -178,30 +177,30 @@ export function GenerateWorkoutModal({ onClose }: { onClose: () => void }) {
                   onClick={() => setScheme("WEEKDAY")}
                   className="flex-1"
                 >
-                  Dias da semana
+                  {t("weekdayScheme")}
                 </Button>
               </div>
             </div>
 
             <div className="flex flex-col gap-1.5">
-              <Label htmlFor="generate-goal">Objetivo</Label>
+              <Label htmlFor="generate-goal">{t("goalLabel")}</Label>
               <select
                 id="generate-goal"
                 value={goal}
                 onChange={(e) => setGoal(e.target.value as WorkoutGoal)}
                 className="h-11 rounded-md border border-border bg-surface px-3.5 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
               >
-                {GOAL_OPTIONS.map((o) => (
-                  <option key={o.value} value={o.value}>
-                    {o.label}
+                {GOAL_VALUES.map((value) => (
+                  <option key={value} value={value}>
+                    {t(`goals.${value}`)}
                   </option>
                 ))}
               </select>
-              <p className="text-xs text-muted">Vale pra todas as sessões do programa.</p>
+              <p className="text-xs text-muted">{t("goalHint")}</p>
             </div>
 
             <Button type="submit" disabled={!programName.trim()}>
-              Avançar
+              {t("advance")}
             </Button>
           </form>
         )}
@@ -227,18 +226,17 @@ export function GenerateWorkoutModal({ onClose }: { onClose: () => void }) {
             </div>
 
             <h3 className="font-display text-base font-bold">
-              Sessão {labelFor(scheme, currentKey)}
+              {t("sessionTitle", { label: labelFor(scheme, currentKey) })}
             </h3>
 
             {currentDraft === null ? (
               <>
                 <div className="flex flex-col gap-1.5">
-                  <Label>Grupos musculares desta sessão</Label>
-                  <p className="text-xs text-muted">
-                    O 1º grupo marcado é o principal (mais exercícios); os demais entram
-                    como secundários.
-                  </p>
-                  {exercisesQuery.isLoading && <p className="text-sm text-muted">Carregando...</p>}
+                  <Label>{t("muscleGroupsLabel")}</Label>
+                  <p className="text-xs text-muted">{t("muscleGroupsHint")}</p>
+                  {exercisesQuery.isLoading && (
+                    <p className="text-sm text-muted">{tCommon("loading")}</p>
+                  )}
                   {exercisesQuery.isError && (
                     <QueryError
                       error={exercisesQuery.error}
@@ -273,7 +271,7 @@ export function GenerateWorkoutModal({ onClose }: { onClose: () => void }) {
                   <p className="text-sm text-danger">
                     {generateMutation.error instanceof ApiError
                       ? generateMutation.error.message
-                      : "Não foi possível gerar a sugestão."}
+                      : t("generateError")}
                   </p>
                 )}
 
@@ -284,23 +282,21 @@ export function GenerateWorkoutModal({ onClose }: { onClose: () => void }) {
                     disabled={generateMutation.isPending || selectedGroups.length === 0}
                     onClick={() => generateMutation.mutate()}
                   >
-                    {generateMutation.isPending ? "Gerando..." : "Gerar sugestão"}
+                    {generateMutation.isPending ? t("generating") : t("generateSuggestion")}
                   </Button>
                   {/* Pular: cria esta sessão sem exercício nenhum (o Personal
                       adiciona depois manualmente, mesmo padrão do fluxo comum). */}
                   <Button type="button" variant="secondary" onClick={() => setCurrentDraft([])}>
-                    Pular esta sessão
+                    {t("skipSession")}
                   </Button>
                 </div>
               </>
             ) : (
               <>
-                <p className="text-sm text-muted">
-                  Revise, ajuste ou remova qualquer linha — nada foi salvo ainda.
-                </p>
+                <p className="text-sm text-muted">{t("reviewHint")}</p>
 
                 {currentDraft.filter((r) => !r.removed).length === 0 && (
-                  <p className="text-sm text-muted">Sessão sem exercícios (pulada).</p>
+                  <p className="text-sm text-muted">{t("noExercisesSkipped")}</p>
                 )}
 
                 <div className="flex flex-col gap-3">
@@ -318,12 +314,12 @@ export function GenerateWorkoutModal({ onClose }: { onClose: () => void }) {
                             onClick={() => updateRow(row.exerciseId, { removed: true })}
                             className="text-xs font-semibold text-danger hover:underline"
                           >
-                            Remover
+                            {t("removeRow")}
                           </button>
                         </div>
                         <div className="grid grid-cols-3 gap-2">
                           <div className="flex flex-col gap-1">
-                            <Label htmlFor={`sets-${row.exerciseId}`}>Séries</Label>
+                            <Label htmlFor={`sets-${row.exerciseId}`}>{t("setsLabel")}</Label>
                             <Input
                               id={`sets-${row.exerciseId}`}
                               type="number"
@@ -335,7 +331,7 @@ export function GenerateWorkoutModal({ onClose }: { onClose: () => void }) {
                             />
                           </div>
                           <div className="flex flex-col gap-1">
-                            <Label htmlFor={`reps-${row.exerciseId}`}>Reps</Label>
+                            <Label htmlFor={`reps-${row.exerciseId}`}>{t("repsLabel")}</Label>
                             <Input
                               id={`reps-${row.exerciseId}`}
                               value={row.repsRange}
@@ -345,7 +341,7 @@ export function GenerateWorkoutModal({ onClose }: { onClose: () => void }) {
                             />
                           </div>
                           <div className="flex flex-col gap-1">
-                            <Label htmlFor={`rest-${row.exerciseId}`}>Descanso (s)</Label>
+                            <Label htmlFor={`rest-${row.exerciseId}`}>{t("restLabel")}</Label>
                             <Input
                               id={`rest-${row.exerciseId}`}
                               type="number"
@@ -366,7 +362,7 @@ export function GenerateWorkoutModal({ onClose }: { onClose: () => void }) {
                   onClick={() => setCurrentDraft(null)}
                   className="self-start text-xs font-semibold text-accent-secondary hover:underline"
                 >
-                  ← Ajustar grupos musculares / gerar de novo
+                  {t("adjustGroups")}
                 </button>
               </>
             )}
@@ -375,7 +371,7 @@ export function GenerateWorkoutModal({ onClose }: { onClose: () => void }) {
               <p className="text-sm text-danger">
                 {saveMutation.error instanceof ApiError
                   ? saveMutation.error.message
-                  : "Não foi possível criar o programa."}
+                  : t("saveError")}
               </p>
             )}
 
@@ -388,7 +384,7 @@ export function GenerateWorkoutModal({ onClose }: { onClose: () => void }) {
                   disabled={currentDraft === null || saveMutation.isPending}
                   onClick={goToNextSession}
                 >
-                  Próximo treino →
+                  {t("nextWorkout")}
                 </Button>
               )}
               <Button
@@ -397,7 +393,7 @@ export function GenerateWorkoutModal({ onClose }: { onClose: () => void }) {
                 disabled={saveMutation.isPending}
                 onClick={() => saveMutation.mutate()}
               >
-                {saveMutation.isPending ? "Salvando..." : "Salvar programa de treinamento"}
+                {saveMutation.isPending ? t("saving") : t("saveProgram")}
               </Button>
             </div>
           </div>

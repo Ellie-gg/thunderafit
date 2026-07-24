@@ -1,7 +1,8 @@
+"use client";
+
+import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
 import type { WeeklySummaryDay } from "@/lib/types";
-
-const WEEKDAY_LABELS = ["D", "S", "T", "Q", "Q", "S", "S"];
 
 function isSameUtcDay(dateKey: string, date: Date): boolean {
   return dateKey === date.toISOString().slice(0, 10);
@@ -20,9 +21,19 @@ function isSameUtcDay(dateKey: string, date: Date): boolean {
  * primeiros segmentos em sequência, não um padrão arbitrário de dias).
  */
 export function WeeklyVoltageBar({ days, className }: { days: WeeklySummaryDay[]; className?: string }) {
+  const t = useTranslations("weeklyVoltageBar");
+  const WEEKDAY_LABELS = [
+    t("weekday.sun"),
+    t("weekday.mon"),
+    t("weekday.tue"),
+    t("weekday.wed"),
+    t("weekday.thu"),
+    t("weekday.fri"),
+    t("weekday.sat"),
+  ];
   const today = new Date();
   return (
-    <div className={cn("voltage-bar voltage-bar--weekly", className)} role="img" aria-label="Frequência dos últimos 7 dias">
+    <div className={cn("voltage-bar voltage-bar--weekly", className)} role="img" aria-label={t("ariaLabel")}>
       {days.map((day) => {
         const dateObj = new Date(`${day.date}T00:00:00Z`);
         const weekdayLabel = WEEKDAY_LABELS[dateObj.getUTCDay()];
@@ -33,7 +44,7 @@ export function WeeklyVoltageBar({ days, className }: { days: WeeklySummaryDay[]
             className="voltage-segment"
             data-filled={day.active}
             data-today={isToday}
-            title={`${day.date}${isToday ? " (hoje)" : ""}${day.active ? " — treino registrado" : ""}`}
+            title={`${day.date}${isToday ? t("todaySuffix") : ""}${day.active ? t("activeSuffix") : ""}`}
             aria-label={weekdayLabel}
           />
         );

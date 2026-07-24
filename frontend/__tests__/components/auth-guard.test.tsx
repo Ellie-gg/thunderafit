@@ -1,7 +1,8 @@
-import { render, screen } from "@testing-library/react";
+import { screen } from "@testing-library/react";
 import { AuthGuard } from "@/components/auth-guard";
 import { useAuthStore } from "@/lib/store/auth-store";
 import { onAuthExpired } from "@/lib/api/client";
+import { renderWithIntl as render } from "@/lib/i18n-test-utils";
 
 const replace = jest.fn();
 

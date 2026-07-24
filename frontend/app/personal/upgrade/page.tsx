@@ -15,49 +15,15 @@ import { AppHeader } from "@/components/app-header";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { QueryError } from "@/components/query-error";
+import { useTranslations } from "next-intl";
 
 type Interval = "monthly" | "annual";
 
 // Billing 3 degraus: valores em R$ são PLACEHOLDER (o que importa nesta fase
 // é a estrutura de degraus e o filtro do diretório, não o preço final).
-const TIER_INFO: Record<
-  PlanTier,
-  { nome: string; limiteLabel: string; beneficios: string[]; destaque?: boolean }
-> = {
-  BASE: {
-    nome: "Base",
-    limiteLabel: "Até 20 alunos vinculados",
-    beneficios: ["Até 20 alunos vinculados", "Apareça no diretório de profissionais"],
-  },
-  PLUS: {
-    nome: "Plus",
-    limiteLabel: "Alunos ilimitados",
-    beneficios: [
-      "Alunos ilimitados",
-      "Destaque e prioridade no diretório de profissionais",
-    ],
-    destaque: true,
-  },
-};
-
-const PRICES: Record<PlanTier, Record<Interval, { preco: string; sufixo: string; nota: string }>> = {
-  BASE: {
-    monthly: { preco: "R$ 19,90", sufixo: "/mês", nota: "Cobrança mensal, cancele quando quiser." },
-    annual: {
-      preco: "R$ 190,80",
-      sufixo: "/ano",
-      nota: "Equivale a R$ 15,90/mês — 20% de desconto.",
-    },
-  },
-  PLUS: {
-    monthly: { preco: "R$ 39,90", sufixo: "/mês", nota: "Cobrança mensal, cancele quando quiser." },
-    annual: {
-      preco: "R$ 382,80",
-      sufixo: "/ano",
-      nota: "Equivale a R$ 31,90/mês — 20% de desconto.",
-    },
-  },
-};
+// Fase i18n: nome dos degraus ("Base"/"Plus") é tratado como nome de marca —
+// não é traduzido entre locales (igual PLUS/BASE do backend). O resto vem de
+// useTranslations() dentro de cada componente.
 
 function TierCard({
   tier,
@@ -68,7 +34,32 @@ function TierCard({
   onSubscribe: (tier: PlanTier, interval: Interval) => void;
   isPending: boolean;
 }) {
+  const t = useTranslations("personalUpgrade");
   const [interval, setInterval] = useState<Interval>("monthly");
+
+  const TIER_INFO: Record<PlanTier, { nome: string; beneficios: string[]; destaque?: boolean }> = {
+    BASE: {
+      nome: "Base",
+      beneficios: [t("tierBaseBeneficio1"), t("tierBaseBeneficio2")],
+    },
+    PLUS: {
+      nome: "Plus",
+      beneficios: [t("tierPlusBeneficio1"), t("tierPlusBeneficio2")],
+      destaque: true,
+    },
+  };
+
+  const PRICES: Record<PlanTier, Record<Interval, { preco: string; sufixo: string; nota: string }>> = {
+    BASE: {
+      monthly: { preco: "R$ 19,90", sufixo: t("sufixoMes"), nota: t("notaMensal") },
+      annual: { preco: "R$ 190,80", sufixo: t("sufixoAno"), nota: t("notaAnualBase") },
+    },
+    PLUS: {
+      monthly: { preco: "R$ 39,90", sufixo: t("sufixoMes"), nota: t("notaMensal") },
+      annual: { preco: "R$ 382,80", sufixo: t("sufixoAno"), nota: t("notaAnualPlus") },
+    },
+  };
+
   const info = TIER_INFO[tier];
   const price = PRICES[tier][interval];
 
@@ -81,7 +72,7 @@ function TierCard({
         <span className="font-display text-lg font-bold">{info.nome}</span>
         {info.destaque && (
           <span className="ml-2 rounded-full bg-accent/10 px-2 py-0.5 text-xs font-semibold text-accent">
-            Mais popular
+            {t("maisPopular")}
           </span>
         )}
       </div>
@@ -100,7 +91,7 @@ function TierCard({
             interval === "monthly" ? "bg-accent text-ink-950" : "text-muted"
           }`}
         >
-          Mensal
+          {t("mensal")}
         </button>
         <button
           type="button"
@@ -109,7 +100,7 @@ function TierCard({
             interval === "annual" ? "bg-accent text-ink-950" : "text-muted"
           }`}
         >
-          Anual
+          {t("anual")}
         </button>
       </div>
 
@@ -125,13 +116,14 @@ function TierCard({
         variant={info.destaque ? "default" : "secondary"}
         className="mt-auto"
       >
-        {isPending ? "Redirecionando..." : `Assinar ${info.nome}`}
+        {isPending ? t("redirecionando") : t("assinar", { nome: info.nome })}
       </Button>
     </Card>
   );
 }
 
 function UpgradeContent() {
+  const t = useTranslations("personalUpgrade");
   const searchParams = useSearchParams();
   const status = searchParams.get("status"); // success | cancel (retorno do Stripe)
 
@@ -163,31 +155,29 @@ function UpgradeContent() {
       <main className="flex flex-1 flex-col gap-6 px-6 py-8">
         <div>
           <span className="text-xs font-semibold uppercase tracking-wide text-accent-secondary">
-            Plano
+            {t("planoEyebrow")}
           </span>
           <h1 className="font-display text-2xl font-bold tracking-tight">
-            {isPago ? "Sua assinatura" : "Fazer upgrade"}
+            {isPago ? t("suaAssinatura") : t("fazerUpgradeTitulo")}
           </h1>
           <p className="text-sm text-muted">
             {isPago
-              ? `Você está no plano ${tierNome} — ${
-                  tier === "PLUS" ? "alunos ilimitados" : "até 20 alunos vinculados"
-                }.`
-              : "Plano gratuito: até 3 alunos. Faça upgrade para vincular mais e aparecer no diretório de profissionais."}
+              ? t("assinaturaAtivaComLimite", {
+                  plano: tierNome ?? "",
+                  limite: tier === "PLUS" ? t("limiteIlimitado") : t("limiteAte20"),
+                })
+              : t("planoGratuito")}
           </p>
         </div>
 
         {status === "success" && (
           <Card style={{ borderTopWidth: "4px", borderTopColor: "var(--success)" }}>
-            <p className="text-sm text-success">
-              Pagamento concluído! Sua assinatura está sendo ativada — pode levar alguns
-              segundos para o limite atualizar.
-            </p>
+            <p className="text-sm text-success">{t("pagamentoConcluido")}</p>
           </Card>
         )}
         {status === "cancel" && (
           <Card>
-            <p className="text-sm text-muted">Checkout cancelado. Nenhuma cobrança foi feita.</p>
+            <p className="text-sm text-muted">{t("checkoutCancelado")}</p>
           </Card>
         )}
 
@@ -197,18 +187,13 @@ function UpgradeContent() {
 
         {isPago ? (
           <Card className="flex flex-col gap-3">
-            <h2 className="font-display text-lg font-bold">Gerenciar assinatura</h2>
-            <p className="text-sm text-muted">
-              Altere o método de pagamento, veja faturas, troque de degrau ou cancele pelo
-              portal seguro do Stripe. Ao cancelar, seus alunos já vinculados continuam — só
-              novos vínculos acima do limite do plano gratuito ficam bloqueados após o fim do
-              período pago.
-            </p>
+            <h2 className="font-display text-lg font-bold">{t("gerenciarAssinatura")}</h2>
+            <p className="text-sm text-muted">{t("gerenciarAssinaturaDescricao")}</p>
             {portalMutation.isError && (
               <p className="text-sm text-danger">
                 {portalMutation.error instanceof ApiError
                   ? portalMutation.error.message
-                  : "Não foi possível abrir o portal."}
+                  : t("erroAbrirPortal")}
               </p>
             )}
             <Button
@@ -216,7 +201,7 @@ function UpgradeContent() {
               disabled={portalMutation.isPending}
               className="self-start"
             >
-              {portalMutation.isPending ? "Abrindo..." : "Gerenciar / cancelar assinatura"}
+              {portalMutation.isPending ? t("abrindo") : t("gerenciarCancelarAssinatura")}
             </Button>
           </Card>
         ) : (
@@ -238,7 +223,7 @@ function UpgradeContent() {
           <p className="text-sm text-danger">
             {checkoutMutation.error instanceof ApiError
               ? checkoutMutation.error.message
-              : "Não foi possível iniciar o checkout."}
+              : t("erroIniciarCheckout")}
           </p>
         )}
       </main>

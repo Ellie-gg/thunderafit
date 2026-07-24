@@ -1,6 +1,7 @@
-import { SessionScheme } from "@prisma/client";
+import { SessionScheme, Locale } from "@prisma/client";
 import { workoutProgramsRepository, orderFor, WEEKDAY_ORDER } from "../repository/workout-programs.repository";
 import { relationsRepository } from "../repository/relations.repository";
+import { exerciseTranslationService } from "./exercise-translation.service";
 
 const VALID_SCHEMES: SessionScheme[] = ["LETTER", "WEEKDAY"];
 
@@ -164,7 +165,7 @@ export const workoutProgramsService = {
    * Segunda a Sexta e hoje é Sábado), não há sugestão (null) — é só
    * sugestão, nunca trava o aluno, que pode abrir qualquer sessão.
    */
-  async getProgram(programId: string, userId: string, role: string) {
+  async getProgram(programId: string, userId: string, role: string, locale: Locale) {
     const program = await workoutProgramsRepository.findProgramWithSessions(programId);
     if (!program) throw httpError("Programa não encontrado.", 404);
 
@@ -177,10 +178,18 @@ export const workoutProgramsService = {
     const sessions = sortByScheme(program.workouts, program.sessionScheme);
     const suggestedId = computeSuggestedSessionId(sessions, program.sessionScheme);
 
-    return {
-      ...program,
-      workouts: sessions.map((s) => ({ ...s, suggestedNext: s.id === suggestedId })),
-    };
+    // i18n: cada sessão tem seus próprios exercícios aninhados (exercise
+    // embutido via include) — traduz por sessão, mesmo utilitário usado no
+    // catálogo avulso e na execução de treino.
+    const translatedSessions = await Promise.all(
+      sessions.map(async (s) => ({
+        ...s,
+        suggestedNext: s.id === suggestedId,
+        exercises: await exerciseTranslationService.translateNested(s.exercises, locale),
+      }))
+    );
+
+    return { ...program, workouts: translatedSessions };
   },
 };
 

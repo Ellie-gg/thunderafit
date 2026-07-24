@@ -1,6 +1,7 @@
 "use client";
 
 import { useParams } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getWorkout } from "@/lib/api/workouts";
 import { ApiError } from "@/lib/api/client";
@@ -11,6 +12,7 @@ import { AddExerciseForm } from "@/components/add-exercise-form";
 import { ExerciseReorderButtons } from "@/components/exercise-reorder-buttons";
 
 function PersonalWorkoutContent() {
+  const t = useTranslations("personalTreinoDetail");
   const params = useParams<{ id: string }>();
   const workoutId = params.id;
   const queryClient = useQueryClient();
@@ -23,7 +25,7 @@ function PersonalWorkoutContent() {
   if (workoutQuery.isLoading) {
     return (
       <main className="flex flex-1 items-center justify-center">
-        <span className="text-sm text-muted">Carregando treino...</span>
+        <span className="text-sm text-muted">{t("loadingWorkout")}</span>
       </main>
     );
   }
@@ -32,7 +34,7 @@ function PersonalWorkoutContent() {
     const message =
       workoutQuery.error instanceof ApiError
         ? workoutQuery.error.message
-        : "Erro ao carregar o treino.";
+        : t("loadWorkoutError");
     return (
       <main className="flex flex-1 items-center justify-center px-6">
         <Card>
@@ -52,10 +54,12 @@ function PersonalWorkoutContent() {
     <main className="flex flex-1 flex-col gap-6 px-6 py-8">
       <div>
         <span className="text-xs font-semibold uppercase tracking-wide text-accent-secondary">
-          Treino {workout.letter}
+          {t("workoutLetter", { letter: workout.letter })}
         </span>
         <h1 className="font-display text-2xl font-bold tracking-tight">{workout.name}</h1>
-        <p className="text-sm text-muted">{exercises.length} exercício(s) prescrito(s)</p>
+        <p className="text-sm text-muted">
+          {t("exercisesPrescribedCount", { count: exercises.length })}
+        </p>
       </div>
 
       {exercises.length > 0 && (
@@ -81,14 +85,16 @@ function PersonalWorkoutContent() {
                   {ex.sets}x {ex.repsRange} · {ex.restSeconds}s
                 </div>
               </div>
-              {ex.notes && <p className="text-xs text-muted">Obs: {ex.notes}</p>}
+              {ex.notes && (
+                <p className="text-xs text-muted">{t("notes", { notes: ex.notes })}</p>
+              )}
             </Card>
           ))}
         </div>
       )}
 
       <Card>
-        <h2 className="mb-3 font-display text-lg font-bold">Adicionar exercício</h2>
+        <h2 className="mb-3 font-display text-lg font-bold">{t("addExerciseTitle")}</h2>
         <AddExerciseForm
           workoutId={workoutId}
           nextOrder={nextOrder}

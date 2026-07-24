@@ -2,6 +2,7 @@
 
 import { Suspense } from "react";
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { getWorkoutProgram, addProgramSession } from "@/lib/api/workouts";
@@ -21,6 +22,8 @@ import { ExerciseReorderButtons } from "@/components/exercise-reorder-buttons";
  * qualquer momento (o Personal decide quantas sessões quer preencher).
  */
 function SessaoContent() {
+  const t = useTranslations("personalSessaoEditor");
+  const tCommon = useTranslations("common");
   const params = useParams<{ id: string; sessionId: string }>();
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -57,13 +60,13 @@ function SessaoContent() {
     <>
       <AppHeader />
       <main className="flex flex-1 flex-col gap-6 px-6 py-8">
-        {programQuery.isLoading && <p className="text-sm text-muted">Carregando...</p>}
+        {programQuery.isLoading && <p className="text-sm text-muted">{tCommon("loading")}</p>}
         {programQuery.isError && (
           <QueryError error={programQuery.error} onRetry={() => programQuery.refetch()} />
         )}
 
         {program && !session && (
-          <p className="text-sm text-danger">Sessão não encontrada neste programa.</p>
+          <p className="text-sm text-danger">{t("sessionNotFound")}</p>
         )}
 
         {program && session && (
@@ -73,13 +76,13 @@ function SessaoContent() {
                 href={`/personal/programas/${programId}${query}`}
                 className="mb-2 inline-block text-xs font-semibold text-muted hover:text-foreground"
               >
-                ← Voltar ao programa
+                {t("backToProgram")}
               </Link>
               <span className="block text-xs font-semibold uppercase tracking-wide text-accent-secondary">
                 {program.name}
               </span>
               <h1 className="font-display text-2xl font-bold tracking-tight">
-                Sessão {labelFor(scheme, session.letter)}
+                {t("sessionTitle", { label: labelFor(scheme, session.letter) })}
               </h1>
             </div>
 
@@ -101,7 +104,9 @@ function SessaoContent() {
                         <span className="text-xs text-muted">
                           ({ex.sets}x {ex.repsRange})
                         </span>
-                        {ex.notes && <p className="text-xs text-muted">Obs: {ex.notes}</p>}
+                        {ex.notes && (
+                          <p className="text-xs text-muted">{t("notes", { notes: ex.notes })}</p>
+                        )}
                       </div>
                     </li>
                   ))}
@@ -116,13 +121,13 @@ function SessaoContent() {
 
             <div className="flex gap-3">
               <Button asChild variant="secondary" className="flex-1">
-                <Link href={`/personal/programas/${programId}${query}`}>← Voltar ao programa</Link>
+                <Link href={`/personal/programas/${programId}${query}`}>{t("backToProgram")}</Link>
               </Button>
               {nextKey &&
                 (nextSession ? (
                   <Button asChild className="flex-1">
                     <Link href={`/personal/programas/${programId}/sessoes/${nextSession.id}${query}`}>
-                      Próximo: {labelFor(scheme, nextKey)} →
+                      {t("nextSession", { label: labelFor(scheme, nextKey) })}
                     </Link>
                   </Button>
                 ) : (
@@ -132,13 +137,13 @@ function SessaoContent() {
                     onClick={() => addSessionMutation.mutate(nextKey)}
                   >
                     {addSessionMutation.isPending
-                      ? "Criando..."
-                      : `Próximo: ${labelFor(scheme, nextKey)} →`}
+                      ? t("creating")
+                      : t("nextSession", { label: labelFor(scheme, nextKey) })}
                   </Button>
                 ))}
             </div>
             {addSessionMutation.isError && (
-              <p className="text-sm text-danger">Erro ao criar a próxima sessão.</p>
+              <p className="text-sm text-danger">{t("nextSessionError")}</p>
             )}
           </>
         )}

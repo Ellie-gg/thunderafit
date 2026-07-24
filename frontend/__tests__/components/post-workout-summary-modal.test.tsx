@@ -1,10 +1,12 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { NextIntlClientProvider } from "next-intl";
 import { toPng } from "html-to-image";
 import { Capacitor } from "@capacitor/core";
 import { Filesystem } from "@capacitor/filesystem";
 import { Share } from "@capacitor/share";
 import { PostWorkoutSummaryModal } from "@/components/post-workout-summary-modal";
+import ptMessages from "@/messages/pt.json";
 import type { WorkoutCompletionSummary } from "@/lib/types";
 
 jest.mock("html-to-image", () => ({
@@ -45,7 +47,9 @@ const summary: WorkoutCompletionSummary = {
 
 function renderModal(onClose: () => void) {
   return render(
-    <PostWorkoutSummaryModal summary={summary} alunoName="João" durationSeconds={754} onClose={onClose} />
+    <NextIntlClientProvider locale="pt" messages={ptMessages}>
+      <PostWorkoutSummaryModal summary={summary} alunoName="João" durationSeconds={754} onClose={onClose} />
+    </NextIntlClientProvider>
   );
 }
 

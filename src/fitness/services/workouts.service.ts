@@ -1,7 +1,9 @@
+import { Locale } from "@prisma/client";
 import { workoutsRepository } from "../repository/workouts.repository";
 import { relationsRepository } from "../repository/relations.repository";
 import { exercisesRepository } from "../repository/exercises.repository";
 import { workoutSummaryService } from "./workout-summary.service";
+import { exerciseTranslationService } from "./exercise-translation.service";
 
 // Fase 27: observação do Personal sobre a prescrição de um exercício.
 const MAX_NOTES_LENGTH = 500;
@@ -114,7 +116,7 @@ export const workoutsService = {
     return workoutsRepository.findExercisesOrdered(workoutId);
   },
 
-  async getWorkout(workoutId: string, userId: string, role?: string) {
+  async getWorkout(workoutId: string, userId: string, role: string | undefined, locale: Locale) {
     const workout = await workoutsRepository.findByIdWithExercises(workoutId);
     if (!workout) {
       const err = new Error("Treino não encontrado.");
@@ -128,7 +130,13 @@ export const workoutsService = {
       throw err;
     }
 
-    return workout;
+    // i18n: tela de execução — a de maior uso do app — mostra nome E
+    // descrição do exercício; sem isso, nome/categoria traduzidos ficariam
+    // colados a uma descrição só em português.
+    return {
+      ...workout,
+      exercises: await exerciseTranslationService.translateNested(workout.exercises, locale),
+    };
   },
 
   // Fase 16: o aluno marca a sessão como concluída. Só o próprio aluno dono da

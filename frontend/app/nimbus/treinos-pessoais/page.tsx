@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -29,6 +30,8 @@ import type { SessionScheme } from "@/lib/types";
  * aplica (Fase 34.5, tela /meu-treino-pessoal).
  */
 function TreinosPessoaisContent() {
+  const t = useTranslations("nimbusTreinosPessoais");
+  const tCommon = useTranslations("common");
   const queryClient = useQueryClient();
   const templatesQuery = useQuery({
     queryKey: ["admin", "self-templates"],
@@ -81,16 +84,15 @@ function TreinosPessoaisContent() {
       <main className="flex flex-1 flex-col gap-6 px-6 py-8">
         <div>
           <h1 className="font-display text-2xl font-bold tracking-tight">
-            Treinos Pessoais (Meu Treino Pessoal)
+            {t("title")}
           </h1>
           <p className="text-sm text-muted">
-            Templates que qualquer aluno pode escolher e aplicar direto, sem precisar de um
-            Personal. {templates.length} template(s) cadastrado(s).
+            {t("description", { count: templates.length })}
           </p>
         </div>
 
         <Card className="flex flex-col gap-3">
-          <h2 className="font-display text-lg font-bold">Novo template</h2>
+          <h2 className="font-display text-lg font-bold">{t("newTemplate")}</h2>
           <form
             className="flex flex-wrap items-end gap-3"
             onSubmit={(e) => {
@@ -99,37 +101,37 @@ function TreinosPessoaisContent() {
             }}
           >
             <div className="flex flex-1 flex-col gap-1.5">
-              <Label htmlFor="name">Nome</Label>
+              <Label htmlFor="name">{t("nameLabel")}</Label>
               <Input
                 id="name"
                 required
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                placeholder="Ex: Full Body Iniciante"
+                placeholder={t("namePlaceholder")}
               />
             </div>
             <div className="flex flex-col gap-1.5">
-              <Label htmlFor="scheme">Esquema</Label>
+              <Label htmlFor="scheme">{t("schemeLabel")}</Label>
               <select
                 id="scheme"
                 value={scheme}
                 onChange={(e) => setScheme(e.target.value as SessionScheme)}
                 className="h-11 rounded-md border border-border bg-surface px-3.5 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
               >
-                <option value="LETTER">Letras (A-E)</option>
-                <option value="WEEKDAY">Dias da semana</option>
+                <option value="LETTER">{t("schemeOption.letter")}</option>
+                <option value="WEEKDAY">{t("schemeOption.weekday")}</option>
               </select>
             </div>
             <Button type="submit" disabled={createMutation.isPending}>
-              {createMutation.isPending ? "Criando..." : "Criar template"}
+              {createMutation.isPending ? t("creating") : t("createTemplate")}
             </Button>
           </form>
           {createMutation.isError && (
-            <p className="text-sm text-danger">Erro ao criar template.</p>
+            <p className="text-sm text-danger">{t("createError")}</p>
           )}
         </Card>
 
-        {templatesQuery.isLoading && <p className="text-sm text-muted">Carregando...</p>}
+        {templatesQuery.isLoading && <p className="text-sm text-muted">{tCommon("loading")}</p>}
         {templatesQuery.isError && (
           <QueryError error={templatesQuery.error} onRetry={() => templatesQuery.refetch()} />
         )}
@@ -145,11 +147,11 @@ function TreinosPessoaisContent() {
                 <div className="flex items-center justify-between gap-3">
                   <div>
                     <span className="text-xs font-semibold uppercase tracking-wide text-accent-secondary">
-                      {tpl.sessionScheme === "WEEKDAY" ? "Dias da semana" : "Letras"}
+                      {tpl.sessionScheme === "WEEKDAY" ? t("schemeOption.weekday") : t("schemeName.letter")}
                     </span>
                     <h3 className="font-display text-lg font-bold">{tpl.name}</h3>
                     <p className="text-xs text-muted">
-                      {tpl.workouts?.length ?? 0} sessão(ões)
+                      {t("sessionCount", { count: tpl.workouts?.length ?? 0 })}
                     </p>
                   </div>
                   <div className="flex gap-2">
@@ -159,7 +161,7 @@ function TreinosPessoaisContent() {
                       size="sm"
                       onClick={() => setExpandedId(expanded ? null : tpl.id)}
                     >
-                      {expanded ? "Fechar" : "Editar"}
+                      {expanded ? t("close") : t("edit")}
                     </Button>
                     <Button
                       type="button"
@@ -167,12 +169,12 @@ function TreinosPessoaisContent() {
                       size="sm"
                       disabled={deleteMutation.isPending}
                       onClick={() => {
-                        if (confirm(`Excluir o template "${tpl.name}"? Não tem volta.`)) {
+                        if (confirm(t("deleteConfirm", { name: tpl.name }))) {
                           deleteMutation.mutate(tpl.id);
                         }
                       }}
                     >
-                      Excluir
+                      {t("delete")}
                     </Button>
                   </div>
                 </div>
@@ -180,7 +182,7 @@ function TreinosPessoaisContent() {
                 {expanded && (
                   <div className="flex flex-col gap-4 border-t border-border pt-3">
                     {detailQuery.isLoading && (
-                      <p className="text-sm text-muted">Carregando sessões...</p>
+                      <p className="text-sm text-muted">{t("loadingSessions")}</p>
                     )}
                     {(detailQuery.data?.program.workouts ?? []).map((session) => {
                       const sessionExercises = [...(session.exercises ?? [])].sort(
@@ -189,7 +191,7 @@ function TreinosPessoaisContent() {
                       return (
                         <div key={session.id} className="rounded-md border border-border p-3">
                           <h4 className="mb-2 font-display text-sm font-bold text-accent">
-                            Sessão {labelFor(tpl.sessionScheme, session.letter)}
+                            {t("sessionTitle", { label: labelFor(tpl.sessionScheme, session.letter) })}
                           </h4>
                           {sessionExercises.length > 0 && (
                             <ul className="mb-3 flex flex-col gap-1">
@@ -242,7 +244,7 @@ function TreinosPessoaisContent() {
             );
           })}
           {templatesQuery.isSuccess && templates.length === 0 && (
-            <p className="text-sm text-muted">Nenhum template pessoal cadastrado ainda.</p>
+            <p className="text-sm text-muted">{t("empty")}</p>
           )}
         </div>
       </main>

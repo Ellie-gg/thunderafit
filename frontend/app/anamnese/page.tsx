@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { getOwnAnamnesis, createAnamnesis, updateAnamnesis } from "@/lib/api/anamnesis";
 import type { Anamnesis, AnamnesisInput } from "@/lib/types";
@@ -51,6 +52,7 @@ function buildFormFromData(a: Anamnesis | null): AnamnesisInput {
  * sincronizar `form` com `anamnesisQuery.data` depois que ele chega.
  */
 function AnamneseForm({ initial, exists }: { initial: Anamnesis | null; exists: boolean }) {
+  const t = useTranslations("anamneseAluno");
   const queryClient = useQueryClient();
   const [form, setForm] = useState<AnamnesisInput>(() => buildFormFromData(initial));
 
@@ -91,11 +93,11 @@ function AnamneseForm({ initial, exists }: { initial: Anamnesis | null; exists: 
       }}
     >
       <Card className="flex flex-col gap-4">
-        <h2 className="font-display text-lg font-bold">Dados Pessoais</h2>
-        {field("fullName", "Nome completo")}
+        <h2 className="font-display text-lg font-bold">{t("personalDataHeading")}</h2>
+        {field("fullName", t("fullNameLabel"))}
         <div className="grid grid-cols-3 gap-3">
           <div className="flex flex-col gap-1.5">
-            <Label htmlFor="birthDate">Nascimento</Label>
+            <Label htmlFor="birthDate">{t("birthDateLabel")}</Label>
             <Input
               id="birthDate"
               type="date"
@@ -103,51 +105,53 @@ function AnamneseForm({ initial, exists }: { initial: Anamnesis | null; exists: 
               onChange={(e) => setForm((f) => ({ ...f, birthDate: e.target.value }))}
             />
           </div>
-          {field("heightCm", "Altura (cm)")}
-          {field("weightKg", "Peso (kg)")}
+          {field("heightCm", t("heightLabel"))}
+          {field("weightKg", t("weightLabel"))}
         </div>
       </Card>
 
       <Card className="flex flex-col gap-4">
-        <h2 className="font-display text-lg font-bold">Objetivos</h2>
-        {field("goals", "Objetivos", "Ex: emagrecimento, hipertrofia, condicionamento...")}
+        <h2 className="font-display text-lg font-bold">{t("goalsHeading")}</h2>
+        {field("goals", t("goalsLabel"), t("goalsPlaceholder"))}
       </Card>
 
       <Card className="flex flex-col gap-4">
-        <h2 className="font-display text-lg font-bold">Histórico de Saúde</h2>
-        {field("healthConditions", "Condições de saúde", "Ex: hipertensão, diabetes...")}
-        {field("medications", "Medicamentos em uso")}
+        <h2 className="font-display text-lg font-bold">{t("healthHistoryHeading")}</h2>
+        {field("healthConditions", t("healthConditionsLabel"), t("healthConditionsPlaceholder"))}
+        {field("medications", t("medicationsLabel"))}
       </Card>
 
       <Card className="flex flex-col gap-4">
-        <h2 className="font-display text-lg font-bold">Atividade Física</h2>
-        {field("activityLevel", "Nível de atividade atual", "Ex: sedentário, leve, moderado, intenso")}
-        {field("pastExperience", "Experiência anterior com treinos")}
+        <h2 className="font-display text-lg font-bold">{t("physicalActivityHeading")}</h2>
+        {field("activityLevel", t("activityLevelLabel"), t("activityLevelPlaceholder"))}
+        {field("pastExperience", t("pastExperienceLabel"))}
       </Card>
 
       <Card className="flex flex-col gap-4">
-        <h2 className="font-display text-lg font-bold">Preferências e Restrições</h2>
-        {field("trainingPreferences", "Preferências de treino", "Ex: dias disponíveis, tipo preferido...")}
-        {field("injuries", "Lesões/restrições", "Ex: nenhuma")}
+        <h2 className="font-display text-lg font-bold">{t("preferencesHeading")}</h2>
+        {field("trainingPreferences", t("trainingPreferencesLabel"), t("trainingPreferencesPlaceholder"))}
+        {field("injuries", t("injuriesLabel"), t("injuriesPlaceholder"))}
       </Card>
 
       {saveMutation.isError && (
         <p className="text-sm text-danger">
           {saveMutation.error instanceof ApiError
             ? saveMutation.error.message
-            : "Não foi possível conectar ao servidor."}
+            : t("connectionError")}
         </p>
       )}
-      {saveMutation.isSuccess && <p className="text-sm text-success">Anamnese salva com sucesso.</p>}
+      {saveMutation.isSuccess && <p className="text-sm text-success">{t("saveSuccess")}</p>}
 
       <Button type="submit" disabled={saveMutation.isPending} className="self-start">
-        {saveMutation.isPending ? "Salvando..." : "Salvar anamnese"}
+        {saveMutation.isPending ? t("saving") : t("saveAnamnesis")}
       </Button>
     </form>
   );
 }
 
 function AnamneseContent() {
+  const t = useTranslations("anamneseAluno");
+  const tCommon = useTranslations("common");
   const anamnesisQuery = useQuery({ queryKey: ["anamnesis", "own"], queryFn: getOwnAnamnesis });
 
   return (
@@ -155,14 +159,11 @@ function AnamneseContent() {
       <AppHeader />
       <main className="flex flex-1 flex-col gap-6 px-6 py-8">
         <div>
-          <h1 className="font-display text-2xl font-bold tracking-tight">Anamnese</h1>
-          <p className="text-sm text-muted">
-            Seu histórico de saúde e objetivos — seu Personal Trainer pode ver essas
-            informações, mas só você pode editar.
-          </p>
+          <h1 className="font-display text-2xl font-bold tracking-tight">{t("title")}</h1>
+          <p className="text-sm text-muted">{t("subtitle")}</p>
         </div>
 
-        {anamnesisQuery.isLoading && <p className="text-sm text-muted">Carregando...</p>}
+        {anamnesisQuery.isLoading && <p className="text-sm text-muted">{tCommon("loading")}</p>}
 
         {anamnesisQuery.isError && (
           <QueryError error={anamnesisQuery.error} onRetry={() => anamnesisQuery.refetch()} />

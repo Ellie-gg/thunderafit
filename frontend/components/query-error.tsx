@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { ApiError } from "@/lib/api/client";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -12,13 +13,14 @@ import { Button } from "@/components/ui/button";
  * mensagem e o botão de "Tentar novamente" consistentes em todas elas.
  */
 export function QueryError({ error, onRetry }: { error: unknown; onRetry: () => void }) {
-  const message = error instanceof ApiError ? error.message : "Não foi possível conectar ao servidor.";
+  const t = useTranslations("queryError");
+  const message = error instanceof ApiError ? error.message : t("connectionError");
 
   return (
     <Card className="flex flex-col gap-3">
       <p className="text-sm text-danger">{message}</p>
       <Button variant="secondary" size="sm" onClick={onRetry} className="self-start">
-        Tentar novamente
+        {t("retry")}
       </Button>
     </Card>
   );

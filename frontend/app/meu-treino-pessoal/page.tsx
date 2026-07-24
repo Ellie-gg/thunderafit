@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { listSelfTemplates, applySelfTemplate } from "@/lib/api/workouts";
 import { ApiError } from "@/lib/api/client";
@@ -19,6 +20,8 @@ import { QueryError } from "@/components/query-error";
  * placeholder visual ("em breve"): não decidimos ainda se vira feature paga.
  */
 function MeuTreinoPessoalContent() {
+  const t = useTranslations("meuTreinoPessoal");
+  const tCommon = useTranslations("common");
   const router = useRouter();
   const templatesQuery = useQuery({ queryKey: ["self-templates"], queryFn: listSelfTemplates });
 
@@ -36,14 +39,11 @@ function MeuTreinoPessoalContent() {
       <AppHeader />
       <main className="flex flex-1 flex-col gap-6 px-6 py-8">
         <div>
-          <h1 className="font-display text-2xl font-bold tracking-tight">Meu Treino Pessoal</h1>
-          <p className="text-sm text-muted">
-            Templates prontos, sem precisar de um Personal. Escolha um e comece a treinar hoje
-            mesmo.
-          </p>
+          <h1 className="font-display text-2xl font-bold tracking-tight">{t("title")}</h1>
+          <p className="text-sm text-muted">{t("subtitle")}</p>
         </div>
 
-        {templatesQuery.isLoading && <p className="text-sm text-muted">Carregando...</p>}
+        {templatesQuery.isLoading && <p className="text-sm text-muted">{tCommon("loading")}</p>}
         {templatesQuery.isError && (
           <QueryError error={templatesQuery.error} onRetry={() => templatesQuery.refetch()} />
         )}
@@ -53,29 +53,32 @@ function MeuTreinoPessoalContent() {
             <Card key={tpl.id} className="flex flex-col gap-2">
               <h2 className="font-display text-lg font-bold">{tpl.name}</h2>
               <p className="text-xs text-muted">
-                {tpl.workouts?.length ?? 0} sessão(ões) ·{" "}
-                {tpl.sessionScheme === "WEEKDAY" ? "dias da semana" : "letras"}
+                {t("sessionCountScheme", {
+                  count: tpl.workouts?.length ?? 0,
+                  scheme:
+                    tpl.sessionScheme === "WEEKDAY" ? t("schemeWeekday") : t("schemeLetter"),
+                })}
               </p>
               <Button
                 className="mt-2"
                 disabled={applyMutation.isPending}
                 onClick={() => applyMutation.mutate(tpl.id)}
               >
-                {applyMutation.isPending ? "Aplicando..." : "Aplicar este treino"}
+                {applyMutation.isPending ? t("applying") : t("applyTemplate")}
               </Button>
             </Card>
           ))}
         </div>
 
         {templatesQuery.isSuccess && templates.length === 0 && (
-          <p className="text-sm text-muted">Nenhum treino pessoal disponível ainda.</p>
+          <p className="text-sm text-muted">{t("emptyState")}</p>
         )}
 
         {applyMutation.isError && (
           <p className="text-sm text-danger">
             {applyMutation.error instanceof ApiError
               ? applyMutation.error.message
-              : "Erro ao aplicar o treino."}
+              : t("applyError")}
           </p>
         )}
 
@@ -83,23 +86,21 @@ function MeuTreinoPessoalContent() {
             ainda se vira feature paga (ver STATUS.md, Fase 34.5). */}
         <Card className="flex flex-col gap-2 border-dashed opacity-70">
           <div className="flex items-center justify-between gap-3">
-            <h2 className="font-display text-lg font-bold">Crie seu treino do zero</h2>
+            <h2 className="font-display text-lg font-bold">{t("buildFromScratch")}</h2>
             <span className="shrink-0 rounded-full border border-border px-2.5 py-0.5 text-xs font-semibold text-muted">
-              Em breve
+              {t("comingSoon")}
             </span>
           </div>
-          <p className="text-sm text-muted">
-            Montar seu próprio treino, exercício por exercício, com acesso ao catálogo completo.
-          </p>
+          <p className="text-sm text-muted">{t("buildFromScratchDescription")}</p>
           <Button type="button" disabled>
-            Em breve
+            {t("comingSoon")}
           </Button>
         </Card>
 
         <p className="text-center text-sm text-muted">
-          Quer um acompanhamento mais de perto?{" "}
+          {t("wantCloserFollowUp")}{" "}
           <Link href="/profissionais" className="font-semibold text-accent-secondary hover:underline">
-            Convide um Personal
+            {t("invitePersonal")}
           </Link>
           .
         </p>

@@ -1,5 +1,5 @@
 import prisma from "../../lib/prisma";
-import { Role, PlanoAssinatura } from "@prisma/client";
+import { Role, PlanoAssinatura, Locale } from "@prisma/client";
 
 export interface CreateUserInput {
   email: string;
@@ -62,6 +62,14 @@ export const authRepository = {
     return prisma.user.update({
       where: { id: userId },
       data: { avatarUrl },
+    });
+  },
+
+  /** i18n: escolha explícita de idioma (Configurações). `null` volta a detectar automaticamente. */
+  async updateLocale(userId: string, locale: Locale | null) {
+    return prisma.user.update({
+      where: { id: userId },
+      data: { locale },
     });
   },
 

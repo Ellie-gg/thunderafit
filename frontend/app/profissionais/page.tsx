@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   searchProfessionals,
@@ -18,16 +19,18 @@ import { Button } from "@/components/ui/button";
 import { QueryError } from "@/components/query-error";
 
 function StatusBadge({ status }: { status: ConnectionStatus }) {
+  const t = useTranslations("profissionais");
   const map: Record<ConnectionStatus, { label: string; cls: string }> = {
-    PENDENTE: { label: "Pendente", cls: "bg-accent/15 text-accent" },
-    ACEITA: { label: "Aceita", cls: "bg-success/15 text-success" },
-    RECUSADA: { label: "Recusada", cls: "bg-danger/15 text-danger" },
+    PENDENTE: { label: t("statusPending"), cls: "bg-accent/15 text-accent" },
+    ACEITA: { label: t("statusAccepted"), cls: "bg-success/15 text-success" },
+    RECUSADA: { label: t("statusRejected"), cls: "bg-danger/15 text-danger" },
   };
   const m = map[status];
   return <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${m.cls}`}>{m.label}</span>;
 }
 
 function ProfissionaisContent() {
+  const t = useTranslations("profissionais");
   const queryClient = useQueryClient();
   const [location, setLocation] = useState("");
   const [submitted, setSubmitted] = useState<string | undefined>(undefined);
@@ -58,12 +61,10 @@ function ProfissionaisContent() {
       <main className="flex flex-1 flex-col gap-6 px-6 py-8">
         <div>
           <span className="text-xs font-semibold uppercase tracking-wide text-accent-secondary">
-            Descobrir
+            {t("discover")}
           </span>
-          <h1 className="font-display text-2xl font-bold tracking-tight">Encontrar Personal</h1>
-          <p className="text-sm text-muted">
-            Busque por cidade/estado e solicite vínculo. O profissional aprova manualmente.
-          </p>
+          <h1 className="font-display text-2xl font-bold tracking-tight">{t("title")}</h1>
+          <p className="text-sm text-muted">{t("subtitle")}</p>
         </div>
 
         <Card className="flex flex-col gap-3">
@@ -75,27 +76,28 @@ function ProfissionaisContent() {
             }}
           >
             <div className="flex flex-1 flex-col gap-1.5">
-              <Label htmlFor="location">Localização (cidade/estado)</Label>
+              <Label htmlFor="location">{t("locationLabel")}</Label>
               <Input
                 id="location"
                 value={location}
                 onChange={(e) => setLocation(e.target.value)}
-                placeholder="Ex: Palhoça, SC"
+                placeholder={t("locationPlaceholder")}
               />
             </div>
-            <Button type="submit">Buscar</Button>
+            <Button type="submit">{t("searchButton")}</Button>
           </form>
         </Card>
 
-        {searchQuery.isLoading && <p className="text-sm text-muted">Buscando...</p>}
+        {searchQuery.isLoading && <p className="text-sm text-muted">{t("searching")}</p>}
         {searchQuery.isError && (
           <QueryError error={searchQuery.error} onRetry={() => searchQuery.refetch()} />
         )}
         {searchQuery.isSuccess && searchQuery.data.professionals.length === 0 && (
           <Card>
             <p className="text-sm text-muted">
-              Nenhum profissional disponível{submitted ? ` em "${submitted}"` : ""}. Tente outra
-              localização ou deixe o campo vazio para ver todos.
+              {t("noResultsFound", {
+                location: submitted ? t("inLocationSuffix", { location: submitted }) : "",
+              })}
             </p>
           </Card>
         )}
@@ -139,8 +141,8 @@ function ProfissionaisContent() {
                     onClick={() => requestMutation.mutate(p.id)}
                   >
                     {requestMutation.isPending && requestMutation.variables === p.id
-                      ? "Enviando..."
-                      : "Solicitar vínculo"}
+                      ? t("sending")
+                      : t("requestConnection")}
                   </Button>
                 )}
               </Card>
@@ -152,14 +154,14 @@ function ProfissionaisContent() {
           <p className="text-sm text-danger">
             {requestMutation.error instanceof ApiError
               ? requestMutation.error.message
-              : "Não foi possível enviar a solicitação."}
+              : t("sendRequestError")}
           </p>
         )}
 
         <section className="flex flex-col gap-3 border-t border-border pt-6">
-          <h2 className="font-display text-lg font-bold">Minhas solicitações</h2>
+          <h2 className="font-display text-lg font-bold">{t("myRequests")}</h2>
           {requestsQuery.isSuccess && requests.length === 0 && (
-            <p className="text-sm text-muted">Você ainda não enviou nenhuma solicitação.</p>
+            <p className="text-sm text-muted">{t("noRequestsSent")}</p>
           )}
           {requests.map((r) => (
             <Card key={r.id} className="flex items-center justify-between">

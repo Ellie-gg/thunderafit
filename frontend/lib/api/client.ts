@@ -12,6 +12,8 @@
  * um header `Authorization` nem leem token de lugar nenhum.
  */
 
+import { getClientLocale } from "@/i18n/client-locale";
+
 export class ApiError extends Error {
   status: number;
   constructor(status: number, message: string) {
@@ -64,7 +66,12 @@ export async function apiFetch<T>(path: string, options: RequestOptions = {}): P
     const hasBody = body !== undefined;
     return fetch(path, {
       method,
-      headers: hasBody ? { "Content-Type": "application/json" } : {},
+      headers: {
+        ...(hasBody ? { "Content-Type": "application/json" } : {}),
+        // i18n: o backend usa este header (não o JWT) pra decidir o locale
+        // do catálogo de exercícios — funciona igual em telas sem sessão.
+        "x-locale": getClientLocale(),
+      },
       body: hasBody ? JSON.stringify(body) : undefined,
     });
   };

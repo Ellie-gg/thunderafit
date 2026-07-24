@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { listRelations } from "@/lib/api/relations";
 import { createDietPlan } from "@/lib/api/nutrition";
@@ -15,6 +16,7 @@ import { Button } from "@/components/ui/button";
 import { QueryError } from "@/components/query-error";
 
 function NovoPlanoContent() {
+  const t = useTranslations("planoDietaNovo");
   const router = useRouter();
   const [alunoId, setAlunoId] = useState("");
   const [name, setName] = useState("");
@@ -35,9 +37,9 @@ function NovoPlanoContent() {
       <AppHeader />
       <main className="flex flex-1 flex-col items-center justify-center px-6 py-12">
         <Card className="w-full max-w-sm">
-          <h1 className="mb-4 font-display text-xl font-bold">Criar novo plano de dieta</h1>
+          <h1 className="mb-4 font-display text-xl font-bold">{t("heading")}</h1>
 
-          {relationsQuery.isLoading && <p className="mb-4 text-sm text-muted">Carregando alunos...</p>}
+          {relationsQuery.isLoading && <p className="mb-4 text-sm text-muted">{t("loadingAlunos")}</p>}
 
           {relationsQuery.isError && (
             <div className="mb-4">
@@ -53,7 +55,7 @@ function NovoPlanoContent() {
             }}
           >
             <div className="flex flex-col gap-1.5">
-              <Label htmlFor="aluno">Aluno</Label>
+              <Label htmlFor="aluno">{t("alunoLabel")}</Label>
               <select
                 id="aluno"
                 required
@@ -62,7 +64,7 @@ function NovoPlanoContent() {
                 className="h-11 rounded-md border border-border bg-surface px-3.5 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
               >
                 <option value="" disabled>
-                  Selecione um aluno
+                  {t("selecioneAluno")}
                 </option>
                 {alunos.map((a) => (
                   <option key={a.id} value={a.id}>
@@ -72,19 +74,19 @@ function NovoPlanoContent() {
               </select>
               {relationsQuery.isSuccess && alunos.length === 0 && (
                 <p className="text-xs text-muted">
-                  Você ainda não tem alunos vinculados — vincule um antes de criar um plano.
+                  {t("noAlunos")}
                 </p>
               )}
             </div>
 
             <div className="flex flex-col gap-1.5">
-              <Label htmlFor="name">Nome do plano</Label>
+              <Label htmlFor="name">{t("nomeLabel")}</Label>
               <Input
                 id="name"
                 required
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                placeholder="Plano de Cutting - Semana 1"
+                placeholder={t("namePlaceholder")}
               />
             </div>
 
@@ -92,12 +94,12 @@ function NovoPlanoContent() {
               <p className="text-sm text-danger">
                 {mutation.error instanceof ApiError
                   ? mutation.error.message
-                  : "Não foi possível conectar ao servidor."}
+                  : t("genericServerError")}
               </p>
             )}
 
             <Button type="submit" disabled={mutation.isPending || alunos.length === 0}>
-              {mutation.isPending ? "Criando..." : "Criar plano"}
+              {mutation.isPending ? t("creating") : t("criarPlano")}
             </Button>
           </form>
         </Card>

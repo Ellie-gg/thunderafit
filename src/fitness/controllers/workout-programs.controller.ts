@@ -1,6 +1,7 @@
 import { FastifyRequest, FastifyReply } from "fastify";
 import { SessionScheme } from "@prisma/client";
 import { workoutProgramsService } from "../services/workout-programs.service";
+import { resolveRequestLocale } from "../../lib/locale";
 
 function handleError(err: any, reply: FastifyReply) {
   const status = err?.statusCode ?? 500;
@@ -138,7 +139,12 @@ export async function getProgramHandler(
 ) {
   try {
     const { sub, role } = (request as any).user;
-    const program = await workoutProgramsService.getProgram(request.params.id, sub, role);
+    const program = await workoutProgramsService.getProgram(
+      request.params.id,
+      sub,
+      role,
+      resolveRequestLocale(request)
+    );
     return reply.status(200).send({ program });
   } catch (err) {
     return handleError(err, reply);
