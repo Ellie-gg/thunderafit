@@ -481,7 +481,7 @@
  },
  {
   "name": "Encolhimento com Halteres",
-  "muscleGroup": "Costas",
+  "muscleGroup": "Trapézio",
   "equipment": "Halteres",
   "mediaUrl": "https://www.youtube.com/results?search_query=Encolhimento%20com%20Halteres%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
   "description": "Em pé com halteres ao lado do corpo, eleve os ombros em direção às orelhas contraindo o trapézio, desça controladamente.",
@@ -489,7 +489,7 @@
  },
  {
   "name": "Encolhimento com Barra",
-  "muscleGroup": "Costas",
+  "muscleGroup": "Trapézio",
   "equipment": "Barra",
   "mediaUrl": "https://www.youtube.com/results?search_query=Encolhimento%20com%20Barra%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
   "description": "Em pé segurando a barra à frente, eleve os ombros contraindo o trapézio e desça controladamente sem rotacionar.",
@@ -817,7 +817,7 @@
  },
  {
   "name": "Elevação em Y no Banco Inclinado",
-  "muscleGroup": "Ombro",
+  "muscleGroup": "Trapézio",
   "equipment": "Halteres",
   "mediaUrl": "https://www.youtube.com/results?search_query=Eleva%C3%A7%C3%A3o%20em%20Y%20no%20Banco%20Inclinado%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
   "description": "Deitado de bruços no banco inclinado, eleve os halteres em formato de Y contraindo o trapézio inferior e o deltoide posterior.",
@@ -825,7 +825,7 @@
  },
  {
   "name": "Encolhimento no Cabo",
-  "muscleGroup": "Ombro",
+  "muscleGroup": "Trapézio",
   "equipment": "Cabo",
   "mediaUrl": "https://www.youtube.com/results?search_query=Encolhimento%20no%20Cabo%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
   "description": "Em pé segurando a barra da polia baixa, eleve os ombros contraindo o trapézio e desça controladamente.",
@@ -865,7 +865,7 @@
  },
  {
   "name": "Rosca Inversa com Barra",
-  "muscleGroup": "Bíceps",
+  "muscleGroup": "Antebraço",
   "equipment": "Barra",
   "mediaUrl": "https://www.youtube.com/results?search_query=Rosca%20Inversa%20com%20Barra%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
   "description": "Pegada pronada, flexione os cotovelos elevando a barra, enfatizando o braquiorradial e o antebraço, desça controladamente.",
@@ -921,7 +921,7 @@
  },
  {
   "name": "Rosca Punho",
-  "muscleGroup": "Bíceps",
+  "muscleGroup": "Antebraço",
   "equipment": "Halteres",
   "mediaUrl": "https://www.youtube.com/results?search_query=Rosca%20Punho%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
   "description": "Antebraços apoiados, flexione apenas os punhos elevando os halteres, fortalecendo os flexores do antebraço.",
@@ -1702,5 +1702,157 @@
   "difficultyLevel": "INTERMEDIARIO",
   "description": "Incline o tronco para frente apoiando as mãos em um móvel estável, mantenha os joelhos levemente flexionados e eleve os calcanhares o máximo possível contraindo a panturrilha.",
   "mediaUrl": "https://www.youtube.com/watch?v=Q6G7jfvshrA"
+ },
+ {
+  "name": "Rosca de Punho com Barra",
+  "muscleGroup": "Antebraço",
+  "equipment": "Barra",
+  "difficultyLevel": "INICIANTE",
+  "description": "Sentado no banco com os antebraços apoiados nas coxas e pegada supinada na barra, flexione os punhos para cima contraindo os flexores do antebraço, e desça controladamente até o alongamento máximo.",
+  "mediaUrl": "https://www.youtube.com/watch?v=r5-nYE_1CXo"
+ },
+ {
+  "name": "Rosca de Punho Invertida com Halteres",
+  "muscleGroup": "Antebraço",
+  "equipment": "Halteres",
+  "difficultyLevel": "INICIANTE",
+  "description": "Sentado com os antebraços apoiados nas coxas e as palmas voltadas para baixo, eleve o dorso das mãos em direção ao teto para trabalhar os extensores do punho, controlando a fase negativa.",
+  "mediaUrl": "https://www.youtube.com/watch?v=krZ6pWGZ8xo"
+ },
+ {
+  "name": "Farmer's Walk com Halteres",
+  "muscleGroup": "Antebraço",
+  "equipment": "Halteres",
+  "difficultyLevel": "INTERMEDIARIO",
+  "description": "Segure um halter pesado em cada mão com pegada firme e neutra, mantenha o tronco ereto e caminhe uma distância determinada sem deixar os ombros caírem para frente.",
+  "mediaUrl": "https://www.youtube.com/watch?v=Fkzk_RqlYig"
+ },
+ {
+  "name": "Pinça de Anilha (Plate Pinch)",
+  "muscleGroup": "Antebraço",
+  "equipment": "Peso Corporal",
+  "difficultyLevel": "INTERMEDIARIO",
+  "description": "Segure duas anilhas lisas juntas apenas com a ponta dos dedos e o polegar, mantendo o braço estendido ao lado do corpo pelo tempo determinado sem deixar as anilhas escorregarem.",
+  "mediaUrl": "https://www.youtube.com/watch?v=LARw21BBiDk"
+ },
+ {
+  "name": "Wrist Roller (Rolo de Punho)",
+  "muscleGroup": "Antebraço",
+  "equipment": "Itens Domésticos",
+  "difficultyLevel": "INTERMEDIARIO",
+  "description": "Segure o rolo de punho com os braços estendidos à frente do corpo e enrole a corda girando os punhos alternadamente até levantar o peso, depois desenrole controlando a descida.",
+  "mediaUrl": "https://www.youtube.com/watch?v=VPFQSgAiXco"
+ },
+ {
+  "name": "Dead Hang na Toalha",
+  "muscleGroup": "Antebraço",
+  "equipment": "Itens Domésticos",
+  "difficultyLevel": "INICIANTE",
+  "description": "Pendure uma toalha resistente sobre a barra fixa, segure firmemente as pontas com as duas mãos e mantenha o corpo suspenso pelo tempo determinado sem deixar o tecido escorregar.",
+  "mediaUrl": "https://www.youtube.com/watch?v=tTeAcQdG73s"
+ },
+ {
+  "name": "Rosca Inversa no Cabo com Corda",
+  "muscleGroup": "Antebraço",
+  "equipment": "Cabo",
+  "difficultyLevel": "INTERMEDIARIO",
+  "description": "Em pé na polia baixa com pegada pronada na corda ou barra reta, flexione os cotovelos mantendo-os junto ao corpo e os punhos travados, focando na contração dos antebraços.",
+  "mediaUrl": "https://www.youtube.com/watch?v=8uQdYcCUOu8"
+ },
+ {
+  "name": "Encolhimento com Barra Atrás das Costas",
+  "muscleGroup": "Trapézio",
+  "equipment": "Barra",
+  "difficultyLevel": "INTERMEDIARIO",
+  "description": "De costas para a barra apoiada nas pernas, segure-a com pegada pronada atrás do corpo e eleve os ombros em linha reta para cima, pausando no topo antes de descer controladamente.",
+  "mediaUrl": "https://www.youtube.com/watch?v=H1BRkK7x-h8"
+ },
+ {
+  "name": "Rack Pull (Levantamento Parcial na Gaiola)",
+  "muscleGroup": "Trapézio",
+  "equipment": "Barra",
+  "difficultyLevel": "AVANCADO",
+  "description": "Com a barra apoiada nos pinos do rack pouco abaixo do joelho, flexione o quadril para segurá-la com pegada pronada e estenda o quadril e os joelhos até a extensão completa, finalizando com os trapézios contraídos.",
+  "mediaUrl": "https://www.youtube.com/watch?v=aAjN8zS7Idg"
+ },
+ {
+  "name": "Remada Alta Pegada de Arranco (Snatch Grip High Pull)",
+  "muscleGroup": "Trapézio",
+  "equipment": "Barra",
+  "difficultyLevel": "AVANCADO",
+  "description": "Com pegada bem aberta na barra no chão, estenda quadril e joelhos explosivamente e puxe a barra ao longo do corpo até a altura do peito, elevando os cotovelos e contraindo fortemente os trapézios no topo.",
+  "mediaUrl": "https://www.youtube.com/watch?v=5YBexETP3-E"
+ },
+ {
+  "name": "Flexão de Quadril em Pé no Cabo",
+  "muscleGroup": "Flexores do Quadril",
+  "equipment": "Cabo",
+  "difficultyLevel": "INTERMEDIARIO",
+  "description": "Prenda a caneleira no tornozelo, fique de pé de lado para a torre e conduza o joelho à frente e para cima contra a resistência do cabo, mantendo o tronco estável.",
+  "mediaUrl": "https://www.youtube.com/watch?v=UPnv3H68IQY"
+ },
+ {
+  "name": "Flexão de Quadril na Máquina",
+  "muscleGroup": "Flexores do Quadril",
+  "equipment": "Máquina",
+  "difficultyLevel": "INICIANTE",
+  "description": "Sente-se na máquina multi-hip com o encosto apoiado, eleve a coxa à frente até a horizontal e retorne controladamente sem balançar o tronco.",
+  "mediaUrl": "https://www.youtube.com/watch?v=3A9B7hupyI4"
+ },
+ {
+  "name": "Marcha Estacionária com Mini Band",
+  "muscleGroup": "Flexores do Quadril",
+  "equipment": "Itens Domésticos",
+  "difficultyLevel": "INICIANTE",
+  "description": "Posicione uma mini band nos tornozelos, fique em pé e marche no lugar elevando o joelho contra a resistência da faixa, alternando as pernas.",
+  "mediaUrl": "https://www.youtube.com/watch?v=C7abjfzbpV4"
+ },
+ {
+  "name": "Elevação de Joelho em Pé (Marcha Alta)",
+  "muscleGroup": "Flexores do Quadril",
+  "equipment": "Peso Corporal",
+  "difficultyLevel": "INICIANTE",
+  "description": "Em pé com postura ereta, eleve um joelho o mais alto possível em direção ao peito controladamente e retorne, alternando as pernas sem inclinar o tronco.",
+  "mediaUrl": "https://www.youtube.com/watch?v=O_8EUJ7i-PI"
+ },
+ {
+  "name": "Elevação de Joelho com Caneleira em Pé",
+  "muscleGroup": "Flexores do Quadril",
+  "equipment": "Itens Domésticos",
+  "difficultyLevel": "INTERMEDIARIO",
+  "description": "Com uma caneleira presa ao tornozelo, eleve o joelho à frente contra o peso extra e desça devagar, mantendo o quadril estável e sem compensar com a lombar.",
+  "mediaUrl": "https://www.youtube.com/watch?v=OuBrPpY_eyA"
+ },
+ {
+  "name": "Elevação de Joelho Sentado no Banco",
+  "muscleGroup": "Flexores do Quadril",
+  "equipment": "Peso Corporal",
+  "difficultyLevel": "INICIANTE",
+  "description": "Sente-se na borda do banco segurando a lateral para estabilizar o tronco e eleve os joelhos em direção ao peito, focando na contração dos flexores do quadril.",
+  "mediaUrl": "https://www.youtube.com/watch?v=GXPCSeFYJPI"
+ },
+ {
+  "name": "L-Sit Tuck (Flexão de Quadril Suspensa em Barras)",
+  "muscleGroup": "Flexores do Quadril",
+  "equipment": "Peso Corporal",
+  "difficultyLevel": "AVANCADO",
+  "description": "Apoie-se em paralelas ou barras baixas com os braços estendidos e mantenha os joelhos flexionados junto ao peito em isometria, sustentando a posição pelo maior tempo possível.",
+  "mediaUrl": "https://www.youtube.com/watch?v=J_tmt6DGE9E"
+ },
+ {
+  "name": "Mountain Climber com Faixa Elástica (Flexores do Quadril)",
+  "muscleGroup": "Flexores do Quadril",
+  "equipment": "Itens Domésticos",
+  "difficultyLevel": "INTERMEDIARIO",
+  "description": "Em posição de prancha com uma faixa elástica presa aos pés, conduza um joelho lentamente em direção ao peito contra a resistência da banda, priorizando controle em vez de velocidade.",
+  "mediaUrl": "https://www.youtube.com/watch?v=rvSNalMjXno"
+ },
+ {
+  "name": "Flexão de Quadril no Cabo (Psoas)",
+  "muscleGroup": "Flexores do Quadril",
+  "equipment": "Cabo",
+  "difficultyLevel": "AVANCADO",
+  "description": "Com a caneleira presa ao cabo baixo, conduza o joelho para cima e ligeiramente para dentro em movimento controlado, enfatizando a ativação do psoas.",
+  "mediaUrl": "https://www.youtube.com/watch?v=rRYmaBwla-g"
  }
 ]
