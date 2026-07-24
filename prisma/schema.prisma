@@ -320,10 +320,33 @@ model WorkoutProgram {
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
 
+  // Fase 52: só tem sentido em templates `origin: SELF` (`isTemplate: true`)
+  // — "Meu Treino Pessoal" agrupa os templates do admin em carrosséis por
+  // categoria. Em qualquer outro programa (PERSONAL, ou instância aplicada
+  // por um aluno) fica no default GERAL, sem uso — não vale a pena um campo
+  // nullable só pra isso, o default já é inofensivo em todo outro caso.
+  category       SelfTemplateCategory @default(GERAL)
+  // Fase 52: banner do carrossel de "Meu Treino Pessoal" — só setado em
+  // templates SELF via upload do admin (GCS, mesmo padrão de mídia de
+  // exercício). Null = sem banner ainda, o card cai no fallback estático
+  // (só o nome), nunca um erro.
+  bannerImageUrl String?
+
   // Perf (triagem 2026-07-24): listByPersonal/listByAluno filtram por uma
   // dessas colunas + orderBy createdAt — nenhuma tinha índice antes.
   @@index([personalId, createdAt])
   @@index([alunoId, createdAt])
+}
+
+// Fase 52: categoriza templates origin: SELF pra "Meu Treino Pessoal" —
+// GERAL é a lista plana já existente (comportamento de sempre, default de
+// todo template pré-Fase-52); HOME e PREMIUM ganham carrossel dedicado com
+// banner. PREMIUM ainda não tem gate de billing real (não existe plano
+// pago pro aluno hoje) — o cadeado na UI é só visual por enquanto.
+enum SelfTemplateCategory {
+  GERAL
+  HOME
+  PREMIUM
 }
 
 model Workout {

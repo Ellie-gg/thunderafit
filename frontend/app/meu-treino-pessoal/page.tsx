@@ -1,16 +1,20 @@
 "use client";
 
+import * as React from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { listSelfTemplates, applySelfTemplate } from "@/lib/api/workouts";
 import { ApiError } from "@/lib/api/client";
+import type { WorkoutProgram } from "@/lib/types";
 import { AuthGuard } from "@/components/auth-guard";
 import { AppHeader } from "@/components/app-header";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { QueryError } from "@/components/query-error";
+import { SelfTemplateCarousel } from "@/components/self-template-carousel";
+import { ReplaceSelfTemplateDialog } from "@/components/replace-self-template-dialog";
 
 /**
  * Fase 34.5 — "Meu treino pessoal": templates curados pelo admin (origin:
@@ -18,11 +22,19 @@ import { QueryError } from "@/components/query-error";
  * mesmo padrão de sempre) — sem acesso ao catálogo completo de exercícios
  * nem montagem livre nesta fase. "Crie seu treino do zero" é só um
  * placeholder visual ("em breve"): não decidimos ainda se vira feature paga.
+ *
+ * Fase 52: além da lista plana (categoria GERAL, comportamento inalterado),
+ * dois carrosséis novos agrupados por `category` — "Treino em Casa" (HOME,
+ * funcional: aplica de verdade, com fluxo de confirmação de troca via 409
+ * SELF_PROGRAM_EXISTS) e "Treinos Premium" (PREMIUM, decorativo: todo slide
+ * tem cadeado e o clique só mostra "em breve", sem chamar a API — não existe
+ * conceito de aluno pagante ainda).
  */
 function MeuTreinoPessoalContent() {
   const t = useTranslations("meuTreinoPessoal");
   const tCommon = useTranslations("common");
   const router = useRouter();
+  const queryClient = useQueryClient();
   const templatesQuery = useQuery({ queryKey: ["self-templates"], queryFn: listSelfTemplates });
 
   const applyMutation = useMutation({
@@ -32,7 +44,58 @@ function MeuTreinoPessoalContent() {
     },
   });
 
+  // Fluxo de aplicação do carrossel "Treino em Casa": diferente do
+  // applyMutation da lista plana porque precisa distinguir "409 por já ter
+  // um treino pessoal ativo" (abre diálogo de confirmação) de qualquer outro
+  // erro (mostra mensagem, igual applyMutation já faz).
+  const [pendingReplace, setPendingReplace] = React.useState<{
+    template: WorkoutProgram;
+    existingProgramName: string;
+  } | null>(null);
+  const [premiumNotice, setPremiumNotice] = React.useState(false);
+
+  function onApplySuccess(data: { program: WorkoutProgram }) {
+    queryClient.invalidateQueries({ queryKey: ["self-templates"] });
+    router.push(`/programas/${data.program.id}`);
+  }
+
+  const homeApplyMutation = useMutation({
+    mutationFn: (programId: string) => applySelfTemplate(programId),
+    onSuccess: onApplySuccess,
+    onError: (error, programId) => {
+      if (error instanceof ApiError && error.status === 409 && error.data?.code === "SELF_PROGRAM_EXISTS") {
+        const template = homeTemplates.find((tpl) => tpl.id === programId);
+        if (template) {
+          setPendingReplace({
+            template,
+            existingProgramName: String(error.data.existingProgramName ?? ""),
+          });
+        }
+      }
+    },
+  });
+
+  const replaceMutation = useMutation({
+    mutationFn: (programId: string) => applySelfTemplate(programId, true),
+    onSuccess: (data) => {
+      setPendingReplace(null);
+      onApplySuccess(data);
+    },
+  });
+
   const templates = templatesQuery.data?.programs ?? [];
+  const geralTemplates = templates.filter((tpl) => tpl.category === "GERAL");
+  const homeTemplates = templates.filter((tpl) => tpl.category === "HOME");
+  const premiumTemplates = templates.filter((tpl) => tpl.category === "PREMIUM");
+
+  function handleSelectHome(template: WorkoutProgram) {
+    setPremiumNotice(false);
+    homeApplyMutation.mutate(template.id);
+  }
+
+  function handleSelectPremium() {
+    setPremiumNotice(true);
+  }
 
   return (
     <>
@@ -49,7 +112,7 @@ function MeuTreinoPessoalContent() {
         )}
 
         <div className="grid gap-3 sm:grid-cols-2">
-          {templates.map((tpl) => (
+          {geralTemplates.map((tpl) => (
             <Card key={tpl.id} className="flex flex-col gap-2">
               <h2 className="font-display text-lg font-bold">{tpl.name}</h2>
               <p className="text-xs text-muted">
@@ -70,7 +133,7 @@ function MeuTreinoPessoalContent() {
           ))}
         </div>
 
-        {templatesQuery.isSuccess && templates.length === 0 && (
+        {templatesQuery.isSuccess && geralTemplates.length === 0 && (
           <p className="text-sm text-muted">{t("emptyState")}</p>
         )}
 
@@ -97,6 +160,43 @@ function MeuTreinoPessoalContent() {
           </Button>
         </Card>
 
+        {/* Fase 52: "Treino em Casa" — carrossel funcional. */}
+        <div className="flex flex-col gap-3">
+          <div>
+            <h2 className="font-display text-lg font-bold">{t("homeSectionTitle")}</h2>
+            <p className="text-sm text-muted">{t("homeSectionSubtitle")}</p>
+          </div>
+          {templatesQuery.isSuccess && homeTemplates.length === 0 && (
+            <p className="text-sm text-muted">{t("emptyState")}</p>
+          )}
+          <SelfTemplateCarousel templates={homeTemplates} onSelect={handleSelectHome} />
+          {homeApplyMutation.isError &&
+            !(
+              homeApplyMutation.error instanceof ApiError &&
+              homeApplyMutation.error.status === 409 &&
+              homeApplyMutation.error.data?.code === "SELF_PROGRAM_EXISTS"
+            ) && (
+              <p className="text-sm text-danger">
+                {homeApplyMutation.error instanceof ApiError
+                  ? homeApplyMutation.error.message
+                  : t("applyError")}
+              </p>
+            )}
+        </div>
+
+        {/* Fase 52: "Treinos Premium" — decorativo, todo slide bloqueado. */}
+        <div className="flex flex-col gap-3">
+          <div>
+            <h2 className="font-display text-lg font-bold">{t("premiumSectionTitle")}</h2>
+            <p className="text-sm text-muted">{t("premiumSectionSubtitle")}</p>
+          </div>
+          {templatesQuery.isSuccess && premiumTemplates.length === 0 && (
+            <p className="text-sm text-muted">{t("emptyState")}</p>
+          )}
+          <SelfTemplateCarousel templates={premiumTemplates} locked onSelect={handleSelectPremium} />
+          {premiumNotice && <p className="text-sm text-muted">{t("premiumComingSoon")}</p>}
+        </div>
+
         <p className="text-center text-sm text-muted">
           {t("wantCloserFollowUp")}{" "}
           <Link href="/profissionais" className="font-semibold text-accent-secondary hover:underline">
@@ -105,6 +205,15 @@ function MeuTreinoPessoalContent() {
           .
         </p>
       </main>
+
+      {pendingReplace && (
+        <ReplaceSelfTemplateDialog
+          existingProgramName={pendingReplace.existingProgramName}
+          isPending={replaceMutation.isPending}
+          onCancel={() => setPendingReplace(null)}
+          onConfirm={() => replaceMutation.mutate(pendingReplace.template.id)}
+        />
+      )}
     </>
   );
 }

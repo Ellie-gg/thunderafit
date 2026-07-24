@@ -57,6 +57,19 @@
       "saveError": "Error al guardar la foto."
     }
   },
+  "templateBannerUpload": {
+    "uploading": "Enviando...",
+    "changeBanner": "Cambiar banner",
+    "remove": "Quitar banner",
+    "noBanner": "Sin banner",
+    "errors": {
+      "invalidType": "Elige un archivo de imagen (PNG, JPEG o WebP).",
+      "loadFailed": "No se pudo leer la imagen.",
+      "canvasFailed": "No se pudo procesar la imagen.",
+      "processError": "Error al procesar la imagen.",
+      "saveError": "Error al guardar el banner."
+    }
+  },
   "availabilityBadge": {
     "full": "Completo",
     "openForNewStudents": "Disponible para nuevos alumnos"
@@ -252,7 +265,16 @@
     "comingSoon": "Próximamente",
     "buildFromScratchDescription": "Arma tu propio entrenamiento, ejercicio por ejercicio, con acceso al catálogo completo.",
     "wantCloserFollowUp": "¿Quieres un seguimiento más de cerca?",
-    "invitePersonal": "Invita a un Entrenador Personal"
+    "invitePersonal": "Invita a un Entrenador Personal",
+    "homeSectionTitle": "Entrenamiento en Casa",
+    "homeSectionSubtitle": "Sin equipo de gimnasio — entrenamientos pensados para hacer en casa.",
+    "premiumSectionTitle": "Entrenamientos Premium",
+    "premiumSectionSubtitle": "Programas exclusivos con curaduría especial.",
+    "premiumComingSoon": "Los entrenamientos Premium todavía no están disponibles. ¡Próximamente!",
+    "replaceDialogTitle": "¿Reemplazar tu entrenamiento personal activo?",
+    "replaceDialogMessage": "Ya tienes \"{name}\" activo. Aplicar este nuevo entrenamiento borra el historial de series del actual — esta acción no se puede deshacer.",
+    "replaceDialogConfirm": "Sí, reemplazar",
+    "replacing": "Reemplazando..."
   },
   "evolucao": {
     "noPreviousComparison": "Sin comparación anterior todavía",
@@ -842,6 +864,12 @@
     },
     "schemeName": {
       "letter": "Letras"
+    },
+    "categoryLabel": "Categoría",
+    "categoryOption": {
+      "GERAL": "General",
+      "HOME": "Entrenamiento en Casa",
+      "PREMIUM": "Entrenamientos Premium"
     },
     "creating": "Creando...",
     "createTemplate": "Crear template",

@@ -57,6 +57,19 @@
       "saveError": "Erro ao salvar a foto."
     }
   },
+  "templateBannerUpload": {
+    "uploading": "Enviando...",
+    "changeBanner": "Trocar banner",
+    "remove": "Remover banner",
+    "noBanner": "Sem banner",
+    "errors": {
+      "invalidType": "Escolha um arquivo de imagem (PNG, JPEG ou WebP).",
+      "loadFailed": "Não foi possível ler a imagem.",
+      "canvasFailed": "Não foi possível processar a imagem.",
+      "processError": "Erro ao processar a imagem.",
+      "saveError": "Erro ao salvar o banner."
+    }
+  },
   "availabilityBadge": {
     "full": "Lotado",
     "openForNewStudents": "Aberto para novos alunos"
@@ -252,7 +265,16 @@
     "comingSoon": "Em breve",
     "buildFromScratchDescription": "Montar seu próprio treino, exercício por exercício, com acesso ao catálogo completo.",
     "wantCloserFollowUp": "Quer um acompanhamento mais de perto?",
-    "invitePersonal": "Convide um Personal"
+    "invitePersonal": "Convide um Personal",
+    "homeSectionTitle": "Treino em Casa",
+    "homeSectionSubtitle": "Sem equipamento de academia — treinos pensados pra fazer em casa.",
+    "premiumSectionTitle": "Treinos Premium",
+    "premiumSectionSubtitle": "Programas exclusivos com curadoria especial.",
+    "premiumComingSoon": "Treinos Premium ainda não estão disponíveis. Em breve!",
+    "replaceDialogTitle": "Trocar treino pessoal ativo?",
+    "replaceDialogMessage": "Você já tem \"{name}\" ativo. Aplicar este novo treino apaga o histórico de séries do atual — essa ação não pode ser desfeita.",
+    "replaceDialogConfirm": "Sim, trocar",
+    "replacing": "Trocando..."
   },
   "evolucao": {
     "noPreviousComparison": "Sem comparação anterior ainda",
@@ -842,6 +864,12 @@
     },
     "schemeName": {
       "letter": "Letras"
+    },
+    "categoryLabel": "Categoria",
+    "categoryOption": {
+      "GERAL": "Geral",
+      "HOME": "Treino em Casa",
+      "PREMIUM": "Treinos Premium"
     },
     "creating": "Criando...",
     "createTemplate": "Criar template",

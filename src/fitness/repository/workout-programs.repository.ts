@@ -244,6 +244,16 @@ export const workoutProgramsRepository = {
     });
   },
 
+  // Fase 52: "1 treino pessoal ativo por vez" — instância aplicada (não
+  // template) de origin SELF pra este aluno, se existir. Não filtra por
+  // category (GERAL/HOME/PREMIUM) de propósito: a regra é "1 treino pessoal
+  // no total", independente de qual carrossel ele veio.
+  async findAppliedSelfProgramForAluno(alunoId: string) {
+    return prisma.workoutProgram.findFirst({
+      where: { alunoId, origin: "SELF", isTemplate: false },
+    });
+  },
+
   /**
    * Aplica (COPIA) um template SELF pro próprio aluno — mesmo padrão de
    * `applyToAluno` (cópia independente, não referência), mas sem Personal

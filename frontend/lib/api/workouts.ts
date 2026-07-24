@@ -140,10 +140,15 @@ export function listSelfTemplates() {
   return apiFetch<{ programs: WorkoutProgram[] }>("/api/workout-programs/self-templates");
 }
 
-export function applySelfTemplate(programId: string) {
+// Fase 52: "1 treino pessoal ativo por vez" — sem `replace`, um 2º apply
+// enquanto já existe um ativo devolve 409 (`ApiError.data.code ===
+// "SELF_PROGRAM_EXISTS"`, com `existingProgramId`/`existingProgramName`) em
+// vez de lançar a exceção genérica; quem chama decide se mostra um diálogo
+// de confirmação e tenta de novo com `replace: true`.
+export function applySelfTemplate(programId: string, replace?: boolean) {
   return apiFetch<{ program: WorkoutProgram }>(
     `/api/workout-programs/${programId}/apply-self-template`,
-    { method: "POST" }
+    { method: "POST", body: replace ? { replace: true } : undefined }
   );
 }
 

@@ -57,6 +57,19 @@
       "saveError": "Error saving the photo."
     }
   },
+  "templateBannerUpload": {
+    "uploading": "Uploading...",
+    "changeBanner": "Change banner",
+    "remove": "Remove banner",
+    "noBanner": "No banner",
+    "errors": {
+      "invalidType": "Choose an image file (PNG, JPEG, or WebP).",
+      "loadFailed": "Could not read the image.",
+      "canvasFailed": "Could not process the image.",
+      "processError": "Error processing the image.",
+      "saveError": "Error saving the banner."
+    }
+  },
   "availabilityBadge": {
     "full": "Full",
     "openForNewStudents": "Open for new students"
@@ -252,7 +265,16 @@
     "comingSoon": "Coming soon",
     "buildFromScratchDescription": "Build your own workout, exercise by exercise, with access to the full catalog.",
     "wantCloserFollowUp": "Want closer guidance?",
-    "invitePersonal": "Invite a Personal Trainer"
+    "invitePersonal": "Invite a Personal Trainer",
+    "homeSectionTitle": "Home Workouts",
+    "homeSectionSubtitle": "No gym equipment needed — workouts designed to do at home.",
+    "premiumSectionTitle": "Premium Workouts",
+    "premiumSectionSubtitle": "Exclusive, specially curated programs.",
+    "premiumComingSoon": "Premium workouts aren't available yet. Coming soon!",
+    "replaceDialogTitle": "Replace your active workout?",
+    "replaceDialogMessage": "You already have \"{name}\" active. Applying this new workout erases the current one's set history — this can't be undone.",
+    "replaceDialogConfirm": "Yes, replace it",
+    "replacing": "Replacing..."
   },
   "evolucao": {
     "noPreviousComparison": "No previous comparison yet",
@@ -842,6 +864,12 @@
     },
     "schemeName": {
       "letter": "Letters"
+    },
+    "categoryLabel": "Category",
+    "categoryOption": {
+      "GERAL": "General",
+      "HOME": "Home Workout",
+      "PREMIUM": "Premium Workouts"
     },
     "creating": "Creating...",
     "createTemplate": "Create template",
