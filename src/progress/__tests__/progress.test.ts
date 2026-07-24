@@ -211,6 +211,22 @@ describe("GET /api/progress/load-history", () => {
     expect(r.body.history).toHaveLength(0);
     expect(r.body.percentChangeVsPrevious).toBeNull();
   });
+
+  // Perf (triagem 2026-07-24): findMaxWeightByDayForExercise agrega no SQL
+  // filtrando por exerciseId + alunoId via JOIN — este teste confirma que o
+  // log do exercício B (1 único dia, monthsAgo(2), 40kg) não vaza para o
+  // histórico do exercício A nem é somado a ele (o teste acima já garante
+  // exatamente 2 pontos para A; aqui confirmamos que B, isolado, também só
+  // enxerga o seu próprio ponto, com só 1 entrada → sem variação percentual).
+  it("não vaza séries de outro exercício (B) no histórico do exercício A", async () => {
+    const r = await supertest(server.server)
+      .get(`/api/progress/load-history?exerciseId=${exerciseBId}`)
+      .set("Authorization", `Bearer ${tokenAluno}`);
+    expect(r.status).toBe(200);
+    expect(r.body.history).toHaveLength(1);
+    expect(r.body.history[0].maxWeightKg).toBe(40);
+    expect(r.body.percentChangeVsPrevious).toBeNull();
+  });
 });
 
 describe("GET /api/progress/frequency", () => {

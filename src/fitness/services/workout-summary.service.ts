@@ -123,15 +123,14 @@ export const workoutSummaryService = {
     weightKg: number,
     before: Date
   ): Promise<{ isPersonalRecord: boolean; previousBest: number | null }> {
-    const historicalLogs = await workoutSummaryRepository.findHistoricalSetLogsForExercise(
+    const previousBest = await workoutSummaryRepository.findMaxHistoricalWeightForExercise(
       alunoId,
       exerciseId,
       before
     );
-    if (historicalLogs.length === 0) {
+    if (previousBest === null) {
       return { isPersonalRecord: false, previousBest: null };
     }
-    const previousBest = Math.max(...historicalLogs.map((l) => l.weightKg));
     return { isPersonalRecord: weightKg > previousBest, previousBest };
   },
 };
@@ -181,20 +180,14 @@ async function buildPersonalRecords(
     }
   }
 
-  // Uma única query batelada pra todos os exercícios da sessão (antes era 1
-  // findMany por exercício — N+1 real no caminho de "concluir treino").
+  // Uma única query batelada (agregada no banco via GROUP BY) pra todos os
+  // exercícios da sessão (antes era 1 findMany por exercício — N+1 real no
+  // caminho de "concluir treino" — e depois disso, antes de trazer só os
+  // máximos, ainda trazia TODAS as linhas históricas pra reduzir em JS).
   const exerciseIds = [...maxByExercise.keys()];
-  const historicalLogs = exerciseIds.length
-    ? await workoutSummaryRepository.findHistoricalSetLogsForExercises(alunoId, exerciseIds, windowStart)
-    : [];
-  const previousBestByExercise = new Map<string, number>();
-  for (const log of historicalLogs) {
-    const exerciseId = log.workoutExercise.exerciseId;
-    const current = previousBestByExercise.get(exerciseId);
-    if (current === undefined || log.weightKg > current) {
-      previousBestByExercise.set(exerciseId, log.weightKg);
-    }
-  }
+  const previousBestByExercise = exerciseIds.length
+    ? await workoutSummaryRepository.findMaxHistoricalWeightsForExercises(alunoId, exerciseIds, windowStart)
+    : new Map<string, number>();
 
   const personalRecords: WorkoutSummaryPR[] = [];
   for (const [exerciseId, { exerciseName, weightKg }] of maxByExercise) {

@@ -1,6 +1,7 @@
 import supertest from "supertest";
 import { buildApp } from "../../app";
 import prisma from "../../lib/prisma";
+import { exerciseTranslationsRepository } from "../repository/exercise-translations.repository";
 
 let server: import("fastify").FastifyInstance;
 let personalToken: string;
@@ -67,6 +68,11 @@ describe("i18n — catálogo de exercícios com locale ativo (fallback pro PT)",
         description: "Test translated description.",
       },
     });
+    // Escrita direta via Prisma (não passa pelo CRUD do admin) — precisa
+    // invalidar o cache em memória de exercise-translations.repository.ts
+    // manualmente, senão o teste abaixo vê o EN cacheado da chamada
+    // anterior (sem esta tradução ainda).
+    exerciseTranslationsRepository.invalidateCache();
 
     const r = await supertest(server.server)
       .get("/api/exercises")

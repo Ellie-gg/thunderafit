@@ -4,6 +4,12 @@ import { uploadExerciseMedia } from "../../lib/storage";
 // query) do domínio fitness — não importa o repository dele, pra manter os
 // dois domínios desacoplados (mesmo padrão já usado no resto do projeto).
 import { orderFor } from "../../fitness/repository/workout-programs.repository";
+// Exceção pontual ao desacoplamento acima: o catálogo de exercícios agora é
+// cache-backed (ver exercises.repository.ts) e este é o ÚNICO lugar que
+// escreve em `Exercise` via HTTP — precisa invalidar o cache após cada
+// mutação bem-sucedida, senão o catálogo fica stale por até 5min.
+import { exercisesRepository } from "../../fitness/repository/exercises.repository";
+import { exerciseTranslationsRepository } from "../../fitness/repository/exercise-translations.repository";
 
 const VALID_SESSION_SCHEMES = ["LETTER", "WEEKDAY"] as const;
 type AdminSessionScheme = (typeof VALID_SESSION_SCHEMES)[number];
@@ -236,7 +242,10 @@ export const adminService = {
         (err as any).statusCode = 400;
         throw err;
       }
-      return adminRepository.updateExerciseMedia(exerciseId, input.youtubeUrl, "YOUTUBE");
+      const updated = await adminRepository.updateExerciseMedia(exerciseId, input.youtubeUrl, "YOUTUBE");
+      exercisesRepository.invalidateCache();
+      exerciseTranslationsRepository.invalidateCache();
+      return updated;
     }
 
     if (input.mediaType === "VIDEO" || input.mediaType === "GIF") {
@@ -269,7 +278,10 @@ export const adminService = {
       const buffer = Buffer.from(base64Data, "base64");
 
       const url = await uploadExerciseMedia(buffer, contentType, extension);
-      return adminRepository.updateExerciseMedia(exerciseId, url, input.mediaType as "VIDEO" | "GIF");
+      const updated = await adminRepository.updateExerciseMedia(exerciseId, url, input.mediaType as "VIDEO" | "GIF");
+      exercisesRepository.invalidateCache();
+      exerciseTranslationsRepository.invalidateCache();
+      return updated;
     }
 
     const err = new Error("mediaType inválido. Use YOUTUBE, VIDEO ou GIF.");
@@ -325,6 +337,8 @@ export const adminService = {
       difficultyLevel: input.difficultyLevel,
       isFeatured: input.isFeatured ?? false,
     });
+    exercisesRepository.invalidateCache();
+    exerciseTranslationsRepository.invalidateCache();
     return { exercise };
   },
 
@@ -375,6 +389,8 @@ export const adminService = {
       difficultyLevel: input.difficultyLevel,
       isFeatured: input.isFeatured ?? current.isFeatured,
     });
+    exercisesRepository.invalidateCache();
+    exerciseTranslationsRepository.invalidateCache();
     return { exercise };
   },
 
@@ -403,6 +419,8 @@ export const adminService = {
     }
 
     await adminRepository.deleteExercise(exerciseId);
+    exercisesRepository.invalidateCache();
+    exerciseTranslationsRepository.invalidateCache();
     return { deleted: true };
   },
 
