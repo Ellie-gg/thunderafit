@@ -69,8 +69,9 @@ convidados) e passa a operar em **modelo híbrido**:
 ```
 /src
   /auth          registro, login, JWT/refresh, rate limit  [não tocar sem gate]
-  /fitness       exercícios (149), programas (templates A–E, cópia-ao-aplicar),
-                 treinos, séries/SetLog, relations (vínculo + limite Freemium)
+  /fitness       exercícios (~213, incl. categoria "treino em casa"), programas
+                 (templates A–E, cópia-ao-aplicar), treinos, séries/SetLog,
+                 relations (vínculo + limite Freemium)
   /connections   descoberta de profissionais (perfil público opt-in, busca por
                  localização, ConnectionRequest com aprovação manual)
   /billing       Stripe Checkout/portal/status/webhook (assinado)
@@ -98,8 +99,11 @@ confiados sob `role === ADMIN` (visão ampliada, leitura). Roles: `PERSONAL`, `A
   alunoId?, letter A–E, lastCompletedAt) → `WorkoutExercise` → `SetLog`.
   Aplicar template = **cópia**, nunca referência. `suggestedNext` = menor letra nunca
   concluída; senão a de conclusão mais antiga (sem ordem forçada).
-- `Exercise` (~150, difficultyLevel, mediaUrl/mediaType, CRUD via `/nimbus/exercicios` desde
-  a Fase 33) · `Anamnesis` · `SupportThread/Message` · `Notification` · `LoginLog` ·
+- `Exercise` (~213, `muscleGroup`/`equipment` texto livre — não enum, listas de admin/
+  gerador derivam do banco; difficultyLevel, mediaUrl/mediaType, CRUD via
+  `/nimbus/exercicios` desde a Fase 33; categoria "treino em casa" via
+  `equipment: "Peso Corporal"/"Itens Domésticos"` desde a Fase 50) · `Anamnesis` ·
+  `SupportThread/Message` · `Notification` · `LoginLog` ·
   `AdminAccessLog` (acesso a anamnese) · `AdminAuditLog` (ações administrativas
   sensíveis, ex: mudança de role — Fase 33) · nutrição (dormente).
 
@@ -572,6 +576,28 @@ decisão/priorização futura):
     client"` (nenhum layout aninhado além do root, estrutural — refatoração
     grande, não uma config rápida); 3 famílias de fonte no layout raiz; sem
     bundle analyzer configurado pra medir os ganhos dos itens 34/38 no CI.
+
+### Grupo F — Catálogo: categoria "treino em casa" + subdivisão de Pernas. ✅ CONCLUÍDA (2026-07-24, registrada como "Fase 50" no STATUS.md).
+
+44. ✅ **Categoria "treino em casa"** — 42 exercícios novos curados via pesquisa real no
+    YouTube (4 agentes em paralelo, todo `mediaUrl` verificado por fetch real da página
+    antes de entrar no catálogo — nada gerado/adivinhado), cobrindo peso corporal e itens
+    domésticos (mochila, toalha, cadeira, parede, degrau). Sem campo/tabela novo — usa o
+    `equipment` (texto livre) já existente, com um valor novo (`"Itens Domésticos"`) ao
+    lado do já existente `"Peso Corporal"`.
+45. ✅ **"Pernas" subdividido em 5 grupos** — `Quadríceps`, `Glúteos`, `Posterior da Coxa`,
+    `Panturrilhas`, `Adutores e Abdutores`. Reclassificação dos 31 exercícios existentes
+    (curadoria manual pela ênfase muscular real) + rodada extra de curadoria (YouTube,
+    verificada) especificamente pros 2 grupos que ficariam finos demais depois da divisão
+    (`Glúteos`/`Adutores e Abdutores`, só 2 exercícios cada antes). `muscleGroup` é string
+    livre (não enum) — seletores do admin e do gerador de treino já derivam a lista do
+    banco, então a subdivisão não exigiu nenhuma mudança de código/schema, só dado.
+    `data/exercises_seed.json` (usado por `db:seed`) atualizado junto, pra um ambiente novo
+    já nascer com o catálogo completo.
+    *Modelo: Sonnet 5, com 4 agentes de pesquisa em paralelo pra curadoria. 309/309 backend
+    (2 testes ajustados — contagem de catálogo derivada do JSON, e um `muscleGroup` de teste
+    trocado de "Pernas" pra "Quadríceps"), `tsc --noEmit` limpo. Catálogo: 171 → 213
+    exercícios.*
 
 ### Backlog operacional herdado
 Ver Seção 7 acima (Neon, billing, Android, webhook).

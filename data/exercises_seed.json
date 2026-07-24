@@ -1,1370 +1,1706 @@
 [
-  {
-    "name": "Supino Reto com Barra",
-    "muscleGroup": "Peito",
-    "equipment": "Barra",
-    "mediaUrl": "https://www.youtube.com/watch?v=rT7DgCr-3pg",
-    "description": "Deite-se no banco reto com os pés firmes no chão. Segure a barra com pegada pouco mais larga que os ombros, desça controladamente até tocar o peito e empurre de volta à posição inicial.",
-    "difficultyLevel": "INTERMEDIARIO"
-  },
-  {
-    "name": "Supino Inclinado com Halteres",
-    "muscleGroup": "Peito",
-    "equipment": "Halteres",
-    "mediaUrl": "https://www.youtube.com/watch?v=8iPEnn-ltC8",
-    "description": "Ajuste o banco a 30-45 graus. Empurre os halteres para cima até quase encostar entre si, controlando a descida até a altura do peito.",
-    "difficultyLevel": "INTERMEDIARIO"
-  },
-  {
-    "name": "Crucifixo Reto com Halteres",
-    "muscleGroup": "Peito",
-    "equipment": "Halteres",
-    "mediaUrl": "https://www.youtube.com/watch?v=eozdVDA78K0",
-    "description": "Deitado no banco reto, abra os braços levemente flexionados em arco até sentir alongamento no peitoral, depois retorne juntando os halteres acima do peito.",
-    "difficultyLevel": "INICIANTE"
-  },
-  {
-    "name": "Crossover no Cabo",
-    "muscleGroup": "Peito",
-    "equipment": "Cabo",
-    "mediaUrl": "https://www.youtube.com/watch?v=taI4XduLpTk",
-    "description": "Com os cabos ajustados na parte superior, puxe as alças em direção ao centro do corpo em movimento de arco, contraindo o peitoral.",
-    "difficultyLevel": "INICIANTE"
-  },
-  {
-    "name": "Puxada Frontal na Polia",
-    "muscleGroup": "Costas",
-    "equipment": "Máquina",
-    "mediaUrl": "https://www.youtube.com/watch?v=CAwf7n6Luuc",
-    "description": "Sentado, segure a barra com pegada aberta e puxe até a altura do queixo/peito, contraindo as escápulas, retornando controladamente.",
-    "difficultyLevel": "INICIANTE"
-  },
-  {
-    "name": "Remada Curvada com Barra",
-    "muscleGroup": "Costas",
-    "equipment": "Barra",
-    "mediaUrl": "https://www.youtube.com/watch?v=vT2GjY_Umpw",
-    "description": "Incline o tronco para frente mantendo a coluna neutra, puxe a barra em direção ao abdômen contraindo as costas, desça controladamente.",
-    "difficultyLevel": "INTERMEDIARIO"
-  },
-  {
-    "name": "Remada Baixa no Cabo",
-    "muscleGroup": "Costas",
-    "equipment": "Cabo",
-    "mediaUrl": "https://www.youtube.com/watch?v=GZbfZ033f74",
-    "description": "Sentado com joelhos levemente flexionados, puxe o triângulo em direção ao abdômen mantendo o tronco ereto, retorne controlando o alongamento.",
-    "difficultyLevel": "INICIANTE"
-  },
-  {
-    "name": "Levantamento Terra",
-    "muscleGroup": "Costas",
-    "equipment": "Barra",
-    "mediaUrl": "https://www.youtube.com/watch?v=1ZXobu7JvvE",
-    "description": "Com a barra próxima às canelas, quadril para trás e coluna neutra, levante estendendo quadril e joelhos simultaneamente até a extensão completa.",
-    "difficultyLevel": "AVANCADO"
-  },
-  {
-    "name": "Puxada Alta com Triângulo",
-    "muscleGroup": "Costas",
-    "equipment": "Máquina",
-    "mediaUrl": "https://www.youtube.com/watch?v=EcSSXWyz3TU",
-    "description": "Puxe a barra em triângulo em direção ao peito mantendo cotovelos próximos ao corpo, controle a volta até a extensão dos braços.",
-    "difficultyLevel": "INICIANTE"
-  },
-  {
-    "name": "Agachamento Livre",
-    "muscleGroup": "Pernas",
-    "equipment": "Barra",
-    "mediaUrl": "https://www.youtube.com/watch?v=ultWZbUMPL8",
-    "description": "Barra apoiada nas costas, pés na largura dos ombros, desça flexionando quadril e joelhos até coxas paralelas ao chão, suba controladamente.",
-    "difficultyLevel": "AVANCADO"
-  },
-  {
-    "name": "Leg Press 45",
-    "muscleGroup": "Pernas",
-    "equipment": "Máquina",
-    "mediaUrl": "https://www.youtube.com/watch?v=IZxyjW7MPJQ",
-    "description": "Sentado na máquina, pés na plataforma na largura dos ombros, flexione os joelhos até 90 graus e empurre de volta sem travar totalmente.",
-    "difficultyLevel": "INICIANTE"
-  },
-  {
-    "name": "Cadeira Extensora",
-    "muscleGroup": "Pernas",
-    "equipment": "Máquina",
-    "mediaUrl": "https://www.youtube.com/watch?v=YyvSfVjQeL0",
-    "description": "Sentado na máquina, estenda os joelhos até quase a extensão completa, contraindo o quadríceps, e retorne controladamente.",
-    "difficultyLevel": "INICIANTE"
-  },
-  {
-    "name": "Mesa Flexora",
-    "muscleGroup": "Pernas",
-    "equipment": "Máquina",
-    "mediaUrl": "https://www.youtube.com/watch?v=1Tq3QdYUuHs",
-    "description": "Deitado de bruços na máquina, flexione os joelhos trazendo o calcanhar em direção ao glúteo, controle a volta à posição inicial.",
-    "difficultyLevel": "INICIANTE"
-  },
-  {
-    "name": "Afundo com Halteres",
-    "muscleGroup": "Pernas",
-    "equipment": "Halteres",
-    "mediaUrl": "https://www.youtube.com/watch?v=QOVaHwm-Q6U",
-    "description": "Dê um passo à frente e desça até ambos os joelhos formarem 90 graus, mantendo o tronco ereto, retorne à posição inicial.",
-    "difficultyLevel": "INTERMEDIARIO"
-  },
-  {
-    "name": "Elevação Pélvica com Barra",
-    "muscleGroup": "Pernas",
-    "equipment": "Barra",
-    "mediaUrl": "https://www.youtube.com/watch?v=xDmFkJxPzeM",
-    "description": "Costas superiores apoiadas em banco, barra sobre o quadril, eleve o quadril contraindo os glúteos até o corpo formar linha reta, desça controladamente.",
-    "difficultyLevel": "INTERMEDIARIO"
-  },
-  {
-    "name": "Panturrilha em Pé",
-    "muscleGroup": "Pernas",
-    "equipment": "Máquina",
-    "mediaUrl": "https://www.youtube.com/watch?v=-M4-G8p8fmc",
-    "description": "Em pé na máquina, eleve os calcanhares o máximo possível contraindo a panturrilha, desça até alongar completamente.",
-    "difficultyLevel": "INICIANTE"
-  },
-  {
-    "name": "Desenvolvimento com Halteres",
-    "muscleGroup": "Ombro",
-    "equipment": "Halteres",
-    "mediaUrl": "https://www.youtube.com/watch?v=qEwKCR5JCog",
-    "description": "Sentado ou em pé, empurre os halteres para cima até quase a extensão total dos cotovelos, desça controladamente até a altura dos ombros.",
-    "difficultyLevel": "INTERMEDIARIO"
-  },
-  {
-    "name": "Elevação Lateral com Halteres",
-    "muscleGroup": "Ombro",
-    "equipment": "Halteres",
-    "mediaUrl": "https://www.youtube.com/watch?v=3VcKaXpzqRo",
-    "description": "Em pé, eleve os halteres lateralmente até a altura dos ombros com leve flexão de cotovelo, desça controladamente.",
-    "difficultyLevel": "INICIANTE"
-  },
-  {
-    "name": "Elevação Frontal com Halteres",
-    "muscleGroup": "Ombro",
-    "equipment": "Halteres",
-    "mediaUrl": "https://www.youtube.com/watch?v=sxeqiszaWao",
-    "description": "Em pé, eleve os halteres à frente do corpo até a altura dos ombros, controlando a descida sem balançar o tronco.",
-    "difficultyLevel": "INICIANTE"
-  },
-  {
-    "name": "Remada Alta com Barra",
-    "muscleGroup": "Ombro",
-    "equipment": "Barra",
-    "mediaUrl": "https://www.youtube.com/watch?v=GKvpKkbMWtw",
-    "description": "Segure a barra com pegada fechada e puxe verticalmente até a altura do peito, cotovelos acima das mãos, desça controladamente.",
-    "difficultyLevel": "INTERMEDIARIO"
-  },
-  {
-    "name": "Rosca Direta com Barra",
-    "muscleGroup": "Bíceps",
-    "equipment": "Barra",
-    "mediaUrl": "https://www.youtube.com/watch?v=kwG2ipFRgfo",
-    "description": "Em pé, cotovelos fixos ao lado do corpo, flexione os braços elevando a barra até a altura do peito, desça controladamente.",
-    "difficultyLevel": "INICIANTE"
-  },
-  {
-    "name": "Rosca Alternada com Halteres",
-    "muscleGroup": "Bíceps",
-    "equipment": "Halteres",
-    "mediaUrl": "https://www.youtube.com/watch?v=sAq_ocpRh_I",
-    "description": "Em pé, flexione um braço por vez elevando o halter até a altura do ombro com rotação do punho, alternando os lados.",
-    "difficultyLevel": "INICIANTE"
-  },
-  {
-    "name": "Rosca Martelo",
-    "muscleGroup": "Bíceps",
-    "equipment": "Halteres",
-    "mediaUrl": "https://www.youtube.com/watch?v=zC3nLlEvin4",
-    "description": "Em pé, com pegada neutra (palmas voltadas uma para outra), flexione os cotovelos elevando os halteres, desça controladamente.",
-    "difficultyLevel": "INICIANTE"
-  },
-  {
-    "name": "Tríceps Pulley com Corda",
-    "muscleGroup": "Tríceps",
-    "equipment": "Cabo",
-    "mediaUrl": "https://www.youtube.com/watch?v=vB5OHsJ3EME",
-    "description": "Em pé, cotovelos fixos ao lado do corpo, estenda os braços empurrando a corda para baixo e abrindo levemente ao final, retorne controladamente.",
-    "difficultyLevel": "INICIANTE"
-  },
-  {
-    "name": "Tríceps Testa com Barra",
-    "muscleGroup": "Tríceps",
-    "equipment": "Barra",
-    "mediaUrl": "https://www.youtube.com/watch?v=d_KZxkY_0cM",
-    "description": "Deitado no banco, braços perpendiculares ao corpo, flexione os cotovelos descendo a barra em direção à testa, estenda controladamente.",
-    "difficultyLevel": "INTERMEDIARIO"
-  },
-  {
-    "name": "Mergulho no Banco",
-    "muscleGroup": "Tríceps",
-    "equipment": "Peso Corporal",
-    "mediaUrl": "https://www.youtube.com/watch?v=6kALZikXxLc",
-    "description": "Mãos apoiadas na borda do banco atrás do corpo, desça flexionando os cotovelos até 90 graus e empurre de volta à posição inicial.",
-    "difficultyLevel": "INICIANTE"
-  },
-  {
-    "name": "Abdominal Supra no Solo",
-    "muscleGroup": "Abdômen",
-    "equipment": "Peso Corporal",
-    "mediaUrl": "https://www.youtube.com/watch?v=jDwoBqPH0jk",
-    "description": "Deitado com joelhos flexionados, eleve o tronco em direção aos joelhos contraindo o abdômen, retorne controladamente sem tocar totalmente o chão.",
-    "difficultyLevel": "INICIANTE"
-  },
-  {
-    "name": "Prancha Isométrica",
-    "muscleGroup": "Abdômen",
-    "equipment": "Peso Corporal",
-    "mediaUrl": "https://www.youtube.com/watch?v=pSHjTRCQxIw",
-    "description": "Apoiado nos antebraços e pontas dos pés, mantenha o corpo em linha reta contraindo o abdômen pelo tempo determinado.",
-    "difficultyLevel": "INICIANTE"
-  },
-  {
-    "name": "Elevação de Pernas na Barra Fixa",
-    "muscleGroup": "Abdômen",
-    "equipment": "Barra Fixa",
-    "mediaUrl": "https://www.youtube.com/watch?v=JB2oyawG9KI",
-    "description": "Pendurado na barra, eleve as pernas estendidas ou flexionadas até a altura do quadril, controlando a descida sem balançar o corpo.",
-    "difficultyLevel": "AVANCADO"
-  },
-  {
-    "name": "Supino Reto com Halteres",
-    "muscleGroup": "Peito",
-    "equipment": "Halteres",
-    "mediaUrl": "https://www.youtube.com/results?search_query=Supino%20Reto%20com%20Halteres%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
-    "description": "Deitado no banco reto, empurre os halteres para cima até quase encostá-los, controlando a descida até a linha do peito com os cotovelos a 45 graus.",
-    "difficultyLevel": "INTERMEDIARIO"
-  },
-  {
-    "name": "Supino Inclinado com Barra",
-    "muscleGroup": "Peito",
-    "equipment": "Barra",
-    "mediaUrl": "https://www.youtube.com/results?search_query=Supino%20Inclinado%20com%20Barra%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
-    "description": "Banco a 30-45 graus, desça a barra controladamente até a parte superior do peito e empurre de volta sem travar os cotovelos.",
-    "difficultyLevel": "INTERMEDIARIO"
-  },
-  {
-    "name": "Supino Declinado com Barra",
-    "muscleGroup": "Peito",
-    "equipment": "Barra",
-    "mediaUrl": "https://www.youtube.com/results?search_query=Supino%20Declinado%20com%20Barra%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
-    "description": "Banco declinado, desça a barra até a parte inferior do peito e empurre de volta, enfatizando a porção inferior do peitoral.",
-    "difficultyLevel": "INTERMEDIARIO"
-  },
-  {
-    "name": "Crucifixo Inclinado com Halteres",
-    "muscleGroup": "Peito",
-    "equipment": "Halteres",
-    "mediaUrl": "https://www.youtube.com/results?search_query=Crucifixo%20Inclinado%20com%20Halteres%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
-    "description": "Banco inclinado, abra os braços levemente flexionados em arco até alongar o peitoral superior, retorne juntando os halteres acima do peito.",
-    "difficultyLevel": "INICIANTE"
-  },
-  {
-    "name": "Flexão de Braço",
-    "muscleGroup": "Peito",
-    "equipment": "Peso Corporal",
-    "mediaUrl": "https://www.youtube.com/results?search_query=Flex%C3%A3o%20de%20Bra%C3%A7o%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
-    "description": "Mãos pouco mais largas que os ombros, corpo em linha reta, desça até o peito quase tocar o chão e empurre de volta contraindo o peitoral.",
-    "difficultyLevel": "INICIANTE"
-  },
-  {
-    "name": "Flexão de Braço Inclinada",
-    "muscleGroup": "Peito",
-    "equipment": "Peso Corporal",
-    "mediaUrl": "https://www.youtube.com/results?search_query=Flex%C3%A3o%20de%20Bra%C3%A7o%20Inclinada%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
-    "description": "Mãos apoiadas em uma superfície elevada, desça o peito em direção ao apoio e empurre de volta — variação mais leve da flexão tradicional.",
-    "difficultyLevel": "INICIANTE"
-  },
-  {
-    "name": "Peck Deck (Voador)",
-    "muscleGroup": "Peito",
-    "equipment": "Máquina",
-    "mediaUrl": "https://www.youtube.com/results?search_query=Peck%20Deck%20(Voador)%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
-    "description": "Sentado na máquina, junte os braços à frente do corpo contraindo o peitoral, retorne controladamente sem bater os pesos.",
-    "difficultyLevel": "INICIANTE"
-  },
-  {
-    "name": "Supino Máquina",
-    "muscleGroup": "Peito",
-    "equipment": "Máquina",
-    "mediaUrl": "https://www.youtube.com/results?search_query=Supino%20M%C3%A1quina%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
-    "description": "Sentado na máquina, empurre as pegadas à frente até quase estender os cotovelos, retorne controlando a fase negativa.",
-    "difficultyLevel": "INICIANTE"
-  },
-  {
-    "name": "Crossover Baixo no Cabo",
-    "muscleGroup": "Peito",
-    "equipment": "Cabo",
-    "mediaUrl": "https://www.youtube.com/results?search_query=Crossover%20Baixo%20no%20Cabo%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
-    "description": "Cabos na posição baixa, puxe as alças para cima e para o centro em arco, contraindo a porção superior do peitoral.",
-    "difficultyLevel": "INTERMEDIARIO"
-  },
-  {
-    "name": "Supino Fechado com Barra",
-    "muscleGroup": "Peito",
-    "equipment": "Barra",
-    "mediaUrl": "https://www.youtube.com/results?search_query=Supino%20Fechado%20com%20Barra%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
-    "description": "Pegada na largura dos ombros, desça a barra ao peito mantendo os cotovelos próximos ao corpo, empurre de volta — recruta peito interno e tríceps.",
-    "difficultyLevel": "INTERMEDIARIO"
-  },
-  {
-    "name": "Flexão Diamante",
-    "muscleGroup": "Peito",
-    "equipment": "Peso Corporal",
-    "mediaUrl": "https://www.youtube.com/results?search_query=Flex%C3%A3o%20Diamante%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
-    "description": "Mãos juntas formando um losango sob o peito, desça controladamente e empurre — ênfase no peito interno e tríceps.",
-    "difficultyLevel": "AVANCADO"
-  },
-  {
-    "name": "Pullover com Halter",
-    "muscleGroup": "Peito",
-    "equipment": "Halteres",
-    "mediaUrl": "https://www.youtube.com/results?search_query=Pullover%20com%20Halter%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
-    "description": "Deitado no banco, segure um halter com as duas mãos e leve-o atrás da cabeça em arco, retornando acima do peito com leve flexão de cotovelo.",
-    "difficultyLevel": "INTERMEDIARIO"
-  },
-  {
-    "name": "Crucifixo na Máquina Voador",
-    "muscleGroup": "Peito",
-    "equipment": "Máquina",
-    "mediaUrl": "https://www.youtube.com/results?search_query=Crucifixo%20na%20M%C3%A1quina%20Voador%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
-    "description": "Ajuste o assento, junte os braços à frente em arco contraindo o peito e retorne controladamente até sentir o alongamento.",
-    "difficultyLevel": "INICIANTE"
-  },
-  {
-    "name": "Supino Inclinado na Máquina Smith",
-    "muscleGroup": "Peito",
-    "equipment": "Máquina",
-    "mediaUrl": "https://www.youtube.com/results?search_query=Supino%20Inclinado%20na%20M%C3%A1quina%20Smith%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
-    "description": "Banco inclinado sob a barra guiada, desça até a parte superior do peito e empurre de volta com trajetória fixa e segura.",
-    "difficultyLevel": "INICIANTE"
-  },
-  {
-    "name": "Flexão com Pés Elevados",
-    "muscleGroup": "Peito",
-    "equipment": "Peso Corporal",
-    "mediaUrl": "https://www.youtube.com/results?search_query=Flex%C3%A3o%20com%20P%C3%A9s%20Elevados%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
-    "description": "Pés apoiados em banco, mãos no chão, desça o peito e empurre — aumenta a carga sobre a porção superior do peitoral.",
-    "difficultyLevel": "INTERMEDIARIO"
-  },
-  {
-    "name": "Supino Reto na Máquina Smith",
-    "muscleGroup": "Peito",
-    "equipment": "Máquina",
-    "mediaUrl": "https://www.youtube.com/results?search_query=Supino%20Reto%20na%20M%C3%A1quina%20Smith%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
-    "description": "Deitado sob a barra guiada, desça controladamente ao peito e empurre de volta com trajetória estável, ideal para iniciantes.",
-    "difficultyLevel": "INICIANTE"
-  },
-  {
-    "name": "Crucifixo no Cabo Unilateral",
-    "muscleGroup": "Peito",
-    "equipment": "Cabo",
-    "mediaUrl": "https://www.youtube.com/results?search_query=Crucifixo%20no%20Cabo%20Unilateral%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
-    "description": "Em pé, puxe uma alça por vez em arco à frente do corpo contraindo o peitoral, alternando os lados com controle.",
-    "difficultyLevel": "INTERMEDIARIO"
-  },
-  {
-    "name": "Pressão de Peito com Faixa Elástica",
-    "muscleGroup": "Peito",
-    "equipment": "Peso Corporal",
-    "mediaUrl": "https://www.youtube.com/results?search_query=Press%C3%A3o%20de%20Peito%20com%20Faixa%20El%C3%A1stica%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
-    "description": "Com a faixa presa atrás, empurre as mãos à frente até estender os braços, contraindo o peito, e retorne controladamente.",
-    "difficultyLevel": "INICIANTE"
-  },
-  {
-    "name": "Barra Fixa Pronada",
-    "muscleGroup": "Costas",
-    "equipment": "Barra Fixa",
-    "mediaUrl": "https://www.youtube.com/results?search_query=Barra%20Fixa%20Pronada%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
-    "description": "Pendurado com pegada pronada aberta, puxe o corpo até o queixo ultrapassar a barra contraindo o dorsal, desça controladamente.",
-    "difficultyLevel": "AVANCADO"
-  },
-  {
-    "name": "Barra Fixa Supinada",
-    "muscleGroup": "Costas",
-    "equipment": "Barra Fixa",
-    "mediaUrl": "https://www.youtube.com/results?search_query=Barra%20Fixa%20Supinada%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
-    "description": "Pegada supinada na largura dos ombros, puxe o corpo até o queixo passar a barra, enfatizando dorsal e bíceps.",
-    "difficultyLevel": "AVANCADO"
-  },
-  {
-    "name": "Remada Cavalinho",
-    "muscleGroup": "Costas",
-    "equipment": "Barra",
-    "mediaUrl": "https://www.youtube.com/results?search_query=Remada%20Cavalinho%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
-    "description": "Tronco inclinado sobre a barra em T, puxe o peso em direção ao peito contraindo o meio das costas, desça controladamente.",
-    "difficultyLevel": "INTERMEDIARIO"
-  },
-  {
-    "name": "Remada Unilateral com Halter",
-    "muscleGroup": "Costas",
-    "equipment": "Halteres",
-    "mediaUrl": "https://www.youtube.com/results?search_query=Remada%20Unilateral%20com%20Halter%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
-    "description": "Apoiado no banco com uma mão e joelho, puxe o halter em direção ao quadril contraindo a escápula, desça alongando o dorsal.",
-    "difficultyLevel": "INICIANTE"
-  },
-  {
-    "name": "Puxada Alta Aberta",
-    "muscleGroup": "Costas",
-    "equipment": "Máquina",
-    "mediaUrl": "https://www.youtube.com/results?search_query=Puxada%20Alta%20Aberta%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
-    "description": "Sentado, pegada aberta, puxe a barra até o peito contraindo as escápulas e retorne controladamente à extensão dos braços.",
-    "difficultyLevel": "INICIANTE"
-  },
-  {
-    "name": "Remada na Máquina",
-    "muscleGroup": "Costas",
-    "equipment": "Máquina",
-    "mediaUrl": "https://www.youtube.com/results?search_query=Remada%20na%20M%C3%A1quina%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
-    "description": "Sentado com peito apoiado, puxe as pegadas em direção ao tronco contraindo as costas, retorne controlando o alongamento.",
-    "difficultyLevel": "INICIANTE"
-  },
-  {
-    "name": "Remada Curvada com Halteres",
-    "muscleGroup": "Costas",
-    "equipment": "Halteres",
-    "mediaUrl": "https://www.youtube.com/results?search_query=Remada%20Curvada%20com%20Halteres%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
-    "description": "Tronco inclinado, coluna neutra, puxe os halteres em direção ao quadril contraindo as costas, desça controladamente.",
-    "difficultyLevel": "INTERMEDIARIO"
-  },
-  {
-    "name": "Puxada Frontal com Pegada Fechada",
-    "muscleGroup": "Costas",
-    "equipment": "Máquina",
-    "mediaUrl": "https://www.youtube.com/results?search_query=Puxada%20Frontal%20com%20Pegada%20Fechada%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
-    "description": "Sentado, pegada fechada supinada, puxe a barra ao peito contraindo o dorsal e retorne controlando a subida.",
-    "difficultyLevel": "INICIANTE"
-  },
-  {
-    "name": "Hiperextensão Lombar",
-    "muscleGroup": "Costas",
-    "equipment": "Peso Corporal",
-    "mediaUrl": "https://www.youtube.com/results?search_query=Hiperextens%C3%A3o%20Lombar%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
-    "description": "No banco romano, desça o tronco flexionando o quadril e suba até alinhar o corpo, contraindo lombar e glúteos.",
-    "difficultyLevel": "INICIANTE"
-  },
-  {
-    "name": "Remada Baixa com Pegada Aberta",
-    "muscleGroup": "Costas",
-    "equipment": "Cabo",
-    "mediaUrl": "https://www.youtube.com/results?search_query=Remada%20Baixa%20com%20Pegada%20Aberta%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
-    "description": "Sentado, use a barra longa com pegada aberta e puxe ao abdômen contraindo o meio das costas, retorne controladamente.",
-    "difficultyLevel": "INICIANTE"
-  },
-  {
-    "name": "Pulldown com Braços Estendidos",
-    "muscleGroup": "Costas",
-    "equipment": "Cabo",
-    "mediaUrl": "https://www.youtube.com/results?search_query=Pulldown%20com%20Bra%C3%A7os%20Estendidos%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
-    "description": "Em pé de frente à polia alta, braços estendidos, puxe a barra até as coxas em arco contraindo o dorsal sem flexionar os cotovelos.",
-    "difficultyLevel": "INTERMEDIARIO"
-  },
-  {
-    "name": "Levantamento Terra Romeno",
-    "muscleGroup": "Pernas",
-    "equipment": "Barra",
-    "mediaUrl": "https://www.youtube.com/results?search_query=Levantamento%20Terra%20Romeno%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
-    "description": "Joelhos levemente flexionados, desça a barra rente às pernas empurrando o quadril para trás, suba contraindo posteriores e lombar.",
-    "difficultyLevel": "INTERMEDIARIO"
-  },
-  {
-    "name": "Remada Serrote no Cabo",
-    "muscleGroup": "Costas",
-    "equipment": "Cabo",
-    "mediaUrl": "https://www.youtube.com/results?search_query=Remada%20Serrote%20no%20Cabo%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
-    "description": "Ajoelhado ou em pé, puxe a alça baixa em direção ao quadril contraindo a escápula, alternando os lados.",
-    "difficultyLevel": "INICIANTE"
-  },
-  {
-    "name": "Encolhimento com Halteres",
-    "muscleGroup": "Costas",
-    "equipment": "Halteres",
-    "mediaUrl": "https://www.youtube.com/results?search_query=Encolhimento%20com%20Halteres%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
-    "description": "Em pé com halteres ao lado do corpo, eleve os ombros em direção às orelhas contraindo o trapézio, desça controladamente.",
-    "difficultyLevel": "INICIANTE"
-  },
-  {
-    "name": "Encolhimento com Barra",
-    "muscleGroup": "Costas",
-    "equipment": "Barra",
-    "mediaUrl": "https://www.youtube.com/results?search_query=Encolhimento%20com%20Barra%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
-    "description": "Em pé segurando a barra à frente, eleve os ombros contraindo o trapézio e desça controladamente sem rotacionar.",
-    "difficultyLevel": "INICIANTE"
-  },
-  {
-    "name": "Face Pull no Cabo",
-    "muscleGroup": "Costas",
-    "equipment": "Cabo",
-    "mediaUrl": "https://www.youtube.com/results?search_query=Face%20Pull%20no%20Cabo%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
-    "description": "Puxe a corda na altura do rosto separando as mãos, contraindo trapézio médio e deltoide posterior, retorne controladamente.",
-    "difficultyLevel": "INTERMEDIARIO"
-  },
-  {
-    "name": "Remada Invertida na Barra",
-    "muscleGroup": "Costas",
-    "equipment": "Peso Corporal",
-    "mediaUrl": "https://www.youtube.com/results?search_query=Remada%20Invertida%20na%20Barra%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
-    "description": "Suspenso sob uma barra fixa baixa, corpo reto, puxe o peito em direção à barra contraindo as costas e desça controladamente.",
-    "difficultyLevel": "INTERMEDIARIO"
-  },
-  {
-    "name": "Pull-over na Polia Alta",
-    "muscleGroup": "Costas",
-    "equipment": "Cabo",
-    "mediaUrl": "https://www.youtube.com/results?search_query=Pull-over%20na%20Polia%20Alta%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
-    "description": "Em pé, braços estendidos, puxe a barra da polia alta até as coxas em arco, enfatizando o dorsal com o core estável.",
-    "difficultyLevel": "INTERMEDIARIO"
-  },
-  {
-    "name": "Puxada Triângulo Neutra",
-    "muscleGroup": "Costas",
-    "equipment": "Máquina",
-    "mediaUrl": "https://www.youtube.com/results?search_query=Puxada%20Tri%C3%A2ngulo%20Neutra%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
-    "description": "Sentado, use o triângulo com pegada neutra e puxe ao peito contraindo o dorsal, retorne controlando o alongamento.",
-    "difficultyLevel": "INICIANTE"
-  },
-  {
-    "name": "Agachamento Frontal",
-    "muscleGroup": "Pernas",
-    "equipment": "Barra",
-    "mediaUrl": "https://www.youtube.com/results?search_query=Agachamento%20Frontal%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
-    "description": "Barra apoiada na frente dos ombros, desça mantendo o tronco ereto até as coxas paralelas, suba contraindo quadríceps e glúteos.",
-    "difficultyLevel": "AVANCADO"
-  },
-  {
-    "name": "Agachamento Búlgaro",
-    "muscleGroup": "Pernas",
-    "equipment": "Halteres",
-    "mediaUrl": "https://www.youtube.com/results?search_query=Agachamento%20B%C3%BAlgaro%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
-    "description": "Pé de trás apoiado em banco, desça flexionando o joelho da frente até 90 graus, suba contraindo o glúteo da perna dianteira.",
-    "difficultyLevel": "INTERMEDIARIO"
-  },
-  {
-    "name": "Agachamento Sumô com Halter",
-    "muscleGroup": "Pernas",
-    "equipment": "Halteres",
-    "mediaUrl": "https://www.youtube.com/results?search_query=Agachamento%20Sum%C3%B4%20com%20Halter%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
-    "description": "Pés bem afastados e pontas para fora, desça segurando um halter entre as pernas, suba contraindo glúteos e adutores.",
-    "difficultyLevel": "INICIANTE"
-  },
-  {
-    "name": "Hack Squat na Máquina",
-    "muscleGroup": "Pernas",
-    "equipment": "Máquina",
-    "mediaUrl": "https://www.youtube.com/results?search_query=Hack%20Squat%20na%20M%C3%A1quina%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
-    "description": "Costas apoiadas na máquina inclinada, desça flexionando os joelhos até 90 graus e empurre a plataforma de volta.",
-    "difficultyLevel": "INTERMEDIARIO"
-  },
-  {
-    "name": "Cadeira Adutora",
-    "muscleGroup": "Pernas",
-    "equipment": "Máquina",
-    "mediaUrl": "https://www.youtube.com/results?search_query=Cadeira%20Adutora%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
-    "description": "Sentado na máquina, junte as pernas contra a resistência contraindo a parte interna das coxas, retorne controladamente.",
-    "difficultyLevel": "INICIANTE"
-  },
-  {
-    "name": "Cadeira Abdutora",
-    "muscleGroup": "Pernas",
-    "equipment": "Máquina",
-    "mediaUrl": "https://www.youtube.com/results?search_query=Cadeira%20Abdutora%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
-    "description": "Sentado na máquina, afaste as pernas contra a resistência contraindo os glúteos médios, retorne controladamente.",
-    "difficultyLevel": "INICIANTE"
-  },
-  {
-    "name": "Stiff com Barra",
-    "muscleGroup": "Pernas",
-    "equipment": "Barra",
-    "mediaUrl": "https://www.youtube.com/results?search_query=Stiff%20com%20Barra%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
-    "description": "Joelhos quase estendidos, desça a barra rente às pernas empurrando o quadril para trás até alongar os posteriores, suba contraindo.",
-    "difficultyLevel": "INTERMEDIARIO"
-  },
-  {
-    "name": "Stiff com Halteres",
-    "muscleGroup": "Pernas",
-    "equipment": "Halteres",
-    "mediaUrl": "https://www.youtube.com/results?search_query=Stiff%20com%20Halteres%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
-    "description": "Com halteres à frente das coxas, desça empurrando o quadril para trás e alongando os posteriores, retorne contraindo glúteos.",
-    "difficultyLevel": "INICIANTE"
-  },
-  {
-    "name": "Passada com Halteres",
-    "muscleGroup": "Pernas",
-    "equipment": "Halteres",
-    "mediaUrl": "https://www.youtube.com/results?search_query=Passada%20com%20Halteres%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
-    "description": "Dê passos alternados à frente descendo até 90 graus nos dois joelhos, mantendo o tronco ereto e o core firme.",
-    "difficultyLevel": "INTERMEDIARIO"
-  },
-  {
-    "name": "Panturrilha Sentado",
-    "muscleGroup": "Pernas",
-    "equipment": "Máquina",
-    "mediaUrl": "https://www.youtube.com/results?search_query=Panturrilha%20Sentado%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
-    "description": "Sentado com o peso sobre os joelhos, eleve os calcanhares contraindo a panturrilha (sóleo) e desça alongando.",
-    "difficultyLevel": "INICIANTE"
-  },
-  {
-    "name": "Panturrilha no Leg Press",
-    "muscleGroup": "Pernas",
-    "equipment": "Máquina",
-    "mediaUrl": "https://www.youtube.com/results?search_query=Panturrilha%20no%20Leg%20Press%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
-    "description": "No leg press, apoie as pontas dos pés na plataforma e empurre estendendo os tornozelos, controlando a volta.",
-    "difficultyLevel": "INICIANTE"
-  },
-  {
-    "name": "Cadeira Flexora Sentado",
-    "muscleGroup": "Pernas",
-    "equipment": "Máquina",
-    "mediaUrl": "https://www.youtube.com/results?search_query=Cadeira%20Flexora%20Sentado%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
-    "description": "Sentado na máquina, flexione os joelhos puxando o apoio para baixo contraindo os posteriores, retorne controladamente.",
-    "difficultyLevel": "INICIANTE"
-  },
-  {
-    "name": "Agachamento na Máquina Smith",
-    "muscleGroup": "Pernas",
-    "equipment": "Máquina",
-    "mediaUrl": "https://www.youtube.com/results?search_query=Agachamento%20na%20M%C3%A1quina%20Smith%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
-    "description": "Barra guiada nas costas, desça flexionando quadril e joelhos até as coxas paralelas e suba com trajetória estável.",
-    "difficultyLevel": "INICIANTE"
-  },
-  {
-    "name": "Elevação Pélvica na Máquina",
-    "muscleGroup": "Pernas",
-    "equipment": "Máquina",
-    "mediaUrl": "https://www.youtube.com/results?search_query=Eleva%C3%A7%C3%A3o%20P%C3%A9lvica%20na%20M%C3%A1quina%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
-    "description": "Costas apoiadas, empurre o quadril para cima contra a resistência contraindo os glúteos, desça controladamente.",
-    "difficultyLevel": "INICIANTE"
-  },
-  {
-    "name": "Agachamento Goblet",
-    "muscleGroup": "Pernas",
-    "equipment": "Halteres",
-    "mediaUrl": "https://www.youtube.com/results?search_query=Agachamento%20Goblet%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
-    "description": "Segure um halter junto ao peito, desça mantendo o tronco ereto até as coxas paralelas e suba contraindo as pernas.",
-    "difficultyLevel": "INICIANTE"
-  },
-  {
-    "name": "Avanço Estático com Halteres",
-    "muscleGroup": "Pernas",
-    "equipment": "Halteres",
-    "mediaUrl": "https://www.youtube.com/results?search_query=Avan%C3%A7o%20Est%C3%A1tico%20com%20Halteres%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
-    "description": "Em posição de passada fixa, desça o joelho de trás em direção ao chão e suba, sem mover os pés, alternando as pernas por série.",
-    "difficultyLevel": "INICIANTE"
-  },
-  {
-    "name": "Cadeira Extensora Unilateral",
-    "muscleGroup": "Pernas",
-    "equipment": "Máquina",
-    "mediaUrl": "https://www.youtube.com/results?search_query=Cadeira%20Extensora%20Unilateral%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
-    "description": "Sentado, estenda um joelho por vez contraindo o quadríceps, controlando a descida — corrige assimetrias entre as pernas.",
-    "difficultyLevel": "INICIANTE"
-  },
-  {
-    "name": "Levantamento Terra Sumô",
-    "muscleGroup": "Pernas",
-    "equipment": "Barra",
-    "mediaUrl": "https://www.youtube.com/results?search_query=Levantamento%20Terra%20Sum%C3%B4%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
-    "description": "Pés bem afastados e pontas para fora, pegada dentro das pernas, levante estendendo quadril e joelhos com coluna neutra.",
-    "difficultyLevel": "AVANCADO"
-  },
-  {
-    "name": "Afundo Caminhando com Barra",
-    "muscleGroup": "Pernas",
-    "equipment": "Barra",
-    "mediaUrl": "https://www.youtube.com/results?search_query=Afundo%20Caminhando%20com%20Barra%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
-    "description": "Barra nas costas, dê passos alternados descendo até 90 graus, mantendo o tronco ereto e o núcleo estável.",
-    "difficultyLevel": "AVANCADO"
-  },
-  {
-    "name": "Panturrilha em Pé com Halteres",
-    "muscleGroup": "Pernas",
-    "equipment": "Halteres",
-    "mediaUrl": "https://www.youtube.com/results?search_query=Panturrilha%20em%20P%C3%A9%20com%20Halteres%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
-    "description": "Em pé segurando halteres, eleve os calcanhares o máximo possível contraindo a panturrilha e desça alongando.",
-    "difficultyLevel": "INICIANTE"
-  },
-  {
-    "name": "Agachamento com Peso Corporal",
-    "muscleGroup": "Pernas",
-    "equipment": "Peso Corporal",
-    "mediaUrl": "https://www.youtube.com/results?search_query=Agachamento%20com%20Peso%20Corporal%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
-    "description": "Pés na largura dos ombros, desça flexionando quadril e joelhos até as coxas paralelas e suba contraindo — sem carga externa.",
-    "difficultyLevel": "INICIANTE"
-  },
-  {
-    "name": "Cadeira Extensora Isométrica",
-    "muscleGroup": "Pernas",
-    "equipment": "Máquina",
-    "mediaUrl": "https://www.youtube.com/results?search_query=Cadeira%20Extensora%20Isom%C3%A9trica%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
-    "description": "Estenda os joelhos e mantenha a contração no topo por alguns segundos antes de descer, intensificando o estímulo no quadríceps.",
-    "difficultyLevel": "INTERMEDIARIO"
-  },
-  {
-    "name": "Passada Reversa com Halteres",
-    "muscleGroup": "Pernas",
-    "equipment": "Halteres",
-    "mediaUrl": "https://www.youtube.com/results?search_query=Passada%20Reversa%20com%20Halteres%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
-    "description": "Dê um passo para trás descendo até 90 graus nos dois joelhos e retorne — reduz o estresse sobre o joelho da frente.",
-    "difficultyLevel": "INTERMEDIARIO"
-  },
-  {
-    "name": "Desenvolvimento com Barra",
-    "muscleGroup": "Ombro",
-    "equipment": "Barra",
-    "mediaUrl": "https://www.youtube.com/results?search_query=Desenvolvimento%20com%20Barra%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
-    "description": "Sentado ou em pé, empurre a barra da altura do queixo até quase estender os cotovelos, desça controladamente.",
-    "difficultyLevel": "INTERMEDIARIO"
-  },
-  {
-    "name": "Desenvolvimento Arnold",
-    "muscleGroup": "Ombro",
-    "equipment": "Halteres",
-    "mediaUrl": "https://www.youtube.com/results?search_query=Desenvolvimento%20Arnold%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
-    "description": "Comece com as palmas voltadas para você e gire os halteres enquanto os empurra para cima, retorne invertendo o movimento.",
-    "difficultyLevel": "AVANCADO"
-  },
-  {
-    "name": "Elevação Lateral no Cabo",
-    "muscleGroup": "Ombro",
-    "equipment": "Cabo",
-    "mediaUrl": "https://www.youtube.com/results?search_query=Eleva%C3%A7%C3%A3o%20Lateral%20no%20Cabo%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
-    "description": "Em pé ao lado da polia baixa, eleve o braço lateralmente até a altura do ombro contraindo o deltoide medial, desça controlando.",
-    "difficultyLevel": "INTERMEDIARIO"
-  },
-  {
-    "name": "Crucifixo Inverso na Máquina",
-    "muscleGroup": "Ombro",
-    "equipment": "Máquina",
-    "mediaUrl": "https://www.youtube.com/results?search_query=Crucifixo%20Inverso%20na%20M%C3%A1quina%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
-    "description": "Sentado de frente para a máquina, abra os braços para trás contraindo o deltoide posterior, retorne controladamente.",
-    "difficultyLevel": "INICIANTE"
-  },
-  {
-    "name": "Crucifixo Inverso com Halteres",
-    "muscleGroup": "Ombro",
-    "equipment": "Halteres",
-    "mediaUrl": "https://www.youtube.com/results?search_query=Crucifixo%20Inverso%20com%20Halteres%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
-    "description": "Tronco inclinado à frente, abra os braços lateralmente contraindo o deltoide posterior, desça controlando o movimento.",
-    "difficultyLevel": "INICIANTE"
-  },
-  {
-    "name": "Desenvolvimento na Máquina",
-    "muscleGroup": "Ombro",
-    "equipment": "Máquina",
-    "mediaUrl": "https://www.youtube.com/results?search_query=Desenvolvimento%20na%20M%C3%A1quina%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
-    "description": "Sentado, empurre as pegadas para cima até quase estender os cotovelos e retorne controlando a fase negativa.",
-    "difficultyLevel": "INICIANTE"
-  },
-  {
-    "name": "Elevação Frontal com Barra",
-    "muscleGroup": "Ombro",
-    "equipment": "Barra",
-    "mediaUrl": "https://www.youtube.com/results?search_query=Eleva%C3%A7%C3%A3o%20Frontal%20com%20Barra%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
-    "description": "Em pé, eleve a barra à frente até a altura dos ombros sem balançar o tronco, desça controladamente.",
-    "difficultyLevel": "INICIANTE"
-  },
-  {
-    "name": "Elevação Lateral Curvado",
-    "muscleGroup": "Ombro",
-    "equipment": "Halteres",
-    "mediaUrl": "https://www.youtube.com/results?search_query=Eleva%C3%A7%C3%A3o%20Lateral%20Curvado%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
-    "description": "Tronco inclinado, eleve os halteres lateralmente contraindo o deltoide posterior, desça controlando o movimento.",
-    "difficultyLevel": "INTERMEDIARIO"
-  },
-  {
-    "name": "Desenvolvimento Militar em Pé",
-    "muscleGroup": "Ombro",
-    "equipment": "Barra",
-    "mediaUrl": "https://www.youtube.com/results?search_query=Desenvolvimento%20Militar%20em%20P%C3%A9%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
-    "description": "Em pé com o core firme, empurre a barra da altura do queixo até a extensão total, sem hiperestender a lombar.",
-    "difficultyLevel": "AVANCADO"
-  },
-  {
-    "name": "Remada Alta no Cabo",
-    "muscleGroup": "Ombro",
-    "equipment": "Cabo",
-    "mediaUrl": "https://www.youtube.com/results?search_query=Remada%20Alta%20no%20Cabo%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
-    "description": "Puxe a barra da polia baixa verticalmente até a altura do peito, cotovelos acima das mãos, desça controladamente.",
-    "difficultyLevel": "INTERMEDIARIO"
-  },
-  {
-    "name": "Elevação Lateral na Máquina",
-    "muscleGroup": "Ombro",
-    "equipment": "Máquina",
-    "mediaUrl": "https://www.youtube.com/results?search_query=Eleva%C3%A7%C3%A3o%20Lateral%20na%20M%C3%A1quina%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
-    "description": "Sentado na máquina, eleve os braços lateralmente contra a resistência até a altura dos ombros, retorne controladamente.",
-    "difficultyLevel": "INICIANTE"
-  },
-  {
-    "name": "Face Pull na Corda para Ombro",
-    "muscleGroup": "Ombro",
-    "equipment": "Cabo",
-    "mediaUrl": "https://www.youtube.com/results?search_query=Face%20Pull%20na%20Corda%20para%20Ombro%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
-    "description": "Puxe a corda na altura do rosto abrindo as mãos, contraindo o deltoide posterior e o trapézio, retorne controladamente.",
-    "difficultyLevel": "INICIANTE"
-  },
-  {
-    "name": "Desenvolvimento com Halteres Sentado",
-    "muscleGroup": "Ombro",
-    "equipment": "Halteres",
-    "mediaUrl": "https://www.youtube.com/results?search_query=Desenvolvimento%20com%20Halteres%20Sentado%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
-    "description": "Sentado com apoio nas costas, empurre os halteres para cima até quase encostá-los e desça até a altura dos ombros.",
-    "difficultyLevel": "INICIANTE"
-  },
-  {
-    "name": "Elevação em Y no Banco Inclinado",
-    "muscleGroup": "Ombro",
-    "equipment": "Halteres",
-    "mediaUrl": "https://www.youtube.com/results?search_query=Eleva%C3%A7%C3%A3o%20em%20Y%20no%20Banco%20Inclinado%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
-    "description": "Deitado de bruços no banco inclinado, eleve os halteres em formato de Y contraindo o trapézio inferior e o deltoide posterior.",
-    "difficultyLevel": "INTERMEDIARIO"
-  },
-  {
-    "name": "Encolhimento no Cabo",
-    "muscleGroup": "Ombro",
-    "equipment": "Cabo",
-    "mediaUrl": "https://www.youtube.com/results?search_query=Encolhimento%20no%20Cabo%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
-    "description": "Em pé segurando a barra da polia baixa, eleve os ombros contraindo o trapézio e desça controladamente.",
-    "difficultyLevel": "INICIANTE"
-  },
-  {
-    "name": "Rotação Externa com Halter",
-    "muscleGroup": "Ombro",
-    "equipment": "Halteres",
-    "mediaUrl": "https://www.youtube.com/results?search_query=Rota%C3%A7%C3%A3o%20Externa%20com%20Halter%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
-    "description": "Cotovelo fixo junto ao corpo, gire o antebraço para fora contra a resistência, fortalecendo o manguito rotador.",
-    "difficultyLevel": "INICIANTE"
-  },
-  {
-    "name": "Rosca Scott com Barra",
-    "muscleGroup": "Bíceps",
-    "equipment": "Barra",
-    "mediaUrl": "https://www.youtube.com/results?search_query=Rosca%20Scott%20com%20Barra%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
-    "description": "Braços apoiados no banco Scott, flexione os cotovelos elevando a barra e desça controlando o alongamento sem estender totalmente.",
-    "difficultyLevel": "INTERMEDIARIO"
-  },
-  {
-    "name": "Rosca Concentrada",
-    "muscleGroup": "Bíceps",
-    "equipment": "Halteres",
-    "mediaUrl": "https://www.youtube.com/results?search_query=Rosca%20Concentrada%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
-    "description": "Sentado, cotovelo apoiado na parte interna da coxa, flexione o braço elevando o halter com pico de contração, desça controladamente.",
-    "difficultyLevel": "INICIANTE"
-  },
-  {
-    "name": "Rosca no Cabo",
-    "muscleGroup": "Bíceps",
-    "equipment": "Cabo",
-    "mediaUrl": "https://www.youtube.com/results?search_query=Rosca%20no%20Cabo%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
-    "description": "Em pé de frente à polia baixa, flexione os cotovelos puxando a barra até o peito, desça controlando a tensão constante.",
-    "difficultyLevel": "INICIANTE"
-  },
-  {
-    "name": "Rosca Inversa com Barra",
-    "muscleGroup": "Bíceps",
-    "equipment": "Barra",
-    "mediaUrl": "https://www.youtube.com/results?search_query=Rosca%20Inversa%20com%20Barra%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
-    "description": "Pegada pronada, flexione os cotovelos elevando a barra, enfatizando o braquiorradial e o antebraço, desça controladamente.",
-    "difficultyLevel": "INTERMEDIARIO"
-  },
-  {
-    "name": "Rosca 21",
-    "muscleGroup": "Bíceps",
-    "equipment": "Barra",
-    "mediaUrl": "https://www.youtube.com/results?search_query=Rosca%2021%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
-    "description": "Execute 7 reps na metade inferior, 7 na metade superior e 7 completas, intensificando o estímulo em toda a amplitude.",
-    "difficultyLevel": "AVANCADO"
-  },
-  {
-    "name": "Rosca Spider",
-    "muscleGroup": "Bíceps",
-    "equipment": "Halteres",
-    "mediaUrl": "https://www.youtube.com/results?search_query=Rosca%20Spider%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
-    "description": "Peito apoiado em banco inclinado, braços pendendo, flexione os cotovelos elevando os halteres com pico de contração.",
-    "difficultyLevel": "INTERMEDIARIO"
-  },
-  {
-    "name": "Rosca Direta com Halteres",
-    "muscleGroup": "Bíceps",
-    "equipment": "Halteres",
-    "mediaUrl": "https://www.youtube.com/results?search_query=Rosca%20Direta%20com%20Halteres%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
-    "description": "Em pé, cotovelos fixos, flexione ambos os braços elevando os halteres até a altura dos ombros e desça controladamente.",
-    "difficultyLevel": "INICIANTE"
-  },
-  {
-    "name": "Rosca Scott na Máquina",
-    "muscleGroup": "Bíceps",
-    "equipment": "Máquina",
-    "mediaUrl": "https://www.youtube.com/results?search_query=Rosca%20Scott%20na%20M%C3%A1quina%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
-    "description": "Braços apoiados, flexione os cotovelos contra a resistência da máquina até o pico e desça controlando a fase negativa.",
-    "difficultyLevel": "INICIANTE"
-  },
-  {
-    "name": "Rosca Martelo no Cabo com Corda",
-    "muscleGroup": "Bíceps",
-    "equipment": "Cabo",
-    "mediaUrl": "https://www.youtube.com/results?search_query=Rosca%20Martelo%20no%20Cabo%20com%20Corda%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
-    "description": "Pegada neutra na corda, flexione os cotovelos puxando para cima contraindo bíceps e braquial, desça controladamente.",
-    "difficultyLevel": "INICIANTE"
-  },
-  {
-    "name": "Rosca Cross na Polia",
-    "muscleGroup": "Bíceps",
-    "equipment": "Cabo",
-    "mediaUrl": "https://www.youtube.com/results?search_query=Rosca%20Cross%20na%20Polia%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
-    "description": "Entre duas polias altas, flexione ambos os braços trazendo as alças em direção à cabeça, contraindo o pico do bíceps.",
-    "difficultyLevel": "INTERMEDIARIO"
-  },
-  {
-    "name": "Rosca Punho",
-    "muscleGroup": "Bíceps",
-    "equipment": "Halteres",
-    "mediaUrl": "https://www.youtube.com/results?search_query=Rosca%20Punho%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
-    "description": "Antebraços apoiados, flexione apenas os punhos elevando os halteres, fortalecendo os flexores do antebraço.",
-    "difficultyLevel": "INICIANTE"
-  },
-  {
-    "name": "Rosca Concentrada no Cabo",
-    "muscleGroup": "Bíceps",
-    "equipment": "Cabo",
-    "mediaUrl": "https://www.youtube.com/results?search_query=Rosca%20Concentrada%20no%20Cabo%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
-    "description": "Sentado com cotovelo apoiado na coxa, puxe a alça da polia baixa flexionando o cotovelo com tensão constante.",
-    "difficultyLevel": "INICIANTE"
-  },
-  {
-    "name": "Rosca Direta na Máquina Smith",
-    "muscleGroup": "Bíceps",
-    "equipment": "Máquina",
-    "mediaUrl": "https://www.youtube.com/results?search_query=Rosca%20Direta%20na%20M%C3%A1quina%20Smith%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
-    "description": "Segure a barra guiada com pegada supinada e flexione os cotovelos com trajetória fixa, desça controladamente.",
-    "difficultyLevel": "INICIANTE"
-  },
-  {
-    "name": "Tríceps Corda na Polia Alta",
-    "muscleGroup": "Tríceps",
-    "equipment": "Cabo",
-    "mediaUrl": "https://www.youtube.com/results?search_query=Tr%C3%ADceps%20Corda%20na%20Polia%20Alta%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
-    "description": "Cotovelos fixos, estenda os braços empurrando a corda para baixo e abrindo ao final, contraindo o tríceps, retorne controladamente.",
-    "difficultyLevel": "INICIANTE"
-  },
-  {
-    "name": "Tríceps Francês com Halteres",
-    "muscleGroup": "Tríceps",
-    "equipment": "Halteres",
-    "mediaUrl": "https://www.youtube.com/results?search_query=Tr%C3%ADceps%20Franc%C3%AAs%20com%20Halteres%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
-    "description": "Sentado, halter acima da cabeça com as duas mãos, flexione os cotovelos descendo atrás da cabeça e estenda contraindo o tríceps.",
-    "difficultyLevel": "INTERMEDIARIO"
-  },
-  {
-    "name": "Tríceps Coice com Halter",
-    "muscleGroup": "Tríceps",
-    "equipment": "Halteres",
-    "mediaUrl": "https://www.youtube.com/results?search_query=Tr%C3%ADceps%20Coice%20com%20Halter%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
-    "description": "Tronco inclinado, cotovelo fixo, estenda o antebraço para trás contraindo o tríceps, retorne controladamente.",
-    "difficultyLevel": "INICIANTE"
-  },
-  {
-    "name": "Mergulho nas Paralelas",
-    "muscleGroup": "Tríceps",
-    "equipment": "Peso Corporal",
-    "mediaUrl": "https://www.youtube.com/results?search_query=Mergulho%20nas%20Paralelas%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
-    "description": "Suspenso nas paralelas com tronco ereto, desça flexionando os cotovelos até 90 graus e empurre de volta contraindo o tríceps.",
-    "difficultyLevel": "AVANCADO"
-  },
-  {
-    "name": "Tríceps Testa com Halteres",
-    "muscleGroup": "Tríceps",
-    "equipment": "Halteres",
-    "mediaUrl": "https://www.youtube.com/results?search_query=Tr%C3%ADceps%20Testa%20com%20Halteres%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
-    "description": "Deitado, braços perpendiculares, flexione os cotovelos descendo os halteres em direção à testa e estenda contraindo o tríceps.",
-    "difficultyLevel": "INTERMEDIARIO"
-  },
-  {
-    "name": "Tríceps na Máquina",
-    "muscleGroup": "Tríceps",
-    "equipment": "Máquina",
-    "mediaUrl": "https://www.youtube.com/results?search_query=Tr%C3%ADceps%20na%20M%C3%A1quina%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
-    "description": "Sentado, empurre as pegadas para baixo estendendo os cotovelos contra a resistência e retorne controladamente.",
-    "difficultyLevel": "INICIANTE"
-  },
-  {
-    "name": "Tríceps Pulley Barra Reta",
-    "muscleGroup": "Tríceps",
-    "equipment": "Cabo",
-    "mediaUrl": "https://www.youtube.com/results?search_query=Tr%C3%ADceps%20Pulley%20Barra%20Reta%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
-    "description": "Cotovelos fixos ao corpo, empurre a barra para baixo estendendo os braços e retorne controlando a tensão.",
-    "difficultyLevel": "INICIANTE"
-  },
-  {
-    "name": "Tríceps Francês na Polia",
-    "muscleGroup": "Tríceps",
-    "equipment": "Cabo",
-    "mediaUrl": "https://www.youtube.com/results?search_query=Tr%C3%ADceps%20Franc%C3%AAs%20na%20Polia%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
-    "description": "De costas para a polia, estenda os braços acima da cabeça contra a corda, contraindo o tríceps na fase final.",
-    "difficultyLevel": "INTERMEDIARIO"
-  },
-  {
-    "name": "Tríceps Testa na Máquina Smith",
-    "muscleGroup": "Tríceps",
-    "equipment": "Máquina",
-    "mediaUrl": "https://www.youtube.com/results?search_query=Tr%C3%ADceps%20Testa%20na%20M%C3%A1quina%20Smith%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
-    "description": "Deitado sob a barra guiada, flexione os cotovelos descendo a barra à testa e estenda com trajetória segura.",
-    "difficultyLevel": "INTERMEDIARIO"
-  },
-  {
-    "name": "Extensão de Tríceps Unilateral no Cabo",
-    "muscleGroup": "Tríceps",
-    "equipment": "Cabo",
-    "mediaUrl": "https://www.youtube.com/results?search_query=Extens%C3%A3o%20de%20Tr%C3%ADceps%20Unilateral%20no%20Cabo%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
-    "description": "Com uma mão, empurre a alça da polia alta para baixo estendendo o cotovelo, corrigindo assimetrias entre os braços.",
-    "difficultyLevel": "INICIANTE"
-  },
-  {
-    "name": "Supino Fechado na Máquina Smith",
-    "muscleGroup": "Tríceps",
-    "equipment": "Máquina",
-    "mediaUrl": "https://www.youtube.com/results?search_query=Supino%20Fechado%20na%20M%C3%A1quina%20Smith%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
-    "description": "Deitado, pegada fechada na barra guiada, desça ao peito com cotovelos junto ao corpo e empurre enfatizando o tríceps.",
-    "difficultyLevel": "INTERMEDIARIO"
-  },
-  {
-    "name": "Tríceps Coice no Cabo",
-    "muscleGroup": "Tríceps",
-    "equipment": "Cabo",
-    "mediaUrl": "https://www.youtube.com/results?search_query=Tr%C3%ADceps%20Coice%20no%20Cabo%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
-    "description": "Tronco inclinado, cotovelo fixo, estenda o braço para trás puxando a alça da polia baixa, contraindo o tríceps.",
-    "difficultyLevel": "INICIANTE"
-  },
-  {
-    "name": "Flexão Fechada",
-    "muscleGroup": "Tríceps",
-    "equipment": "Peso Corporal",
-    "mediaUrl": "https://www.youtube.com/results?search_query=Flex%C3%A3o%20Fechada%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
-    "description": "Mãos na largura dos ombros ou mais próximas, desça mantendo os cotovelos junto ao corpo e empurre enfatizando o tríceps.",
-    "difficultyLevel": "INTERMEDIARIO"
-  },
-  {
-    "name": "Tríceps Banco com Peso",
-    "muscleGroup": "Tríceps",
-    "equipment": "Peso Corporal",
-    "mediaUrl": "https://www.youtube.com/results?search_query=Tr%C3%ADceps%20Banco%20com%20Peso%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
-    "description": "Mãos na borda do banco atrás do corpo e um disco sobre as coxas, desça flexionando os cotovelos e empurre de volta.",
-    "difficultyLevel": "INTERMEDIARIO"
-  },
-  {
-    "name": "Abdominal Infra no Solo",
-    "muscleGroup": "Abdômen",
-    "equipment": "Peso Corporal",
-    "mediaUrl": "https://www.youtube.com/results?search_query=Abdominal%20Infra%20no%20Solo%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
-    "description": "Deitado, eleve as pernas em direção ao teto contraindo a porção inferior do abdômen, desça controladamente sem tocar o chão.",
-    "difficultyLevel": "INICIANTE"
-  },
-  {
-    "name": "Prancha Lateral",
-    "muscleGroup": "Abdômen",
-    "equipment": "Peso Corporal",
-    "mediaUrl": "https://www.youtube.com/results?search_query=Prancha%20Lateral%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
-    "description": "Apoiado em um antebraço e na lateral dos pés, mantenha o corpo em linha reta contraindo o oblíquo pelo tempo determinado.",
-    "difficultyLevel": "INTERMEDIARIO"
-  },
-  {
-    "name": "Abdominal Bicicleta",
-    "muscleGroup": "Abdômen",
-    "equipment": "Peso Corporal",
-    "mediaUrl": "https://www.youtube.com/results?search_query=Abdominal%20Bicicleta%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
-    "description": "Deitado, alterne levar o cotovelo ao joelho oposto pedalando as pernas, contraindo os oblíquos de forma controlada.",
-    "difficultyLevel": "INTERMEDIARIO"
-  },
-  {
-    "name": "Abdominal na Máquina",
-    "muscleGroup": "Abdômen",
-    "equipment": "Máquina",
-    "mediaUrl": "https://www.youtube.com/results?search_query=Abdominal%20na%20M%C3%A1quina%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
-    "description": "Sentado na máquina, flexione o tronco à frente contra a resistência contraindo o abdômen, retorne controladamente.",
-    "difficultyLevel": "INICIANTE"
-  },
-  {
-    "name": "Elevação de Joelhos Suspenso",
-    "muscleGroup": "Abdômen",
-    "equipment": "Barra Fixa",
-    "mediaUrl": "https://www.youtube.com/results?search_query=Eleva%C3%A7%C3%A3o%20de%20Joelhos%20Suspenso%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
-    "description": "Pendurado na barra, eleve os joelhos em direção ao peito contraindo o abdômen inferior, desça sem balançar o corpo.",
-    "difficultyLevel": "INTERMEDIARIO"
-  },
-  {
-    "name": "Abdominal Canivete",
-    "muscleGroup": "Abdômen",
-    "equipment": "Peso Corporal",
-    "mediaUrl": "https://www.youtube.com/results?search_query=Abdominal%20Canivete%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
-    "description": "Deitado, eleve tronco e pernas simultaneamente tocando as mãos nos pés, retorne controladamente sem apoiar totalmente.",
-    "difficultyLevel": "AVANCADO"
-  },
-  {
-    "name": "Rotação Russa (Russian Twist)",
-    "muscleGroup": "Abdômen",
-    "equipment": "Peso Corporal",
-    "mediaUrl": "https://www.youtube.com/results?search_query=Rota%C3%A7%C3%A3o%20Russa%20(Russian%20Twist)%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
-    "description": "Sentado com tronco inclinado e pés elevados, gire o tronco de um lado ao outro contraindo os oblíquos.",
-    "difficultyLevel": "INTERMEDIARIO"
-  },
-  {
-    "name": "Prancha com Elevação de Braço",
-    "muscleGroup": "Abdômen",
-    "equipment": "Peso Corporal",
-    "mediaUrl": "https://www.youtube.com/results?search_query=Prancha%20com%20Eleva%C3%A7%C3%A3o%20de%20Bra%C3%A7o%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
-    "description": "Na posição de prancha, eleve um braço à frente mantendo o quadril estável, alternando os lados sem rotacionar o tronco.",
-    "difficultyLevel": "INTERMEDIARIO"
-  },
-  {
-    "name": "Abdominal Oblíquo no Solo",
-    "muscleGroup": "Abdômen",
-    "equipment": "Peso Corporal",
-    "mediaUrl": "https://www.youtube.com/results?search_query=Abdominal%20Obl%C3%ADquo%20no%20Solo%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
-    "description": "Deitado, leve o cotovelo em direção ao joelho oposto contraindo o oblíquo, retorne controladamente e alterne os lados.",
-    "difficultyLevel": "INICIANTE"
-  },
-  {
-    "name": "Abdominal na Roda (Ab Wheel)",
-    "muscleGroup": "Abdômen",
-    "equipment": "Peso Corporal",
-    "mediaUrl": "https://www.youtube.com/results?search_query=Abdominal%20na%20Roda%20(Ab%20Wheel)%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
-    "description": "Ajoelhado segurando a roda, role para frente estendendo o corpo e retorne contraindo o abdômen sem arquear a lombar.",
-    "difficultyLevel": "AVANCADO"
-  },
-  {
-    "name": "Prancha com Toque no Ombro",
-    "muscleGroup": "Abdômen",
-    "equipment": "Peso Corporal",
-    "mediaUrl": "https://www.youtube.com/results?search_query=Prancha%20com%20Toque%20no%20Ombro%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
-    "description": "Na prancha alta, toque o ombro oposto com uma mão de cada vez mantendo o quadril estável, contraindo o core.",
-    "difficultyLevel": "INTERMEDIARIO"
-  },
-  {
-    "name": "Abdominal Remador",
-    "muscleGroup": "Abdômen",
-    "equipment": "Peso Corporal",
-    "mediaUrl": "https://www.youtube.com/results?search_query=Abdominal%20Remador%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
-    "description": "Deitado, eleve tronco e joelhos ao mesmo tempo como um remador, contraindo o abdômen, e retorne controladamente.",
-    "difficultyLevel": "INTERMEDIARIO"
-  },
-  {
-    "name": "Elevação de Pernas no Banco",
-    "muscleGroup": "Abdômen",
-    "equipment": "Peso Corporal",
-    "mediaUrl": "https://www.youtube.com/results?search_query=Eleva%C3%A7%C3%A3o%20de%20Pernas%20no%20Banco%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
-    "description": "Deitado no banco segurando a borda atrás da cabeça, eleve as pernas estendidas até a vertical e desça controladamente.",
-    "difficultyLevel": "INICIANTE"
-  },
-  {
-    "name": "Abdominal Canivete no Cabo",
-    "muscleGroup": "Abdômen",
-    "equipment": "Cabo",
-    "mediaUrl": "https://www.youtube.com/results?search_query=Abdominal%20Canivete%20no%20Cabo%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
-    "description": "Ajoelhado de frente à polia alta com a corda atrás da cabeça, flexione o tronco em direção ao chão contraindo o abdômen.",
-    "difficultyLevel": "INTERMEDIARIO"
-  },
-  {
-    "name": "Prancha com Deslize",
-    "muscleGroup": "Abdômen",
-    "equipment": "Peso Corporal",
-    "mediaUrl": "https://www.youtube.com/results?search_query=Prancha%20com%20Deslize%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
-    "description": "Na prancha nos antebraços, deslize o corpo para frente e para trás mantendo a linha reta e o abdômen contraído.",
-    "difficultyLevel": "AVANCADO"
-  },
-  {
-    "name": "Abdominal Declinado",
-    "muscleGroup": "Abdômen",
-    "equipment": "Peso Corporal",
-    "mediaUrl": "https://www.youtube.com/results?search_query=Abdominal%20Declinado%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
-    "description": "No banco declinado com os pés presos, eleve o tronco contraindo o abdômen e desça controladamente sem relaxar totalmente.",
-    "difficultyLevel": "INTERMEDIARIO"
-  },
-  {
-    "name": "Prancha com Elevação de Perna",
-    "muscleGroup": "Abdômen",
-    "equipment": "Peso Corporal",
-    "mediaUrl": "https://www.youtube.com/results?search_query=Prancha%20com%20Eleva%C3%A7%C3%A3o%20de%20Perna%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
-    "description": "Na prancha, eleve uma perna estendida mantendo o quadril estável, alternando os lados sem rotacionar o tronco.",
-    "difficultyLevel": "INTERMEDIARIO"
-  },
-  {
-    "name": "Alongamento de Isquiotibiais em Pé",
-    "muscleGroup": "Alongamento",
-    "equipment": "Nenhum",
-    "mediaUrl": "https://www.youtube.com/results?search_query=Alongamento%20de%20Isquiotibiais%20em%20P%C3%A9%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
-    "description": "Em pé, incline o tronco à frente com a perna apoiada num banco baixo e o joelho estendido, sentindo o alongamento atrás da coxa sem forçar a lombar.",
-    "difficultyLevel": "INICIANTE"
-  },
-  {
-    "name": "Alongamento de Quadríceps em Pé",
-    "muscleGroup": "Alongamento",
-    "equipment": "Nenhum",
-    "mediaUrl": "https://www.youtube.com/results?search_query=Alongamento%20de%20Quadr%C3%ADceps%20em%20P%C3%A9%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
-    "description": "Em pé com apoio, segure o tornozelo e puxe o calcanhar em direção ao glúteo, mantendo os joelhos alinhados e o quadril neutro.",
-    "difficultyLevel": "INICIANTE"
-  },
-  {
-    "name": "Alongamento de Panturrilha na Parede",
-    "muscleGroup": "Alongamento",
-    "equipment": "Nenhum",
-    "mediaUrl": "https://www.youtube.com/results?search_query=Alongamento%20de%20Panturrilha%20na%20Parede%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
-    "description": "De frente pra parede, apoie as mãos e leve uma perna pra trás com o calcanhar no chão, inclinando o corpo à frente até sentir o alongamento na panturrilha.",
-    "difficultyLevel": "INICIANTE"
-  },
-  {
-    "name": "Alongamento de Peitoral no Batente da Porta",
-    "muscleGroup": "Alongamento",
-    "equipment": "Nenhum",
-    "mediaUrl": "https://www.youtube.com/results?search_query=Alongamento%20de%20Peitoral%20no%20Batente%20da%20Porta%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
-    "description": "Apoie o antebraço no batente da porta com o cotovelo a 90 graus e incline o corpo levemente à frente, alongando o peitoral do lado apoiado.",
-    "difficultyLevel": "INICIANTE"
-  },
-  {
-    "name": "Alongamento de Ombro Cruzado",
-    "muscleGroup": "Alongamento",
-    "equipment": "Nenhum",
-    "mediaUrl": "https://www.youtube.com/results?search_query=Alongamento%20de%20Ombro%20Cruzado%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
-    "description": "Cruze um braço estendido à frente do corpo e use o outro braço pra puxá-lo levemente contra o peito, alongando a parte de trás do ombro.",
-    "difficultyLevel": "INICIANTE"
-  },
-  {
-    "name": "Alongamento de Tríceps Overhead",
-    "muscleGroup": "Alongamento",
-    "equipment": "Nenhum",
-    "mediaUrl": "https://www.youtube.com/results?search_query=Alongamento%20de%20Tr%C3%ADceps%20Overhead%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
-    "description": "Com um braço elevado e o cotovelo flexionado atrás da cabeça, use a outra mão pra empurrar levemente o cotovelo, alongando o tríceps.",
-    "difficultyLevel": "INICIANTE"
-  },
-  {
-    "name": "Alongamento Borboleta (Adutores)",
-    "muscleGroup": "Alongamento",
-    "equipment": "Nenhum",
-    "mediaUrl": "https://www.youtube.com/results?search_query=Alongamento%20Borboleta%20Adutores%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
-    "description": "Sentado com as solas dos pés unidas e os joelhos abertos, incline levemente o tronco à frente pressionando os joelhos em direção ao chão.",
-    "difficultyLevel": "INICIANTE"
-  },
-  {
-    "name": "Gato-Camelo (Mobilidade Lombar)",
-    "muscleGroup": "Alongamento",
-    "equipment": "Nenhum",
-    "mediaUrl": "https://www.youtube.com/results?search_query=Gato-Camelo%20Mobilidade%20Lombar%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
-    "description": "Em quatro apoios, alterne entre arquear a coluna pra cima (gato) e deixá-la afundar pra baixo (camelo), num movimento lento e controlado.",
-    "difficultyLevel": "INICIANTE"
-  },
-  {
-    "name": "Alongamento do Piriforme Sentado",
-    "muscleGroup": "Alongamento",
-    "equipment": "Nenhum",
-    "mediaUrl": "https://www.youtube.com/results?search_query=Alongamento%20do%20Piriforme%20Sentado%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
-    "description": "Sentado, cruze um tornozelo sobre o joelho oposto e incline o tronco à frente, sentindo o alongamento na lateral do glúteo.",
-    "difficultyLevel": "INICIANTE"
-  },
-  {
-    "name": "Alongamento de Flexores do Quadril (Meia-Ajoelhado)",
-    "muscleGroup": "Alongamento",
-    "equipment": "Nenhum",
-    "mediaUrl": "https://www.youtube.com/results?search_query=Alongamento%20de%20Flexores%20do%20Quadril%20Meia-Ajoelhado%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
-    "description": "Em posição de meio-ajoelhado, empurre o quadril levemente à frente mantendo o tronco ereto, alongando a frente do quadril da perna de trás.",
-    "difficultyLevel": "INICIANTE"
-  },
-  {
-    "name": "Corrida na Esteira",
-    "muscleGroup": "Cardio",
-    "equipment": "Esteira",
-    "mediaUrl": "https://www.youtube.com/results?search_query=Corrida%20na%20Esteira%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
-    "description": "Mantenha postura ereta e passada natural, ajustando velocidade/inclinação gradualmente conforme o condicionamento.",
-    "difficultyLevel": "INICIANTE"
-  },
-  {
-    "name": "Bicicleta Ergométrica",
-    "muscleGroup": "Cardio",
-    "equipment": "Bicicleta Ergométrica",
-    "mediaUrl": "https://www.youtube.com/results?search_query=Bicicleta%20Erg%C3%A9metrica%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
-    "description": "Ajuste o banco na altura correta e pedale em ritmo constante, mantendo o core levemente contraído e as costas relaxadas.",
-    "difficultyLevel": "INICIANTE"
-  },
-  {
-    "name": "Elíptico",
-    "muscleGroup": "Cardio",
-    "equipment": "Elíptico",
-    "mediaUrl": "https://www.youtube.com/results?search_query=El%C3%ADptico%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
-    "description": "Mantenha o movimento fluido de pernas e braços simultaneamente, com postura ereta e passos amplos.",
-    "difficultyLevel": "INICIANTE"
-  },
-  {
-    "name": "Remo Ergométrico",
-    "muscleGroup": "Cardio",
-    "equipment": "Remo Ergométrico",
-    "mediaUrl": "https://www.youtube.com/results?search_query=Remo%20Erg%C3%A9metrico%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
-    "description": "Empurre com as pernas primeiro, depois incline o tronco e puxe os braços, revertendo a sequência na volta — pernas, tronco, braços.",
-    "difficultyLevel": "INTERMEDIARIO"
-  },
-  {
-    "name": "Pular Corda",
-    "muscleGroup": "Cardio",
-    "equipment": "Corda",
-    "mediaUrl": "https://www.youtube.com/results?search_query=Pular%20Corda%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
-    "description": "Salte com os pés juntos e joelhos levemente flexionados, girando a corda com os punhos, não os braços inteiros.",
-    "difficultyLevel": "INTERMEDIARIO"
-  },
-  {
-    "name": "Escada Ergométrica (StepMill)",
-    "muscleGroup": "Cardio",
-    "equipment": "Escada Ergométrica",
-    "mediaUrl": "https://www.youtube.com/results?search_query=Escada%20Erg%C3%A9metrica%20StepMill%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
-    "description": "Suba os degraus em ritmo constante mantendo o tronco ereto, evitando se apoiar demais nos corrimãos.",
-    "difficultyLevel": "INTERMEDIARIO"
-  },
-  {
-    "name": "Burpees",
-    "muscleGroup": "Cardio",
-    "equipment": "Peso Corporal",
-    "mediaUrl": "https://www.youtube.com/results?search_query=Burpees%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
-    "description": "Agache, apoie as mãos no chão, jogue as pernas pra trás em prancha, retorne e salte com os braços estendidos acima da cabeça.",
-    "difficultyLevel": "AVANCADO"
-  },
-  {
-    "name": "Mountain Climbers",
-    "muscleGroup": "Cardio",
-    "equipment": "Peso Corporal",
-    "mediaUrl": "https://www.youtube.com/results?search_query=Mountain%20Climbers%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
-    "description": "Em posição de prancha, alterne trazendo os joelhos em direção ao peito rapidamente, mantendo o quadril estável.",
-    "difficultyLevel": "INTERMEDIARIO"
-  },
-  {
-    "name": "Corrida Intervalada (Sprints)",
-    "muscleGroup": "Cardio",
-    "equipment": "Esteira",
-    "mediaUrl": "https://www.youtube.com/results?search_query=Corrida%20Intervalada%20Sprints%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
-    "description": "Alterne tiros curtos em alta intensidade com períodos de recuperação em ritmo leve, num formato de intervalos.",
-    "difficultyLevel": "AVANCADO"
-  },
-  {
-    "name": "Polichinelo (Jumping Jacks)",
-    "muscleGroup": "Cardio",
-    "equipment": "Peso Corporal",
-    "mediaUrl": "https://www.youtube.com/results?search_query=Polichinelo%20Jumping%20Jacks%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
-    "description": "Salte abrindo pernas e braços simultaneamente, retornando à posição inicial num ritmo constante.",
-    "difficultyLevel": "INICIANTE"
-  },
-  {
-    "name": "Dead Bug (Inseto Morto)",
-    "muscleGroup": "Abdômen",
-    "equipment": "Peso Corporal",
-    "mediaUrl": "https://www.youtube.com/results?search_query=Dead%20Bug%20Inseto%20Morto%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
-    "description": "Deitado, braços e pernas para cima a 90 graus, estenda um braço e a perna oposta simultaneamente sem deixar a lombar descolar do chão, alternando os lados.",
-    "difficultyLevel": "INICIANTE"
-  },
-  {
-    "name": "Prancha com Rotação",
-    "muscleGroup": "Abdômen",
-    "equipment": "Peso Corporal",
-    "mediaUrl": "https://www.youtube.com/results?search_query=Prancha%20com%20Rota%C3%A7%C3%A3o%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
-    "description": "Na prancha lateral com um braço estendido para cima, gire o tronco levando o braço por baixo do corpo e retorne, alternando os lados.",
-    "difficultyLevel": "INTERMEDIARIO"
-  }
+ {
+  "name": "Supino Reto com Barra",
+  "muscleGroup": "Peito",
+  "equipment": "Barra",
+  "mediaUrl": "https://www.youtube.com/watch?v=rT7DgCr-3pg",
+  "description": "Deite-se no banco reto com os pés firmes no chão. Segure a barra com pegada pouco mais larga que os ombros, desça controladamente até tocar o peito e empurre de volta à posição inicial.",
+  "difficultyLevel": "INTERMEDIARIO"
+ },
+ {
+  "name": "Supino Inclinado com Halteres",
+  "muscleGroup": "Peito",
+  "equipment": "Halteres",
+  "mediaUrl": "https://www.youtube.com/watch?v=8iPEnn-ltC8",
+  "description": "Ajuste o banco a 30-45 graus. Empurre os halteres para cima até quase encostar entre si, controlando a descida até a altura do peito.",
+  "difficultyLevel": "INTERMEDIARIO"
+ },
+ {
+  "name": "Crucifixo Reto com Halteres",
+  "muscleGroup": "Peito",
+  "equipment": "Halteres",
+  "mediaUrl": "https://www.youtube.com/watch?v=eozdVDA78K0",
+  "description": "Deitado no banco reto, abra os braços levemente flexionados em arco até sentir alongamento no peitoral, depois retorne juntando os halteres acima do peito.",
+  "difficultyLevel": "INICIANTE"
+ },
+ {
+  "name": "Crossover no Cabo",
+  "muscleGroup": "Peito",
+  "equipment": "Cabo",
+  "mediaUrl": "https://www.youtube.com/watch?v=taI4XduLpTk",
+  "description": "Com os cabos ajustados na parte superior, puxe as alças em direção ao centro do corpo em movimento de arco, contraindo o peitoral.",
+  "difficultyLevel": "INICIANTE"
+ },
+ {
+  "name": "Puxada Frontal na Polia",
+  "muscleGroup": "Costas",
+  "equipment": "Máquina",
+  "mediaUrl": "https://www.youtube.com/watch?v=CAwf7n6Luuc",
+  "description": "Sentado, segure a barra com pegada aberta e puxe até a altura do queixo/peito, contraindo as escápulas, retornando controladamente.",
+  "difficultyLevel": "INICIANTE"
+ },
+ {
+  "name": "Remada Curvada com Barra",
+  "muscleGroup": "Costas",
+  "equipment": "Barra",
+  "mediaUrl": "https://www.youtube.com/watch?v=vT2GjY_Umpw",
+  "description": "Incline o tronco para frente mantendo a coluna neutra, puxe a barra em direção ao abdômen contraindo as costas, desça controladamente.",
+  "difficultyLevel": "INTERMEDIARIO"
+ },
+ {
+  "name": "Remada Baixa no Cabo",
+  "muscleGroup": "Costas",
+  "equipment": "Cabo",
+  "mediaUrl": "https://www.youtube.com/watch?v=GZbfZ033f74",
+  "description": "Sentado com joelhos levemente flexionados, puxe o triângulo em direção ao abdômen mantendo o tronco ereto, retorne controlando o alongamento.",
+  "difficultyLevel": "INICIANTE"
+ },
+ {
+  "name": "Levantamento Terra",
+  "muscleGroup": "Costas",
+  "equipment": "Barra",
+  "mediaUrl": "https://www.youtube.com/watch?v=1ZXobu7JvvE",
+  "description": "Com a barra próxima às canelas, quadril para trás e coluna neutra, levante estendendo quadril e joelhos simultaneamente até a extensão completa.",
+  "difficultyLevel": "AVANCADO"
+ },
+ {
+  "name": "Puxada Alta com Triângulo",
+  "muscleGroup": "Costas",
+  "equipment": "Máquina",
+  "mediaUrl": "https://www.youtube.com/watch?v=EcSSXWyz3TU",
+  "description": "Puxe a barra em triângulo em direção ao peito mantendo cotovelos próximos ao corpo, controle a volta até a extensão dos braços.",
+  "difficultyLevel": "INICIANTE"
+ },
+ {
+  "name": "Agachamento Livre",
+  "muscleGroup": "Quadríceps",
+  "equipment": "Barra",
+  "mediaUrl": "https://www.youtube.com/watch?v=ultWZbUMPL8",
+  "description": "Barra apoiada nas costas, pés na largura dos ombros, desça flexionando quadril e joelhos até coxas paralelas ao chão, suba controladamente.",
+  "difficultyLevel": "AVANCADO"
+ },
+ {
+  "name": "Leg Press 45",
+  "muscleGroup": "Quadríceps",
+  "equipment": "Máquina",
+  "mediaUrl": "https://www.youtube.com/watch?v=IZxyjW7MPJQ",
+  "description": "Sentado na máquina, pés na plataforma na largura dos ombros, flexione os joelhos até 90 graus e empurre de volta sem travar totalmente.",
+  "difficultyLevel": "INICIANTE"
+ },
+ {
+  "name": "Cadeira Extensora",
+  "muscleGroup": "Quadríceps",
+  "equipment": "Máquina",
+  "mediaUrl": "https://www.youtube.com/watch?v=YyvSfVjQeL0",
+  "description": "Sentado na máquina, estenda os joelhos até quase a extensão completa, contraindo o quadríceps, e retorne controladamente.",
+  "difficultyLevel": "INICIANTE"
+ },
+ {
+  "name": "Mesa Flexora",
+  "muscleGroup": "Posterior da Coxa",
+  "equipment": "Máquina",
+  "mediaUrl": "https://www.youtube.com/watch?v=1Tq3QdYUuHs",
+  "description": "Deitado de bruços na máquina, flexione os joelhos trazendo o calcanhar em direção ao glúteo, controle a volta à posição inicial.",
+  "difficultyLevel": "INICIANTE"
+ },
+ {
+  "name": "Afundo com Halteres",
+  "muscleGroup": "Quadríceps",
+  "equipment": "Halteres",
+  "mediaUrl": "https://www.youtube.com/watch?v=QOVaHwm-Q6U",
+  "description": "Dê um passo à frente e desça até ambos os joelhos formarem 90 graus, mantendo o tronco ereto, retorne à posição inicial.",
+  "difficultyLevel": "INTERMEDIARIO"
+ },
+ {
+  "name": "Elevação Pélvica com Barra",
+  "muscleGroup": "Glúteos",
+  "equipment": "Barra",
+  "mediaUrl": "https://www.youtube.com/watch?v=xDmFkJxPzeM",
+  "description": "Costas superiores apoiadas em banco, barra sobre o quadril, eleve o quadril contraindo os glúteos até o corpo formar linha reta, desça controladamente.",
+  "difficultyLevel": "INTERMEDIARIO"
+ },
+ {
+  "name": "Panturrilha em Pé",
+  "muscleGroup": "Panturrilhas",
+  "equipment": "Máquina",
+  "mediaUrl": "https://www.youtube.com/watch?v=-M4-G8p8fmc",
+  "description": "Em pé na máquina, eleve os calcanhares o máximo possível contraindo a panturrilha, desça até alongar completamente.",
+  "difficultyLevel": "INICIANTE"
+ },
+ {
+  "name": "Desenvolvimento com Halteres",
+  "muscleGroup": "Ombro",
+  "equipment": "Halteres",
+  "mediaUrl": "https://www.youtube.com/watch?v=qEwKCR5JCog",
+  "description": "Sentado ou em pé, empurre os halteres para cima até quase a extensão total dos cotovelos, desça controladamente até a altura dos ombros.",
+  "difficultyLevel": "INTERMEDIARIO"
+ },
+ {
+  "name": "Elevação Lateral com Halteres",
+  "muscleGroup": "Ombro",
+  "equipment": "Halteres",
+  "mediaUrl": "https://www.youtube.com/watch?v=3VcKaXpzqRo",
+  "description": "Em pé, eleve os halteres lateralmente até a altura dos ombros com leve flexão de cotovelo, desça controladamente.",
+  "difficultyLevel": "INICIANTE"
+ },
+ {
+  "name": "Elevação Frontal com Halteres",
+  "muscleGroup": "Ombro",
+  "equipment": "Halteres",
+  "mediaUrl": "https://www.youtube.com/watch?v=sxeqiszaWao",
+  "description": "Em pé, eleve os halteres à frente do corpo até a altura dos ombros, controlando a descida sem balançar o tronco.",
+  "difficultyLevel": "INICIANTE"
+ },
+ {
+  "name": "Remada Alta com Barra",
+  "muscleGroup": "Ombro",
+  "equipment": "Barra",
+  "mediaUrl": "https://www.youtube.com/watch?v=GKvpKkbMWtw",
+  "description": "Segure a barra com pegada fechada e puxe verticalmente até a altura do peito, cotovelos acima das mãos, desça controladamente.",
+  "difficultyLevel": "INTERMEDIARIO"
+ },
+ {
+  "name": "Rosca Direta com Barra",
+  "muscleGroup": "Bíceps",
+  "equipment": "Barra",
+  "mediaUrl": "https://www.youtube.com/watch?v=kwG2ipFRgfo",
+  "description": "Em pé, cotovelos fixos ao lado do corpo, flexione os braços elevando a barra até a altura do peito, desça controladamente.",
+  "difficultyLevel": "INICIANTE"
+ },
+ {
+  "name": "Rosca Alternada com Halteres",
+  "muscleGroup": "Bíceps",
+  "equipment": "Halteres",
+  "mediaUrl": "https://www.youtube.com/watch?v=sAq_ocpRh_I",
+  "description": "Em pé, flexione um braço por vez elevando o halter até a altura do ombro com rotação do punho, alternando os lados.",
+  "difficultyLevel": "INICIANTE"
+ },
+ {
+  "name": "Rosca Martelo",
+  "muscleGroup": "Bíceps",
+  "equipment": "Halteres",
+  "mediaUrl": "https://www.youtube.com/watch?v=zC3nLlEvin4",
+  "description": "Em pé, com pegada neutra (palmas voltadas uma para outra), flexione os cotovelos elevando os halteres, desça controladamente.",
+  "difficultyLevel": "INICIANTE"
+ },
+ {
+  "name": "Tríceps Pulley com Corda",
+  "muscleGroup": "Tríceps",
+  "equipment": "Cabo",
+  "mediaUrl": "https://www.youtube.com/watch?v=vB5OHsJ3EME",
+  "description": "Em pé, cotovelos fixos ao lado do corpo, estenda os braços empurrando a corda para baixo e abrindo levemente ao final, retorne controladamente.",
+  "difficultyLevel": "INICIANTE"
+ },
+ {
+  "name": "Tríceps Testa com Barra",
+  "muscleGroup": "Tríceps",
+  "equipment": "Barra",
+  "mediaUrl": "https://www.youtube.com/watch?v=d_KZxkY_0cM",
+  "description": "Deitado no banco, braços perpendiculares ao corpo, flexione os cotovelos descendo a barra em direção à testa, estenda controladamente.",
+  "difficultyLevel": "INTERMEDIARIO"
+ },
+ {
+  "name": "Mergulho no Banco",
+  "muscleGroup": "Tríceps",
+  "equipment": "Peso Corporal",
+  "mediaUrl": "https://www.youtube.com/watch?v=6kALZikXxLc",
+  "description": "Mãos apoiadas na borda do banco atrás do corpo, desça flexionando os cotovelos até 90 graus e empurre de volta à posição inicial.",
+  "difficultyLevel": "INICIANTE"
+ },
+ {
+  "name": "Abdominal Supra no Solo",
+  "muscleGroup": "Abdômen",
+  "equipment": "Peso Corporal",
+  "mediaUrl": "https://www.youtube.com/watch?v=jDwoBqPH0jk",
+  "description": "Deitado com joelhos flexionados, eleve o tronco em direção aos joelhos contraindo o abdômen, retorne controladamente sem tocar totalmente o chão.",
+  "difficultyLevel": "INICIANTE"
+ },
+ {
+  "name": "Prancha Isométrica",
+  "muscleGroup": "Abdômen",
+  "equipment": "Peso Corporal",
+  "mediaUrl": "https://www.youtube.com/watch?v=pSHjTRCQxIw",
+  "description": "Apoiado nos antebraços e pontas dos pés, mantenha o corpo em linha reta contraindo o abdômen pelo tempo determinado.",
+  "difficultyLevel": "INICIANTE"
+ },
+ {
+  "name": "Elevação de Pernas na Barra Fixa",
+  "muscleGroup": "Abdômen",
+  "equipment": "Barra Fixa",
+  "mediaUrl": "https://www.youtube.com/watch?v=JB2oyawG9KI",
+  "description": "Pendurado na barra, eleve as pernas estendidas ou flexionadas até a altura do quadril, controlando a descida sem balançar o corpo.",
+  "difficultyLevel": "AVANCADO"
+ },
+ {
+  "name": "Supino Reto com Halteres",
+  "muscleGroup": "Peito",
+  "equipment": "Halteres",
+  "mediaUrl": "https://www.youtube.com/results?search_query=Supino%20Reto%20com%20Halteres%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
+  "description": "Deitado no banco reto, empurre os halteres para cima até quase encostá-los, controlando a descida até a linha do peito com os cotovelos a 45 graus.",
+  "difficultyLevel": "INTERMEDIARIO"
+ },
+ {
+  "name": "Supino Inclinado com Barra",
+  "muscleGroup": "Peito",
+  "equipment": "Barra",
+  "mediaUrl": "https://www.youtube.com/results?search_query=Supino%20Inclinado%20com%20Barra%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
+  "description": "Banco a 30-45 graus, desça a barra controladamente até a parte superior do peito e empurre de volta sem travar os cotovelos.",
+  "difficultyLevel": "INTERMEDIARIO"
+ },
+ {
+  "name": "Supino Declinado com Barra",
+  "muscleGroup": "Peito",
+  "equipment": "Barra",
+  "mediaUrl": "https://www.youtube.com/results?search_query=Supino%20Declinado%20com%20Barra%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
+  "description": "Banco declinado, desça a barra até a parte inferior do peito e empurre de volta, enfatizando a porção inferior do peitoral.",
+  "difficultyLevel": "INTERMEDIARIO"
+ },
+ {
+  "name": "Crucifixo Inclinado com Halteres",
+  "muscleGroup": "Peito",
+  "equipment": "Halteres",
+  "mediaUrl": "https://www.youtube.com/results?search_query=Crucifixo%20Inclinado%20com%20Halteres%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
+  "description": "Banco inclinado, abra os braços levemente flexionados em arco até alongar o peitoral superior, retorne juntando os halteres acima do peito.",
+  "difficultyLevel": "INICIANTE"
+ },
+ {
+  "name": "Flexão de Braço",
+  "muscleGroup": "Peito",
+  "equipment": "Peso Corporal",
+  "mediaUrl": "https://www.youtube.com/results?search_query=Flex%C3%A3o%20de%20Bra%C3%A7o%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
+  "description": "Mãos pouco mais largas que os ombros, corpo em linha reta, desça até o peito quase tocar o chão e empurre de volta contraindo o peitoral.",
+  "difficultyLevel": "INICIANTE"
+ },
+ {
+  "name": "Flexão de Braço Inclinada",
+  "muscleGroup": "Peito",
+  "equipment": "Peso Corporal",
+  "mediaUrl": "https://www.youtube.com/results?search_query=Flex%C3%A3o%20de%20Bra%C3%A7o%20Inclinada%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
+  "description": "Mãos apoiadas em uma superfície elevada, desça o peito em direção ao apoio e empurre de volta — variação mais leve da flexão tradicional.",
+  "difficultyLevel": "INICIANTE"
+ },
+ {
+  "name": "Peck Deck (Voador)",
+  "muscleGroup": "Peito",
+  "equipment": "Máquina",
+  "mediaUrl": "https://www.youtube.com/results?search_query=Peck%20Deck%20(Voador)%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
+  "description": "Sentado na máquina, junte os braços à frente do corpo contraindo o peitoral, retorne controladamente sem bater os pesos.",
+  "difficultyLevel": "INICIANTE"
+ },
+ {
+  "name": "Supino Máquina",
+  "muscleGroup": "Peito",
+  "equipment": "Máquina",
+  "mediaUrl": "https://www.youtube.com/results?search_query=Supino%20M%C3%A1quina%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
+  "description": "Sentado na máquina, empurre as pegadas à frente até quase estender os cotovelos, retorne controlando a fase negativa.",
+  "difficultyLevel": "INICIANTE"
+ },
+ {
+  "name": "Crossover Baixo no Cabo",
+  "muscleGroup": "Peito",
+  "equipment": "Cabo",
+  "mediaUrl": "https://www.youtube.com/results?search_query=Crossover%20Baixo%20no%20Cabo%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
+  "description": "Cabos na posição baixa, puxe as alças para cima e para o centro em arco, contraindo a porção superior do peitoral.",
+  "difficultyLevel": "INTERMEDIARIO"
+ },
+ {
+  "name": "Supino Fechado com Barra",
+  "muscleGroup": "Peito",
+  "equipment": "Barra",
+  "mediaUrl": "https://www.youtube.com/results?search_query=Supino%20Fechado%20com%20Barra%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
+  "description": "Pegada na largura dos ombros, desça a barra ao peito mantendo os cotovelos próximos ao corpo, empurre de volta — recruta peito interno e tríceps.",
+  "difficultyLevel": "INTERMEDIARIO"
+ },
+ {
+  "name": "Flexão Diamante",
+  "muscleGroup": "Peito",
+  "equipment": "Peso Corporal",
+  "mediaUrl": "https://www.youtube.com/results?search_query=Flex%C3%A3o%20Diamante%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
+  "description": "Mãos juntas formando um losango sob o peito, desça controladamente e empurre — ênfase no peito interno e tríceps.",
+  "difficultyLevel": "AVANCADO"
+ },
+ {
+  "name": "Pullover com Halter",
+  "muscleGroup": "Peito",
+  "equipment": "Halteres",
+  "mediaUrl": "https://www.youtube.com/results?search_query=Pullover%20com%20Halter%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
+  "description": "Deitado no banco, segure um halter com as duas mãos e leve-o atrás da cabeça em arco, retornando acima do peito com leve flexão de cotovelo.",
+  "difficultyLevel": "INTERMEDIARIO"
+ },
+ {
+  "name": "Crucifixo na Máquina Voador",
+  "muscleGroup": "Peito",
+  "equipment": "Máquina",
+  "mediaUrl": "https://www.youtube.com/results?search_query=Crucifixo%20na%20M%C3%A1quina%20Voador%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
+  "description": "Ajuste o assento, junte os braços à frente em arco contraindo o peito e retorne controladamente até sentir o alongamento.",
+  "difficultyLevel": "INICIANTE"
+ },
+ {
+  "name": "Supino Inclinado na Máquina Smith",
+  "muscleGroup": "Peito",
+  "equipment": "Máquina",
+  "mediaUrl": "https://www.youtube.com/results?search_query=Supino%20Inclinado%20na%20M%C3%A1quina%20Smith%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
+  "description": "Banco inclinado sob a barra guiada, desça até a parte superior do peito e empurre de volta com trajetória fixa e segura.",
+  "difficultyLevel": "INICIANTE"
+ },
+ {
+  "name": "Flexão com Pés Elevados",
+  "muscleGroup": "Peito",
+  "equipment": "Peso Corporal",
+  "mediaUrl": "https://www.youtube.com/results?search_query=Flex%C3%A3o%20com%20P%C3%A9s%20Elevados%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
+  "description": "Pés apoiados em banco, mãos no chão, desça o peito e empurre — aumenta a carga sobre a porção superior do peitoral.",
+  "difficultyLevel": "INTERMEDIARIO"
+ },
+ {
+  "name": "Supino Reto na Máquina Smith",
+  "muscleGroup": "Peito",
+  "equipment": "Máquina",
+  "mediaUrl": "https://www.youtube.com/results?search_query=Supino%20Reto%20na%20M%C3%A1quina%20Smith%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
+  "description": "Deitado sob a barra guiada, desça controladamente ao peito e empurre de volta com trajetória estável, ideal para iniciantes.",
+  "difficultyLevel": "INICIANTE"
+ },
+ {
+  "name": "Crucifixo no Cabo Unilateral",
+  "muscleGroup": "Peito",
+  "equipment": "Cabo",
+  "mediaUrl": "https://www.youtube.com/results?search_query=Crucifixo%20no%20Cabo%20Unilateral%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
+  "description": "Em pé, puxe uma alça por vez em arco à frente do corpo contraindo o peitoral, alternando os lados com controle.",
+  "difficultyLevel": "INTERMEDIARIO"
+ },
+ {
+  "name": "Pressão de Peito com Faixa Elástica",
+  "muscleGroup": "Peito",
+  "equipment": "Peso Corporal",
+  "mediaUrl": "https://www.youtube.com/results?search_query=Press%C3%A3o%20de%20Peito%20com%20Faixa%20El%C3%A1stica%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
+  "description": "Com a faixa presa atrás, empurre as mãos à frente até estender os braços, contraindo o peito, e retorne controladamente.",
+  "difficultyLevel": "INICIANTE"
+ },
+ {
+  "name": "Barra Fixa Pronada",
+  "muscleGroup": "Costas",
+  "equipment": "Barra Fixa",
+  "mediaUrl": "https://www.youtube.com/results?search_query=Barra%20Fixa%20Pronada%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
+  "description": "Pendurado com pegada pronada aberta, puxe o corpo até o queixo ultrapassar a barra contraindo o dorsal, desça controladamente.",
+  "difficultyLevel": "AVANCADO"
+ },
+ {
+  "name": "Barra Fixa Supinada",
+  "muscleGroup": "Costas",
+  "equipment": "Barra Fixa",
+  "mediaUrl": "https://www.youtube.com/results?search_query=Barra%20Fixa%20Supinada%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
+  "description": "Pegada supinada na largura dos ombros, puxe o corpo até o queixo passar a barra, enfatizando dorsal e bíceps.",
+  "difficultyLevel": "AVANCADO"
+ },
+ {
+  "name": "Remada Cavalinho",
+  "muscleGroup": "Costas",
+  "equipment": "Barra",
+  "mediaUrl": "https://www.youtube.com/results?search_query=Remada%20Cavalinho%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
+  "description": "Tronco inclinado sobre a barra em T, puxe o peso em direção ao peito contraindo o meio das costas, desça controladamente.",
+  "difficultyLevel": "INTERMEDIARIO"
+ },
+ {
+  "name": "Remada Unilateral com Halter",
+  "muscleGroup": "Costas",
+  "equipment": "Halteres",
+  "mediaUrl": "https://www.youtube.com/results?search_query=Remada%20Unilateral%20com%20Halter%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
+  "description": "Apoiado no banco com uma mão e joelho, puxe o halter em direção ao quadril contraindo a escápula, desça alongando o dorsal.",
+  "difficultyLevel": "INICIANTE"
+ },
+ {
+  "name": "Puxada Alta Aberta",
+  "muscleGroup": "Costas",
+  "equipment": "Máquina",
+  "mediaUrl": "https://www.youtube.com/results?search_query=Puxada%20Alta%20Aberta%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
+  "description": "Sentado, pegada aberta, puxe a barra até o peito contraindo as escápulas e retorne controladamente à extensão dos braços.",
+  "difficultyLevel": "INICIANTE"
+ },
+ {
+  "name": "Remada na Máquina",
+  "muscleGroup": "Costas",
+  "equipment": "Máquina",
+  "mediaUrl": "https://www.youtube.com/results?search_query=Remada%20na%20M%C3%A1quina%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
+  "description": "Sentado com peito apoiado, puxe as pegadas em direção ao tronco contraindo as costas, retorne controlando o alongamento.",
+  "difficultyLevel": "INICIANTE"
+ },
+ {
+  "name": "Remada Curvada com Halteres",
+  "muscleGroup": "Costas",
+  "equipment": "Halteres",
+  "mediaUrl": "https://www.youtube.com/results?search_query=Remada%20Curvada%20com%20Halteres%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
+  "description": "Tronco inclinado, coluna neutra, puxe os halteres em direção ao quadril contraindo as costas, desça controladamente.",
+  "difficultyLevel": "INTERMEDIARIO"
+ },
+ {
+  "name": "Puxada Frontal com Pegada Fechada",
+  "muscleGroup": "Costas",
+  "equipment": "Máquina",
+  "mediaUrl": "https://www.youtube.com/results?search_query=Puxada%20Frontal%20com%20Pegada%20Fechada%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
+  "description": "Sentado, pegada fechada supinada, puxe a barra ao peito contraindo o dorsal e retorne controlando a subida.",
+  "difficultyLevel": "INICIANTE"
+ },
+ {
+  "name": "Hiperextensão Lombar",
+  "muscleGroup": "Costas",
+  "equipment": "Peso Corporal",
+  "mediaUrl": "https://www.youtube.com/results?search_query=Hiperextens%C3%A3o%20Lombar%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
+  "description": "No banco romano, desça o tronco flexionando o quadril e suba até alinhar o corpo, contraindo lombar e glúteos.",
+  "difficultyLevel": "INICIANTE"
+ },
+ {
+  "name": "Remada Baixa com Pegada Aberta",
+  "muscleGroup": "Costas",
+  "equipment": "Cabo",
+  "mediaUrl": "https://www.youtube.com/results?search_query=Remada%20Baixa%20com%20Pegada%20Aberta%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
+  "description": "Sentado, use a barra longa com pegada aberta e puxe ao abdômen contraindo o meio das costas, retorne controladamente.",
+  "difficultyLevel": "INICIANTE"
+ },
+ {
+  "name": "Pulldown com Braços Estendidos",
+  "muscleGroup": "Costas",
+  "equipment": "Cabo",
+  "mediaUrl": "https://www.youtube.com/results?search_query=Pulldown%20com%20Bra%C3%A7os%20Estendidos%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
+  "description": "Em pé de frente à polia alta, braços estendidos, puxe a barra até as coxas em arco contraindo o dorsal sem flexionar os cotovelos.",
+  "difficultyLevel": "INTERMEDIARIO"
+ },
+ {
+  "name": "Levantamento Terra Romeno",
+  "muscleGroup": "Posterior da Coxa",
+  "equipment": "Barra",
+  "mediaUrl": "https://www.youtube.com/results?search_query=Levantamento%20Terra%20Romeno%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
+  "description": "Joelhos levemente flexionados, desça a barra rente às pernas empurrando o quadril para trás, suba contraindo posteriores e lombar.",
+  "difficultyLevel": "INTERMEDIARIO"
+ },
+ {
+  "name": "Remada Serrote no Cabo",
+  "muscleGroup": "Costas",
+  "equipment": "Cabo",
+  "mediaUrl": "https://www.youtube.com/results?search_query=Remada%20Serrote%20no%20Cabo%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
+  "description": "Ajoelhado ou em pé, puxe a alça baixa em direção ao quadril contraindo a escápula, alternando os lados.",
+  "difficultyLevel": "INICIANTE"
+ },
+ {
+  "name": "Encolhimento com Halteres",
+  "muscleGroup": "Costas",
+  "equipment": "Halteres",
+  "mediaUrl": "https://www.youtube.com/results?search_query=Encolhimento%20com%20Halteres%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
+  "description": "Em pé com halteres ao lado do corpo, eleve os ombros em direção às orelhas contraindo o trapézio, desça controladamente.",
+  "difficultyLevel": "INICIANTE"
+ },
+ {
+  "name": "Encolhimento com Barra",
+  "muscleGroup": "Costas",
+  "equipment": "Barra",
+  "mediaUrl": "https://www.youtube.com/results?search_query=Encolhimento%20com%20Barra%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
+  "description": "Em pé segurando a barra à frente, eleve os ombros contraindo o trapézio e desça controladamente sem rotacionar.",
+  "difficultyLevel": "INICIANTE"
+ },
+ {
+  "name": "Face Pull no Cabo",
+  "muscleGroup": "Costas",
+  "equipment": "Cabo",
+  "mediaUrl": "https://www.youtube.com/results?search_query=Face%20Pull%20no%20Cabo%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
+  "description": "Puxe a corda na altura do rosto separando as mãos, contraindo trapézio médio e deltoide posterior, retorne controladamente.",
+  "difficultyLevel": "INTERMEDIARIO"
+ },
+ {
+  "name": "Remada Invertida na Barra",
+  "muscleGroup": "Costas",
+  "equipment": "Peso Corporal",
+  "mediaUrl": "https://www.youtube.com/results?search_query=Remada%20Invertida%20na%20Barra%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
+  "description": "Suspenso sob uma barra fixa baixa, corpo reto, puxe o peito em direção à barra contraindo as costas e desça controladamente.",
+  "difficultyLevel": "INTERMEDIARIO"
+ },
+ {
+  "name": "Pull-over na Polia Alta",
+  "muscleGroup": "Costas",
+  "equipment": "Cabo",
+  "mediaUrl": "https://www.youtube.com/results?search_query=Pull-over%20na%20Polia%20Alta%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
+  "description": "Em pé, braços estendidos, puxe a barra da polia alta até as coxas em arco, enfatizando o dorsal com o core estável.",
+  "difficultyLevel": "INTERMEDIARIO"
+ },
+ {
+  "name": "Puxada Triângulo Neutra",
+  "muscleGroup": "Costas",
+  "equipment": "Máquina",
+  "mediaUrl": "https://www.youtube.com/results?search_query=Puxada%20Tri%C3%A2ngulo%20Neutra%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
+  "description": "Sentado, use o triângulo com pegada neutra e puxe ao peito contraindo o dorsal, retorne controlando o alongamento.",
+  "difficultyLevel": "INICIANTE"
+ },
+ {
+  "name": "Agachamento Frontal",
+  "muscleGroup": "Quadríceps",
+  "equipment": "Barra",
+  "mediaUrl": "https://www.youtube.com/results?search_query=Agachamento%20Frontal%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
+  "description": "Barra apoiada na frente dos ombros, desça mantendo o tronco ereto até as coxas paralelas, suba contraindo quadríceps e glúteos.",
+  "difficultyLevel": "AVANCADO"
+ },
+ {
+  "name": "Agachamento Búlgaro",
+  "muscleGroup": "Quadríceps",
+  "equipment": "Halteres",
+  "mediaUrl": "https://www.youtube.com/results?search_query=Agachamento%20B%C3%BAlgaro%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
+  "description": "Pé de trás apoiado em banco, desça flexionando o joelho da frente até 90 graus, suba contraindo o glúteo da perna dianteira.",
+  "difficultyLevel": "INTERMEDIARIO"
+ },
+ {
+  "name": "Agachamento Sumô com Halter",
+  "muscleGroup": "Quadríceps",
+  "equipment": "Halteres",
+  "mediaUrl": "https://www.youtube.com/results?search_query=Agachamento%20Sum%C3%B4%20com%20Halter%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
+  "description": "Pés bem afastados e pontas para fora, desça segurando um halter entre as pernas, suba contraindo glúteos e adutores.",
+  "difficultyLevel": "INICIANTE"
+ },
+ {
+  "name": "Hack Squat na Máquina",
+  "muscleGroup": "Quadríceps",
+  "equipment": "Máquina",
+  "mediaUrl": "https://www.youtube.com/results?search_query=Hack%20Squat%20na%20M%C3%A1quina%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
+  "description": "Costas apoiadas na máquina inclinada, desça flexionando os joelhos até 90 graus e empurre a plataforma de volta.",
+  "difficultyLevel": "INTERMEDIARIO"
+ },
+ {
+  "name": "Cadeira Adutora",
+  "muscleGroup": "Adutores e Abdutores",
+  "equipment": "Máquina",
+  "mediaUrl": "https://www.youtube.com/results?search_query=Cadeira%20Adutora%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
+  "description": "Sentado na máquina, junte as pernas contra a resistência contraindo a parte interna das coxas, retorne controladamente.",
+  "difficultyLevel": "INICIANTE"
+ },
+ {
+  "name": "Cadeira Abdutora",
+  "muscleGroup": "Adutores e Abdutores",
+  "equipment": "Máquina",
+  "mediaUrl": "https://www.youtube.com/results?search_query=Cadeira%20Abdutora%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
+  "description": "Sentado na máquina, afaste as pernas contra a resistência contraindo os glúteos médios, retorne controladamente.",
+  "difficultyLevel": "INICIANTE"
+ },
+ {
+  "name": "Stiff com Barra",
+  "muscleGroup": "Posterior da Coxa",
+  "equipment": "Barra",
+  "mediaUrl": "https://www.youtube.com/results?search_query=Stiff%20com%20Barra%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
+  "description": "Joelhos quase estendidos, desça a barra rente às pernas empurrando o quadril para trás até alongar os posteriores, suba contraindo.",
+  "difficultyLevel": "INTERMEDIARIO"
+ },
+ {
+  "name": "Stiff com Halteres",
+  "muscleGroup": "Posterior da Coxa",
+  "equipment": "Halteres",
+  "mediaUrl": "https://www.youtube.com/results?search_query=Stiff%20com%20Halteres%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
+  "description": "Com halteres à frente das coxas, desça empurrando o quadril para trás e alongando os posteriores, retorne contraindo glúteos.",
+  "difficultyLevel": "INICIANTE"
+ },
+ {
+  "name": "Passada com Halteres",
+  "muscleGroup": "Quadríceps",
+  "equipment": "Halteres",
+  "mediaUrl": "https://www.youtube.com/results?search_query=Passada%20com%20Halteres%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
+  "description": "Dê passos alternados à frente descendo até 90 graus nos dois joelhos, mantendo o tronco ereto e o core firme.",
+  "difficultyLevel": "INTERMEDIARIO"
+ },
+ {
+  "name": "Panturrilha Sentado",
+  "muscleGroup": "Panturrilhas",
+  "equipment": "Máquina",
+  "mediaUrl": "https://www.youtube.com/results?search_query=Panturrilha%20Sentado%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
+  "description": "Sentado com o peso sobre os joelhos, eleve os calcanhares contraindo a panturrilha (sóleo) e desça alongando.",
+  "difficultyLevel": "INICIANTE"
+ },
+ {
+  "name": "Panturrilha no Leg Press",
+  "muscleGroup": "Panturrilhas",
+  "equipment": "Máquina",
+  "mediaUrl": "https://www.youtube.com/results?search_query=Panturrilha%20no%20Leg%20Press%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
+  "description": "No leg press, apoie as pontas dos pés na plataforma e empurre estendendo os tornozelos, controlando a volta.",
+  "difficultyLevel": "INICIANTE"
+ },
+ {
+  "name": "Cadeira Flexora Sentado",
+  "muscleGroup": "Posterior da Coxa",
+  "equipment": "Máquina",
+  "mediaUrl": "https://www.youtube.com/results?search_query=Cadeira%20Flexora%20Sentado%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
+  "description": "Sentado na máquina, flexione os joelhos puxando o apoio para baixo contraindo os posteriores, retorne controladamente.",
+  "difficultyLevel": "INICIANTE"
+ },
+ {
+  "name": "Agachamento na Máquina Smith",
+  "muscleGroup": "Quadríceps",
+  "equipment": "Máquina",
+  "mediaUrl": "https://www.youtube.com/results?search_query=Agachamento%20na%20M%C3%A1quina%20Smith%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
+  "description": "Barra guiada nas costas, desça flexionando quadril e joelhos até as coxas paralelas e suba com trajetória estável.",
+  "difficultyLevel": "INICIANTE"
+ },
+ {
+  "name": "Elevação Pélvica na Máquina",
+  "muscleGroup": "Glúteos",
+  "equipment": "Máquina",
+  "mediaUrl": "https://www.youtube.com/results?search_query=Eleva%C3%A7%C3%A3o%20P%C3%A9lvica%20na%20M%C3%A1quina%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
+  "description": "Costas apoiadas, empurre o quadril para cima contra a resistência contraindo os glúteos, desça controladamente.",
+  "difficultyLevel": "INICIANTE"
+ },
+ {
+  "name": "Agachamento Goblet",
+  "muscleGroup": "Quadríceps",
+  "equipment": "Halteres",
+  "mediaUrl": "https://www.youtube.com/results?search_query=Agachamento%20Goblet%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
+  "description": "Segure um halter junto ao peito, desça mantendo o tronco ereto até as coxas paralelas e suba contraindo as pernas.",
+  "difficultyLevel": "INICIANTE"
+ },
+ {
+  "name": "Avanço Estático com Halteres",
+  "muscleGroup": "Quadríceps",
+  "equipment": "Halteres",
+  "mediaUrl": "https://www.youtube.com/results?search_query=Avan%C3%A7o%20Est%C3%A1tico%20com%20Halteres%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
+  "description": "Em posição de passada fixa, desça o joelho de trás em direção ao chão e suba, sem mover os pés, alternando as pernas por série.",
+  "difficultyLevel": "INICIANTE"
+ },
+ {
+  "name": "Cadeira Extensora Unilateral",
+  "muscleGroup": "Quadríceps",
+  "equipment": "Máquina",
+  "mediaUrl": "https://www.youtube.com/results?search_query=Cadeira%20Extensora%20Unilateral%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
+  "description": "Sentado, estenda um joelho por vez contraindo o quadríceps, controlando a descida — corrige assimetrias entre as pernas.",
+  "difficultyLevel": "INICIANTE"
+ },
+ {
+  "name": "Levantamento Terra Sumô",
+  "muscleGroup": "Posterior da Coxa",
+  "equipment": "Barra",
+  "mediaUrl": "https://www.youtube.com/results?search_query=Levantamento%20Terra%20Sum%C3%B4%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
+  "description": "Pés bem afastados e pontas para fora, pegada dentro das pernas, levante estendendo quadril e joelhos com coluna neutra.",
+  "difficultyLevel": "AVANCADO"
+ },
+ {
+  "name": "Afundo Caminhando com Barra",
+  "muscleGroup": "Quadríceps",
+  "equipment": "Barra",
+  "mediaUrl": "https://www.youtube.com/results?search_query=Afundo%20Caminhando%20com%20Barra%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
+  "description": "Barra nas costas, dê passos alternados descendo até 90 graus, mantendo o tronco ereto e o núcleo estável.",
+  "difficultyLevel": "AVANCADO"
+ },
+ {
+  "name": "Panturrilha em Pé com Halteres",
+  "muscleGroup": "Panturrilhas",
+  "equipment": "Halteres",
+  "mediaUrl": "https://www.youtube.com/results?search_query=Panturrilha%20em%20P%C3%A9%20com%20Halteres%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
+  "description": "Em pé segurando halteres, eleve os calcanhares o máximo possível contraindo a panturrilha e desça alongando.",
+  "difficultyLevel": "INICIANTE"
+ },
+ {
+  "name": "Agachamento com Peso Corporal",
+  "muscleGroup": "Quadríceps",
+  "equipment": "Peso Corporal",
+  "mediaUrl": "https://www.youtube.com/results?search_query=Agachamento%20com%20Peso%20Corporal%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
+  "description": "Pés na largura dos ombros, desça flexionando quadril e joelhos até as coxas paralelas e suba contraindo — sem carga externa.",
+  "difficultyLevel": "INICIANTE"
+ },
+ {
+  "name": "Cadeira Extensora Isométrica",
+  "muscleGroup": "Quadríceps",
+  "equipment": "Máquina",
+  "mediaUrl": "https://www.youtube.com/results?search_query=Cadeira%20Extensora%20Isom%C3%A9trica%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
+  "description": "Estenda os joelhos e mantenha a contração no topo por alguns segundos antes de descer, intensificando o estímulo no quadríceps.",
+  "difficultyLevel": "INTERMEDIARIO"
+ },
+ {
+  "name": "Passada Reversa com Halteres",
+  "muscleGroup": "Quadríceps",
+  "equipment": "Halteres",
+  "mediaUrl": "https://www.youtube.com/results?search_query=Passada%20Reversa%20com%20Halteres%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
+  "description": "Dê um passo para trás descendo até 90 graus nos dois joelhos e retorne — reduz o estresse sobre o joelho da frente.",
+  "difficultyLevel": "INTERMEDIARIO"
+ },
+ {
+  "name": "Desenvolvimento com Barra",
+  "muscleGroup": "Ombro",
+  "equipment": "Barra",
+  "mediaUrl": "https://www.youtube.com/results?search_query=Desenvolvimento%20com%20Barra%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
+  "description": "Sentado ou em pé, empurre a barra da altura do queixo até quase estender os cotovelos, desça controladamente.",
+  "difficultyLevel": "INTERMEDIARIO"
+ },
+ {
+  "name": "Desenvolvimento Arnold",
+  "muscleGroup": "Ombro",
+  "equipment": "Halteres",
+  "mediaUrl": "https://www.youtube.com/results?search_query=Desenvolvimento%20Arnold%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
+  "description": "Comece com as palmas voltadas para você e gire os halteres enquanto os empurra para cima, retorne invertendo o movimento.",
+  "difficultyLevel": "AVANCADO"
+ },
+ {
+  "name": "Elevação Lateral no Cabo",
+  "muscleGroup": "Ombro",
+  "equipment": "Cabo",
+  "mediaUrl": "https://www.youtube.com/results?search_query=Eleva%C3%A7%C3%A3o%20Lateral%20no%20Cabo%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
+  "description": "Em pé ao lado da polia baixa, eleve o braço lateralmente até a altura do ombro contraindo o deltoide medial, desça controlando.",
+  "difficultyLevel": "INTERMEDIARIO"
+ },
+ {
+  "name": "Crucifixo Inverso na Máquina",
+  "muscleGroup": "Ombro",
+  "equipment": "Máquina",
+  "mediaUrl": "https://www.youtube.com/results?search_query=Crucifixo%20Inverso%20na%20M%C3%A1quina%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
+  "description": "Sentado de frente para a máquina, abra os braços para trás contraindo o deltoide posterior, retorne controladamente.",
+  "difficultyLevel": "INICIANTE"
+ },
+ {
+  "name": "Crucifixo Inverso com Halteres",
+  "muscleGroup": "Ombro",
+  "equipment": "Halteres",
+  "mediaUrl": "https://www.youtube.com/results?search_query=Crucifixo%20Inverso%20com%20Halteres%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
+  "description": "Tronco inclinado à frente, abra os braços lateralmente contraindo o deltoide posterior, desça controlando o movimento.",
+  "difficultyLevel": "INICIANTE"
+ },
+ {
+  "name": "Desenvolvimento na Máquina",
+  "muscleGroup": "Ombro",
+  "equipment": "Máquina",
+  "mediaUrl": "https://www.youtube.com/results?search_query=Desenvolvimento%20na%20M%C3%A1quina%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
+  "description": "Sentado, empurre as pegadas para cima até quase estender os cotovelos e retorne controlando a fase negativa.",
+  "difficultyLevel": "INICIANTE"
+ },
+ {
+  "name": "Elevação Frontal com Barra",
+  "muscleGroup": "Ombro",
+  "equipment": "Barra",
+  "mediaUrl": "https://www.youtube.com/results?search_query=Eleva%C3%A7%C3%A3o%20Frontal%20com%20Barra%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
+  "description": "Em pé, eleve a barra à frente até a altura dos ombros sem balançar o tronco, desça controladamente.",
+  "difficultyLevel": "INICIANTE"
+ },
+ {
+  "name": "Elevação Lateral Curvado",
+  "muscleGroup": "Ombro",
+  "equipment": "Halteres",
+  "mediaUrl": "https://www.youtube.com/results?search_query=Eleva%C3%A7%C3%A3o%20Lateral%20Curvado%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
+  "description": "Tronco inclinado, eleve os halteres lateralmente contraindo o deltoide posterior, desça controlando o movimento.",
+  "difficultyLevel": "INTERMEDIARIO"
+ },
+ {
+  "name": "Desenvolvimento Militar em Pé",
+  "muscleGroup": "Ombro",
+  "equipment": "Barra",
+  "mediaUrl": "https://www.youtube.com/results?search_query=Desenvolvimento%20Militar%20em%20P%C3%A9%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
+  "description": "Em pé com o core firme, empurre a barra da altura do queixo até a extensão total, sem hiperestender a lombar.",
+  "difficultyLevel": "AVANCADO"
+ },
+ {
+  "name": "Remada Alta no Cabo",
+  "muscleGroup": "Ombro",
+  "equipment": "Cabo",
+  "mediaUrl": "https://www.youtube.com/results?search_query=Remada%20Alta%20no%20Cabo%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
+  "description": "Puxe a barra da polia baixa verticalmente até a altura do peito, cotovelos acima das mãos, desça controladamente.",
+  "difficultyLevel": "INTERMEDIARIO"
+ },
+ {
+  "name": "Elevação Lateral na Máquina",
+  "muscleGroup": "Ombro",
+  "equipment": "Máquina",
+  "mediaUrl": "https://www.youtube.com/results?search_query=Eleva%C3%A7%C3%A3o%20Lateral%20na%20M%C3%A1quina%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
+  "description": "Sentado na máquina, eleve os braços lateralmente contra a resistência até a altura dos ombros, retorne controladamente.",
+  "difficultyLevel": "INICIANTE"
+ },
+ {
+  "name": "Face Pull na Corda para Ombro",
+  "muscleGroup": "Ombro",
+  "equipment": "Cabo",
+  "mediaUrl": "https://www.youtube.com/results?search_query=Face%20Pull%20na%20Corda%20para%20Ombro%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
+  "description": "Puxe a corda na altura do rosto abrindo as mãos, contraindo o deltoide posterior e o trapézio, retorne controladamente.",
+  "difficultyLevel": "INICIANTE"
+ },
+ {
+  "name": "Desenvolvimento com Halteres Sentado",
+  "muscleGroup": "Ombro",
+  "equipment": "Halteres",
+  "mediaUrl": "https://www.youtube.com/results?search_query=Desenvolvimento%20com%20Halteres%20Sentado%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
+  "description": "Sentado com apoio nas costas, empurre os halteres para cima até quase encostá-los e desça até a altura dos ombros.",
+  "difficultyLevel": "INICIANTE"
+ },
+ {
+  "name": "Elevação em Y no Banco Inclinado",
+  "muscleGroup": "Ombro",
+  "equipment": "Halteres",
+  "mediaUrl": "https://www.youtube.com/results?search_query=Eleva%C3%A7%C3%A3o%20em%20Y%20no%20Banco%20Inclinado%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
+  "description": "Deitado de bruços no banco inclinado, eleve os halteres em formato de Y contraindo o trapézio inferior e o deltoide posterior.",
+  "difficultyLevel": "INTERMEDIARIO"
+ },
+ {
+  "name": "Encolhimento no Cabo",
+  "muscleGroup": "Ombro",
+  "equipment": "Cabo",
+  "mediaUrl": "https://www.youtube.com/results?search_query=Encolhimento%20no%20Cabo%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
+  "description": "Em pé segurando a barra da polia baixa, eleve os ombros contraindo o trapézio e desça controladamente.",
+  "difficultyLevel": "INICIANTE"
+ },
+ {
+  "name": "Rotação Externa com Halter",
+  "muscleGroup": "Ombro",
+  "equipment": "Halteres",
+  "mediaUrl": "https://www.youtube.com/results?search_query=Rota%C3%A7%C3%A3o%20Externa%20com%20Halter%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
+  "description": "Cotovelo fixo junto ao corpo, gire o antebraço para fora contra a resistência, fortalecendo o manguito rotador.",
+  "difficultyLevel": "INICIANTE"
+ },
+ {
+  "name": "Rosca Scott com Barra",
+  "muscleGroup": "Bíceps",
+  "equipment": "Barra",
+  "mediaUrl": "https://www.youtube.com/results?search_query=Rosca%20Scott%20com%20Barra%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
+  "description": "Braços apoiados no banco Scott, flexione os cotovelos elevando a barra e desça controlando o alongamento sem estender totalmente.",
+  "difficultyLevel": "INTERMEDIARIO"
+ },
+ {
+  "name": "Rosca Concentrada",
+  "muscleGroup": "Bíceps",
+  "equipment": "Halteres",
+  "mediaUrl": "https://www.youtube.com/results?search_query=Rosca%20Concentrada%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
+  "description": "Sentado, cotovelo apoiado na parte interna da coxa, flexione o braço elevando o halter com pico de contração, desça controladamente.",
+  "difficultyLevel": "INICIANTE"
+ },
+ {
+  "name": "Rosca no Cabo",
+  "muscleGroup": "Bíceps",
+  "equipment": "Cabo",
+  "mediaUrl": "https://www.youtube.com/results?search_query=Rosca%20no%20Cabo%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
+  "description": "Em pé de frente à polia baixa, flexione os cotovelos puxando a barra até o peito, desça controlando a tensão constante.",
+  "difficultyLevel": "INICIANTE"
+ },
+ {
+  "name": "Rosca Inversa com Barra",
+  "muscleGroup": "Bíceps",
+  "equipment": "Barra",
+  "mediaUrl": "https://www.youtube.com/results?search_query=Rosca%20Inversa%20com%20Barra%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
+  "description": "Pegada pronada, flexione os cotovelos elevando a barra, enfatizando o braquiorradial e o antebraço, desça controladamente.",
+  "difficultyLevel": "INTERMEDIARIO"
+ },
+ {
+  "name": "Rosca 21",
+  "muscleGroup": "Bíceps",
+  "equipment": "Barra",
+  "mediaUrl": "https://www.youtube.com/results?search_query=Rosca%2021%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
+  "description": "Execute 7 reps na metade inferior, 7 na metade superior e 7 completas, intensificando o estímulo em toda a amplitude.",
+  "difficultyLevel": "AVANCADO"
+ },
+ {
+  "name": "Rosca Spider",
+  "muscleGroup": "Bíceps",
+  "equipment": "Halteres",
+  "mediaUrl": "https://www.youtube.com/results?search_query=Rosca%20Spider%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
+  "description": "Peito apoiado em banco inclinado, braços pendendo, flexione os cotovelos elevando os halteres com pico de contração.",
+  "difficultyLevel": "INTERMEDIARIO"
+ },
+ {
+  "name": "Rosca Direta com Halteres",
+  "muscleGroup": "Bíceps",
+  "equipment": "Halteres",
+  "mediaUrl": "https://www.youtube.com/results?search_query=Rosca%20Direta%20com%20Halteres%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
+  "description": "Em pé, cotovelos fixos, flexione ambos os braços elevando os halteres até a altura dos ombros e desça controladamente.",
+  "difficultyLevel": "INICIANTE"
+ },
+ {
+  "name": "Rosca Scott na Máquina",
+  "muscleGroup": "Bíceps",
+  "equipment": "Máquina",
+  "mediaUrl": "https://www.youtube.com/results?search_query=Rosca%20Scott%20na%20M%C3%A1quina%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
+  "description": "Braços apoiados, flexione os cotovelos contra a resistência da máquina até o pico e desça controlando a fase negativa.",
+  "difficultyLevel": "INICIANTE"
+ },
+ {
+  "name": "Rosca Martelo no Cabo com Corda",
+  "muscleGroup": "Bíceps",
+  "equipment": "Cabo",
+  "mediaUrl": "https://www.youtube.com/results?search_query=Rosca%20Martelo%20no%20Cabo%20com%20Corda%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
+  "description": "Pegada neutra na corda, flexione os cotovelos puxando para cima contraindo bíceps e braquial, desça controladamente.",
+  "difficultyLevel": "INICIANTE"
+ },
+ {
+  "name": "Rosca Cross na Polia",
+  "muscleGroup": "Bíceps",
+  "equipment": "Cabo",
+  "mediaUrl": "https://www.youtube.com/results?search_query=Rosca%20Cross%20na%20Polia%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
+  "description": "Entre duas polias altas, flexione ambos os braços trazendo as alças em direção à cabeça, contraindo o pico do bíceps.",
+  "difficultyLevel": "INTERMEDIARIO"
+ },
+ {
+  "name": "Rosca Punho",
+  "muscleGroup": "Bíceps",
+  "equipment": "Halteres",
+  "mediaUrl": "https://www.youtube.com/results?search_query=Rosca%20Punho%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
+  "description": "Antebraços apoiados, flexione apenas os punhos elevando os halteres, fortalecendo os flexores do antebraço.",
+  "difficultyLevel": "INICIANTE"
+ },
+ {
+  "name": "Rosca Concentrada no Cabo",
+  "muscleGroup": "Bíceps",
+  "equipment": "Cabo",
+  "mediaUrl": "https://www.youtube.com/results?search_query=Rosca%20Concentrada%20no%20Cabo%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
+  "description": "Sentado com cotovelo apoiado na coxa, puxe a alça da polia baixa flexionando o cotovelo com tensão constante.",
+  "difficultyLevel": "INICIANTE"
+ },
+ {
+  "name": "Rosca Direta na Máquina Smith",
+  "muscleGroup": "Bíceps",
+  "equipment": "Máquina",
+  "mediaUrl": "https://www.youtube.com/results?search_query=Rosca%20Direta%20na%20M%C3%A1quina%20Smith%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
+  "description": "Segure a barra guiada com pegada supinada e flexione os cotovelos com trajetória fixa, desça controladamente.",
+  "difficultyLevel": "INICIANTE"
+ },
+ {
+  "name": "Tríceps Corda na Polia Alta",
+  "muscleGroup": "Tríceps",
+  "equipment": "Cabo",
+  "mediaUrl": "https://www.youtube.com/results?search_query=Tr%C3%ADceps%20Corda%20na%20Polia%20Alta%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
+  "description": "Cotovelos fixos, estenda os braços empurrando a corda para baixo e abrindo ao final, contraindo o tríceps, retorne controladamente.",
+  "difficultyLevel": "INICIANTE"
+ },
+ {
+  "name": "Tríceps Francês com Halteres",
+  "muscleGroup": "Tríceps",
+  "equipment": "Halteres",
+  "mediaUrl": "https://www.youtube.com/results?search_query=Tr%C3%ADceps%20Franc%C3%AAs%20com%20Halteres%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
+  "description": "Sentado, halter acima da cabeça com as duas mãos, flexione os cotovelos descendo atrás da cabeça e estenda contraindo o tríceps.",
+  "difficultyLevel": "INTERMEDIARIO"
+ },
+ {
+  "name": "Tríceps Coice com Halter",
+  "muscleGroup": "Tríceps",
+  "equipment": "Halteres",
+  "mediaUrl": "https://www.youtube.com/results?search_query=Tr%C3%ADceps%20Coice%20com%20Halter%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
+  "description": "Tronco inclinado, cotovelo fixo, estenda o antebraço para trás contraindo o tríceps, retorne controladamente.",
+  "difficultyLevel": "INICIANTE"
+ },
+ {
+  "name": "Mergulho nas Paralelas",
+  "muscleGroup": "Tríceps",
+  "equipment": "Peso Corporal",
+  "mediaUrl": "https://www.youtube.com/results?search_query=Mergulho%20nas%20Paralelas%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
+  "description": "Suspenso nas paralelas com tronco ereto, desça flexionando os cotovelos até 90 graus e empurre de volta contraindo o tríceps.",
+  "difficultyLevel": "AVANCADO"
+ },
+ {
+  "name": "Tríceps Testa com Halteres",
+  "muscleGroup": "Tríceps",
+  "equipment": "Halteres",
+  "mediaUrl": "https://www.youtube.com/results?search_query=Tr%C3%ADceps%20Testa%20com%20Halteres%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
+  "description": "Deitado, braços perpendiculares, flexione os cotovelos descendo os halteres em direção à testa e estenda contraindo o tríceps.",
+  "difficultyLevel": "INTERMEDIARIO"
+ },
+ {
+  "name": "Tríceps na Máquina",
+  "muscleGroup": "Tríceps",
+  "equipment": "Máquina",
+  "mediaUrl": "https://www.youtube.com/results?search_query=Tr%C3%ADceps%20na%20M%C3%A1quina%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
+  "description": "Sentado, empurre as pegadas para baixo estendendo os cotovelos contra a resistência e retorne controladamente.",
+  "difficultyLevel": "INICIANTE"
+ },
+ {
+  "name": "Tríceps Pulley Barra Reta",
+  "muscleGroup": "Tríceps",
+  "equipment": "Cabo",
+  "mediaUrl": "https://www.youtube.com/results?search_query=Tr%C3%ADceps%20Pulley%20Barra%20Reta%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
+  "description": "Cotovelos fixos ao corpo, empurre a barra para baixo estendendo os braços e retorne controlando a tensão.",
+  "difficultyLevel": "INICIANTE"
+ },
+ {
+  "name": "Tríceps Francês na Polia",
+  "muscleGroup": "Tríceps",
+  "equipment": "Cabo",
+  "mediaUrl": "https://www.youtube.com/results?search_query=Tr%C3%ADceps%20Franc%C3%AAs%20na%20Polia%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
+  "description": "De costas para a polia, estenda os braços acima da cabeça contra a corda, contraindo o tríceps na fase final.",
+  "difficultyLevel": "INTERMEDIARIO"
+ },
+ {
+  "name": "Tríceps Testa na Máquina Smith",
+  "muscleGroup": "Tríceps",
+  "equipment": "Máquina",
+  "mediaUrl": "https://www.youtube.com/results?search_query=Tr%C3%ADceps%20Testa%20na%20M%C3%A1quina%20Smith%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
+  "description": "Deitado sob a barra guiada, flexione os cotovelos descendo a barra à testa e estenda com trajetória segura.",
+  "difficultyLevel": "INTERMEDIARIO"
+ },
+ {
+  "name": "Extensão de Tríceps Unilateral no Cabo",
+  "muscleGroup": "Tríceps",
+  "equipment": "Cabo",
+  "mediaUrl": "https://www.youtube.com/results?search_query=Extens%C3%A3o%20de%20Tr%C3%ADceps%20Unilateral%20no%20Cabo%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
+  "description": "Com uma mão, empurre a alça da polia alta para baixo estendendo o cotovelo, corrigindo assimetrias entre os braços.",
+  "difficultyLevel": "INICIANTE"
+ },
+ {
+  "name": "Supino Fechado na Máquina Smith",
+  "muscleGroup": "Tríceps",
+  "equipment": "Máquina",
+  "mediaUrl": "https://www.youtube.com/results?search_query=Supino%20Fechado%20na%20M%C3%A1quina%20Smith%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
+  "description": "Deitado, pegada fechada na barra guiada, desça ao peito com cotovelos junto ao corpo e empurre enfatizando o tríceps.",
+  "difficultyLevel": "INTERMEDIARIO"
+ },
+ {
+  "name": "Tríceps Coice no Cabo",
+  "muscleGroup": "Tríceps",
+  "equipment": "Cabo",
+  "mediaUrl": "https://www.youtube.com/results?search_query=Tr%C3%ADceps%20Coice%20no%20Cabo%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
+  "description": "Tronco inclinado, cotovelo fixo, estenda o braço para trás puxando a alça da polia baixa, contraindo o tríceps.",
+  "difficultyLevel": "INICIANTE"
+ },
+ {
+  "name": "Flexão Fechada",
+  "muscleGroup": "Tríceps",
+  "equipment": "Peso Corporal",
+  "mediaUrl": "https://www.youtube.com/results?search_query=Flex%C3%A3o%20Fechada%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
+  "description": "Mãos na largura dos ombros ou mais próximas, desça mantendo os cotovelos junto ao corpo e empurre enfatizando o tríceps.",
+  "difficultyLevel": "INTERMEDIARIO"
+ },
+ {
+  "name": "Tríceps Banco com Peso",
+  "muscleGroup": "Tríceps",
+  "equipment": "Peso Corporal",
+  "mediaUrl": "https://www.youtube.com/results?search_query=Tr%C3%ADceps%20Banco%20com%20Peso%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
+  "description": "Mãos na borda do banco atrás do corpo e um disco sobre as coxas, desça flexionando os cotovelos e empurre de volta.",
+  "difficultyLevel": "INTERMEDIARIO"
+ },
+ {
+  "name": "Abdominal Infra no Solo",
+  "muscleGroup": "Abdômen",
+  "equipment": "Peso Corporal",
+  "mediaUrl": "https://www.youtube.com/results?search_query=Abdominal%20Infra%20no%20Solo%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
+  "description": "Deitado, eleve as pernas em direção ao teto contraindo a porção inferior do abdômen, desça controladamente sem tocar o chão.",
+  "difficultyLevel": "INICIANTE"
+ },
+ {
+  "name": "Prancha Lateral",
+  "muscleGroup": "Abdômen",
+  "equipment": "Peso Corporal",
+  "mediaUrl": "https://www.youtube.com/results?search_query=Prancha%20Lateral%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
+  "description": "Apoiado em um antebraço e na lateral dos pés, mantenha o corpo em linha reta contraindo o oblíquo pelo tempo determinado.",
+  "difficultyLevel": "INTERMEDIARIO"
+ },
+ {
+  "name": "Abdominal Bicicleta",
+  "muscleGroup": "Abdômen",
+  "equipment": "Peso Corporal",
+  "mediaUrl": "https://www.youtube.com/results?search_query=Abdominal%20Bicicleta%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
+  "description": "Deitado, alterne levar o cotovelo ao joelho oposto pedalando as pernas, contraindo os oblíquos de forma controlada.",
+  "difficultyLevel": "INTERMEDIARIO"
+ },
+ {
+  "name": "Abdominal na Máquina",
+  "muscleGroup": "Abdômen",
+  "equipment": "Máquina",
+  "mediaUrl": "https://www.youtube.com/results?search_query=Abdominal%20na%20M%C3%A1quina%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
+  "description": "Sentado na máquina, flexione o tronco à frente contra a resistência contraindo o abdômen, retorne controladamente.",
+  "difficultyLevel": "INICIANTE"
+ },
+ {
+  "name": "Elevação de Joelhos Suspenso",
+  "muscleGroup": "Abdômen",
+  "equipment": "Barra Fixa",
+  "mediaUrl": "https://www.youtube.com/results?search_query=Eleva%C3%A7%C3%A3o%20de%20Joelhos%20Suspenso%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
+  "description": "Pendurado na barra, eleve os joelhos em direção ao peito contraindo o abdômen inferior, desça sem balançar o corpo.",
+  "difficultyLevel": "INTERMEDIARIO"
+ },
+ {
+  "name": "Abdominal Canivete",
+  "muscleGroup": "Abdômen",
+  "equipment": "Peso Corporal",
+  "mediaUrl": "https://www.youtube.com/results?search_query=Abdominal%20Canivete%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
+  "description": "Deitado, eleve tronco e pernas simultaneamente tocando as mãos nos pés, retorne controladamente sem apoiar totalmente.",
+  "difficultyLevel": "AVANCADO"
+ },
+ {
+  "name": "Rotação Russa (Russian Twist)",
+  "muscleGroup": "Abdômen",
+  "equipment": "Peso Corporal",
+  "mediaUrl": "https://www.youtube.com/results?search_query=Rota%C3%A7%C3%A3o%20Russa%20(Russian%20Twist)%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
+  "description": "Sentado com tronco inclinado e pés elevados, gire o tronco de um lado ao outro contraindo os oblíquos.",
+  "difficultyLevel": "INTERMEDIARIO"
+ },
+ {
+  "name": "Prancha com Elevação de Braço",
+  "muscleGroup": "Abdômen",
+  "equipment": "Peso Corporal",
+  "mediaUrl": "https://www.youtube.com/results?search_query=Prancha%20com%20Eleva%C3%A7%C3%A3o%20de%20Bra%C3%A7o%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
+  "description": "Na posição de prancha, eleve um braço à frente mantendo o quadril estável, alternando os lados sem rotacionar o tronco.",
+  "difficultyLevel": "INTERMEDIARIO"
+ },
+ {
+  "name": "Abdominal Oblíquo no Solo",
+  "muscleGroup": "Abdômen",
+  "equipment": "Peso Corporal",
+  "mediaUrl": "https://www.youtube.com/results?search_query=Abdominal%20Obl%C3%ADquo%20no%20Solo%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
+  "description": "Deitado, leve o cotovelo em direção ao joelho oposto contraindo o oblíquo, retorne controladamente e alterne os lados.",
+  "difficultyLevel": "INICIANTE"
+ },
+ {
+  "name": "Abdominal na Roda (Ab Wheel)",
+  "muscleGroup": "Abdômen",
+  "equipment": "Peso Corporal",
+  "mediaUrl": "https://www.youtube.com/results?search_query=Abdominal%20na%20Roda%20(Ab%20Wheel)%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
+  "description": "Ajoelhado segurando a roda, role para frente estendendo o corpo e retorne contraindo o abdômen sem arquear a lombar.",
+  "difficultyLevel": "AVANCADO"
+ },
+ {
+  "name": "Prancha com Toque no Ombro",
+  "muscleGroup": "Abdômen",
+  "equipment": "Peso Corporal",
+  "mediaUrl": "https://www.youtube.com/results?search_query=Prancha%20com%20Toque%20no%20Ombro%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
+  "description": "Na prancha alta, toque o ombro oposto com uma mão de cada vez mantendo o quadril estável, contraindo o core.",
+  "difficultyLevel": "INTERMEDIARIO"
+ },
+ {
+  "name": "Abdominal Remador",
+  "muscleGroup": "Abdômen",
+  "equipment": "Peso Corporal",
+  "mediaUrl": "https://www.youtube.com/results?search_query=Abdominal%20Remador%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
+  "description": "Deitado, eleve tronco e joelhos ao mesmo tempo como um remador, contraindo o abdômen, e retorne controladamente.",
+  "difficultyLevel": "INTERMEDIARIO"
+ },
+ {
+  "name": "Elevação de Pernas no Banco",
+  "muscleGroup": "Abdômen",
+  "equipment": "Peso Corporal",
+  "mediaUrl": "https://www.youtube.com/results?search_query=Eleva%C3%A7%C3%A3o%20de%20Pernas%20no%20Banco%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
+  "description": "Deitado no banco segurando a borda atrás da cabeça, eleve as pernas estendidas até a vertical e desça controladamente.",
+  "difficultyLevel": "INICIANTE"
+ },
+ {
+  "name": "Abdominal Canivete no Cabo",
+  "muscleGroup": "Abdômen",
+  "equipment": "Cabo",
+  "mediaUrl": "https://www.youtube.com/results?search_query=Abdominal%20Canivete%20no%20Cabo%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
+  "description": "Ajoelhado de frente à polia alta com a corda atrás da cabeça, flexione o tronco em direção ao chão contraindo o abdômen.",
+  "difficultyLevel": "INTERMEDIARIO"
+ },
+ {
+  "name": "Prancha com Deslize",
+  "muscleGroup": "Abdômen",
+  "equipment": "Peso Corporal",
+  "mediaUrl": "https://www.youtube.com/results?search_query=Prancha%20com%20Deslize%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
+  "description": "Na prancha nos antebraços, deslize o corpo para frente e para trás mantendo a linha reta e o abdômen contraído.",
+  "difficultyLevel": "AVANCADO"
+ },
+ {
+  "name": "Abdominal Declinado",
+  "muscleGroup": "Abdômen",
+  "equipment": "Peso Corporal",
+  "mediaUrl": "https://www.youtube.com/results?search_query=Abdominal%20Declinado%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
+  "description": "No banco declinado com os pés presos, eleve o tronco contraindo o abdômen e desça controladamente sem relaxar totalmente.",
+  "difficultyLevel": "INTERMEDIARIO"
+ },
+ {
+  "name": "Prancha com Elevação de Perna",
+  "muscleGroup": "Abdômen",
+  "equipment": "Peso Corporal",
+  "mediaUrl": "https://www.youtube.com/results?search_query=Prancha%20com%20Eleva%C3%A7%C3%A3o%20de%20Perna%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
+  "description": "Na prancha, eleve uma perna estendida mantendo o quadril estável, alternando os lados sem rotacionar o tronco.",
+  "difficultyLevel": "INTERMEDIARIO"
+ },
+ {
+  "name": "Alongamento de Isquiotibiais em Pé",
+  "muscleGroup": "Alongamento",
+  "equipment": "Nenhum",
+  "mediaUrl": "https://www.youtube.com/results?search_query=Alongamento%20de%20Isquiotibiais%20em%20P%C3%A9%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
+  "description": "Em pé, incline o tronco à frente com a perna apoiada num banco baixo e o joelho estendido, sentindo o alongamento atrás da coxa sem forçar a lombar.",
+  "difficultyLevel": "INICIANTE"
+ },
+ {
+  "name": "Alongamento de Quadríceps em Pé",
+  "muscleGroup": "Alongamento",
+  "equipment": "Nenhum",
+  "mediaUrl": "https://www.youtube.com/results?search_query=Alongamento%20de%20Quadr%C3%ADceps%20em%20P%C3%A9%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
+  "description": "Em pé com apoio, segure o tornozelo e puxe o calcanhar em direção ao glúteo, mantendo os joelhos alinhados e o quadril neutro.",
+  "difficultyLevel": "INICIANTE"
+ },
+ {
+  "name": "Alongamento de Panturrilha na Parede",
+  "muscleGroup": "Alongamento",
+  "equipment": "Nenhum",
+  "mediaUrl": "https://www.youtube.com/results?search_query=Alongamento%20de%20Panturrilha%20na%20Parede%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
+  "description": "De frente pra parede, apoie as mãos e leve uma perna pra trás com o calcanhar no chão, inclinando o corpo à frente até sentir o alongamento na panturrilha.",
+  "difficultyLevel": "INICIANTE"
+ },
+ {
+  "name": "Alongamento de Peitoral no Batente da Porta",
+  "muscleGroup": "Alongamento",
+  "equipment": "Nenhum",
+  "mediaUrl": "https://www.youtube.com/results?search_query=Alongamento%20de%20Peitoral%20no%20Batente%20da%20Porta%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
+  "description": "Apoie o antebraço no batente da porta com o cotovelo a 90 graus e incline o corpo levemente à frente, alongando o peitoral do lado apoiado.",
+  "difficultyLevel": "INICIANTE"
+ },
+ {
+  "name": "Alongamento de Ombro Cruzado",
+  "muscleGroup": "Alongamento",
+  "equipment": "Nenhum",
+  "mediaUrl": "https://www.youtube.com/results?search_query=Alongamento%20de%20Ombro%20Cruzado%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
+  "description": "Cruze um braço estendido à frente do corpo e use o outro braço pra puxá-lo levemente contra o peito, alongando a parte de trás do ombro.",
+  "difficultyLevel": "INICIANTE"
+ },
+ {
+  "name": "Alongamento de Tríceps Overhead",
+  "muscleGroup": "Alongamento",
+  "equipment": "Nenhum",
+  "mediaUrl": "https://www.youtube.com/results?search_query=Alongamento%20de%20Tr%C3%ADceps%20Overhead%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
+  "description": "Com um braço elevado e o cotovelo flexionado atrás da cabeça, use a outra mão pra empurrar levemente o cotovelo, alongando o tríceps.",
+  "difficultyLevel": "INICIANTE"
+ },
+ {
+  "name": "Alongamento Borboleta (Adutores)",
+  "muscleGroup": "Alongamento",
+  "equipment": "Nenhum",
+  "mediaUrl": "https://www.youtube.com/results?search_query=Alongamento%20Borboleta%20Adutores%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
+  "description": "Sentado com as solas dos pés unidas e os joelhos abertos, incline levemente o tronco à frente pressionando os joelhos em direção ao chão.",
+  "difficultyLevel": "INICIANTE"
+ },
+ {
+  "name": "Gato-Camelo (Mobilidade Lombar)",
+  "muscleGroup": "Alongamento",
+  "equipment": "Nenhum",
+  "mediaUrl": "https://www.youtube.com/results?search_query=Gato-Camelo%20Mobilidade%20Lombar%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
+  "description": "Em quatro apoios, alterne entre arquear a coluna pra cima (gato) e deixá-la afundar pra baixo (camelo), num movimento lento e controlado.",
+  "difficultyLevel": "INICIANTE"
+ },
+ {
+  "name": "Alongamento do Piriforme Sentado",
+  "muscleGroup": "Alongamento",
+  "equipment": "Nenhum",
+  "mediaUrl": "https://www.youtube.com/results?search_query=Alongamento%20do%20Piriforme%20Sentado%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
+  "description": "Sentado, cruze um tornozelo sobre o joelho oposto e incline o tronco à frente, sentindo o alongamento na lateral do glúteo.",
+  "difficultyLevel": "INICIANTE"
+ },
+ {
+  "name": "Alongamento de Flexores do Quadril (Meia-Ajoelhado)",
+  "muscleGroup": "Alongamento",
+  "equipment": "Nenhum",
+  "mediaUrl": "https://www.youtube.com/results?search_query=Alongamento%20de%20Flexores%20do%20Quadril%20Meia-Ajoelhado%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
+  "description": "Em posição de meio-ajoelhado, empurre o quadril levemente à frente mantendo o tronco ereto, alongando a frente do quadril da perna de trás.",
+  "difficultyLevel": "INICIANTE"
+ },
+ {
+  "name": "Corrida na Esteira",
+  "muscleGroup": "Cardio",
+  "equipment": "Esteira",
+  "mediaUrl": "https://www.youtube.com/results?search_query=Corrida%20na%20Esteira%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
+  "description": "Mantenha postura ereta e passada natural, ajustando velocidade/inclinação gradualmente conforme o condicionamento.",
+  "difficultyLevel": "INICIANTE"
+ },
+ {
+  "name": "Bicicleta Ergométrica",
+  "muscleGroup": "Cardio",
+  "equipment": "Bicicleta Ergométrica",
+  "mediaUrl": "https://www.youtube.com/results?search_query=Bicicleta%20Erg%C3%A9metrica%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
+  "description": "Ajuste o banco na altura correta e pedale em ritmo constante, mantendo o core levemente contraído e as costas relaxadas.",
+  "difficultyLevel": "INICIANTE"
+ },
+ {
+  "name": "Elíptico",
+  "muscleGroup": "Cardio",
+  "equipment": "Elíptico",
+  "mediaUrl": "https://www.youtube.com/results?search_query=El%C3%ADptico%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
+  "description": "Mantenha o movimento fluido de pernas e braços simultaneamente, com postura ereta e passos amplos.",
+  "difficultyLevel": "INICIANTE"
+ },
+ {
+  "name": "Remo Ergométrico",
+  "muscleGroup": "Cardio",
+  "equipment": "Remo Ergométrico",
+  "mediaUrl": "https://www.youtube.com/results?search_query=Remo%20Erg%C3%A9metrico%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
+  "description": "Empurre com as pernas primeiro, depois incline o tronco e puxe os braços, revertendo a sequência na volta — pernas, tronco, braços.",
+  "difficultyLevel": "INTERMEDIARIO"
+ },
+ {
+  "name": "Pular Corda",
+  "muscleGroup": "Cardio",
+  "equipment": "Corda",
+  "mediaUrl": "https://www.youtube.com/results?search_query=Pular%20Corda%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
+  "description": "Salte com os pés juntos e joelhos levemente flexionados, girando a corda com os punhos, não os braços inteiros.",
+  "difficultyLevel": "INTERMEDIARIO"
+ },
+ {
+  "name": "Escada Ergométrica (StepMill)",
+  "muscleGroup": "Cardio",
+  "equipment": "Escada Ergométrica",
+  "mediaUrl": "https://www.youtube.com/results?search_query=Escada%20Erg%C3%A9metrica%20StepMill%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
+  "description": "Suba os degraus em ritmo constante mantendo o tronco ereto, evitando se apoiar demais nos corrimãos.",
+  "difficultyLevel": "INTERMEDIARIO"
+ },
+ {
+  "name": "Burpees",
+  "muscleGroup": "Cardio",
+  "equipment": "Peso Corporal",
+  "mediaUrl": "https://www.youtube.com/results?search_query=Burpees%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
+  "description": "Agache, apoie as mãos no chão, jogue as pernas pra trás em prancha, retorne e salte com os braços estendidos acima da cabeça.",
+  "difficultyLevel": "AVANCADO"
+ },
+ {
+  "name": "Mountain Climbers",
+  "muscleGroup": "Cardio",
+  "equipment": "Peso Corporal",
+  "mediaUrl": "https://www.youtube.com/results?search_query=Mountain%20Climbers%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
+  "description": "Em posição de prancha, alterne trazendo os joelhos em direção ao peito rapidamente, mantendo o quadril estável.",
+  "difficultyLevel": "INTERMEDIARIO"
+ },
+ {
+  "name": "Corrida Intervalada (Sprints)",
+  "muscleGroup": "Cardio",
+  "equipment": "Esteira",
+  "mediaUrl": "https://www.youtube.com/results?search_query=Corrida%20Intervalada%20Sprints%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
+  "description": "Alterne tiros curtos em alta intensidade com períodos de recuperação em ritmo leve, num formato de intervalos.",
+  "difficultyLevel": "AVANCADO"
+ },
+ {
+  "name": "Polichinelo (Jumping Jacks)",
+  "muscleGroup": "Cardio",
+  "equipment": "Peso Corporal",
+  "mediaUrl": "https://www.youtube.com/results?search_query=Polichinelo%20Jumping%20Jacks%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
+  "description": "Salte abrindo pernas e braços simultaneamente, retornando à posição inicial num ritmo constante.",
+  "difficultyLevel": "INICIANTE"
+ },
+ {
+  "name": "Dead Bug (Inseto Morto)",
+  "muscleGroup": "Abdômen",
+  "equipment": "Peso Corporal",
+  "mediaUrl": "https://www.youtube.com/results?search_query=Dead%20Bug%20Inseto%20Morto%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
+  "description": "Deitado, braços e pernas para cima a 90 graus, estenda um braço e a perna oposta simultaneamente sem deixar a lombar descolar do chão, alternando os lados.",
+  "difficultyLevel": "INICIANTE"
+ },
+ {
+  "name": "Prancha com Rotação",
+  "muscleGroup": "Abdômen",
+  "equipment": "Peso Corporal",
+  "mediaUrl": "https://www.youtube.com/results?search_query=Prancha%20com%20Rota%C3%A7%C3%A3o%20execu%C3%A7%C3%A3o%20t%C3%A9cnica",
+  "description": "Na prancha lateral com um braço estendido para cima, gire o tronco levando o braço por baixo do corpo e retorne, alternando os lados.",
+  "difficultyLevel": "INTERMEDIARIO"
+ },
+ {
+  "name": "Flexão Apoiada na Parede",
+  "muscleGroup": "Peito",
+  "equipment": "Peso Corporal",
+  "difficultyLevel": "INICIANTE",
+  "description": "Apoie as mãos na parede na altura dos ombros, afaste os pés e flexione os cotovelos aproximando o peito da parede antes de empurrar de volta, controlando o movimento.",
+  "mediaUrl": "https://www.youtube.com/watch?v=msMPUMk8Z7U"
+ },
+ {
+  "name": "Flexão Arqueiro",
+  "muscleGroup": "Peito",
+  "equipment": "Peso Corporal",
+  "difficultyLevel": "INTERMEDIARIO",
+  "description": "Com as mãos bem mais afastadas que os ombros, desça o corpo deslocando o peso para um lado enquanto o braço oposto permanece estendido, alternando os lados a cada repetição.",
+  "mediaUrl": "https://www.youtube.com/watch?v=qA0lFPPq6UE"
+ },
+ {
+  "name": "Supino Reto com Mochila",
+  "muscleGroup": "Peito",
+  "equipment": "Itens Domésticos",
+  "difficultyLevel": "INTERMEDIARIO",
+  "description": "Deitado no chão com uma mochila carregada de livros ou garrafas segura sobre o peito, empurre-a para cima estendendo os braços e desça de forma controlada até quase tocar o peito.",
+  "mediaUrl": "https://www.youtube.com/watch?v=UZ8apI02uCA"
+ },
+ {
+  "name": "Flexão com Palmas",
+  "muscleGroup": "Peito",
+  "equipment": "Peso Corporal",
+  "difficultyLevel": "AVANCADO",
+  "description": "Desça em uma flexão padrão e impulsione o corpo com força suficiente para tirar as mãos do chão, batendo palmas no ar antes de amortecer a queda com os braços.",
+  "mediaUrl": "https://www.youtube.com/watch?v=IpwAHyea3lQ"
+ },
+ {
+  "name": "Remada com Toalha na Porta",
+  "muscleGroup": "Costas",
+  "equipment": "Itens Domésticos",
+  "difficultyLevel": "INICIANTE",
+  "description": "Enrole uma toalha na maçaneta ou batente firme da porta, incline o corpo para trás com os braços estendidos e puxe o tronco em direção à porta contraindo as escápulas.",
+  "mediaUrl": "https://www.youtube.com/watch?v=IYe_Emg0DJg"
+ },
+ {
+  "name": "Remada Unilateral com Mochila",
+  "muscleGroup": "Costas",
+  "equipment": "Itens Domésticos",
+  "difficultyLevel": "INTERMEDIARIO",
+  "description": "Apoie um joelho e uma mão em uma cadeira ou banco, segure a mochila carregada com a mão livre e puxe o cotovelo para trás junto ao tronco, contraindo as costas no topo.",
+  "mediaUrl": "https://www.youtube.com/watch?v=M_aNTNw--8c"
+ },
+ {
+  "name": "Superman no Solo",
+  "muscleGroup": "Costas",
+  "equipment": "Peso Corporal",
+  "difficultyLevel": "INICIANTE",
+  "description": "Deitado de bruços com braços e pernas estendidos, eleve simultaneamente braços, peito e pernas do chão contraindo a lombar e as costas, segurando um instante no topo.",
+  "mediaUrl": "https://www.youtube.com/watch?v=4mY7IewWVJ8"
+ },
+ {
+  "name": "Remada Invertida na Mesa",
+  "muscleGroup": "Costas",
+  "equipment": "Itens Domésticos",
+  "difficultyLevel": "INTERMEDIARIO",
+  "description": "Deite-se sob uma mesa firme e resistente, segure a borda com as mãos e puxe o peito em direção à mesa mantendo o corpo reto, depois desça controladamente.",
+  "mediaUrl": "https://www.youtube.com/watch?v=4-2JmXK9rtk"
+ },
+ {
+  "name": "Flexão Pike",
+  "muscleGroup": "Ombro",
+  "equipment": "Peso Corporal",
+  "difficultyLevel": "INTERMEDIARIO",
+  "description": "Em posição de flexão com os quadris elevados formando um V invertido, flexione os cotovelos levando o topo da cabeça em direção ao chão e empurre de volta focando o ombro.",
+  "mediaUrl": "https://www.youtube.com/watch?v=BIW_B9JU8gk"
+ },
+ {
+  "name": "Elevação Lateral com Mochila",
+  "muscleGroup": "Ombro",
+  "equipment": "Itens Domésticos",
+  "difficultyLevel": "INICIANTE",
+  "description": "Em pé, segure a mochila com peso leve em uma das mãos e eleve o braço lateralmente até a altura do ombro, com leve flexão no cotovelo, controlando a descida.",
+  "mediaUrl": "https://www.youtube.com/watch?v=ldwVIgUeAVQ"
+ },
+ {
+  "name": "Elevação Frontal com Mochila",
+  "muscleGroup": "Ombro",
+  "equipment": "Itens Domésticos",
+  "difficultyLevel": "INICIANTE",
+  "description": "Em pé com os pés na largura dos ombros, segure a mochila com as duas mãos e eleve-a à frente do corpo até a altura dos ombros, sem passar essa linha, e desça controladamente.",
+  "mediaUrl": "https://www.youtube.com/watch?v=_n8dsiWSVUU"
+ },
+ {
+  "name": "Apoio de Mãos na Parede",
+  "muscleGroup": "Ombro",
+  "equipment": "Peso Corporal",
+  "difficultyLevel": "AVANCADO",
+  "description": "De costas para a parede, apoie as mãos no chão e caminhe os pés pela parede até ficar quase na vertical, sustentando o peso do corpo nos ombros e braços estendidos.",
+  "mediaUrl": "https://www.youtube.com/watch?v=KKTWN15CghE"
+ },
+ {
+  "name": "Rosca Direta com Mochila",
+  "muscleGroup": "Bíceps",
+  "equipment": "Itens Domésticos",
+  "difficultyLevel": "INICIANTE",
+  "description": "Segure as alças de uma mochila carregada com livros, cotovelos fixos ao lado do corpo, flexione os braços trazendo o peso até os ombros e desça controladamente.",
+  "mediaUrl": "https://www.youtube.com/watch?v=LF3xohftl9k"
+ },
+ {
+  "name": "Rosca Unilateral com Mochila",
+  "muscleGroup": "Bíceps",
+  "equipment": "Itens Domésticos",
+  "difficultyLevel": "INICIANTE",
+  "description": "Segure a mochila com um braço, cotovelo colado ao tronco, flexione até a altura do ombro contraindo o bíceps e retorne devagar antes de trocar de lado.",
+  "mediaUrl": "https://www.youtube.com/watch?v=Qz4JWzkyJek"
+ },
+ {
+  "name": "Rosca Bíceps com Toalha",
+  "muscleGroup": "Bíceps",
+  "equipment": "Itens Domésticos",
+  "difficultyLevel": "INICIANTE",
+  "description": "Sentado, prenda a toalha sob o pé e puxe as pontas em direção ao ombro fazendo força isométrica contra a resistência do próprio pé.",
+  "mediaUrl": "https://www.youtube.com/watch?v=UB3RsYI7-RI"
+ },
+ {
+  "name": "Rosca Martelo com Mochila",
+  "muscleGroup": "Bíceps",
+  "equipment": "Itens Domésticos",
+  "difficultyLevel": "INTERMEDIARIO",
+  "description": "Segure a mochila na posição neutra (como um martelo), cotovelos fixos, flexione até a altura do peito e desça controladamente sem balançar o tronco.",
+  "mediaUrl": "https://www.youtube.com/watch?v=8wtLdOhwvtQ"
+ },
+ {
+  "name": "Tríceps Mergulho na Cadeira",
+  "muscleGroup": "Tríceps",
+  "equipment": "Itens Domésticos",
+  "difficultyLevel": "INTERMEDIARIO",
+  "description": "Apoie as mãos na borda de uma cadeira firme, pernas estendidas à frente, desça o quadril flexionando os cotovelos a 90 graus e empurre de volta contraindo o tríceps.",
+  "mediaUrl": "https://www.youtube.com/watch?v=5SKV9hy5Rpk"
+ },
+ {
+  "name": "Tríceps Francês com Mochila",
+  "muscleGroup": "Tríceps",
+  "equipment": "Itens Domésticos",
+  "difficultyLevel": "INTERMEDIARIO",
+  "description": "Segure a mochila com as duas mãos atrás da cabeça, cotovelos apontados para cima e próximos, estenda os braços elevando o peso e desça controladamente sem abrir os cotovelos.",
+  "mediaUrl": "https://www.youtube.com/watch?v=2pGdWqtSUbk"
+ },
+ {
+  "name": "Elevação Pélvica no Solo",
+  "muscleGroup": "Glúteos",
+  "equipment": "Peso Corporal",
+  "difficultyLevel": "INICIANTE",
+  "description": "Deite-se com os joelhos flexionados e pés apoiados no chão, contraia o abdômen e eleve o quadril até formar uma linha reta dos ombros aos joelhos, apertando os glúteos no topo.",
+  "mediaUrl": "https://www.youtube.com/watch?v=kvmT_ZlgVI0"
+ },
+ {
+  "name": "Elevação Pélvica Unilateral",
+  "muscleGroup": "Glúteos",
+  "equipment": "Peso Corporal",
+  "difficultyLevel": "INTERMEDIARIO",
+  "description": "Deitado de costas com um pé apoiado no chão e a outra perna estendida, eleve o quadril apoiando-se apenas na perna de base, contraindo o glúteo no topo do movimento.",
+  "mediaUrl": "https://www.youtube.com/watch?v=IW-xVGlldho"
+ },
+ {
+  "name": "Coice de Glúteo em Quatro Apoios",
+  "muscleGroup": "Glúteos",
+  "equipment": "Peso Corporal",
+  "difficultyLevel": "INICIANTE",
+  "description": "Apoie-se em quatro apoios (mãos e joelhos), mantenha o joelho flexionado a 90 graus e empurre o pé em direção ao teto usando apenas a contração do glúteo, sem arquear a lombar.",
+  "mediaUrl": "https://www.youtube.com/watch?v=rQ-yA6tCH_w"
+ },
+ {
+  "name": "Ponte de Glúteo Unilateral Dinâmica",
+  "muscleGroup": "Glúteos",
+  "equipment": "Peso Corporal",
+  "difficultyLevel": "INTERMEDIARIO",
+  "description": "Com um pé apoiado e a outra perna elevada e estendida, suba e desça o quadril em ritmo controlado, mantendo o core firme para evitar rotação do tronco.",
+  "mediaUrl": "https://www.youtube.com/watch?v=pX39RDCCxok"
+ },
+ {
+  "name": "Hip Thrust com Barra",
+  "muscleGroup": "Glúteos",
+  "equipment": "Barra",
+  "difficultyLevel": "INTERMEDIARIO",
+  "description": "Com as escápulas apoiadas no banco e a barra acolchoada sobre o quadril, empurre o quadril para cima até a extensão completa, contraindo forte os glúteos no topo antes de descer com controle.",
+  "mediaUrl": "https://www.youtube.com/watch?v=3mnHo-F-U4Q"
+ },
+ {
+  "name": "Glúteo Cabo Joelho Estendido",
+  "muscleGroup": "Glúteos",
+  "equipment": "Cabo",
+  "difficultyLevel": "INTERMEDIARIO",
+  "description": "Preso o cabo no tornozelo e apoiado na estrutura da polia, estenda o quadril levando a perna para trás com o joelho estendido, contraindo o glúteo no fim do movimento sem arquear a lombar.",
+  "mediaUrl": "https://www.youtube.com/watch?v=wQRODgAmF4k"
+ },
+ {
+  "name": "Pull-Through no Cabo",
+  "muscleGroup": "Glúteos",
+  "equipment": "Cabo",
+  "difficultyLevel": "INTERMEDIARIO",
+  "description": "De costas para a polia baixa com a corda entre as pernas, flexione o quadril levando-o para trás e retorne empurrando o chão e contraindo os glúteos até ficar em pé.",
+  "mediaUrl": "https://www.youtube.com/watch?v=oTGgQ1Nq8J0"
+ },
+ {
+  "name": "Step Up Lateral com Halteres",
+  "muscleGroup": "Glúteos",
+  "equipment": "Halteres",
+  "difficultyLevel": "INTERMEDIARIO",
+  "description": "Com um halter em cada mão ao lado do corpo, suba lateralmente sobre o step empurrando pelo calcanhar da perna de apoio, sem deixar o joelho projetar para dentro.",
+  "mediaUrl": "https://www.youtube.com/watch?v=K-74LaOH5Cg"
+ },
+ {
+  "name": "Exercício Ostra (Clamshell)",
+  "muscleGroup": "Adutores e Abdutores",
+  "equipment": "Peso Corporal",
+  "difficultyLevel": "INICIANTE",
+  "description": "Deite-se de lado com os joelhos flexionados e os pés unidos, abra o joelho de cima como uma concha sem girar o quadril para trás, focando na contração do glúteo médio.",
+  "mediaUrl": "https://www.youtube.com/watch?v=-BVUHNJd75U"
+ },
+ {
+  "name": "Abdução de Quadril em Pé",
+  "muscleGroup": "Adutores e Abdutores",
+  "equipment": "Peso Corporal",
+  "difficultyLevel": "INICIANTE",
+  "description": "Em pé e com apoio em uma parede ou cadeira, eleve a perna lateralmente mantendo o tronco ereto e o pé neutro, sem inclinar o corpo para compensar o movimento.",
+  "mediaUrl": "https://www.youtube.com/watch?v=9-XUx041ioE"
+ },
+ {
+  "name": "Agachamento Cossaco",
+  "muscleGroup": "Adutores e Abdutores",
+  "equipment": "Peso Corporal",
+  "difficultyLevel": "INTERMEDIARIO",
+  "description": "Com os pés bem afastados, desloque o peso do corpo para um lado flexionando esse joelho enquanto a perna oposta permanece estendida com o pé apoiado, alongando o adutor da perna estendida.",
+  "mediaUrl": "https://www.youtube.com/watch?v=rMkDxOA3d0A"
+ },
+ {
+  "name": "Afundo Cruzado Alternado",
+  "muscleGroup": "Adutores e Abdutores",
+  "equipment": "Peso Corporal",
+  "difficultyLevel": "INTERMEDIARIO",
+  "description": "Dê um passo para trás cruzando a perna atrás da perna de apoio, como uma reverência, flexionando ambos os joelhos até quase tocar o joelho de trás no chão, alternando os lados.",
+  "mediaUrl": "https://www.youtube.com/watch?v=OGKVPW0aoWs"
+ },
+ {
+  "name": "Adução de Quadril Deitado",
+  "muscleGroup": "Adutores e Abdutores",
+  "equipment": "Peso Corporal",
+  "difficultyLevel": "INICIANTE",
+  "description": "Deitado de lado com a perna de baixo estendida e a de cima cruzada à frente apoiada no chão, eleve a perna de baixo lentamente em direção ao teto trabalhando o adutor da coxa.",
+  "mediaUrl": "https://www.youtube.com/watch?v=U_5-OcAu4Ro"
+ },
+ {
+  "name": "Abdução de Quadril no Cabo em Pé",
+  "muscleGroup": "Adutores e Abdutores",
+  "equipment": "Cabo",
+  "difficultyLevel": "INTERMEDIARIO",
+  "description": "Preso o cabo no tornozelo e de lado para a torre da polia, afaste a perna lateralmente mantendo o tronco ereto e o joelho estendido, sem inclinar o quadril para compensar.",
+  "mediaUrl": "https://www.youtube.com/watch?v=vBhkIaqW08Y"
+ },
+ {
+  "name": "Adução de Quadril no Cabo",
+  "muscleGroup": "Adutores e Abdutores",
+  "equipment": "Cabo",
+  "difficultyLevel": "INTERMEDIARIO",
+  "description": "Com o cabo preso no tornozelo e a perna de trabalho cruzando à frente da perna de apoio, puxe a perna para dentro contraindo o adutor, controlando o retorno até a posição inicial.",
+  "mediaUrl": "https://www.youtube.com/watch?v=5AONqQzcRYA"
+ },
+ {
+  "name": "Abdução de Quadril no Banco 45°",
+  "muscleGroup": "Adutores e Abdutores",
+  "equipment": "Cabo",
+  "difficultyLevel": "INTERMEDIARIO",
+  "description": "Deitado de lado sobre um banco a 45 graus com o cabo preso no tornozelo, eleve a perna de cima lateralmente contraindo o abdutor e evitando balançar o quadril para trás.",
+  "mediaUrl": "https://www.youtube.com/watch?v=F1UfOdTNCvY"
+ },
+ {
+  "name": "Agachamento Sumô no Smith",
+  "muscleGroup": "Adutores e Abdutores",
+  "equipment": "Máquina",
+  "difficultyLevel": "INTERMEDIARIO",
+  "description": "Com os pés bem afastados e as pontas viradas para fora sob a barra guiada, desça flexionando os joelhos até as coxas ficarem paralelas ao chão, empurrando os calcanhares e contraindo os adutores na subida.",
+  "mediaUrl": "https://www.youtube.com/watch?v=3I8MbMwaBAI"
+ },
+ {
+  "name": "Abdutora em Pé na Máquina",
+  "muscleGroup": "Adutores e Abdutores",
+  "equipment": "Máquina",
+  "difficultyLevel": "INICIANTE",
+  "description": "Em pé na máquina de abdução com a almofada apoiada acima do joelho e a coluna neutra, afaste a perna lateralmente contra a resistência e retorne devagar sem deixar o tronco balançar.",
+  "mediaUrl": "https://www.youtube.com/watch?v=g8Ro7Viqwb0"
+ },
+ {
+  "name": "Agachamento Isométrico na Parede",
+  "muscleGroup": "Quadríceps",
+  "equipment": "Itens Domésticos",
+  "difficultyLevel": "INICIANTE",
+  "description": "Apoie as costas em uma parede e deslize para baixo até os joelhos formarem 90 graus, mantendo essa posição isométrica pelo tempo determinado sem tirar as costas da parede.",
+  "mediaUrl": "https://www.youtube.com/watch?v=KBMTKkkPsPo"
+ },
+ {
+  "name": "Subida no Banco (Step Up)",
+  "muscleGroup": "Quadríceps",
+  "equipment": "Itens Domésticos",
+  "difficultyLevel": "INTERMEDIARIO",
+  "description": "Suba em um banco ou degrau estável usando apenas a força da perna da frente, sem impulsionar com a perna de trás, e desça controladamente.",
+  "mediaUrl": "https://www.youtube.com/watch?v=9LBlAgBjDKM"
+ },
+ {
+  "name": "Stiff Unilateral com Peso Corporal",
+  "muscleGroup": "Posterior da Coxa",
+  "equipment": "Peso Corporal",
+  "difficultyLevel": "INTERMEDIARIO",
+  "description": "Em pé sobre uma perna, incline o tronco para frente enquanto estende a outra perna para trás, mantendo a coluna neutra, até sentir o alongamento no posterior de coxa.",
+  "mediaUrl": "https://www.youtube.com/watch?v=kp2MyAjGpbM"
+ },
+ {
+  "name": "Stiff Unilateral com Apoio para Equilíbrio",
+  "muscleGroup": "Posterior da Coxa",
+  "equipment": "Itens Domésticos",
+  "difficultyLevel": "INICIANTE",
+  "description": "Segure-se levemente em uma cadeira ou parede para apoio e execute o stiff unilateral com controle, priorizando a fase excêntrica para maior ativação do isquiotibial.",
+  "mediaUrl": "https://www.youtube.com/watch?v=hfk08bJajWY"
+ },
+ {
+  "name": "Panturrilha em Pé no Degrau",
+  "muscleGroup": "Panturrilhas",
+  "equipment": "Itens Domésticos",
+  "difficultyLevel": "INICIANTE",
+  "description": "Apoie a ponta dos pés na borda de um degrau, deixando os calcanhares para fora, e eleve o corpo na ponta dos pés antes de descer abaixo do nível do degrau para ampliar a amplitude.",
+  "mediaUrl": "https://www.youtube.com/watch?v=Bk92mZ7BYyY"
+ },
+ {
+  "name": "Panturrilha Inclinada (Donkey Calf Raise)",
+  "muscleGroup": "Panturrilhas",
+  "equipment": "Itens Domésticos",
+  "difficultyLevel": "INTERMEDIARIO",
+  "description": "Incline o tronco para frente apoiando as mãos em um móvel estável, mantenha os joelhos levemente flexionados e eleve os calcanhares o máximo possível contraindo a panturrilha.",
+  "mediaUrl": "https://www.youtube.com/watch?v=Q6G7jfvshrA"
+ }
 ]

@@ -1,22 +1,22 @@
-// Fase 34: curadoria pontual do catálogo — dois ajustes de dado feitos uma
-// única vez, não fazem parte do `db:seed` automático (mesmo raciocínio do
-// `seed-admin.ts`: mudança deliberada, não algo que deve rodar sozinho a
-// cada seed). Idempotente: pode rodar de novo sem efeito colateral (os
-// updates são absolutos, não incrementais).
+// Fase 34: curadoria pontual do catálogo — não faz parte do `db:seed`
+// automático (mesmo raciocínio do `seed-admin.ts`: mudança deliberada, não
+// algo que deve rodar sozinho a cada seed). Idempotente: pode rodar de novo
+// sem efeito colateral (os updates são absolutos, não incrementais).
 //
-// 1. Recategoriza "Levantamento Terra Romeno" de Costas pra Pernas — é
-//    predominantemente um exercício de posterior de coxa; o próprio catálogo
-//    já tem "Levantamento Terra Sumô" em Pernas, inconsistência clara.
-// 2. Marca isFeatured=true nos ~5 exercícios mais feitos de cada grupo
-//    muscular (pesquisa de popularidade real de academia, não um palpite),
-//    pra aparecerem primeiro e ganharem destaque visual na tela de
-//    prescrição. Nunca desmarca isFeatured de ninguém — rodar de novo só
-//    reforça a mesma lista.
+// Marca isFeatured=true nos ~5 exercícios mais feitos de cada grupo
+// muscular (pesquisa de popularidade real de academia, não um palpite),
+// pra aparecerem primeiro e ganharem destaque visual na tela de
+// prescrição. Nunca desmarca isFeatured de ninguém — rodar de novo só
+// reforça a mesma lista.
+//
+// RECATEGORIZE (histórico, Fase 34): recategorizava "Levantamento Terra
+// Romeno" de Costas pra Pernas. Superado pela Fase 50, que já semeia esse
+// exercício direto como "Posterior da Coxa" (subdivisão de "Pernas" em 5
+// grupos) — mantido como array vazio, não como código morto removido, caso
+// uma recategorização pontual futura precise do mesmo padrão.
 import prisma from "../src/lib/prisma";
 
-const RECATEGORIZE: Array<{ name: string; muscleGroup: string }> = [
-  { name: "Levantamento Terra Romeno", muscleGroup: "Pernas" },
-];
+const RECATEGORIZE: Array<{ name: string; muscleGroup: string }> = [];
 
 const FEATURED_EXERCISE_NAMES: string[] = [
   // Peito
@@ -31,12 +31,19 @@ const FEATURED_EXERCISE_NAMES: string[] = [
   "Remada Curvada com Barra",
   "Barra Fixa Pronada",
   "Remada Baixa no Cabo",
-  // Pernas
+  // Quadríceps, Posterior da Coxa, Panturrilhas (ex-"Pernas", subdividido na Fase 50)
   "Agachamento Livre",
   "Leg Press 45",
   "Levantamento Terra Romeno",
   "Cadeira Extensora",
   "Panturrilha em Pé",
+  // Glúteos e Adutores e Abdutores (novos na Fase 50 — já marcados isFeatured
+  // na criação por seed-treino-em-casa-e-pernas.ts; listados aqui também
+  // pra um `db:seed` + este script, sem aquele, ainda produzir o mesmo estado)
+  "Hip Thrust com Barra",
+  "Elevação Pélvica no Solo",
+  "Abdução de Quadril no Cabo em Pé",
+  "Exercício Ostra (Clamshell)",
   // Ombro
   "Desenvolvimento com Halteres",
   "Elevação Lateral com Halteres",
