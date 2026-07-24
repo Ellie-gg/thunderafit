@@ -652,6 +652,7 @@
     "loadingCatalog": "Cargando catálogo...",
     "muscleGroupLabel": "Grupo muscular",
     "allGroups": "Todos",
+    "homeWorkoutFilterLabel": "Entrenamiento en casa (sin equipo de gimnasio)",
     "searchByNameLabel": "Buscar por nombre",
     "searchByNamePlaceholder": "Ej: press de banca, sentadilla...",
     "exerciseLabel": "Ejercicio ({count})",
