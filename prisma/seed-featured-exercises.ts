@@ -68,6 +68,13 @@ const FEATURED_EXERCISE_NAMES: string[] = [
   "Abdominal Bicicleta",
   "Abdominal na Máquina",
   "Rotação Russa (Russian Twist)",
+  // Antebraço, Trapézio, Flexores do Quadril (novos na Fase 51 — já marcados
+  // isFeatured na criação por seed-antebraco-trapezio-quadril.ts; listados
+  // aqui também pra um `db:seed` + este script, sem aquele, produzir o
+  // mesmo estado)
+  "Farmer's Walk com Halteres",
+  "Rack Pull (Levantamento Parcial na Gaiola)",
+  "Flexão de Quadril em Pé no Cabo",
 ];
 
 async function main() {

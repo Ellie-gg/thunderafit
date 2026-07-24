@@ -69,7 +69,7 @@ convidados) e passa a operar em **modelo híbrido**:
 ```
 /src
   /auth          registro, login, JWT/refresh, rate limit  [não tocar sem gate]
-  /fitness       exercícios (~213, incl. categoria "treino em casa"), programas
+  /fitness       exercícios (~232, incl. categoria "treino em casa"), programas
                  (templates A–E, cópia-ao-aplicar), treinos, séries/SetLog,
                  relations (vínculo + limite Freemium)
   /connections   descoberta de profissionais (perfil público opt-in, busca por
@@ -99,7 +99,7 @@ confiados sob `role === ADMIN` (visão ampliada, leitura). Roles: `PERSONAL`, `A
   alunoId?, letter A–E, lastCompletedAt) → `WorkoutExercise` → `SetLog`.
   Aplicar template = **cópia**, nunca referência. `suggestedNext` = menor letra nunca
   concluída; senão a de conclusão mais antiga (sem ordem forçada).
-- `Exercise` (~213, `muscleGroup`/`equipment` texto livre — não enum, listas de admin/
+- `Exercise` (~232, `muscleGroup`/`equipment` texto livre — não enum, listas de admin/
   gerador derivam do banco; difficultyLevel, mediaUrl/mediaType, CRUD via
   `/nimbus/exercicios` desde a Fase 33; categoria "treino em casa" via
   `equipment: "Peso Corporal"/"Itens Domésticos"` desde a Fase 50) · `Anamnesis` ·
@@ -598,6 +598,22 @@ decisão/priorização futura):
     (2 testes ajustados — contagem de catálogo derivada do JSON, e um `muscleGroup` de teste
     trocado de "Pernas" pra "Quadríceps"), `tsc --noEmit` limpo. Catálogo: 171 → 213
     exercícios.*
+
+### Grupo G — Catálogo: 3 grupos musculares novos (Antebraço, Trapézio, Flexores do Quadril). ✅ CONCLUÍDA (2026-07-24, registrada como "Fase 51" no STATUS.md).
+
+46. ✅ **Antebraço, Trapézio, Flexores do Quadril** — mesmo padrão do Grupo F: reclassificação
+    de exercícios já cadastrados que se encaixavam melhor no grupo novo (`Rosca Punho`/`Rosca
+    Inversa com Barra` de Bíceps → Antebraço; `Encolhimento` com Barra/Halteres/Cabo de
+    Costas/Ombro → Trapézio; `Elevação em Y no Banco Inclinado` de Ombro → Trapézio, cuja
+    própria descrição já citava "trapézio inferior") + curadoria nova via YouTube (2 agentes
+    em paralelo, `mediaUrl` verificado por oEmbed/fetch real antes de entrar no catálogo).
+    `Flexores do Quadril` nasceu do zero (0 exercícios antes). Achado ao vetar os agentes: um
+    propôs recriar o mesmo exercício já existente (`Elevação em Y`) com um nome novo em vez
+    de reconhecer a reclassificação necessária — descartado o duplicado, reclassificado o
+    original. `muscleGroup` continua string livre (não enum), então de novo zero mudança de
+    código/schema. `data/exercises_seed.json` e `seed-featured-exercises.ts` atualizados junto.
+    *Modelo: Sonnet 5, 2 agentes de pesquisa em paralelo pra curadoria. 309/309 backend,
+    `tsc --noEmit` limpo. Catálogo: 213 → 232 exercícios.*
 
 ### Backlog operacional herdado
 Ver Seção 7 acima (Neon, billing, Android, webhook).
