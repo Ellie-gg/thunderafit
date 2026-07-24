@@ -98,7 +98,7 @@ describe("POST /api/workouts/generate — Montagem Inteligente (motor de regras 
     const r = await supertest(server.server)
       .post("/api/workouts/generate")
       .set("Authorization", `Bearer ${personalToken}`)
-      .send({ muscleGroups: ["Pernas", "Abdômen", "Tríceps"], goal: "forca" });
+      .send({ muscleGroups: ["Quadríceps", "Abdômen", "Tríceps"], goal: "forca" });
     expect(r.status).toBe(200);
     expect(r.body.exercises).toHaveLength(7);
   });

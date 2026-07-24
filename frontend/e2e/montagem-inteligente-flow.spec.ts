@@ -58,9 +58,9 @@ test("Personal gera um PROGRAMA com 2 sessões (A e B) pela Montagem Inteligente
   await expect(page.getByRole("button", { name: "Remover" })).toHaveCount(4);
   await page.getByRole("button", { name: "Próximo treino →" }).click();
 
-  // --- Sessão B: Pernas (principal, 3) ---
+  // --- Sessão B: Quadríceps (principal, 3) ---
   await expect(page.getByRole("heading", { name: "Sessão B" })).toBeVisible();
-  await page.getByRole("button", { name: "Pernas", exact: true }).click();
+  await page.getByRole("button", { name: "Quadríceps", exact: true }).click();
   await page.getByRole("button", { name: "Gerar sugestão" }).click();
   await expect(page.getByRole("button", { name: "Remover" })).toHaveCount(3);
 
