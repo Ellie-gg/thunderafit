@@ -62,7 +62,7 @@
     "changeBanner": "Change banner",
     "remove": "Remove banner",
     "noBanner": "No banner",
-    "sizeHint": "Any image ratio works — it's never cropped, just fitted inside the 16:9 frame (a blurred backdrop fills any leftover space). For the sharpest result, use an image at least 1200×675px.",
+"sizeHint": "Ideal: an image already in 16:9 (e.g. 1200×675, 1280×720, or 1920×1080) — fills the frame completely. Outside that ratio, the whole image is kept (never cropped), with a blurred backdrop filling any leftover space.",
     "errors": {
       "invalidType": "Choose an image file (PNG, JPEG, or WebP).",
       "loadFailed": "Could not read the image.",

@@ -62,7 +62,7 @@
     "changeBanner": "Trocar banner",
     "remove": "Remover banner",
     "noBanner": "Sem banner",
-    "sizeHint": "Qualquer proporção de imagem funciona — ela nunca é cortada, só ajustada dentro do quadro 16:9 (fundo desfocado preenche o espaço sobrando). Pra melhor nitidez, use uma imagem de pelo menos 1200×675px.",
+"sizeHint": "Ideal: imagem já na proporção 16:9 (ex: 1200×675, 1280×720 ou 1920×1080) — preenche o quadro por completo. Fora dessa proporção, a imagem inteira é mantida (nunca cortada), com fundo desfocado preenchendo o espaço sobrando.",
     "errors": {
       "invalidType": "Escolha um arquivo de imagem (PNG, JPEG ou WebP).",
       "loadFailed": "Não foi possível ler a imagem.",
