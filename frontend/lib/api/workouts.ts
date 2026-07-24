@@ -97,6 +97,29 @@ export function createWorkoutProgram(name: string, sessionScheme?: SessionScheme
   });
 }
 
+// "Montagem Inteligente": motor de regras determinístico (sem IA), devolve
+// só um rascunho — nada é persistido nesta chamada. `level` não é coletado
+// no modal (fiel ao pedido de "3 campos simples"); o backend usa
+// "intermediario" como padrão quando omitido.
+export type WorkoutGoal = "hipertrofia" | "forca" | "resistencia";
+
+export interface GeneratedExercise {
+  exerciseId: string;
+  exerciseName: string;
+  muscleGroup: string;
+  sets: number;
+  repsRange: string;
+  restSeconds: number;
+  order: number;
+}
+
+export function generateWorkoutDraft(input: { muscleGroups: string[]; goal: WorkoutGoal }) {
+  return apiFetch<{ exercises: GeneratedExercise[] }>("/api/workouts/generate", {
+    method: "POST",
+    body: input,
+  });
+}
+
 export function addProgramSession(programId: string, input: { letter: string; name?: string }) {
   return apiFetch<{ session: Workout }>(`/api/workout-programs/${programId}/sessions`, {
     method: "POST",

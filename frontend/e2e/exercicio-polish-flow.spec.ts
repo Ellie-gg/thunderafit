@@ -35,7 +35,7 @@ test("na tela de sessão: posição do botão avança a cada exercício, popup c
   await backendJson("/api/auth/register", { email: personalEmail, password, role: "PERSONAL" });
 
   await loginViaUI(page, personalEmail, password);
-  await page.getByRole("link", { name: "Criar novo programa" }).click();
+  await page.getByRole("link", { name: "ou monte um programa do zero →" }).click();
   await page.locator("#name").fill(programName);
   await page.getByRole("button", { name: "Criar programa" }).click();
   await expect(page.getByRole("heading", { name: programName })).toBeVisible({ timeout: 30000 });
