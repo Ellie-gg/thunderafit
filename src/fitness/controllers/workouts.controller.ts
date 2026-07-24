@@ -1,5 +1,10 @@
 import { FastifyRequest, FastifyReply } from "fastify";
 import { workoutsService } from "../services/workouts.service";
+import {
+  workoutGeneratorService,
+  WorkoutGoal,
+  ExperienceLevel,
+} from "../services/workout-generator.service";
 
 export async function listWorkoutsHandler(
   request: FastifyRequest<{ Querystring: { alunoId?: string; personalId?: string } }>,
@@ -43,6 +48,40 @@ export async function createWorkoutHandler(
     return reply.status(201).send({ workout });
   } catch (err: any) {
     const status = (err as any).statusCode ?? 500;
+    return reply.status(status).send({ error: err.message });
+  }
+}
+
+/**
+ * "Montagem Inteligente" — motor de regras determinístico, sem LLM externa.
+ * NÃO persiste nada (nenhum WorkoutProgram/Workout/WorkoutExercise é criado
+ * aqui): devolve só um rascunho pro Personal revisar/editar antes de mandar
+ * criar de verdade via os endpoints já existentes (POST /api/workout-programs
+ * → POST /api/workout-programs/:id/sessions → POST /api/workouts/:id/exercises
+ * em sequência, do lado do frontend).
+ */
+export async function generateWorkoutHandler(
+  request: FastifyRequest<{
+    Body: { muscleGroups: string[]; goal: WorkoutGoal; level?: ExperienceLevel };
+  }>,
+  reply: FastifyReply
+) {
+  const role = (request as any).user.role;
+  if (role !== "PERSONAL") {
+    return reply
+      .status(403)
+      .send({ error: "Apenas Personal Trainers podem gerar sugestões de treino." });
+  }
+
+  try {
+    const exercises = await workoutGeneratorService.generateDraft(
+      request.body.muscleGroups,
+      request.body.goal,
+      request.body.level ?? "intermediario"
+    );
+    return reply.status(200).send({ exercises });
+  } catch (err: any) {
+    const status = err.statusCode ?? 500;
     return reply.status(status).send({ error: err.message });
   }
 }

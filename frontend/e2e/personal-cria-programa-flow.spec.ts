@@ -44,7 +44,7 @@ test("esquema Letras: Personal cria programa, percorre A→E via Próximo, presc
 
   // --- 1. Login e cria o programa (esquema Letras é o padrão) ---
   await loginViaUI(page, personalEmail, password);
-  await page.getByRole("link", { name: "Criar novo programa" }).click();
+  await page.getByRole("link", { name: "ou monte um programa do zero →" }).click();
   await page.locator("#name").fill(programName);
   await page.locator("#targetAluno").selectOption({ label: alunoEmail });
   await page.getByRole("button", { name: "Criar programa" }).click();
@@ -127,7 +127,7 @@ test("esquema Dias da semana: sessão adicionada fora de ordem (Quarta antes de 
 
   // --- 1. Cria o programa escolhendo o esquema "Dias da semana" ---
   await loginViaUI(page, personalEmail, password);
-  await page.getByRole("link", { name: "Criar novo programa" }).click();
+  await page.getByRole("link", { name: "ou monte um programa do zero →" }).click();
   await page.locator("#name").fill(programName);
   await page.getByRole("button", { name: "Dias da semana" }).click();
   await page.locator("#targetAluno").selectOption({ label: alunoEmail });

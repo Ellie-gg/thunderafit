@@ -2,6 +2,7 @@ import { FastifyInstance } from "fastify";
 import {
   listWorkoutsHandler,
   createWorkoutHandler,
+  generateWorkoutHandler,
   addExerciseHandler,
   moveExerciseHandler,
   getWorkoutHandler,
@@ -23,6 +24,17 @@ export async function workoutsRoutes(fastify: FastifyInstance) {
       preHandler: [(fastify as any).authenticate],
     },
     createWorkoutHandler
+  );
+
+  // "Montagem Inteligente": sem :id nenhum, não persiste nada — registrado
+  // antes das rotas /:id/... só por hábito defensivo, embora não haja risco
+  // real de colisão aqui (nenhuma rota bare POST /api/workouts/:id existe).
+  fastify.post(
+    "/api/workouts/generate",
+    {
+      preHandler: [(fastify as any).authenticate],
+    },
+    generateWorkoutHandler
   );
 
   fastify.post(

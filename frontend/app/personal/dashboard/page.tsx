@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { listRelations } from "@/lib/api/relations";
@@ -14,10 +15,12 @@ import { Button } from "@/components/ui/button";
 import { VoltageBar } from "@/components/voltage-bar";
 import { QueryError } from "@/components/query-error";
 import { DeleteProgramButton } from "@/components/delete-program-button";
+import { GenerateWorkoutModal } from "@/components/generate-workout-modal";
 
 function PersonalDashboardContent() {
   const user = useAuthStore((s) => s.user);
   const queryClient = useQueryClient();
+  const [generatorOpen, setGeneratorOpen] = useState(false);
 
   const relationsQuery = useQuery({
     queryKey: ["relations"],
@@ -195,14 +198,23 @@ function PersonalDashboardContent() {
             )}
           </div>
 
-          {/* Fase 25: aponta pro fluxo de Programas (Fase 16) — criar um treino
-              sempre passa pelo Programa pai (sessões A-E), sem exigir aluno
-              vinculado de antemão (um programa pode nascer como template
-              puro e ser aplicado depois). */}
-          <Button asChild variant="secondary">
-            <Link href="/personal/programas">Criar novo programa</Link>
-          </Button>
+          {/* "Montagem Inteligente": CTA principal do dashboard (antes só um
+              botão secundário "Criar novo programa", pouco descoberto — o
+              Personal não tinha nenhum caminho de destaque pra criar/editar
+              templates a partir daqui). O motor de regras determinístico
+              monta um rascunho revisável em segundos; quem prefere montar
+              tudo à mão continua indo direto pra /personal/programas, sem
+              nenhuma sugestão automática. */}
+          <Button onClick={() => setGeneratorOpen(true)}>⚡ Gerar Treino Rápido</Button>
+          <Link
+            href="/personal/programas"
+            className="self-start text-sm font-semibold text-accent-secondary hover:underline"
+          >
+            ou monte um programa do zero →
+          </Link>
         </Card>
+
+        {generatorOpen && <GenerateWorkoutModal onClose={() => setGeneratorOpen(false)} />}
 
         {/* Atalho visível também aqui — no celular, o link de texto do
             header fica escondido por falta de espaço. */}

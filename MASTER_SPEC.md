@@ -298,6 +298,21 @@ nesta seção — registrados como **Fase 43** e **Fase 44** no STATUS.md:
   checkout; `price.id` atual da subscription pra trocas via Portal do Cliente). Bug
   corrigido: downgrade pra Free agora desliga `availableForNewStudents` (antes ficava
   ligado pra sempre). Valores em R$ são placeholder.
+- ✅ **Montagem Inteligente + CTA de destaque no dashboard do Personal.** Registrada
+  como **Fase 45** no STATUS.md. Substitui a Fase 39 (cancelada acima). `POST
+  /api/workouts/generate` — motor de regras determinístico (sem IA), gera um RASCUNHO
+  (nada persistido) de exercícios a partir de grupos musculares (1º = principal, 3
+  exercícios; demais = secundários, 2 cada) + objetivo (hipertrofia/força/resistência →
+  séries/reps/descanso fixos). `level` é aceito mas não filtra o catálogo de forma
+  rígida (a maioria dos ~170 exercícios não é curada por nível) — só reordena
+  preferência, evitando esvaziar grupos musculares inteiros pra iniciante/avançado.
+  Dashboard do Personal ganhou o botão "⚡ Gerar Treino Rápido" como CTA PRINCIPAL
+  (resolve o pedido do fundador de tornar a criação de templates mais descobrível —
+  antes só existia um botão secundário "Criar novo programa"); o fluxo 100% manual
+  continua disponível via link menor. Revisão em lote no frontend (rascunho só em
+  memória, editável/removível linha a linha) — um clique final cria o programa + a
+  sessão + todos os exercícios em sequência, reusando os 3 endpoints que já existiam
+  (sem endpoint novo de gravação em lote).
 
 ### Grupo C — pesquisa (sem código)
 
@@ -305,8 +320,14 @@ nesta seção — registrados como **Fase 43** e **Fase 44** no STATUS.md:
     (o de deep-research da Fase 23 não compensou). Inclui avaliar anúncios como fonte
     secundária de receita (banner ancorado discreto em telas de navegação — nunca na
     tela de execução do treino) e provedores disponíveis pra Android/Capacitor.
-12. **Fase 39 — Sugestão de treino via IA.** Fase própria só de design (provedor, formato
-    de prompt, rate limit) antes de qualquer código.
+12. ❌ **Fase 39 — Sugestão de treino via IA.** CANCELADA (2026-07-24, decisão do fundador).
+    Substituída por um motor de regras **determinístico, sem IA/LLM externa** ("Montagem
+    Inteligente" — ver STATUS.md, "Fase 45"), que resolve a mesma necessidade (montar o
+    esboço de uma sessão a partir de grupos musculares + objetivo em segundos) sem exigir
+    provedor/prompt/rate-limit nenhum. Não é uma pesquisa concluída que virou implementação
+    — é um caminho alternativo que tornou a pesquisa desnecessária por ora. Uma versão
+    genuinamente IA-based (sugestões mais adaptativas que regras fixas) permanece um
+    upgrade futuro possível, não descartado por princípio, só sem prioridade definida.
 13. **Fase 40 — Pesquisa de conteúdo de mídia dos exercícios.** A Fase 32 resolve o
     *mecanismo* (onde/como servir vídeo/GIF/YouTube); esta fase é sobre *conteúdo* —
     ferramenta/IA pra gerar ou curar mídia em massa pros ~120 exercícios que ainda não
