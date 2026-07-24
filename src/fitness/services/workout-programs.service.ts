@@ -179,15 +179,24 @@ export const workoutProgramsService = {
     const suggestedId = computeSuggestedSessionId(sessions, program.sessionScheme);
 
     // i18n: cada sessão tem seus próprios exercícios aninhados (exercise
-    // embutido via include) — traduz por sessão, mesmo utilitário usado no
-    // catálogo avulso e na execução de treino.
-    const translatedSessions = await Promise.all(
-      sessions.map(async (s) => ({
+    // embutido via include), mesmo utilitário usado no catálogo avulso e na
+    // execução de treino. Traduzido em UMA chamada só pra todos os
+    // exercícios de todas as sessões (em vez de 1 chamada — e 1 query em
+    // ExerciseTranslation — por sessão), depois redistribuído de volta pra
+    // cada sessão na mesma posição/ordem original.
+    const allExercises = sessions.flatMap((s) => s.exercises);
+    const translatedExercises = await exerciseTranslationService.translateNested(allExercises, locale);
+
+    let cursor = 0;
+    const translatedSessions = sessions.map((s) => {
+      const exercises = translatedExercises.slice(cursor, cursor + s.exercises.length);
+      cursor += s.exercises.length;
+      return {
         ...s,
         suggestedNext: s.id === suggestedId,
-        exercises: await exerciseTranslationService.translateNested(s.exercises, locale),
-      }))
-    );
+        exercises,
+      };
+    });
 
     return { ...program, workouts: translatedSessions };
   },

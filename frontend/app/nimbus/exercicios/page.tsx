@@ -1,7 +1,7 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { useMemo, useState } from "react";
+import { memo, useCallback, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { listAdminExercises } from "@/lib/api/admin";
 import { AuthGuard } from "@/components/auth-guard";
@@ -15,6 +15,68 @@ import { DeleteExerciseButton } from "@/components/delete-exercise-button";
 import type { Exercise } from "@/lib/types";
 
 type FormState = { mode: "closed" } | { mode: "create" } | { mode: "edit"; exercise: Exercise };
+
+type ExerciseRowProps = {
+  exercise: Exercise;
+  categories: string[];
+  isEditing: boolean;
+  featuredLabel: string;
+  editLabel: string;
+  closeLabel: string;
+  onToggleEdit: (exercise: Exercise) => void;
+  onSaved: () => void;
+};
+
+const ExerciseRow = memo(function ExerciseRow({
+  exercise,
+  categories,
+  isEditing,
+  featuredLabel,
+  editLabel,
+  closeLabel,
+  onToggleEdit,
+  onSaved,
+}: ExerciseRowProps) {
+  return (
+    <div className="rounded-md border border-border">
+      <div className="flex flex-wrap items-center justify-between gap-2 px-3 py-2">
+        <div className="flex flex-col">
+          <span className="text-sm font-semibold">{exercise.name}</span>
+          <span className="text-xs text-muted">
+            {exercise.muscleGroup} · {exercise.equipment} · {exercise.mediaType}
+          </span>
+        </div>
+        <div className="flex items-center gap-2">
+          {exercise.isFeatured && (
+            <span className="shrink-0 rounded-full border border-accent-secondary px-2 py-0.5 text-xs font-semibold text-accent-secondary">
+              {featuredLabel}
+            </span>
+          )}
+          <DifficultyBadge level={exercise.difficultyLevel} />
+          <Button
+            type="button"
+            variant="secondary"
+            size="sm"
+            onClick={() => onToggleEdit(exercise)}
+          >
+            {isEditing ? closeLabel : editLabel}
+          </Button>
+          <DeleteExerciseButton exerciseId={exercise.id} onDeleted={onSaved} />
+        </div>
+      </div>
+      {isEditing && (
+        <div className="border-t border-border p-3">
+          <AdminExerciseForm
+            exercise={exercise}
+            categories={categories}
+            onSaved={onSaved}
+            onCancel={() => onToggleEdit(exercise)}
+          />
+        </div>
+      )}
+    </div>
+  );
+});
 
 function ExerciciosContent() {
   const t = useTranslations("nimbusExercicios");
@@ -30,10 +92,18 @@ function ExerciciosContent() {
     return [...set].sort((a, b) => a.localeCompare(b, "pt-BR"));
   }, [exercises]);
 
-  function refetchAndClose() {
+  const refetchAndClose = useCallback(() => {
     queryClient.invalidateQueries({ queryKey: ["admin", "exercises"] });
     setForm({ mode: "closed" });
-  }
+  }, [queryClient]);
+
+  const handleToggleEdit = useCallback((exercise: Exercise) => {
+    setForm((prev) =>
+      prev.mode === "edit" && prev.exercise.id === exercise.id
+        ? { mode: "closed" }
+        : { mode: "edit", exercise }
+    );
+  }, []);
 
   return (
     <>
@@ -71,49 +141,17 @@ function ExerciciosContent() {
         {exercisesQuery.isSuccess && (
           <Card className="flex flex-col gap-2">
             {exercises.map((ex) => (
-              <div key={ex.id} className="rounded-md border border-border">
-                <div className="flex flex-wrap items-center justify-between gap-2 px-3 py-2">
-                  <div className="flex flex-col">
-                    <span className="text-sm font-semibold">{ex.name}</span>
-                    <span className="text-xs text-muted">
-                      {ex.muscleGroup} · {ex.equipment} · {ex.mediaType}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    {ex.isFeatured && (
-                      <span className="shrink-0 rounded-full border border-accent-secondary px-2 py-0.5 text-xs font-semibold text-accent-secondary">
-                        {t("featured")}
-                      </span>
-                    )}
-                    <DifficultyBadge level={ex.difficultyLevel} />
-                    <Button
-                      type="button"
-                      variant="secondary"
-                      size="sm"
-                      onClick={() =>
-                        setForm(
-                          form.mode === "edit" && form.exercise.id === ex.id
-                            ? { mode: "closed" }
-                            : { mode: "edit", exercise: ex }
-                        )
-                      }
-                    >
-                      {form.mode === "edit" && form.exercise.id === ex.id ? t("close") : t("edit")}
-                    </Button>
-                    <DeleteExerciseButton exerciseId={ex.id} onDeleted={refetchAndClose} />
-                  </div>
-                </div>
-                {form.mode === "edit" && form.exercise.id === ex.id && (
-                  <div className="border-t border-border p-3">
-                    <AdminExerciseForm
-                      exercise={form.exercise}
-                      categories={categories}
-                      onSaved={refetchAndClose}
-                      onCancel={() => setForm({ mode: "closed" })}
-                    />
-                  </div>
-                )}
-              </div>
+              <ExerciseRow
+                key={ex.id}
+                exercise={ex}
+                categories={categories}
+                isEditing={form.mode === "edit" && form.exercise.id === ex.id}
+                featuredLabel={t("featured")}
+                editLabel={t("edit")}
+                closeLabel={t("close")}
+                onToggleEdit={handleToggleEdit}
+                onSaved={refetchAndClose}
+              />
             ))}
             {exercises.length === 0 && (
               <p className="text-sm text-muted">{t("empty")}</p>
