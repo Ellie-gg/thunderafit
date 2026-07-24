@@ -80,9 +80,15 @@ enum Role {
   ADMIN
 }
 
+// 3 degraus (evolução do antigo FREE/PAGO): Free (3 alunos, hoje), Base (20
+// alunos, ganha acesso ao diretório de descoberta — pode ativar
+// availableForNewStudents), Plus (ilimitado, destaque/prioridade no
+// diretório). Valores em R$ ainda em aberto — o que importa aqui é a
+// estrutura de degraus e o filtro correto de quem aparece no diretório.
 enum PlanoAssinatura {
   FREE
-  PAGO
+  BASE
+  PLUS
 }
 
 // ============================================================
@@ -101,6 +107,15 @@ model ClientRelation {
   alunoId           String
   professionalType  ProfessionalType  @default(PERSONAL)
   createdAt         DateTime          @default(now())
+
+  // Lembrete de pagamento (MASTER_SPEC): o Personal define a próxima data de
+  // cobrança; ao logar, o aluno recebe UMA notificação in-app se a data já
+  // chegou (sem processamento de pagamento real). paymentReminderDueDate nulo
+  // = lembrete desativado. Não precisa de um campo "já disparado" à parte:
+  // disparar sempre avança (recorrente) ou limpa (não-recorrente) a própria
+  // data, então o mesmo vencimento nunca dispara duas vezes.
+  paymentReminderDueDate   DateTime?
+  paymentReminderRecurring Boolean   @default(false)
 
   @@unique([personalId, alunoId])
 }
@@ -218,9 +233,27 @@ enum SessionScheme {
   WEEKDAY
 }
 
+// Fase 34: distingue um programa PRESCRITO por um Personal (o único tipo que
+// existia até aqui) de um programa SELF — template curado pelo admin,
+// aplicado pelo próprio aluno, sem Personal nenhum envolvido (base da Fase
+// 34.5, "Meu treino pessoal"). Default PERSONAL preserva o significado de
+// todo registro pré-existente sem precisar de backfill manual (o Postgres
+// já popula o valor default em toda linha antiga na migration ADD COLUMN).
+enum WorkoutProgramOrigin {
+  PERSONAL
+  SELF
+}
+
 model WorkoutProgram {
   id            String        @id @default(uuid())
-  personalId    String
+  // Fase 34: nullable — um programa `origin: SELF` não pertence a nenhum
+  // Personal (curado pelo admin). Null NÃO significa "sem dono/qualquer
+  // dono": significa especificamente "pertence só ao aluno", nunca "visível
+  // pro fluxo do Personal". Toda listagem usada pelo Personal (`listByPersonal`)
+  // filtra `origin: PERSONAL` explicitamente — nunca lista "tudo", pra nunca
+  // vazar um programa SELF pra dentro do fluxo de um Personal por engano.
+  personalId    String?
+  origin        WorkoutProgramOrigin @default(PERSONAL)
   name          String
   isTemplate    Boolean       @default(false)
   alunoId       String?
@@ -237,7 +270,14 @@ model Workout {
   // popula, e só então aplica o NOT NULL — ver migration hand-editada.
   programId       String
   program         WorkoutProgram    @relation(fields: [programId], references: [id])
-  personalId      String
+  // Fase 34: nullable em lockstep com WorkoutProgram.personalId — Workout
+  // TEM SEU PRÓPRIO personalId, independente do program (não é herdado via
+  // programId), então precisa da mesma mudança pra sessões de um programa
+  // SELF não violarem a constraint NOT NULL na criação. Sem `origin` próprio
+  // aqui: a segurança já vem de personalId nunca bater com um Personal real
+  // quando for null, então toda query `where: { personalId }` já exclui
+  // sessões SELF automaticamente, sem precisar de um campo a mais.
+  personalId      String?
   // alunoId é nulo quando a sessão pertence a um TEMPLATE (ainda não aplicado
   // a nenhum aluno). Quando o template é aplicado, a cópia tem alunoId
   // preenchido. Consumidores que filtram por alunoId real (progress, posse do

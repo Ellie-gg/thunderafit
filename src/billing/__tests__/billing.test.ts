@@ -103,7 +103,7 @@ describe("Fase 20 BLOCO 1 — segurança do webhook (assinatura Stripe)", () => 
   });
 });
 
-describe("Fase 20 BLOCO 2 — upgrade via webhook: PAGO + limite 50 + 4º aluno liberado", () => {
+describe("Billing 3 degraus BLOCO 2 — upgrade via webhook: BASE + limite 20 + 4º aluno liberado", () => {
   it("antes do upgrade, o 4º vínculo é bloqueado (limite 3/3)", async () => {
     const r = await supertest(server.server)
       .post("/api/relations")
@@ -112,7 +112,7 @@ describe("Fase 20 BLOCO 2 — upgrade via webhook: PAGO + limite 50 + 4º aluno 
     expect(r.status).toBe(403);
   });
 
-  it("checkout.session.completed assinado → usuário vira PAGO, limite 50, customer salvo", async () => {
+  it("checkout.session.completed assinado com metadata.tier=BASE → usuário vira BASE, limite 20, customer salvo", async () => {
     const { payload, header } = signed({
       id: "evt_checkout_1",
       type: "checkout.session.completed",
@@ -123,6 +123,7 @@ describe("Fase 20 BLOCO 2 — upgrade via webhook: PAGO + limite 50 + 4º aluno 
           customer: CUSTOMER,
           subscription: SUBSCRIPTION,
           payment_status: "paid",
+          metadata: { tier: "BASE" },
         },
       },
     });
@@ -130,8 +131,8 @@ describe("Fase 20 BLOCO 2 — upgrade via webhook: PAGO + limite 50 + 4º aluno 
     expect(r.status).toBe(200);
 
     const user = await prisma.user.findUnique({ where: { id: personalId } });
-    expect(user?.planoAssinatura).toBe("PAGO");
-    expect(user?.limiteAlunos).toBe(50);
+    expect(user?.planoAssinatura).toBe("BASE");
+    expect(user?.limiteAlunos).toBe(20);
     expect(user?.stripeCustomerId).toBe(CUSTOMER);
     expect(user?.stripeSubscriptionId).toBe(SUBSCRIPTION);
   });
@@ -143,10 +144,61 @@ describe("Fase 20 BLOCO 2 — upgrade via webhook: PAGO + limite 50 + 4º aluno 
       .send({ alunoId: alunoIds[3] });
     expect(r.status).toBe(201);
   });
+
+  it("subscription.updated com price do degrau PLUS → sobe de BASE pra PLUS, limite vira ilimitado (1_000_000)", async () => {
+    // Simula troca de degrau pelo Portal do Cliente do Stripe (fora do nosso
+    // checkout) — o webhook precisa ler o price ATUAL da subscription, não
+    // metadata de quando ela foi criada.
+    const { payload, header } = signed({
+      id: "evt_sub_upgrade_plus",
+      type: "customer.subscription.updated",
+      data: {
+        object: {
+          id: SUBSCRIPTION,
+          customer: CUSTOMER,
+          status: "active",
+          items: { data: [{ price: { id: process.env.STRIPE_PRICE_ID_PLUS_MONTHLY } }] },
+        },
+      },
+    });
+    const r = await postWebhook(payload, header);
+    expect(r.status).toBe(200);
+    const user = await prisma.user.findUnique({ where: { id: personalId } });
+    expect(user?.planoAssinatura).toBe("PLUS");
+    expect(user?.limiteAlunos).toBe(1_000_000);
+  });
+
+  it("subscription.updated com price desconhecido (não configurado) não quebra — concede BASE por segurança", async () => {
+    const { payload, header } = signed({
+      id: "evt_sub_unknown_price",
+      type: "customer.subscription.updated",
+      data: {
+        object: {
+          id: SUBSCRIPTION,
+          customer: CUSTOMER,
+          status: "active",
+          items: { data: [{ price: { id: "price_desconhecido_xyz" } }] },
+        },
+      },
+    });
+    const r = await postWebhook(payload, header);
+    expect(r.status).toBe(200);
+    const user = await prisma.user.findUnique({ where: { id: personalId } });
+    expect(user?.planoAssinatura).toBe("BASE");
+    expect(user?.limiteAlunos).toBe(20);
+  });
 });
 
 describe("Fase 20 BLOCO 3 — downgrade: FREE + limite 3, SEM quebrar vínculos existentes", () => {
-  it("customer.subscription.deleted assinado → FREE + limite 3", async () => {
+  it("customer.subscription.deleted assinado → FREE + limite 3 + disponibilidade no diretório desligada (bug corrigido)", async () => {
+    // Ativa disponibilidade ENQUANTO ainda pago, pra provar que o downgrade
+    // desliga — antes do degrau de 3 níveis, esse campo ficava ligado pra
+    // sempre depois de um downgrade.
+    await supertest(server.server)
+      .put("/api/professionals/me")
+      .set("Authorization", `Bearer ${personalToken}`)
+      .send({ availableForNewStudents: true });
+
     const { payload, header } = signed({
       id: "evt_sub_deleted_1",
       type: "customer.subscription.deleted",
@@ -157,6 +209,7 @@ describe("Fase 20 BLOCO 3 — downgrade: FREE + limite 3, SEM quebrar vínculos 
     const user = await prisma.user.findUnique({ where: { id: personalId } });
     expect(user?.planoAssinatura).toBe("FREE");
     expect(user?.limiteAlunos).toBe(3);
+    expect(user?.availableForNewStudents).toBe(false);
   });
 
   it("os 4 vínculos existentes CONTINUAM (downgrade não desfaz)", async () => {
@@ -229,7 +282,7 @@ describe("Fase 20 — pagamento assíncrono (boleto/Pix): sem PAGO antes de conf
     expect(user?.stripeSubscriptionId).toBe(SUB);
   });
 
-  it("async_payment_succeeded → agora sim vira PAGO + limite 50", async () => {
+  it("async_payment_succeeded com metadata.tier=PLUS → agora sim vira PLUS + limite ilimitado", async () => {
     const { payload, header } = signed({
       id: "evt_async_paid",
       type: "checkout.session.async_payment_succeeded",
@@ -240,14 +293,15 @@ describe("Fase 20 — pagamento assíncrono (boleto/Pix): sem PAGO antes de conf
           customer: CUST,
           subscription: SUB,
           payment_status: "paid",
+          metadata: { tier: "PLUS" },
         },
       },
     });
     const r = await postWebhook(payload, header);
     expect(r.status).toBe(200);
     const user = await prisma.user.findUnique({ where: { id: proId } });
-    expect(user?.planoAssinatura).toBe("PAGO");
-    expect(user?.limiteAlunos).toBe(50);
+    expect(user?.planoAssinatura).toBe("PLUS");
+    expect(user?.limiteAlunos).toBe(1_000_000);
   });
 
   afterAll(async () => {
@@ -256,7 +310,7 @@ describe("Fase 20 — pagamento assíncrono (boleto/Pix): sem PAGO antes de conf
 });
 
 describe("Fase 20 — checkout-session e portal (API do Stripe mockada)", () => {
-  it("POST /api/billing/checkout-session como PERSONAL retorna a URL de checkout", async () => {
+  it("POST /api/billing/checkout-session com tier=BASE retorna a URL de checkout com o price certo", async () => {
     const stripe = getStripe();
     // usuário já tem customer (do bloco 2), então customers.create não é chamado
     const sessionsCreate = jest
@@ -266,30 +320,63 @@ describe("Fase 20 — checkout-session e portal (API do Stripe mockada)", () => 
     const r = await supertest(server.server)
       .post("/api/billing/checkout-session")
       .set("Authorization", `Bearer ${personalToken}`)
-      .send({ interval: "monthly" });
+      .send({ tier: "BASE", interval: "monthly" });
 
     expect(r.status).toBe(200);
     expect(r.body.url).toMatch(/checkout\.stripe\.com/);
     expect(sessionsCreate).toHaveBeenCalledTimes(1);
-    // confere que passou o priceId mensal e o client_reference_id
+    // confere que passou o priceId certo (degrau + intervalo), metadata.tier e o client_reference_id
     const arg = sessionsCreate.mock.calls[0][0] as any;
     expect(arg.client_reference_id).toBe(personalId);
-    expect(arg.line_items[0].price).toBe(process.env.STRIPE_PRICE_ID_MONTHLY);
+    expect(arg.metadata.tier).toBe("BASE");
+    expect(arg.line_items[0].price).toBe(process.env.STRIPE_PRICE_ID_BASE_MONTHLY);
     sessionsCreate.mockRestore();
+  });
+
+  it("checkout-session com tier=PLUS e interval=annual usa o price PLUS anual", async () => {
+    const stripe = getStripe();
+    const sessionsCreate = jest
+      .spyOn(stripe.checkout.sessions, "create")
+      .mockResolvedValue({ url: "https://checkout.stripe.com/c/pay/cs_test_mock_plus" } as any);
+
+    const r = await supertest(server.server)
+      .post("/api/billing/checkout-session")
+      .set("Authorization", `Bearer ${personalToken}`)
+      .send({ tier: "PLUS", interval: "annual" });
+
+    expect(r.status).toBe(200);
+    const arg = sessionsCreate.mock.calls[0][0] as any;
+    expect(arg.metadata.tier).toBe("PLUS");
+    expect(arg.line_items[0].price).toBe(process.env.STRIPE_PRICE_ID_PLUS_ANNUAL);
+    sessionsCreate.mockRestore();
+  });
+
+  it("checkout-session sem tier (ou com tier inválido) é rejeitado (400)", async () => {
+    const semTier = await supertest(server.server)
+      .post("/api/billing/checkout-session")
+      .set("Authorization", `Bearer ${personalToken}`)
+      .send({ interval: "monthly" });
+    expect(semTier.status).toBe(400);
+
+    const tierInvalido = await supertest(server.server)
+      .post("/api/billing/checkout-session")
+      .set("Authorization", `Bearer ${personalToken}`)
+      .send({ tier: "GOLD", interval: "monthly" });
+    expect(tierInvalido.status).toBe(400);
   });
 
   it("checkout-session como ALUNO é bloqueado (403)", async () => {
     const r = await supertest(server.server)
       .post("/api/billing/checkout-session")
       .set("Authorization", `Bearer ${alunoToken}`)
-      .send({ interval: "monthly" });
+      .send({ tier: "BASE", interval: "monthly" });
     expect(r.status).toBe(403);
   });
 
   it("checkout-session sem autenticação é bloqueado (401)", async () => {
     const r = await supertest(server.server)
       .post("/api/billing/checkout-session")
-      .send({ interval: "monthly" });
+      .send({ tier: "BASE", interval: "monthly" });
     expect(r.status).toBe(401);
   });
 

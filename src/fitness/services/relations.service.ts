@@ -1,5 +1,12 @@
 import prisma from "../../lib/prisma";
 import { relationsRepository } from "../repository/relations.repository";
+import { notificationsService } from "../../notifications/services/notifications.service";
+
+function addOneMonth(date: Date): Date {
+  const next = new Date(date);
+  next.setMonth(next.getMonth() + 1);
+  return next;
+}
 
 export const relationsService = {
   async createRelation(
@@ -48,13 +55,70 @@ export const relationsService = {
 
   async listRelations(personalId: string) {
     const relations = await relationsRepository.findAllByPersonal(personalId);
-    const result: Array<{ id: string; email: string; avatarUrl: string | null; createdAt: Date }> = [];
+    const result: Array<{
+      id: string;
+      email: string;
+      avatarUrl: string | null;
+      createdAt: Date;
+      paymentReminderDueDate: Date | null;
+      paymentReminderRecurring: boolean;
+    }> = [];
     for (const rel of relations) {
       const aluno = await prisma.user.findUnique({ where: { id: rel.alunoId } });
       if (aluno) {
-        result.push({ id: aluno.id, email: aluno.email, avatarUrl: aluno.avatarUrl, createdAt: rel.createdAt });
+        result.push({
+          id: aluno.id,
+          email: aluno.email,
+          avatarUrl: aluno.avatarUrl,
+          createdAt: rel.createdAt,
+          paymentReminderDueDate: rel.paymentReminderDueDate,
+          paymentReminderRecurring: rel.paymentReminderRecurring,
+        });
       }
     }
     return result;
+  },
+
+  /** Personal configura (ou desativa, com dueDate null) o lembrete de pagamento do vínculo. */
+  async setPaymentReminder(
+    personalId: string,
+    alunoId: string,
+    dueDate: Date | null,
+    recurring: boolean
+  ) {
+    const existing = await relationsRepository.findByPersonalAndAluno(personalId, alunoId);
+    if (!existing) {
+      const err = new Error("Vínculo não encontrado.");
+      (err as any).statusCode = 404;
+      throw err;
+    }
+    return relationsRepository.updatePaymentReminder(personalId, alunoId, dueDate, recurring);
+  },
+
+  /**
+   * Chamado no login do aluno: dispara UMA notificação in-app por vínculo com
+   * lembrete vencido. Mecanismo deliberadamente simples (checagem no login,
+   * sem scheduler) — este projeto não tem nenhuma infraestrutura de cron
+   * (Cloud Run escala a zero); o fundador escolheu essa opção "mais simples,
+   * menos confiável" em vez de subir Cloud Scheduler + Terraform só pra isso.
+   * "Já disparou" nunca precisa ser checado à parte: disparar sempre avança
+   * (recorrente) ou limpa (não-recorrente) a própria paymentReminderDueDate.
+   */
+  async checkAndFireDueReminders(alunoId: string) {
+    const now = new Date();
+    const due = await relationsRepository.findDueRemindersForAluno(alunoId, now);
+    for (const relation of due) {
+      const personal = await prisma.user.findUnique({ where: { id: relation.personalId } });
+      const label = personal?.name?.trim() || personal?.email || "seu Personal";
+      await notificationsService.notify(
+        alunoId,
+        "payment_reminder",
+        `Lembrete: ${label} sinalizou que é hoje o dia de acertar o pagamento combinado.`
+      );
+      const nextDueDate = relation.paymentReminderRecurring
+        ? addOneMonth(relation.paymentReminderDueDate!)
+        : null;
+      await relationsRepository.advanceReminder(relation.id, nextDueDate);
+    }
   },
 };

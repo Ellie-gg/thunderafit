@@ -15,6 +15,7 @@
     "db:migrate:deploy": "prisma migrate deploy",
     "db:seed": "ts-node prisma/seed.ts",
     "db:seed:admin": "ts-node prisma/seed-admin.ts",
+    "db:grant-plan": "ts-node prisma/seed-grant-plan.ts",
     "test": "jest --runInBand --forceExit"
   },
   "dependencies": {

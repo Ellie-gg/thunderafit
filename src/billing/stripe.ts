@@ -27,6 +27,26 @@ export function _resetStripeForTests(): void {
   stripe = null;
 }
 
-// Planos (Fase 20): limite Freemium 3, plano pago 50 alunos.
+// Planos: 3 degraus (evolução do antigo FREE/PAGO de 2 estados). PLUS não é
+// "sem limite" de verdade no schema (Int não representa infinito) — usa um
+// teto alto o bastante pra nunca ser alcançado na prática, reaproveitando a
+// MESMA checagem numérica (`count >= limiteAlunos`) já usada em
+// relations.service.ts, sem precisar de um caminho de código à parte para
+// "ilimitado".
 export const FREE_LIMITE_ALUNOS = 3;
-export const PAGO_LIMITE_ALUNOS = 50;
+export const BASE_LIMITE_ALUNOS = 20;
+export const PLUS_LIMITE_ALUNOS = 1_000_000;
+
+export type PlanTier = "BASE" | "PLUS";
+export type BillingInterval = "monthly" | "annual";
+
+/**
+ * Price ID do Stripe para um degrau + intervalo. 4 preços no total (2 degraus
+ * pagos × mensal/anual) — evolução dos 2 preços únicos da Fase 20 (só
+ * intervalo, um único degrau "PAGO"). Lançado tarde de propósito: cada
+ * `requireEnv` só falha quando o preço específico é realmente necessário, não
+ * no boot do servidor (mesmo padrão já usado por STRIPE_SECRET_KEY).
+ */
+export function stripePriceEnvVar(tier: PlanTier, interval: BillingInterval): string {
+  return `STRIPE_PRICE_ID_${tier}_${interval === "annual" ? "ANNUAL" : "MONTHLY"}`;
+}

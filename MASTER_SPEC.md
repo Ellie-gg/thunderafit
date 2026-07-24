@@ -166,8 +166,9 @@ Ver **Seção 8 (Roadmap Priorizado)** — lista viva, atualizada a cada fase co
 
 1. **Rotacionar a senha do Neon** (exposta em chat na Fase 16) e manter o Secret Manager
    como única fonte da credencial.
-2. **Ativar billing**: criar produtos/prices no Stripe (teste), setar env `STRIPE_*`
-   (Secret Manager + Cloud Run), validar via `BILLING_SETUP.md`.
+2. **Ativar billing**: criar os 4 produtos/prices (Base/Plus × mensal/anual) no Stripe
+   (teste), setar env `STRIPE_*` (Secret Manager + Cloud Run), validar via
+   `BILLING_SETUP.md` (atualizado pra 3 degraus em 2026-07-24).
 3. **Spike Android**: rodar o teste de cold start em máquina com Android Studio.
 4. Melhorias documentadas não aplicadas: idempotência por `event.id` no webhook,
    rate limit no webhook público, `AdminAccessLog` para progress.
@@ -257,32 +258,46 @@ cada vez — o fundador escolhe a próxima.
 
 ### Grupo B — fundação do pivô B2C
 
-7. **Fase 34 — `WorkoutProgram.origin` + guards.** Migration aditiva do enum `origin`
-   (`PERSONAL | SELF`, sem `MARKETPLACE` ainda), `personalId` nullable, guards tratando
-   `personalId === null` como "não é do Personal, é do próprio dono" (nunca "todos os
-   programas do aluno" sem filtro explícito), filtro explícito nas listagens do Personal
-   (helper único de repository, ex: `findPersonalPrescriptions()`). **Puxada pra frente**
-   para servir de base à Fase 34.5 — valida a mudança de authz com escopo pequeno e
-   controlado antes de abrir pro pivô B2C completo (Fase 35+). **Esforço: alto (superfície
-   de autorização) · Modelo: Opus 4.8.**
-8. **Fase 34.5 — Meu Treino Pessoal (templates curados, free).** Depende da Fase 34.
-   Substitui o antigo escopo da Fase 35 (UI livre de criação, catálogo completo) por algo
-   mais restrito e menor: nova tela no dashboard do aluno ("Meu treino pessoal") listando
-   `WorkoutProgram` templates com `origin: SELF`, curados pelo admin usando os exercícios
-   já marcados `isFeatured` (Fase 33.3) — **sem acesso ao catálogo completo de 170
-   exercícios nem liberdade de montagem**. Aplicar = cópia (mesmo padrão da Fase 16),
-   mesma sessão A-E, mesmo `SetLog`/histórico de evolução dos treinos prescritos pelo
-   Personal (sem aba ou fluxo separado). Botão "Crie seu treino do zero" presente na UI
-   desde já, sem lógica por trás (placeholder "em breve") — decisão de virar feature paga
-   (plano PRO) ou gratuita fica em aberto, é só uma checagem de authz a adicionar depois,
-   não uma mudança estrutural. CTA de upsell ao fim da execução (assinar plano PRO ou
-   convidar um Personal) — texto/link por ora, sem checagem de plano ainda. **Esforço:
-   médio · Modelo: Sonnet 5.**
-9. **Fase 36 — Dashboard do aluno com 2 blocos.** "Prescrito pelo seu Personal" + "Meus
-   treinos"; card de convite copiável quando não há Personal vinculado. **Esforço: médio
-   · Modelo: Sonnet 5.**
-10. **Fase 37 — Convite aluno→Personal.** Inverte quem inicia o `ConnectionRequest`
-    (Fase 21). **Esforço: médio · Modelo: Sonnet 5.**
+7. ✅ **Fase 34 — `WorkoutProgram.origin` + guards.** CONCLUÍDA (2026-07-23, registrada
+   como "Fase 34" no STATUS.md — número livre lá, sem colisão). Migration aditiva do enum
+   `origin` (`PERSONAL | SELF`, sem `MARKETPLACE` ainda), `personalId` (e `Workout.personalId`,
+   achado só na auditoria — não estava documentado aqui) nullable, guards tratando
+   `personalId === null`/`origin !== "PERSONAL"` como "não é do Personal, é do próprio
+   dono", filtro explícito `origin: "PERSONAL"` nas listagens do Personal.
+8. ✅ **Fase 34.5 — Meu Treino Pessoal (templates curados, free).** CONCLUÍDA (2026-07-23,
+   também "Fase 34.5" no STATUS.md). Nova tela `/nimbus/treinos-pessoais` (admin cura
+   templates `origin: SELF` usando exercícios `isFeatured`) + `/meu-treino-pessoal` (aluno
+   escolhe e aplica, cópia igual Fase 16) — sem catálogo completo nem montagem livre.
+   "Crie seu treino do zero" é placeholder visual sem lógica. CTA de upsell pós-treino SELF
+   ficou só "Convide um Personal" (não "assinar PRO" — não existe plano pago pro aluno).
+9. ✅ **Fase 36 — Dashboard do aluno com 2 blocos.** CONCLUÍDA (2026-07-24). **Registrada
+   como "Fase 42" no STATUS.md** — o número "36" já estava em uso lá pra uma fase anterior
+   não relacionada (PR em Tempo Real); o STATUS.md é a fonte cronológica autoritativa, essa
+   seção é só o plano. "Prescrito pelo seu Personal" + "Meus treinos" (incluindo Fase 34.5)
+   como blocos separados no dashboard, cada um com sua própria "próxima sessão"; card de
+   convite copiável (mesmo padrão da Fase 12, invertido) quando o aluno não tem Personal
+   vinculado (usa `GET /api/support/my-personals` já existente, não um endpoint novo).
+10. ⏸️ **Fase 37 — Convite aluno→Personal.** ADIADA a pedido do fundador (2026-07-23): o
+    `ConnectionRequest` aluno-inicia-vínculo **já existe desde a Fase 21** (achado na
+    auditoria — a premissa original desta fase estava desatualizada). O pedido real era
+    compartilhar o link de instalação do app com um Personal, o que só faz sentido após
+    publicação nas lojas — **jogada pro roadmap futuro, junto da publicação Android/iOS**,
+    fora de qualquer fase de código por ora.
+
+Dois itens adicionais concluídos na mesma leva (2026-07-24), não planejados originalmente
+nesta seção — registrados como **Fase 43** e **Fase 44** no STATUS.md:
+- ✅ **Lembrete de pagamento.** Personal define uma data (+ recorrência mensal opcional)
+  por vínculo (`ClientRelation.paymentReminderDueDate/Recurring`); checagem simples no
+  login do aluno (sem cron/scheduler — este projeto não tem essa infra) dispara UMA
+  notificação in-app via o domínio `notifications` já existente. Sem processamento de
+  pagamento real.
+- ✅ **Billing de 3 degraus (Free/Base/Plus).** `PlanoAssinatura` evolui de 2 estados
+  (`FREE/PAGO`) pra 3 (`FREE/BASE/PLUS`): Free 3 alunos (como hoje), Base 20 alunos +
+  acesso ao diretório de descoberta, Plus alunos ilimitados + destaque/prioridade no
+  diretório. Webhook do Stripe passa a detectar o degrau comprado (`metadata.tier` no
+  checkout; `price.id` atual da subscription pra trocas via Portal do Cliente). Bug
+  corrigido: downgrade pra Free agora desliga `availableForNewStudents` (antes ficava
+  ligado pra sempre). Valores em R$ são placeholder.
 
 ### Grupo C — pesquisa (sem código)
 

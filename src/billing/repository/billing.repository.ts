@@ -1,5 +1,5 @@
 import prisma from "../../lib/prisma";
-import { FREE_LIMITE_ALUNOS, PAGO_LIMITE_ALUNOS } from "../stripe";
+import { FREE_LIMITE_ALUNOS, BASE_LIMITE_ALUNOS, PLUS_LIMITE_ALUNOS, PlanTier } from "../stripe";
 
 export const billingRepository = {
   findUserById(id: string) {
@@ -27,13 +27,13 @@ export const billingRepository = {
     });
   },
 
-  /** Upgrade: PAGO + limite 50 + guarda a subscription. Idempotente. */
-  applyPaidPlan(userId: string, stripeSubscriptionId: string | null) {
+  /** Upgrade: BASE ou PLUS + limite do degrau + guarda a subscription. Idempotente. */
+  applyPaidPlan(userId: string, tier: PlanTier, stripeSubscriptionId: string | null) {
     return prisma.user.update({
       where: { id: userId },
       data: {
-        planoAssinatura: "PAGO",
-        limiteAlunos: PAGO_LIMITE_ALUNOS,
+        planoAssinatura: tier,
+        limiteAlunos: tier === "PLUS" ? PLUS_LIMITE_ALUNOS : BASE_LIMITE_ALUNOS,
         stripeSubscriptionId,
       },
     });
@@ -46,6 +46,11 @@ export const billingRepository = {
    * já vinculados (decisão documentada, Fase 20). Zera a subscription corrente
    * — assim eventos obsoletos daquela subscription deixam de casar e não
    * reativam o plano por engano (defesa contra reordenação/reentrega).
+   *
+   * `availableForNewStudents: false` (bug corrigido nesta fase): antes do
+   * degrau de 3 níveis, um downgrade pra FREE não desligava a disponibilidade
+   * no diretório — o profissional continuava aparecendo pros alunos mesmo
+   * sem mais direito a isso (Base+ é quem pode ficar disponível).
    */
   applyFreePlan(userId: string) {
     return prisma.user.update({
@@ -54,6 +59,7 @@ export const billingRepository = {
         planoAssinatura: "FREE",
         limiteAlunos: FREE_LIMITE_ALUNOS,
         stripeSubscriptionId: null,
+        availableForNewStudents: false,
       },
     });
   },

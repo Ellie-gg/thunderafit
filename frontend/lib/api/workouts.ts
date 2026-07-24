@@ -111,6 +111,19 @@ export function applyProgram(programId: string, alunoId: string) {
   });
 }
 
+// Fase 34.5: "Meu treino pessoal" — catálogo de templates SELF (curados pelo
+// admin) e aplicação (cópia) direto pelo próprio aluno, sem Personal.
+export function listSelfTemplates() {
+  return apiFetch<{ programs: WorkoutProgram[] }>("/api/workout-programs/self-templates");
+}
+
+export function applySelfTemplate(programId: string) {
+  return apiFetch<{ program: WorkoutProgram }>(
+    `/api/workout-programs/${programId}/apply-self-template`,
+    { method: "POST" }
+  );
+}
+
 // Fase 31: apaga um programa (template ou instância aplicada) — sem volta,
 // por isso todo lugar que usa isto exige confirmação antes de chamar
 // (ver DeleteProgramButton).

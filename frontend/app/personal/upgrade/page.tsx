@@ -7,6 +7,7 @@ import {
   getBillingStatus,
   createCheckoutSession,
   createPortalSession,
+  type PlanTier,
 } from "@/lib/api/billing";
 import { ApiError } from "@/lib/api/client";
 import { AuthGuard } from "@/components/auth-guard";
@@ -15,33 +16,130 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { QueryError } from "@/components/query-error";
 
-const PLANS = [
-  {
-    interval: "monthly" as const,
-    nome: "Mensal",
-    preco: "R$ 9,90",
-    sufixo: "/mês",
-    nota: "Cobrança mensal, cancele quando quiser.",
+type Interval = "monthly" | "annual";
+
+// Billing 3 degraus: valores em R$ são PLACEHOLDER (o que importa nesta fase
+// é a estrutura de degraus e o filtro do diretório, não o preço final).
+const TIER_INFO: Record<
+  PlanTier,
+  { nome: string; limiteLabel: string; beneficios: string[]; destaque?: boolean }
+> = {
+  BASE: {
+    nome: "Base",
+    limiteLabel: "Até 20 alunos vinculados",
+    beneficios: ["Até 20 alunos vinculados", "Apareça no diretório de profissionais"],
   },
-  {
-    interval: "annual" as const,
-    nome: "Anual",
-    preco: "R$ 95,04",
-    sufixo: "/ano",
-    nota: "Equivale a R$ 7,92/mês — 20% de desconto.",
+  PLUS: {
+    nome: "Plus",
+    limiteLabel: "Alunos ilimitados",
+    beneficios: [
+      "Alunos ilimitados",
+      "Destaque e prioridade no diretório de profissionais",
+    ],
     destaque: true,
   },
-];
+};
+
+const PRICES: Record<PlanTier, Record<Interval, { preco: string; sufixo: string; nota: string }>> = {
+  BASE: {
+    monthly: { preco: "R$ 19,90", sufixo: "/mês", nota: "Cobrança mensal, cancele quando quiser." },
+    annual: {
+      preco: "R$ 190,80",
+      sufixo: "/ano",
+      nota: "Equivale a R$ 15,90/mês — 20% de desconto.",
+    },
+  },
+  PLUS: {
+    monthly: { preco: "R$ 39,90", sufixo: "/mês", nota: "Cobrança mensal, cancele quando quiser." },
+    annual: {
+      preco: "R$ 382,80",
+      sufixo: "/ano",
+      nota: "Equivale a R$ 31,90/mês — 20% de desconto.",
+    },
+  },
+};
+
+function TierCard({
+  tier,
+  onSubscribe,
+  isPending,
+}: {
+  tier: PlanTier;
+  onSubscribe: (tier: PlanTier, interval: Interval) => void;
+  isPending: boolean;
+}) {
+  const [interval, setInterval] = useState<Interval>("monthly");
+  const info = TIER_INFO[tier];
+  const price = PRICES[tier][interval];
+
+  return (
+    <Card
+      className="flex flex-1 flex-col gap-3"
+      style={info.destaque ? { borderTopWidth: "4px", borderTopColor: "var(--accent)" } : undefined}
+    >
+      <div>
+        <span className="font-display text-lg font-bold">{info.nome}</span>
+        {info.destaque && (
+          <span className="ml-2 rounded-full bg-accent/10 px-2 py-0.5 text-xs font-semibold text-accent">
+            Mais popular
+          </span>
+        )}
+      </div>
+
+      <ul className="flex flex-col gap-1 text-sm text-muted">
+        {info.beneficios.map((b) => (
+          <li key={b}>✓ {b}</li>
+        ))}
+      </ul>
+
+      <div className="flex gap-1.5 rounded-md border border-border p-1">
+        <button
+          type="button"
+          onClick={() => setInterval("monthly")}
+          className={`flex-1 rounded px-2 py-1 text-xs font-semibold transition-colors ${
+            interval === "monthly" ? "bg-accent text-ink-950" : "text-muted"
+          }`}
+        >
+          Mensal
+        </button>
+        <button
+          type="button"
+          onClick={() => setInterval("annual")}
+          className={`flex-1 rounded px-2 py-1 text-xs font-semibold transition-colors ${
+            interval === "annual" ? "bg-accent text-ink-950" : "text-muted"
+          }`}
+        >
+          Anual
+        </button>
+      </div>
+
+      <div>
+        <span className="font-display text-3xl font-bold">{price.preco}</span>
+        <span className="text-sm text-muted">{price.sufixo}</span>
+      </div>
+      <p className="text-sm text-muted">{price.nota}</p>
+
+      <Button
+        onClick={() => onSubscribe(tier, interval)}
+        disabled={isPending}
+        variant={info.destaque ? "default" : "secondary"}
+        className="mt-auto"
+      >
+        {isPending ? "Redirecionando..." : `Assinar ${info.nome}`}
+      </Button>
+    </Card>
+  );
+}
 
 function UpgradeContent() {
   const searchParams = useSearchParams();
   const status = searchParams.get("status"); // success | cancel (retorno do Stripe)
 
   const statusQuery = useQuery({ queryKey: ["billing-status"], queryFn: getBillingStatus });
-  const [pendingInterval, setPendingInterval] = useState<"monthly" | "annual" | null>(null);
 
   const checkoutMutation = useMutation({
-    mutationFn: (interval: "monthly" | "annual") => createCheckoutSession(interval),
+    mutationFn: ({ tier, interval }: { tier: PlanTier; interval: Interval }) =>
+      createCheckoutSession(tier, interval),
     onSuccess: (data) => {
       // Redireciona para o Checkout hospedado do Stripe.
       window.location.href = data.url;
@@ -55,7 +153,9 @@ function UpgradeContent() {
     },
   });
 
-  const isPago = statusQuery.data?.planoAssinatura === "PAGO";
+  const tier = statusQuery.data?.planoAssinatura;
+  const isPago = !!tier && tier !== "FREE";
+  const tierNome = tier === "PLUS" ? "Plus" : tier === "BASE" ? "Base" : null;
 
   return (
     <>
@@ -70,8 +170,10 @@ function UpgradeContent() {
           </h1>
           <p className="text-sm text-muted">
             {isPago
-              ? "Você está no plano pago — até 50 alunos vinculados."
-              : "Plano gratuito: até 3 alunos. Faça upgrade para vincular até 50."}
+              ? `Você está no plano ${tierNome} — ${
+                  tier === "PLUS" ? "alunos ilimitados" : "até 20 alunos vinculados"
+                }.`
+              : "Plano gratuito: até 3 alunos. Faça upgrade para vincular mais e aparecer no diretório de profissionais."}
           </p>
         </div>
 
@@ -97,9 +199,10 @@ function UpgradeContent() {
           <Card className="flex flex-col gap-3">
             <h2 className="font-display text-lg font-bold">Gerenciar assinatura</h2>
             <p className="text-sm text-muted">
-              Altere o método de pagamento, veja faturas ou cancele pelo portal seguro do
-              Stripe. Ao cancelar, seus alunos já vinculados continuam — só novos vínculos
-              acima de 3 ficam bloqueados após o fim do período pago.
+              Altere o método de pagamento, veja faturas, troque de degrau ou cancele pelo
+              portal seguro do Stripe. Ao cancelar, seus alunos já vinculados continuam — só
+              novos vínculos acima do limite do plano gratuito ficam bloqueados após o fim do
+              período pago.
             </p>
             {portalMutation.isError && (
               <p className="text-sm text-danger">
@@ -118,43 +221,16 @@ function UpgradeContent() {
           </Card>
         ) : (
           <div className="flex flex-col gap-4 sm:flex-row">
-            {PLANS.map((plan) => (
-              <Card
-                key={plan.interval}
-                className="flex flex-1 flex-col gap-3"
-                style={
-                  plan.destaque ? { borderTopWidth: "4px", borderTopColor: "var(--accent)" } : undefined
-                }
-              >
-                <div>
-                  <span className="font-display text-lg font-bold">{plan.nome}</span>
-                  {plan.destaque && (
-                    <span className="ml-2 rounded-full bg-accent/10 px-2 py-0.5 text-xs font-semibold text-accent">
-                      Melhor valor
-                    </span>
-                  )}
-                </div>
-                <div>
-                  <span className="font-display text-3xl font-bold">{plan.preco}</span>
-                  <span className="text-sm text-muted">{plan.sufixo}</span>
-                </div>
-                <p className="text-sm text-muted">{plan.nota}</p>
-                <p className="text-xs text-muted">Até 50 alunos vinculados.</p>
-                <Button
-                  onClick={() => {
-                    setPendingInterval(plan.interval);
-                    checkoutMutation.mutate(plan.interval);
-                  }}
-                  disabled={checkoutMutation.isPending}
-                  variant={plan.destaque ? "default" : "secondary"}
-                  className="mt-auto"
-                >
-                  {checkoutMutation.isPending && pendingInterval === plan.interval
-                    ? "Redirecionando..."
-                    : "Assinar"}
-                </Button>
-              </Card>
-            ))}
+            <TierCard
+              tier="BASE"
+              onSubscribe={(t, i) => checkoutMutation.mutate({ tier: t, interval: i })}
+              isPending={checkoutMutation.isPending && checkoutMutation.variables?.tier === "BASE"}
+            />
+            <TierCard
+              tier="PLUS"
+              onSubscribe={(t, i) => checkoutMutation.mutate({ tier: t, interval: i })}
+              isPending={checkoutMutation.isPending && checkoutMutation.variables?.tier === "PLUS"}
+            />
           </div>
         )}
 

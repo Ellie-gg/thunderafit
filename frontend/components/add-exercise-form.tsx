@@ -14,10 +14,20 @@ const ALL_GROUPS = "Todos";
 // Fase 27: mesmo limite validado no backend (workouts.service.ts).
 const MAX_NOTES_LENGTH = 500;
 
+type AddExerciseInput = {
+  exerciseId: string;
+  sets: number;
+  repsRange: string;
+  restSeconds: number;
+  order: number;
+  notes?: string;
+};
+
 export function AddExerciseForm({
   workoutId,
   nextOrder,
   onAdded,
+  addExerciseFn,
 }: {
   workoutId: string;
   nextOrder: number;
@@ -30,6 +40,13 @@ export function AddExerciseForm({
    * invalidado na tela de sessão).
    */
   onAdded?: () => void;
+  /**
+   * Fase 34.5: por padrão usa `addWorkoutExercise` (fluxo do Personal), mas
+   * aceita uma função alternativa — reaproveita todo o seletor de exercício
+   * (filtro por grupo, busca, destaque ☆) na tela de admin de templates SELF
+   * em vez de duplicar ~250 linhas de UI só pra trocar o endpoint chamado.
+   */
+  addExerciseFn?: (workoutId: string, input: AddExerciseInput) => Promise<unknown>;
 }) {
   // Carrega o catálogo inteiro uma vez e filtra no cliente. O backend também
   // aceita ?muscleGroup= (usado por outros clientes/testes), mas com ~150
@@ -68,9 +85,11 @@ export function AddExerciseForm({
     });
   }, [all, group, filter]);
 
+  const submit = addExerciseFn ?? addWorkoutExercise;
+
   const mutation = useMutation({
     mutationFn: () =>
-      addWorkoutExercise(workoutId, {
+      submit(workoutId, {
         exerciseId,
         sets: Number(sets),
         repsRange,

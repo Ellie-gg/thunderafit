@@ -164,3 +164,98 @@ export async function updateUserRoleHandler(
     return handleError(err, reply);
   }
 }
+
+// --- Fase 34.5: curadoria de templates SELF ("Meu treino pessoal") ---
+
+export async function listSelfTemplatesHandler(request: FastifyRequest, reply: FastifyReply) {
+  try {
+    assertAdmin(request);
+    const programs = await adminService.listSelfTemplates();
+    return reply.status(200).send({ programs });
+  } catch (err: any) {
+    return handleError(err, reply);
+  }
+}
+
+export async function getSelfTemplateHandler(
+  request: FastifyRequest<{ Params: { id: string } }>,
+  reply: FastifyReply
+) {
+  try {
+    assertAdmin(request);
+    const program = await adminService.getSelfTemplate(request.params.id);
+    return reply.status(200).send({ program });
+  } catch (err: any) {
+    return handleError(err, reply);
+  }
+}
+
+export async function createSelfTemplateHandler(
+  request: FastifyRequest<{ Body: { name: string; sessionScheme?: string } }>,
+  reply: FastifyReply
+) {
+  try {
+    assertAdmin(request);
+    const program = await adminService.createSelfTemplate(request.body.name, request.body.sessionScheme);
+    return reply.status(201).send({ program });
+  } catch (err: any) {
+    return handleError(err, reply);
+  }
+}
+
+export async function addSessionToSelfTemplateHandler(
+  request: FastifyRequest<{ Params: { id: string }; Body: { name?: string; letter: string } }>,
+  reply: FastifyReply
+) {
+  try {
+    assertAdmin(request);
+    const session = await adminService.addSessionToSelfTemplate(
+      request.params.id,
+      request.body.name,
+      request.body.letter
+    );
+    return reply.status(201).send({ session });
+  } catch (err: any) {
+    return handleError(err, reply);
+  }
+}
+
+export async function addExerciseToSelfSessionHandler(
+  request: FastifyRequest<{
+    Params: { id: string; sessionId: string };
+    Body: {
+      exerciseId: string;
+      sets: number;
+      repsRange: string;
+      restSeconds: number;
+      order: number;
+      notes?: string;
+    };
+  }>,
+  reply: FastifyReply
+) {
+  try {
+    assertAdmin(request);
+    const workoutExercise = await adminService.addExerciseToSelfSession(
+      request.params.id,
+      request.params.sessionId,
+      request.body
+    );
+    return reply.status(201).send({ workoutExercise });
+  } catch (err: any) {
+    return handleError(err, reply);
+  }
+}
+
+export async function deleteSelfTemplateHandler(
+  request: FastifyRequest<{ Params: { id: string } }>,
+  reply: FastifyReply
+) {
+  try {
+    assertAdmin(request);
+    await adminService.deleteSelfTemplate(request.params.id);
+    return reply.status(204).send();
+  } catch (err: any) {
+    return handleError(err, reply);
+  }
+}

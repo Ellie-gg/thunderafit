@@ -1,5 +1,12 @@
 import { adminRepository } from "../repository/admin.repository";
 import { uploadExerciseMedia } from "../../lib/storage";
+// Reaproveita só as funções de ordenação/validação de esquema (puras, sem
+// query) do domínio fitness — não importa o repository dele, pra manter os
+// dois domínios desacoplados (mesmo padrão já usado no resto do projeto).
+import { orderFor } from "../../fitness/repository/workout-programs.repository";
+
+const VALID_SESSION_SCHEMES = ["LETTER", "WEEKDAY"] as const;
+type AdminSessionScheme = (typeof VALID_SESSION_SCHEMES)[number];
 
 // Fase 32: mídia de exercícios (vídeo/GIF nativo, sobe pro bucket GCS; link
 // do YouTube não precisa de upload, só valida e salva o link). Nunca confia
@@ -448,5 +455,108 @@ export const adminService = {
       `${oldRole} -> ${newRole}`
     );
     return { user: updated };
+  },
+
+  // --- Fase 34.5: curadoria de templates SELF ("Meu treino pessoal") ---
+
+  async listSelfTemplates() {
+    return adminRepository.listSelfTemplates();
+  },
+
+  async getSelfTemplate(programId: string) {
+    const template = await adminRepository.findSelfTemplateWithSessions(programId);
+    if (!template) {
+      const err = new Error("Template não encontrado.");
+      (err as any).statusCode = 404;
+      throw err;
+    }
+    return template;
+  },
+
+  async createSelfTemplate(name: string, sessionScheme?: string) {
+    if (!name?.trim()) {
+      const err = new Error("Nome do template é obrigatório.");
+      (err as any).statusCode = 400;
+      throw err;
+    }
+    const scheme = (sessionScheme ?? "LETTER") as AdminSessionScheme;
+    if (!VALID_SESSION_SCHEMES.includes(scheme)) {
+      const err = new Error("sessionScheme deve ser LETTER ou WEEKDAY.");
+      (err as any).statusCode = 400;
+      throw err;
+    }
+    return adminRepository.createSelfTemplate(name.trim(), scheme);
+  },
+
+  async addSessionToSelfTemplate(programId: string, name: string | undefined, letter: string) {
+    const template = await adminRepository.findSelfTemplateWithSessions(programId);
+    if (!template) {
+      const err = new Error("Template não encontrado.");
+      (err as any).statusCode = 404;
+      throw err;
+    }
+    const validKeys = orderFor(template.sessionScheme);
+    if (!validKeys.includes(letter)) {
+      const err = new Error(
+        template.sessionScheme === "WEEKDAY"
+          ? "Sessão deve ser um dia da semana válido (SEGUNDA a DOMINGO)."
+          : "Sessão deve ser uma letra de A a E."
+      );
+      (err as any).statusCode = 400;
+      throw err;
+    }
+    if (template.workouts.length >= validKeys.length) {
+      const err = new Error(`Um template pode ter no máximo ${validKeys.length} sessões.`);
+      (err as any).statusCode = 400;
+      throw err;
+    }
+    if (template.workouts.some((w) => w.letter === letter)) {
+      const err = new Error(`A sessão ${letter} já existe neste template.`);
+      (err as any).statusCode = 409;
+      throw err;
+    }
+    return adminRepository.addSessionToSelfTemplate(
+      programId,
+      name?.trim() || `${template.name} — ${letter}`,
+      letter
+    );
+  },
+
+  async addExerciseToSelfSession(
+    programId: string,
+    sessionId: string,
+    input: { exerciseId: string; sets: number; repsRange: string; restSeconds: number; order: number; notes?: string }
+  ) {
+    const template = await adminRepository.findSelfTemplateWithSessions(programId);
+    if (!template) {
+      const err = new Error("Template não encontrado.");
+      (err as any).statusCode = 404;
+      throw err;
+    }
+    const session = template.workouts.find((w) => w.id === sessionId);
+    if (!session) {
+      const err = new Error("Sessão não encontrada neste template.");
+      (err as any).statusCode = 404;
+      throw err;
+    }
+    return adminRepository.addExerciseToSelfSession(
+      sessionId,
+      input.exerciseId,
+      input.sets,
+      input.repsRange,
+      input.restSeconds,
+      input.order,
+      input.notes?.trim() || null
+    );
+  },
+
+  async deleteSelfTemplate(programId: string) {
+    const template = await adminRepository.findSelfTemplateWithSessions(programId);
+    if (!template) {
+      const err = new Error("Template não encontrado.");
+      (err as any).statusCode = 404;
+      throw err;
+    }
+    await adminRepository.deleteSelfTemplate(programId);
   },
 };

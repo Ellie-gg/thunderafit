@@ -107,11 +107,22 @@ function ProfissionaisContent() {
               <Card
                 key={p.id}
                 className="flex flex-col gap-2"
-                style={{ borderTopWidth: "3px", borderTopColor: "var(--role-personal)" }}
+                style={{
+                  borderTopWidth: p.planoAssinatura === "PLUS" ? "3px" : "3px",
+                  borderTopColor: p.planoAssinatura === "PLUS" ? "var(--accent)" : "var(--role-personal)",
+                }}
               >
                 <div className="flex items-start justify-between gap-3">
                   <div>
-                    <p className="font-semibold">{p.email.split("@")[0]}</p>
+                    <div className="flex items-center gap-2">
+                      <p className="font-semibold">{p.email.split("@")[0]}</p>
+                      {/* Billing 3 degraus: Plus aparece com destaque no diretório. */}
+                      {p.planoAssinatura === "PLUS" && (
+                        <span className="rounded-full bg-accent/15 px-2 py-0.5 text-xs font-semibold text-accent">
+                          ★ Plus
+                        </span>
+                      )}
+                    </div>
                     {p.location && <p className="text-xs text-muted">📍 {p.location}</p>}
                   </div>
                 </div>

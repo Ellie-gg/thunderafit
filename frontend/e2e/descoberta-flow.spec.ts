@@ -1,13 +1,21 @@
 import { test, expect } from "@playwright/test";
+import { execFileSync } from "node:child_process";
+import path from "node:path";
 
 /**
  * Fase 21 — descoberta de profissionais, ponta a ponta pela UI:
  * Personal ativa disponibilidade + localização (tela de perfil), aluno busca
  * por localização e encontra, solicita vínculo, Personal recebe a solicitação
  * e aceita, aluno vê o status "Aceita". Backend + Postgres reais.
+ *
+ * Billing 3 degraus: disponibilidade no diretório agora exige Base+ — o
+ * Personal deste teste precisa estar no degrau Base ANTES de tentar ativar
+ * o switch pela UI (setup via `db:grant-plan`, não é o que está sob teste
+ * aqui; mesmo padrão de bootstrap fora de HTTP já usado por `db:seed:admin`).
  */
 
 const BACKEND_URL = process.env.E2E_BACKEND_URL ?? "http://localhost:3000";
+const ROOT_DIR = path.resolve(__dirname, "..", "..");
 
 async function backendJson(path: string, body: unknown, token?: string) {
   const res = await fetch(`${BACKEND_URL}${path}`, {
@@ -37,6 +45,12 @@ test("Personal fica disponível, aluno busca e solicita, Personal aceita, aluno 
 
   await backendJson("/api/auth/register", { email: personalEmail, password, role: "PERSONAL" });
   await backendJson("/api/auth/register", { email: alunoEmail, password, role: "ALUNO" });
+
+  execFileSync("npm", ["run", "db:grant-plan"], {
+    cwd: ROOT_DIR,
+    shell: true,
+    env: { ...process.env, GRANT_EMAIL: personalEmail, GRANT_TIER: "BASE" },
+  });
 
   // --- 1. Personal ativa disponibilidade + localização pela UI ---
   await login(page, personalEmail, password);

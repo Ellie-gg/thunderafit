@@ -31,6 +31,18 @@ export const connectionsService = {
     }
     const clean: { availableForNewStudents?: boolean; location?: string | null; bio?: string | null } = {};
     if (typeof data.availableForNewStudents === "boolean") {
+      // Gate de degrau: Free não pode ATIVAR disponibilidade no diretório
+      // (Base+ ganhou esse acesso nesta fase). Desligar continua sempre
+      // permitido em qualquer degrau.
+      if (data.availableForNewStudents) {
+        const user = await connectionsRepository.findUserById(userId);
+        if (user?.planoAssinatura === "FREE") {
+          throw httpError(
+            "Disponibilidade no diretório é um recurso dos planos Base e Plus. Faça upgrade para ativar.",
+            403
+          );
+        }
+      }
       clean.availableForNewStudents = data.availableForNewStudents;
     }
     if (data.location !== undefined) clean.location = data.location?.toString().trim() || null;

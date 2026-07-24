@@ -3,18 +3,113 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { listRelations } from "@/lib/api/relations";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { listRelations, setPaymentReminder, type RelationAluno } from "@/lib/api/relations";
 import { listWorkoutPrograms } from "@/lib/api/workouts";
 import { listLoggedExercises, getLoadHistory, getFrequency } from "@/lib/api/progress";
+import { ApiError } from "@/lib/api/client";
 import { AuthGuard } from "@/components/auth-guard";
 import { AppHeader } from "@/components/app-header";
 import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { QueryError } from "@/components/query-error";
 import { LoadHistoryChart } from "@/components/load-history-chart";
 import { FrequencyChart } from "@/components/frequency-chart";
 import { DeleteProgramButton } from "@/components/delete-program-button";
 import { UserAvatar } from "@/components/user-avatar";
+
+// Fase 42 (MASTER_SPEC) — lembrete de pagamento: o Personal define uma
+// próxima data de cobrança (com recorrência mensal opcional); o aluno recebe
+// UMA notificação in-app quando faz login na data (ou depois dela). Não
+// processa pagamento nenhum — é só lembrete. Checagem "já disparou" não
+// existe à parte: disparar sempre avança (recorrente) ou limpa (não-recorrente)
+// a própria data no backend, então o form aqui só reflete o estado atual.
+function PaymentReminderCard({ alunoId, aluno }: { alunoId: string; aluno: RelationAluno }) {
+  const queryClient = useQueryClient();
+  const hasActiveReminder = !!aluno.paymentReminderDueDate;
+  const [dueDate, setDueDate] = useState(aluno.paymentReminderDueDate?.slice(0, 10) ?? "");
+  const [recurring, setRecurring] = useState(aluno.paymentReminderRecurring);
+
+  const mutation = useMutation({
+    mutationFn: (input: { dueDate: string | null; recurring: boolean }) =>
+      setPaymentReminder(alunoId, input.dueDate, input.recurring),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["relations"] });
+    },
+  });
+
+  return (
+    <Card className="flex flex-col gap-3">
+      <h2 className="font-display text-lg font-bold">Lembrete de pagamento</h2>
+      <p className="text-xs text-muted">
+        Na data escolhida, o aluno recebe uma notificação no próximo login — não processa
+        nenhum pagamento de verdade.
+      </p>
+
+      {hasActiveReminder && (
+        <p className="text-sm text-foreground">
+          Próximo lembrete: {new Date(aluno.paymentReminderDueDate!).toLocaleDateString("pt-BR")}
+          {aluno.paymentReminderRecurring && " · repete todo mês"}
+        </p>
+      )}
+
+      <form
+        className="flex flex-col gap-3"
+        onSubmit={(e) => {
+          e.preventDefault();
+          if (!dueDate) return;
+          mutation.mutate({ dueDate: new Date(dueDate).toISOString(), recurring });
+        }}
+      >
+        <div className="flex flex-col gap-1.5">
+          <Label htmlFor={`payment-reminder-date-${alunoId}`}>Próxima cobrança</Label>
+          <Input
+            id={`payment-reminder-date-${alunoId}`}
+            type="date"
+            value={dueDate}
+            onChange={(e) => setDueDate(e.target.value)}
+          />
+        </div>
+        <label className="flex items-center gap-2 text-sm text-foreground">
+          <input
+            type="checkbox"
+            checked={recurring}
+            onChange={(e) => setRecurring(e.target.checked)}
+            className="h-4 w-4 rounded border-border accent-accent"
+          />
+          Repetir todo mês
+        </label>
+        <div className="flex gap-2">
+          <Button type="submit" disabled={mutation.isPending || !dueDate}>
+            {hasActiveReminder ? "Atualizar lembrete" : "Salvar lembrete"}
+          </Button>
+          {hasActiveReminder && (
+            <Button
+              type="button"
+              variant="secondary"
+              disabled={mutation.isPending}
+              onClick={() => {
+                setDueDate("");
+                setRecurring(false);
+                mutation.mutate({ dueDate: null, recurring: false });
+              }}
+            >
+              Desativar
+            </Button>
+          )}
+        </div>
+      </form>
+
+      {mutation.isError && (
+        <p className="text-sm text-danger">
+          {mutation.error instanceof ApiError ? mutation.error.message : "Erro ao salvar o lembrete."}
+        </p>
+      )}
+    </Card>
+  );
+}
 
 /**
  * Fase 29 — hub de administração do aluno: o Personal cria um programa e
@@ -102,6 +197,8 @@ function AlunoHubContent() {
             >
               Ver anamnese →
             </Link>
+
+            <PaymentReminderCard alunoId={alunoId} aluno={aluno} />
 
             <Card className="flex flex-col gap-3">
               <h2 className="font-display text-lg font-bold">Programas de treino</h2>

@@ -2,6 +2,7 @@ import { FastifyInstance } from "fastify";
 import {
   createRelationHandler,
   listRelationsHandler,
+  setPaymentReminderHandler,
 } from "../controllers/relations.controller";
 
 export async function relationsRoutes(fastify: FastifyInstance) {
@@ -25,5 +26,16 @@ export async function relationsRoutes(fastify: FastifyInstance) {
       ],
     },
     listRelationsHandler
+  );
+
+  // PUT /api/relations/:alunoId/payment-reminder - Personal configura/desativa o lembrete
+  fastify.put(
+    "/api/relations/:alunoId/payment-reminder",
+    {
+      preHandler: [
+        (fastify as any).authenticate,
+      ],
+    },
+    setPaymentReminderHandler
   );
 }

@@ -5,6 +5,8 @@ export interface RelationAluno {
   email: string;
   avatarUrl: string | null;
   createdAt: string;
+  paymentReminderDueDate: string | null;
+  paymentReminderRecurring: boolean;
 }
 
 export function listRelations() {
@@ -15,6 +17,14 @@ export function createRelation(alunoId: string) {
   return apiFetch<{ relation: unknown }>("/api/relations", {
     method: "POST",
     body: { alunoId },
+  });
+}
+
+/** Personal configura (ou desativa, com dueDate null) o lembrete de pagamento do vínculo. */
+export function setPaymentReminder(alunoId: string, dueDate: string | null, recurring: boolean) {
+  return apiFetch<{ relation: unknown }>(`/api/relations/${alunoId}/payment-reminder`, {
+    method: "PUT",
+    body: { dueDate, recurring },
   });
 }
 

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { getWorkout, completeWorkout } from "@/lib/api/workouts";
@@ -165,6 +166,21 @@ function ExecucaoContent() {
           summary={summary}
           alunoName={firstNameOrEmailPrefix(user)}
           durationSeconds={durationSeconds}
+          // Fase 34.5: CTA de upsell só pra treinos "Meu treino pessoal"
+          // (origin: SELF) — não existe plano pago pro aluno hoje, então o
+          // CTA só oferece convidar um Personal (nada de "assinar PRO", que
+          // seria um botão morto sem produto nenhum por trás).
+          upsell={
+            workout.program?.origin === "SELF" ? (
+              <p className="text-center text-sm text-foreground">
+                Gostou de treinar sozinho?{" "}
+                <Link href="/profissionais" className="font-semibold text-accent-secondary hover:underline">
+                  Convide um Personal
+                </Link>{" "}
+                pra te acompanhar de perto.
+              </p>
+            ) : null
+          }
           onClose={() => setSummary(null)}
         />
       )}

@@ -611,3 +611,77 @@ describe("Fase 31 — excluir programa (template ou instância aplicada)", () =>
     ).not.toBeNull();
   });
 });
+
+describe("Fase 34 — origin (PERSONAL | SELF) em WorkoutProgram", () => {
+  it("todo programa criado pelo Personal tem origin: PERSONAL por padrão", async () => {
+    const r = await supertest(server.server)
+      .post("/api/workout-programs")
+      .set("Authorization", `Bearer ${personalToken}`)
+      .send({ name: "Programa Fase 34" });
+    expect(r.status).toBe(201);
+    expect(r.body.program.origin).toBe("PERSONAL");
+  });
+
+  it("listByPersonal nunca retorna um programa origin: SELF, mesmo inserido diretamente no banco", async () => {
+    // Simula um template SELF (curado pelo admin, Fase 34.5) — sem
+    // personalId, origin explícito SELF. Como não existe endpoint de
+    // criação ainda nesta fase, insere direto via Prisma.
+    const selfTemplate = await prisma.workoutProgram.create({
+      data: { name: "Template SELF de teste", origin: "SELF", personalId: null, isTemplate: true },
+    });
+
+    const r = await supertest(server.server)
+      .get("/api/workout-programs?type=template")
+      .set("Authorization", `Bearer ${personalToken}`);
+    expect(r.status).toBe(200);
+    expect(r.body.programs.some((p: any) => p.id === selfTemplate.id)).toBe(false);
+
+    await prisma.workoutProgram.delete({ where: { id: selfTemplate.id } });
+  });
+
+  it("Personal não consegue aplicar (POST /apply) um programa origin: SELF, mesmo tentando o id diretamente", async () => {
+    const selfTemplate = await prisma.workoutProgram.create({
+      data: { name: "Template SELF pra tentar aplicar", origin: "SELF", personalId: null, isTemplate: true },
+    });
+
+    const r = await supertest(server.server)
+      .post(`/api/workout-programs/${selfTemplate.id}/apply`)
+      .set("Authorization", `Bearer ${personalToken}`)
+      .send({ alunoId: aluno2Id });
+    expect(r.status).toBe(403);
+
+    await prisma.workoutProgram.delete({ where: { id: selfTemplate.id } });
+  });
+
+  it("Personal não consegue adicionar sessão nem excluir um programa origin: SELF", async () => {
+    const selfTemplate = await prisma.workoutProgram.create({
+      data: { name: "Template SELF pra tentar editar", origin: "SELF", personalId: null, isTemplate: true },
+    });
+
+    const addSession = await supertest(server.server)
+      .post(`/api/workout-programs/${selfTemplate.id}/sessions`)
+      .set("Authorization", `Bearer ${personalToken}`)
+      .send({ letter: "A" });
+    expect(addSession.status).toBe(403);
+
+    const del = await supertest(server.server)
+      .delete(`/api/workout-programs/${selfTemplate.id}`)
+      .set("Authorization", `Bearer ${personalToken}`);
+    expect(del.status).toBe(403);
+
+    await prisma.workoutProgram.delete({ where: { id: selfTemplate.id } });
+  });
+
+  it("Workout.personalId também é nullable (sessão de um programa SELF não viola NOT NULL)", async () => {
+    const selfTemplate = await prisma.workoutProgram.create({
+      data: { name: "Template SELF com sessão", origin: "SELF", personalId: null, isTemplate: true },
+    });
+    const selfWorkout = await prisma.workout.create({
+      data: { programId: selfTemplate.id, personalId: null, alunoId: null, name: "Sessão A", letter: "A" },
+    });
+    expect(selfWorkout.personalId).toBeNull();
+
+    await prisma.workout.delete({ where: { id: selfWorkout.id } });
+    await prisma.workoutProgram.delete({ where: { id: selfTemplate.id } });
+  });
+});

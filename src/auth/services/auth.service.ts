@@ -2,6 +2,7 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { Role } from "@prisma/client";
 import { authRepository } from "../repository/auth.repository";
+import { relationsService } from "../../fitness/services/relations.service";
 
 const BCRYPT_SALT_ROUNDS = 12;
 const ACCESS_TOKEN_EXPIRY = "15m";
@@ -115,6 +116,12 @@ export async function login(input: LoginInput, ipAddress: string | null = null) 
   const refreshTokenHash = await bcrypt.hash(refreshToken, BCRYPT_SALT_ROUNDS);
   await authRepository.updateRefreshTokenHash(user.id, refreshTokenHash);
   await authRepository.recordLogin(user.id, ipAddress);
+
+  // Lembrete de pagamento (MASTER_SPEC): checagem simples no login, só para
+  // ALUNO — Personal/Nutricionista/Admin nunca são o alvo de um lembrete.
+  if (user.role === "ALUNO") {
+    await relationsService.checkAndFireDueReminders(user.id);
+  }
 
   const { passwordHash: _ph, refreshTokenHash: _rth, ...safeUser } = user;
   return { accessToken, refreshToken, user: safeUser };

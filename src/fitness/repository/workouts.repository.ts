@@ -37,6 +37,10 @@ export const workoutsRepository = {
     return prisma.workout.findUnique({
       where: { id },
       include: {
+        // Fase 34.5: só o origin do programa — o frontend usa isso pra
+        // decidir se mostra o CTA de upsell ("convide um Personal") ao final
+        // de um treino origin: SELF, sem precisar de uma chamada à parte.
+        program: { select: { origin: true } },
         exercises: {
           orderBy: { order: "asc" },
           include: {

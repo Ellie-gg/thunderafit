@@ -102,6 +102,36 @@ export async function deleteProgramHandler(
   }
 }
 
+// Fase 34.5: catálogo de templates "Meu treino pessoal" — qualquer usuário
+// autenticado pode ver (a tela em si só é oferecida ao ALUNO no frontend,
+// mas não há dado sensível aqui pra restringir por role no backend).
+export async function listSelfTemplatesHandler(_request: FastifyRequest, reply: FastifyReply) {
+  try {
+    const programs = await workoutProgramsService.listSelfTemplates();
+    return reply.status(200).send({ programs });
+  } catch (err) {
+    return handleError(err, reply);
+  }
+}
+
+export async function applySelfTemplateHandler(
+  request: FastifyRequest<{ Params: { id: string } }>,
+  reply: FastifyReply
+) {
+  try {
+    const { sub, role } = (request as any).user;
+    if (role !== "ALUNO") {
+      const err = new Error("Apenas alunos podem aplicar um treino pessoal.") as any;
+      err.statusCode = 403;
+      throw err;
+    }
+    const program = await workoutProgramsService.applySelfTemplate(request.params.id, sub);
+    return reply.status(201).send({ program });
+  } catch (err) {
+    return handleError(err, reply);
+  }
+}
+
 export async function getProgramHandler(
   request: FastifyRequest<{ Params: { id: string } }>,
   reply: FastifyReply

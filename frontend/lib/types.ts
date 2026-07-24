@@ -8,7 +8,7 @@ export interface User {
   // prefixo do e-mail, já usado na saudação do dashboard).
   name: string | null;
   role: Role;
-  planoAssinatura: "FREE" | "PAGO";
+  planoAssinatura: "FREE" | "BASE" | "PLUS";
   limiteAlunos: number;
   avatarUrl: string | null;
   createdAt: string;
@@ -64,7 +64,9 @@ export interface WorkoutExercise {
 export interface Workout {
   id: string;
   programId: string;
-  personalId: string;
+  // Fase 34: nullable em lockstep com WorkoutProgram.personalId (sessão de
+  // um programa origin: SELF não tem Personal nenhum).
+  personalId: string | null;
   alunoId: string | null;
   name: string;
   letter: string;
@@ -74,6 +76,8 @@ export interface Workout {
   exercises?: WorkoutExercise[];
   /** Presente na visão de programa do aluno (GET /api/workout-programs/:id). */
   suggestedNext?: boolean;
+  /** Fase 34.5: presente em GET /api/workouts/:id (findByIdWithExercises). */
+  program?: { origin: WorkoutProgramOrigin };
 }
 
 // Fase 35/36: resumo pós-treino — devolvido junto da resposta de conclusão de
@@ -104,9 +108,15 @@ export interface WorkoutCompletionSummary {
 
 export type SessionScheme = "LETTER" | "WEEKDAY";
 
+// Fase 34: origin distingue um programa PRESCRITO por um Personal de um
+// template SELF (curado pelo admin, aplicado direto pelo aluno — Fase 34.5).
+// personalId é null exatamente quando origin é SELF.
+export type WorkoutProgramOrigin = "PERSONAL" | "SELF";
+
 export interface WorkoutProgram {
   id: string;
-  personalId: string;
+  personalId: string | null;
+  origin: WorkoutProgramOrigin;
   name: string;
   isTemplate: boolean;
   alunoId: string | null;
@@ -279,7 +289,7 @@ export interface AdminUser {
   id: string;
   email: string;
   role: Role;
-  planoAssinatura: "FREE" | "PAGO";
+  planoAssinatura: "FREE" | "BASE" | "PLUS";
   limiteAlunos: number;
   lastLoginAt: string | null;
   createdAt: string;
