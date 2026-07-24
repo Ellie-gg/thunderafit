@@ -134,17 +134,24 @@ function AlunoHubContent() {
   const relationsQuery = useQuery({ queryKey: ["relations"], queryFn: listRelations });
   const aluno = relationsQuery.data?.relations.find((r) => r.id === alunoId);
 
+  // As 4 queries abaixo só precisam de `alunoId` (já disponível via
+  // useParams, sem esperar `relationsQuery` resolver) — antes ficavam
+  // `enabled: !!aluno`, criando um waterfall desnecessário (esperar a lista
+  // inteira de alunos carregar só pra então disparar as outras 4 em série).
+  // A posse (Personal realmente vinculado a este aluno) já é validada no
+  // BACKEND em cada endpoint via ClientRelation (ex: progress.controller.ts
+  // ::assertAluno) — o gate aqui nunca foi uma checagem de segurança, só
+  // serialização client-side. Sem vínculo, o backend responde 403/vazio e a
+  // mensagem de "não vinculado" abaixo (via relationsQuery) já cobre a UI.
   const programsQuery = useQuery({
     queryKey: ["workout-programs", "personal", "aluno", alunoId],
     queryFn: () => listWorkoutPrograms(undefined, alunoId),
-    enabled: !!aluno,
   });
 
   const [selectedExerciseId, setSelectedExerciseId] = useState("");
   const exercisesQuery = useQuery({
     queryKey: ["progress-exercises", alunoId],
     queryFn: () => listLoggedExercises(alunoId),
-    enabled: !!aluno,
   });
   const exercises = exercisesQuery.data?.exercises ?? [];
   const exerciseId = selectedExerciseId || exercises[0]?.id || "";
@@ -152,13 +159,12 @@ function AlunoHubContent() {
   const loadHistoryQuery = useQuery({
     queryKey: ["load-history", alunoId, exerciseId],
     queryFn: () => getLoadHistory(exerciseId, alunoId),
-    enabled: !!aluno && !!exerciseId,
+    enabled: !!exerciseId,
   });
 
   const frequencyQuery = useQuery({
     queryKey: ["frequency", alunoId],
     queryFn: () => getFrequency("6m", alunoId),
-    enabled: !!aluno,
   });
 
   return (

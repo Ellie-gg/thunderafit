@@ -128,6 +128,16 @@ export const adminRepository = {
     return prisma.exercise.findMany({ orderBy: { name: "asc" } });
   },
 
+  /**
+   * Fase 33: checagem de nome duplicado/similar em createExercise/updateExercise
+   * só compara `.name` — não precisa da linha inteira do exercício (que
+   * `listAllExercises` acima traz completa pra tela de listagem do admin).
+   * Função separada em vez de adicionar `select` na acima, que é compartilhada.
+   */
+  async listAllExerciseNames() {
+    return prisma.exercise.findMany({ orderBy: { name: "asc" }, select: { id: true, name: true } });
+  },
+
   async createExercise(data: {
     name: string;
     muscleGroup: string;
@@ -165,6 +175,16 @@ export const adminRepository = {
 
   async findUserById(id: string) {
     return prisma.user.findUnique({ where: { id } });
+  },
+
+  /**
+   * Fase 33: `updateUserRole` só lê `.role` do usuário-alvo antes de
+   * atualizar (pra decidir se é o último ADMIN) — não usa mais nada do
+   * resto da linha, então evita trazer o usuário inteiro (senha hash,
+   * avatar, etc). Único chamador hoje é `adminService.updateUserRole`.
+   */
+  async findUserRoleById(id: string) {
+    return prisma.user.findUnique({ where: { id }, select: { id: true, role: true } });
   },
 
   async countUsersWithRole(role: "PERSONAL" | "ALUNO" | "NUTRICIONISTA" | "ADMIN") {

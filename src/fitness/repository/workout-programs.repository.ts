@@ -1,6 +1,16 @@
 import prisma from "../../lib/prisma";
 import { SessionScheme } from "@prisma/client";
 
+// Teto de segurança pro histórico de séries trazido por exercício prescrito —
+// sem isso, `setLogs` cresce sem limite pra sempre pra um usuário de longo
+// prazo. O frontend só consome (a) as séries desta sessão (poucas, sempre
+// depois do boundary) e (b) a última série de um ciclo anterior por número de
+// série (`splitSetLogsBySessionBoundary` + `lastTimeSameSet` em
+// exercise-execution-card.tsx) — 100 séries cobrem confortavelmente muitos
+// meses de histórico (bem mais que os poucos ciclos anteriores realmente
+// usados), então o corte não muda nenhum comportamento visível.
+const SET_LOG_HISTORY_LIMIT = 100;
+
 // Fase 26: ordem "de calendário/sequência" de cada esquema — usada pra validar
 // chaves aceitas, calcular o limite de sessões e ordenar sessões
 // corretamente (a ordem alfabética de LETTER coincide por acaso; a de WEEKDAY
@@ -42,7 +52,7 @@ export const workoutProgramsRepository = {
 
   /** Programa com suas sessões (+ exercícios). setLogs incluídos para a visão do aluno. */
   async findProgramWithSessions(id: string) {
-    return prisma.workoutProgram.findUnique({
+    const program = await prisma.workoutProgram.findUnique({
       where: { id },
       include: {
         workouts: {
@@ -52,13 +62,23 @@ export const workoutProgramsRepository = {
               orderBy: { order: "asc" },
               include: {
                 exercise: true,
-                setLogs: { orderBy: { loggedAt: "asc" } },
+                // desc + take = "os N mais recentes"; revertido pra asc logo
+                // abaixo, já que o frontend depende dessa ordem (ver comentário
+                // de SET_LOG_HISTORY_LIMIT acima).
+                setLogs: { orderBy: { loggedAt: "desc" }, take: SET_LOG_HISTORY_LIMIT },
               },
             },
           },
         },
       },
     });
+    if (!program) return program;
+    for (const workout of program.workouts) {
+      for (const workoutExercise of workout.exercises) {
+        workoutExercise.setLogs.reverse();
+      }
+    }
+    return program;
   },
 
   async countSessions(programId: string) {

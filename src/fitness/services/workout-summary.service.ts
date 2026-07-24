@@ -181,21 +181,31 @@ async function buildPersonalRecords(
     }
   }
 
+  // Uma única query batelada pra todos os exercícios da sessão (antes era 1
+  // findMany por exercício — N+1 real no caminho de "concluir treino").
+  const exerciseIds = [...maxByExercise.keys()];
+  const historicalLogs = exerciseIds.length
+    ? await workoutSummaryRepository.findHistoricalSetLogsForExercises(alunoId, exerciseIds, windowStart)
+    : [];
+  const previousBestByExercise = new Map<string, number>();
+  for (const log of historicalLogs) {
+    const exerciseId = log.workoutExercise.exerciseId;
+    const current = previousBestByExercise.get(exerciseId);
+    if (current === undefined || log.weightKg > current) {
+      previousBestByExercise.set(exerciseId, log.weightKg);
+    }
+  }
+
   const personalRecords: WorkoutSummaryPR[] = [];
   for (const [exerciseId, { exerciseName, weightKg }] of maxByExercise) {
-    const historicalLogs = await workoutSummaryRepository.findHistoricalSetLogsForExercise(
-      alunoId,
-      exerciseId,
-      windowStart
-    );
-    if (historicalLogs.length === 0) {
+    const previousBestKg = previousBestByExercise.get(exerciseId);
+    if (previousBestKg === undefined) {
       // Sem nenhum histórico anterior pra este exercício — não conta como PR
       // (evita gerar selo de "recorde" toda vez que o Personal adiciona um
       // exercício novo ao programa; recorde implica bater uma tentativa
       // anterior de verdade).
       continue;
     }
-    const previousBestKg = Math.max(...historicalLogs.map((l) => l.weightKg));
     if (weightKg > previousBestKg) {
       personalRecords.push({ exerciseId, exerciseName, weightKg, previousBestKg });
     }

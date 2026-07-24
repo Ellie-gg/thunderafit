@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense } from "react";
+import { Suspense, useMemo } from "react";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
@@ -49,10 +49,15 @@ function SessaoContent() {
 
   const program = programQuery.data?.program;
   const scheme = program?.sessionScheme ?? "LETTER";
-  const session = program?.workouts?.find((w) => w.id === sessionId);
-  const nextKey = session ? nextKeyInSequence(scheme, session.letter) : null;
-  const nextSession = nextKey ? program?.workouts?.find((w) => w.letter === nextKey) : undefined;
-  const sessionExercises = [...(session?.exercises ?? [])].sort((a, b) => a.order - b.order);
+
+  const { session, nextKey, nextSession, sessionExercises } = useMemo(() => {
+    const session = program?.workouts?.find((w) => w.id === sessionId);
+    const nextKey = session ? nextKeyInSequence(scheme, session.letter) : null;
+    const nextSession = nextKey ? program?.workouts?.find((w) => w.letter === nextKey) : undefined;
+    const sessionExercises = [...(session?.exercises ?? [])].sort((a, b) => a.order - b.order);
+    return { session, nextKey, nextSession, sessionExercises };
+  }, [programQuery.data, sessionId, scheme]);
+
   const invalidateProgram = () =>
     queryClient.invalidateQueries({ queryKey: ["workout-program", programId] });
 
