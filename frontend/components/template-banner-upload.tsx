@@ -15,12 +15,15 @@ const BANNER_HEIGHT_PX = 675;
 const IMAGE_QUALITY = 0.85;
 
 /**
- * Redimensiona/recorta a imagem escolhida num retângulo 16:9 de
- * BANNER_WIDTH_PX x BANNER_HEIGHT_PX, inteiramente no navegador (canvas) —
- * mesmo raciocínio de `avatar-upload.tsx` (recorta a MENOR dimensão antes de
- * redimensionar, preservando proporção), só que o alvo é um retângulo 16:9
- * em vez de um quadrado: recorta o maior retângulo 16:9 centralizado que
- * cabe dentro da imagem original, depois redimensiona pro tamanho final.
+ * Redimensiona a imagem escolhida pra um retângulo 16:9 de BANNER_WIDTH_PX x
+ * BANNER_HEIGHT_PX, inteiramente no navegador (canvas) — SEM recortar nada
+ * do original (achado real: a versão anterior fazia center-crop tipo
+ * "cover", cortando as bordas de qualquer foto que não fosse já 16:9, o que
+ * o fundador reportou como "não mostra completamente a imagem"). A imagem
+ * inteira é desenhada em "contain" (encaixada, nunca cortada) centralizada
+ * sobre um fundo desfocado/escurecido da MESMA imagem esticada pra preencher
+ * o quadro (mesma técnica de capa do Instagram Stories/YouTube) — evita
+ * barras pretas lisas sem nunca perder conteúdo da foto original.
  */
 async function resizeImageToBannerDataUrl(file: File, t: (key: string) => string): Promise<string> {
   if (!file.type.startsWith("image/")) {
@@ -36,37 +39,48 @@ async function resizeImageToBannerDataUrl(file: File, t: (key: string) => string
       el.src = objectUrl;
     });
 
-    const targetRatio = BANNER_WIDTH_PX / BANNER_HEIGHT_PX;
-    const srcRatio = img.naturalWidth / img.naturalHeight;
-
-    let cropWidth = img.naturalWidth;
-    let cropHeight = img.naturalHeight;
-    if (srcRatio > targetRatio) {
-      // Imagem mais larga que 16:9 — recorta as laterais.
-      cropWidth = Math.round(img.naturalHeight * targetRatio);
-    } else {
-      // Imagem mais "quadrada"/alta que 16:9 — recorta topo/base.
-      cropHeight = Math.round(img.naturalWidth / targetRatio);
-    }
-    const sx = Math.round((img.naturalWidth - cropWidth) / 2);
-    const sy = Math.round((img.naturalHeight - cropHeight) / 2);
-
     const canvas = document.createElement("canvas");
     canvas.width = BANNER_WIDTH_PX;
     canvas.height = BANNER_HEIGHT_PX;
     const ctx = canvas.getContext("2d");
     if (!ctx) throw new Error(t("errors.canvasFailed"));
-    ctx.drawImage(
-      img,
-      sx,
-      sy,
-      cropWidth,
-      cropHeight,
-      0,
-      0,
-      BANNER_WIDTH_PX,
-      BANNER_HEIGHT_PX
-    );
+
+    const targetRatio = BANNER_WIDTH_PX / BANNER_HEIGHT_PX;
+    const srcRatio = img.naturalWidth / img.naturalHeight;
+
+    // Camada de fundo: preenche o quadro inteiro (mesma lógica de "cover" de
+    // antes), só que desfocada/escurecida — decorativa, não é onde o
+    // conteúdo real da foto precisa ficar visível.
+    let bgWidth = img.naturalWidth;
+    let bgHeight = img.naturalHeight;
+    if (srcRatio > targetRatio) {
+      bgWidth = Math.round(img.naturalHeight * targetRatio);
+    } else {
+      bgHeight = Math.round(img.naturalWidth / targetRatio);
+    }
+    const bgSx = Math.round((img.naturalWidth - bgWidth) / 2);
+    const bgSy = Math.round((img.naturalHeight - bgHeight) / 2);
+    ctx.save();
+    // ctx.filter pode não existir em navegadores muito antigos — nesse caso
+    // o fundo só fica sem blur/escurecido (ainda preenchido, nunca quebra).
+    if ("filter" in ctx) {
+      ctx.filter = "blur(24px) brightness(0.55)";
+    }
+    ctx.drawImage(img, bgSx, bgSy, bgWidth, bgHeight, -20, -20, BANNER_WIDTH_PX + 40, BANNER_HEIGHT_PX + 40);
+    ctx.restore();
+
+    // Camada principal: a imagem INTEIRA ("contain"), sem cortar nada,
+    // centralizada por cima do fundo.
+    let drawWidth = BANNER_WIDTH_PX;
+    let drawHeight = BANNER_HEIGHT_PX;
+    if (srcRatio > targetRatio) {
+      drawHeight = Math.round(BANNER_WIDTH_PX / srcRatio);
+    } else {
+      drawWidth = Math.round(BANNER_HEIGHT_PX * srcRatio);
+    }
+    const dx = Math.round((BANNER_WIDTH_PX - drawWidth) / 2);
+    const dy = Math.round((BANNER_HEIGHT_PX - drawHeight) / 2);
+    ctx.drawImage(img, 0, 0, img.naturalWidth, img.naturalHeight, dx, dy, drawWidth, drawHeight);
 
     const dataUrl = canvas.toDataURL("image/webp", IMAGE_QUALITY);
     // Alguns navegadores antigos ignoram "image/webp" e devolvem PNG (bem
@@ -137,6 +151,8 @@ export function TemplateBannerUpload({
           {t("noBanner")}
         </div>
       )}
+
+      <p className="max-w-sm text-xs text-muted">{t("sizeHint")}</p>
 
       <div className="flex gap-2">
         <Button
