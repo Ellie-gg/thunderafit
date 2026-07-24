@@ -122,6 +122,11 @@ function SelfTemplateSlide({
     );
   }
 
+  // O banner já vem com o nome estilizado embutido na própria imagem
+  // (gerado/escolhido pelo admin) — sem overlay de texto nem gradiente de
+  // legibilidade por cima: eram redundantes com o nome já desenhado na
+  // imagem. `alt` carrega o nome pra acessibilidade, já que não há mais
+  // texto visível na tela pra isso.
   return (
     <button
       type="button"
@@ -131,14 +136,10 @@ function SelfTemplateSlide({
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
         src={template.bannerImageUrl}
-        alt=""
+        alt={template.name}
         className="absolute inset-0 h-full w-full object-cover"
       />
-      <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent" />
       {locked && <LockBadge />}
-      <span className="absolute inset-x-0 bottom-0 px-3 pb-2 text-left font-display text-base font-bold text-white">
-        {template.name}
-      </span>
     </button>
   );
 }
