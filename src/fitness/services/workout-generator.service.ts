@@ -74,6 +74,12 @@ export const workoutGeneratorService = {
     const draft: GeneratedExercise[] = [];
     let order = 1;
 
+    // `exercisesRepository.findAll` é cache-backed (in-memory, TTL 5min —
+    // ver exercises.repository.ts): a 1ª chamada deste loop popula o cache
+    // do catálogo inteiro, as demais (por grupo, e entre requests dentro do
+    // TTL) só filtram em memória. Ou seja, este loop já NÃO bate no banco
+    // uma vez por grupo — não "otimize" trocando por uma query com
+    // `muscleGroup IN (...)` sem saber disso.
     for (let i = 0; i < muscleGroups.length; i++) {
       const group = muscleGroups[i];
       const count = i === 0 ? PRIMARY_GROUP_EXERCISE_COUNT : SECONDARY_GROUP_EXERCISE_COUNT;

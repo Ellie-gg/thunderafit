@@ -17,20 +17,18 @@ function monthKey(date: Date): string {
  */
 export const progressService = {
   async getLoadHistory(alunoId: string, exerciseId: string) {
-    const logs = await progressRepository.findSetLogsForExercise(alunoId, exerciseId);
+    // Perf (triagem 2026-07-24): agregação por dia (max de weightKg) agora é
+    // feita no Postgres (ver findMaxWeightByDayForExercise) — não busca mais
+    // toda a série histórica só para reduzir em JS. `date` é formatado aqui
+    // via `.toISOString().slice(0,10)` sobre o `Date` retornado (em vez de
+    // confiar em alguma formatação de string vinda do SQL) para garantir
+    // exatamente a mesma semântica de dia-UTC que `dayKey()` sempre produziu.
+    const rows = await progressRepository.findMaxWeightByDayForExercise(alunoId, exerciseId);
 
-    const maxByDay = new Map<string, number>();
-    for (const log of logs) {
-      const key = dayKey(log.loggedAt);
-      const current = maxByDay.get(key);
-      if (current === undefined || log.weightKg > current) {
-        maxByDay.set(key, log.weightKg);
-      }
-    }
-
-    const history = Array.from(maxByDay.entries())
-      .map(([date, maxWeightKg]) => ({ date, maxWeightKg }))
-      .sort((a, b) => a.date.localeCompare(b.date));
+    const history = rows.map((row) => ({
+      date: dayKey(row.day),
+      maxWeightKg: row.maxWeightKg,
+    }));
 
     // Variação percentual calculada no backend (não no frontend): evita
     // duplicar a lógica de agregação por dia em dois lugares — o frontend só
