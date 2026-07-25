@@ -190,3 +190,5 @@
 - [x] Fase 53.1: 3 correções no upload de banner (corte indevido, faixa por desvio de proporção, texto duplicado)
 - [x] Fase 54: Categoria "Treinos Prontos" (academia, grátis) substitui "Crie seu treino do zero" + 3 programas cadastrados
 - [x] Fase 55: i18n do nome de programa/sessão (`WorkoutProgramTranslation`/`WorkoutTranslation`) + banner copiado na aplicação do template + overlay de texto padronizado nos banners + banner substitui o card de sugestão no dashboard ("Meus treinos")
+- [x] Fase 55.1: overlay de banner com fonte grande demais — reduzida e alinhamento à esquerda reforçado
+- [x] Fase 55.2: tela de admin (`/nimbus/treinos-pessoais`) ganha edição do nome PT + tradução EN/ES do template e de cada sessão (antes só existia via seed script)

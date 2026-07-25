@@ -220,6 +220,42 @@ export async function uploadSelfTemplateBannerHandler(
   }
 }
 
+export async function updateSelfTemplateHandler(
+  request: FastifyRequest<{
+    Params: { id: string };
+    Body: { name?: string; nameEN?: string; nameES?: string };
+  }>,
+  reply: FastifyReply
+) {
+  try {
+    assertAdmin(request);
+    const program = await adminService.updateSelfTemplateNames(request.params.id, request.body);
+    return reply.status(200).send({ program });
+  } catch (err: any) {
+    return handleError(err, reply);
+  }
+}
+
+export async function updateSelfSessionHandler(
+  request: FastifyRequest<{
+    Params: { id: string; sessionId: string };
+    Body: { name?: string; nameEN?: string; nameES?: string };
+  }>,
+  reply: FastifyReply
+) {
+  try {
+    assertAdmin(request);
+    const program = await adminService.updateSelfSessionNames(
+      request.params.id,
+      request.params.sessionId,
+      request.body
+    );
+    return reply.status(200).send({ program });
+  } catch (err: any) {
+    return handleError(err, reply);
+  }
+}
+
 export async function addSessionToSelfTemplateHandler(
   request: FastifyRequest<{ Params: { id: string }; Body: { name?: string; letter: string } }>,
   reply: FastifyReply

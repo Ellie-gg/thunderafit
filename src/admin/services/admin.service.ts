@@ -10,6 +10,9 @@ import { orderFor } from "../../fitness/repository/workout-programs.repository";
 // mutação bem-sucedida, senão o catálogo fica stale por até 5min.
 import { exercisesRepository } from "../../fitness/repository/exercises.repository";
 import { exerciseTranslationsRepository } from "../../fitness/repository/exercise-translations.repository";
+// Fase 55.2: mesmo motivo de exception ao desacoplamento acima — a tela de
+// admin agora edita a tradução de nome de programa/sessão diretamente.
+import { programTranslationsRepository } from "../../fitness/repository/program-translations.repository";
 
 const VALID_SESSION_SCHEMES = ["LETTER", "WEEKDAY"] as const;
 type AdminSessionScheme = (typeof VALID_SESSION_SCHEMES)[number];
@@ -491,6 +494,11 @@ export const adminService = {
     return adminRepository.listSelfTemplates();
   },
 
+  /**
+   * Fase 55.2: além do template, devolve a tradução EN/ES (se já existir)
+   * do próprio programa e de cada sessão, pra tela de admin pré-preencher
+   * o formulário de edição em vez de sempre abrir em branco.
+   */
   async getSelfTemplate(programId: string) {
     const template = await adminRepository.findSelfTemplateWithSessions(programId);
     if (!template) {
@@ -498,7 +506,91 @@ export const adminService = {
       (err as any).statusCode = 404;
       throw err;
     }
-    return template;
+
+    const [programTranslations, workoutTranslationsByWorkout] = await Promise.all([
+      programTranslationsRepository.findProgramTranslations(programId),
+      Promise.all(
+        template.workouts.map((w) => programTranslationsRepository.findWorkoutTranslations(w.id))
+      ),
+    ]);
+
+    const programTranslationsMap = Object.fromEntries(programTranslations.map((t) => [t.locale, t.name]));
+    return {
+      ...template,
+      translations: programTranslationsMap,
+      workouts: template.workouts.map((w, index) => ({
+        ...w,
+        translations: Object.fromEntries(workoutTranslationsByWorkout[index].map((t) => [t.locale, t.name])),
+      })),
+    };
+  },
+
+  /**
+   * Fase 55.2: edita o nome PT do template (fonte canônica, nunca tem linha
+   * de tradução própria — mesmo contrato de Exercise/ExerciseTranslation) e,
+   * se enviados, os nomes EN/ES via upsert (string vazia após trim = "não
+   * mandou", não apaga uma tradução já existente).
+   */
+  async updateSelfTemplateNames(
+    programId: string,
+    input: { name?: string; nameEN?: string; nameES?: string }
+  ) {
+    const template = await adminRepository.findSelfTemplateWithSessions(programId);
+    if (!template) {
+      const err = new Error("Template não encontrado.");
+      (err as any).statusCode = 404;
+      throw err;
+    }
+    if (!input.name?.trim()) {
+      const err = new Error("Nome do template é obrigatório.");
+      (err as any).statusCode = 400;
+      throw err;
+    }
+
+    await adminRepository.updateSelfTemplateName(programId, input.name.trim());
+    if (input.nameEN?.trim()) {
+      await programTranslationsRepository.upsertProgramTranslation(programId, "EN", input.nameEN.trim());
+    }
+    if (input.nameES?.trim()) {
+      await programTranslationsRepository.upsertProgramTranslation(programId, "ES", input.nameES.trim());
+    }
+
+    return this.getSelfTemplate(programId);
+  },
+
+  /** Fase 55.2: mesmo contrato acima, mas pro nome de uma sessão específica. */
+  async updateSelfSessionNames(
+    programId: string,
+    sessionId: string,
+    input: { name?: string; nameEN?: string; nameES?: string }
+  ) {
+    const template = await adminRepository.findSelfTemplateWithSessions(programId);
+    if (!template) {
+      const err = new Error("Template não encontrado.");
+      (err as any).statusCode = 404;
+      throw err;
+    }
+    const session = template.workouts.find((w) => w.id === sessionId);
+    if (!session) {
+      const err = new Error("Sessão não encontrada neste template.");
+      (err as any).statusCode = 404;
+      throw err;
+    }
+    if (!input.name?.trim()) {
+      const err = new Error("Nome da sessão é obrigatório.");
+      (err as any).statusCode = 400;
+      throw err;
+    }
+
+    await adminRepository.updateSelfSessionName(sessionId, input.name.trim());
+    if (input.nameEN?.trim()) {
+      await programTranslationsRepository.upsertWorkoutTranslation(sessionId, "EN", input.nameEN.trim());
+    }
+    if (input.nameES?.trim()) {
+      await programTranslationsRepository.upsertWorkoutTranslation(sessionId, "ES", input.nameES.trim());
+    }
+
+    return this.getSelfTemplate(programId);
   },
 
   async createSelfTemplate(name: string, sessionScheme?: string, category?: string) {

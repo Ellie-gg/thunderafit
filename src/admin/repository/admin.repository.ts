@@ -260,6 +260,17 @@ export const adminRepository = {
     });
   },
 
+  // Fase 55.2: edição do nome (PT) do template/sessão — a tradução EN/ES em
+  // si é responsabilidade do programTranslationsRepository (domínio fitness,
+  // já reaproveitado aqui mesmo padrão de exerciseTranslationsRepository).
+  async updateSelfTemplateName(programId: string, name: string) {
+    return prisma.workoutProgram.update({ where: { id: programId }, data: { name } });
+  },
+
+  async updateSelfSessionName(workoutId: string, name: string) {
+    return prisma.workout.update({ where: { id: workoutId }, data: { name } });
+  },
+
   async addExerciseToSelfSession(
     workoutId: string,
     exerciseId: string,
