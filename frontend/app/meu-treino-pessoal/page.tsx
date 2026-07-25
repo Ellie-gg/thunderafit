@@ -16,6 +16,7 @@ import { Button } from "@/components/ui/button";
 import { QueryError } from "@/components/query-error";
 import { SelfTemplateCarousel } from "@/components/self-template-carousel";
 import { ReplaceSelfTemplateDialog } from "@/components/replace-self-template-dialog";
+import { TemplatePreviewDialog } from "@/components/template-preview-dialog";
 
 /**
  * Fase 34.5 — "Meu treino pessoal": templates curados pelo admin (origin:
@@ -65,6 +66,14 @@ function MeuTreinoPessoalContent() {
     existingProgramName: string;
   } | null>(null);
   const [premiumNotice, setPremiumNotice] = React.useState(false);
+  // Fase 59: preview antes de aplicar — em vez de aplicar (ou já perguntar
+  // se quer trocar) direto no clique do carrossel, mostra nome/descrição/
+  // sessões primeiro. "Aplicar" no preview fecha esta tela e dispara o MESMO
+  // fluxo de sempre (inclusive o diálogo de troca em caso de 409).
+  const [previewTemplate, setPreviewTemplate] = React.useState<{
+    template: WorkoutProgram;
+    apply: () => void;
+  } | null>(null);
 
   function onApplySuccess(data: { program: WorkoutProgram }) {
     queryClient.invalidateQueries({ queryKey: ["self-templates"] });
@@ -152,17 +161,17 @@ function MeuTreinoPessoalContent() {
 
   function handleSelectProntos(template: WorkoutProgram) {
     setPremiumNotice(false);
-    prontosApplyMutation.mutate(template.id);
+    setPreviewTemplate({ template, apply: () => prontosApplyMutation.mutate(template.id) });
   }
 
   function handleSelectHome(template: WorkoutProgram) {
     setPremiumNotice(false);
-    homeApplyMutation.mutate(template.id);
+    setPreviewTemplate({ template, apply: () => homeApplyMutation.mutate(template.id) });
   }
 
   function handleSelectPremium(template: WorkoutProgram) {
     if (premiumStatusQuery.data?.hasAccess) {
-      premiumApplyMutation.mutate(template.id);
+      setPreviewTemplate({ template, apply: () => premiumApplyMutation.mutate(template.id) });
       return;
     }
     setPremiumNotice(true);
@@ -325,6 +334,17 @@ function MeuTreinoPessoalContent() {
           .
         </p>
       </main>
+
+      {previewTemplate && (
+        <TemplatePreviewDialog
+          template={previewTemplate.template}
+          onCancel={() => setPreviewTemplate(null)}
+          onApply={() => {
+            previewTemplate.apply();
+            setPreviewTemplate(null);
+          }}
+        />
+      )}
 
       {pendingReplace && (
         <ReplaceSelfTemplateDialog

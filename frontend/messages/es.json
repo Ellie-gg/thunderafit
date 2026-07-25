@@ -278,7 +278,9 @@
     "replaceDialogTitle": "¿Reemplazar tu entrenamiento personal activo?",
     "replaceDialogMessage": "Ya tienes \"{name}\" activo. Aplicar este nuevo entrenamiento borra el historial de series del actual — esta acción no se puede deshacer.",
     "replaceDialogConfirm": "Sí, reemplazar",
-    "replacing": "Reemplazando..."
+    "replacing": "Reemplazando...",
+    "previewSessionsLabel": "{count} sesión(es)",
+    "previewApplyButton": "Aplicar este entrenamiento"
   },
   "evolucao": {
     "noPreviousComparison": "Sin comparación anterior todavía",
@@ -894,7 +896,11 @@
     "savingNames": "Guardando...",
     "saveNamesError": "Error al guardar los nombres.",
     "namesSaved": "¡Guardado!",
-    "sessionNameLabel": "Nombre de la sesión"
+    "sessionNameLabel": "Nombre de la sesión",
+    "descriptionLabel": "Descripción (Foco)",
+    "descriptionPlaceholder": "Ej: Hipertrofia máxima del glúteo, con modelado de piernas...",
+    "descriptionEnLabel": "Descripción (EN)",
+    "descriptionEsLabel": "Descripción (ES)"
   },
   "nimbusUsuarios": {
     "title": "Usuarios",

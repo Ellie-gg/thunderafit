@@ -278,7 +278,9 @@
     "replaceDialogTitle": "Trocar treino pessoal ativo?",
     "replaceDialogMessage": "Você já tem \"{name}\" ativo. Aplicar este novo treino apaga o histórico de séries do atual — essa ação não pode ser desfeita.",
     "replaceDialogConfirm": "Sim, trocar",
-    "replacing": "Trocando..."
+    "replacing": "Trocando...",
+    "previewSessionsLabel": "{count} sessão(ões)",
+    "previewApplyButton": "Aplicar este treino"
   },
   "evolucao": {
     "noPreviousComparison": "Sem comparação anterior ainda",
@@ -894,7 +896,11 @@
     "savingNames": "Salvando...",
     "saveNamesError": "Erro ao salvar os nomes.",
     "namesSaved": "Salvo!",
-    "sessionNameLabel": "Nome da sessão"
+    "sessionNameLabel": "Nome da sessão",
+    "descriptionLabel": "Descrição (Foco)",
+    "descriptionPlaceholder": "Ex: Hipertrofia máxima do glúteo, com modelagem de coxas...",
+    "descriptionEnLabel": "Descrição (EN)",
+    "descriptionEsLabel": "Descrição (ES)"
   },
   "nimbusUsuarios": {
     "title": "Usuários",

@@ -38,22 +38,49 @@ function NameTranslationEditor({
   initialName,
   initialEN,
   initialES,
+  withDescription = false,
+  initialDescription,
+  initialDescriptionEN,
+  initialDescriptionES,
   onSave,
 }: {
   nameLabel: string;
   initialName: string;
   initialEN?: string;
   initialES?: string;
-  onSave: (input: { name: string; nameEN?: string; nameES?: string }) => Promise<unknown>;
+  /** Fase 59: só o template (não a sessão) tem descrição ("Foco"). */
+  withDescription?: boolean;
+  initialDescription?: string | null;
+  initialDescriptionEN?: string;
+  initialDescriptionES?: string;
+  onSave: (input: {
+    name: string;
+    nameEN?: string;
+    nameES?: string;
+    description?: string;
+    descriptionEN?: string;
+    descriptionES?: string;
+  }) => Promise<unknown>;
 }) {
   const t = useTranslations("nimbusTreinosPessoais");
   const [name, setName] = useState(initialName);
   const [nameEN, setNameEN] = useState(initialEN ?? "");
   const [nameES, setNameES] = useState(initialES ?? "");
+  const [description, setDescription] = useState(initialDescription ?? "");
+  const [descriptionEN, setDescriptionEN] = useState(initialDescriptionEN ?? "");
+  const [descriptionES, setDescriptionES] = useState(initialDescriptionES ?? "");
   const [saved, setSaved] = useState(false);
 
   const mutation = useMutation({
-    mutationFn: () => onSave({ name: name.trim(), nameEN: nameEN.trim(), nameES: nameES.trim() }),
+    mutationFn: () =>
+      onSave({
+        name: name.trim(),
+        nameEN: nameEN.trim(),
+        nameES: nameES.trim(),
+        ...(withDescription
+          ? { description: description.trim(), descriptionEN: descriptionEN.trim(), descriptionES: descriptionES.trim() }
+          : {}),
+      }),
     onSuccess: () => {
       setSaved(true);
       setTimeout(() => setSaved(false), 2000);
@@ -62,28 +89,52 @@ function NameTranslationEditor({
 
   return (
     <form
-      className="flex flex-wrap items-end gap-2"
+      className="flex flex-col gap-2"
       onSubmit={(e) => {
         e.preventDefault();
         mutation.mutate();
       }}
     >
-      <div className="flex min-w-[160px] flex-1 flex-col gap-1">
-        <Label>{nameLabel}</Label>
-        <Input required value={name} onChange={(e) => setName(e.target.value)} />
+      <div className="flex flex-wrap items-end gap-2">
+        <div className="flex min-w-[160px] flex-1 flex-col gap-1">
+          <Label>{nameLabel}</Label>
+          <Input required value={name} onChange={(e) => setName(e.target.value)} />
+        </div>
+        <div className="flex min-w-[160px] flex-1 flex-col gap-1">
+          <Label>{t("nameEnLabel")}</Label>
+          <Input value={nameEN} onChange={(e) => setNameEN(e.target.value)} />
+        </div>
+        <div className="flex min-w-[160px] flex-1 flex-col gap-1">
+          <Label>{t("nameEsLabel")}</Label>
+          <Input value={nameES} onChange={(e) => setNameES(e.target.value)} />
+        </div>
       </div>
-      <div className="flex min-w-[160px] flex-1 flex-col gap-1">
-        <Label>{t("nameEnLabel")}</Label>
-        <Input value={nameEN} onChange={(e) => setNameEN(e.target.value)} />
+      {withDescription && (
+        <div className="flex flex-wrap items-end gap-2">
+          <div className="flex min-w-[160px] flex-1 flex-col gap-1">
+            <Label>{t("descriptionLabel")}</Label>
+            <Input
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder={t("descriptionPlaceholder")}
+            />
+          </div>
+          <div className="flex min-w-[160px] flex-1 flex-col gap-1">
+            <Label>{t("descriptionEnLabel")}</Label>
+            <Input value={descriptionEN} onChange={(e) => setDescriptionEN(e.target.value)} />
+          </div>
+          <div className="flex min-w-[160px] flex-1 flex-col gap-1">
+            <Label>{t("descriptionEsLabel")}</Label>
+            <Input value={descriptionES} onChange={(e) => setDescriptionES(e.target.value)} />
+          </div>
+        </div>
+      )}
+      <div>
+        <Button type="submit" variant="secondary" size="sm" disabled={mutation.isPending}>
+          {mutation.isPending ? t("savingNames") : saved ? t("namesSaved") : t("saveNames")}
+        </Button>
       </div>
-      <div className="flex min-w-[160px] flex-1 flex-col gap-1">
-        <Label>{t("nameEsLabel")}</Label>
-        <Input value={nameES} onChange={(e) => setNameES(e.target.value)} />
-      </div>
-      <Button type="submit" variant="secondary" size="sm" disabled={mutation.isPending}>
-        {mutation.isPending ? t("savingNames") : saved ? t("namesSaved") : t("saveNames")}
-      </Button>
-      {mutation.isError && <p className="w-full text-xs text-danger">{t("saveNamesError")}</p>}
+      {mutation.isError && <p className="text-xs text-danger">{t("saveNamesError")}</p>}
     </form>
   );
 }
@@ -285,6 +336,10 @@ function TreinosPessoaisContent() {
                           initialName={detailQuery.data.program.name}
                           initialEN={detailQuery.data.program.translations?.EN}
                           initialES={detailQuery.data.program.translations?.ES}
+                          withDescription
+                          initialDescription={detailQuery.data.program.description}
+                          initialDescriptionEN={detailQuery.data.program.translationDescriptions?.EN}
+                          initialDescriptionES={detailQuery.data.program.translationDescriptions?.ES}
                           onSave={(input) => updateAdminSelfTemplate(tpl.id, input).then(invalidate)}
                         />
                       </div>

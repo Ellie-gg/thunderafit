@@ -563,9 +563,16 @@ export const adminService = {
     ]);
 
     const programTranslationsMap = Object.fromEntries(programTranslations.map((t) => [t.locale, t.name]));
+    // Fase 59: mapa separado da descrição traduzida — mantém `translations`
+    // (nome) com a mesma forma de antes pra não quebrar quem já lê
+    // `translations.EN` como string.
+    const programDescriptionsMap = Object.fromEntries(
+      programTranslations.filter((t) => t.description).map((t) => [t.locale, t.description as string])
+    );
     return {
       ...template,
       translations: programTranslationsMap,
+      translationDescriptions: programDescriptionsMap,
       workouts: template.workouts.map((w, index) => ({
         ...w,
         translations: Object.fromEntries(workoutTranslationsByWorkout[index].map((t) => [t.locale, t.name])),
@@ -581,7 +588,14 @@ export const adminService = {
    */
   async updateSelfTemplateNames(
     programId: string,
-    input: { name?: string; nameEN?: string; nameES?: string }
+    input: {
+      name?: string;
+      nameEN?: string;
+      nameES?: string;
+      description?: string;
+      descriptionEN?: string;
+      descriptionES?: string;
+    }
   ) {
     const template = await adminRepository.findSelfTemplateWithSessions(programId);
     if (!template) {
@@ -595,12 +609,29 @@ export const adminService = {
       throw err;
     }
 
-    await adminRepository.updateSelfTemplateName(programId, input.name.trim());
-    if (input.nameEN?.trim()) {
-      await programTranslationsRepository.upsertProgramTranslation(programId, "EN", input.nameEN.trim());
-    }
-    if (input.nameES?.trim()) {
-      await programTranslationsRepository.upsertProgramTranslation(programId, "ES", input.nameES.trim());
+    // Fase 59: descrição ("Foco") em PT é opcional de verdade (nem todo
+    // template precisa de uma) — string vazia após trim vira `null` (limpa),
+    // diferente de EN/ES abaixo, onde vazio significa "não mandou" (não
+    // apaga tradução já salva por omissão, mesmo contrato do nome).
+    const description = input.description === undefined ? undefined : input.description.trim() || null;
+    await adminRepository.updateSelfTemplateName(programId, input.name.trim(), description);
+
+    // Busca as traduções JÁ salvas pra preservar o `name` de uma quando só a
+    // `description` está sendo enviada nesta chamada (senão sobrescreveria o
+    // nome traduzido com o nome em PT por engano).
+    const existingTranslations = await programTranslationsRepository.findProgramTranslations(programId);
+    for (const locale of ["EN", "ES"] as const) {
+      const nameInput = locale === "EN" ? input.nameEN : input.nameES;
+      const descriptionInput = locale === "EN" ? input.descriptionEN : input.descriptionES;
+      if (!nameInput?.trim() && !descriptionInput?.trim()) continue;
+      const existing = existingTranslations.find((t) => t.locale === locale);
+      const name = nameInput?.trim() || existing?.name || input.name.trim();
+      await programTranslationsRepository.upsertProgramTranslation(
+        programId,
+        locale,
+        name,
+        descriptionInput?.trim() || undefined
+      );
     }
 
     return this.getSelfTemplate(programId);
