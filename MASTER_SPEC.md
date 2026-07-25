@@ -817,6 +817,39 @@ decisão/priorização futura):
     *Modelo: Sonnet 5. 339/339 backend (+7 casos novos), 48/48 Jest/RTL,
     `tsc --noEmit` limpo (backend e frontend).*
 
+### Grupo N — Descrição de programa ("Foco") + preview antes de aplicar. ✅ CONCLUÍDA (2026-07-25, registrada como Fase 59 no STATUS.md).
+
+67. ✅ **`WorkoutProgram.description`** (nullable, migration aditiva) — a
+    frase "Foco" que existia no conteúdo dos 10 templates Premium (Fase 57)
+    virou um campo de verdade, mostrado em `/programas/:id` logo abaixo do
+    nome, em texto pequeno, acima da contagem de sessões. Traduzido via
+    `WorkoutProgramTranslation.description` (nova coluna na mesma tabela da
+    Fase 55), com fallback por CAMPO — não por linha — pro texto em PT
+    quando a tradução existe mas a descrição dela ainda não foi preenchida.
+    Backfill (`prisma/seed-descricoes-programas-premium.ts`) populou os 10
+    templates Premium com o texto "Foco" original + tradução EN/ES; qualquer
+    outro programa (HOME/PRONTOS mais antigos) fica com `description: null`
+    e simplesmente não renderiza nada — sem caso especial.
+68. ✅ **Editável em `/nimbus/treinos-pessoais`** — o mesmo formulário de
+    nome/tradução (Fase 55.2) ganhou 3 campos a mais (PT/EN/ES) só no nível
+    de programa (sessão não tem "Foco"); string vazia em PT limpa a
+    descrição (`null`), EN/ES seguem o mesmo contrato de "vazio = não
+    mandou" do nome — e a chamada busca a tradução JÁ salva antes de
+    escrever, pra nunca sobrescrever um nome traduzido com o nome em PT só
+    porque essa chamada só mandou a descrição.
+69. ✅ **Preview antes de aplicar** — clicar num slide de "Treino em Casa"/
+    "Treinos Prontos"/"Treinos Premium" antes disparava a aplicação (ou já
+    perguntava se queria trocar o treino ativo) direto, sem chance de olhar
+    antes. Agora abre um preview (nome, descrição, lista de sessões — dado
+    que já vem em `listSelfTemplates`, nenhuma chamada nova) com um botão
+    "Aplicar este treino"; confirmar ali dispara o MESMO fluxo de sempre
+    (inclusive o diálogo de troca em caso de 409) — menor risco possível
+    porque nada do fluxo de aplicação em si mudou, só foi adiado por uma
+    tela. `TemplatePreviewDialog` (novo componente, mesmo padrão de overlay
+    zero-dependência do `ReplaceSelfTemplateDialog`).
+    *Modelo: Sonnet 5. 341/341 backend (+2 casos novos), 48/48 Jest/RTL,
+    `tsc --noEmit` limpo (backend e frontend).*
+
 ### Backlog operacional herdado
 Ver Seção 7 acima (Neon, billing, Android, webhook).
 

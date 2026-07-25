@@ -48,6 +48,9 @@ function ProgramaContent() {
                 {t("programLabel")}
               </span>
               <h1 className="font-display text-2xl font-bold tracking-tight">{program.name}</h1>
+              {program.description && (
+                <p className="text-xs text-muted">{program.description}</p>
+              )}
               <p className="text-sm text-muted">
                 {t("sessionCountSubtitle", { count: sessions.length })}
               </p>

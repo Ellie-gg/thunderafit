@@ -372,6 +372,11 @@ model WorkoutProgram {
   // exercício). Null = sem banner ainda, o card cai no fallback estático
   // (só o nome), nunca um erro.
   bannerImageUrl String?
+  // Fase 59: descrição curta ("Foco") mostrada quando o aluno abre o
+  // programa — só faz sentido em templates SELF curados (mesma lógica de
+  // `category`/`bannerImageUrl` acima); null em qualquer outro programa
+  // simplesmente não renderiza nada, sem caso especial no frontend.
+  description    String?
   // Fase 55: i18n do nome — ver WorkoutProgramTranslation.
   translations   WorkoutProgramTranslation[]
 
@@ -394,6 +399,10 @@ model WorkoutProgramTranslation {
   workoutProgram  WorkoutProgram @relation(fields: [workoutProgramId], references: [id], onDelete: Cascade)
   locale          Locale
   name            String
+  // Fase 59: tradução da descrição/"Foco" — nullable de propósito (nem toda
+  // tradução existente até aqui tem descrição ainda; fallback pro PT
+  // canônico do WorkoutProgram, mesmo contrato de `name` acima).
+  description     String?
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt
 

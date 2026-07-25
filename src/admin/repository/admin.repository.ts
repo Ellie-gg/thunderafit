@@ -292,8 +292,13 @@ export const adminRepository = {
   // Fase 55.2: edição do nome (PT) do template/sessão — a tradução EN/ES em
   // si é responsabilidade do programTranslationsRepository (domínio fitness,
   // já reaproveitado aqui mesmo padrão de exerciseTranslationsRepository).
-  async updateSelfTemplateName(programId: string, name: string) {
-    return prisma.workoutProgram.update({ where: { id: programId }, data: { name } });
+  // Fase 59: `description` (Foco) é opcional — `undefined` = "não mandou,
+  // não mexe"; string vazia é tratada pelo service como "limpar" (vira null).
+  async updateSelfTemplateName(programId: string, name: string, description?: string | null) {
+    return prisma.workoutProgram.update({
+      where: { id: programId },
+      data: description === undefined ? { name } : { name, description },
+    });
   },
 
   async updateSelfSessionName(workoutId: string, name: string) {
