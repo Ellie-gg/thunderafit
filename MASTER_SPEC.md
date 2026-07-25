@@ -703,6 +703,20 @@ decisão/priorização futura):
     card de sugestão de sessão (`NextSessionCard`) como já era.
     *Modelo: Sonnet 5. 319/319 backend, 48/48 Jest/RTL, `tsc --noEmit`
     limpo (backend e frontend).*
+55. ✅ **Fase 55.1** — a fonte do overlay de texto (item 53) ficou grande
+    demais na prática; reduzida (`text-xl` → `text-sm`) e alinhamento à
+    esquerda reforçado (`text-left` explícito), tanto no carrossel quanto
+    no banner do dashboard.
+56. ✅ **Fase 55.2** — a tela de admin não tinha NENHUMA forma de editar o
+    nome de um template/sessão já criado (só existia via seed script, ver
+    item 52) — o fundador reportou não achar onde editar. Adicionado
+    `PUT /api/admin/self-templates/:id` e
+    `.../:id/sessions/:sessionId` (nome PT + tradução EN/ES opcional, upsert
+    só quando enviada e não-vazia após trim — nunca apaga uma tradução já
+    salva por omissão) e o formulário correspondente em
+    `/nimbus/treinos-pessoais`, reaproveitando `programTranslationsRepository`
+    do domínio fitness. *Modelo: Sonnet 5. 325/325 backend (+6 casos novos),
+    48/48 Jest/RTL, `tsc --noEmit` limpo.*
 
 ### Backlog operacional herdado
 Ver Seção 7 acima (Neon, billing, Android, webhook).

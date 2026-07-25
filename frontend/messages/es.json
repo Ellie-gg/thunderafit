@@ -882,7 +882,15 @@
     "deleteConfirm": "¿Eliminar el template \"{name}\"? No se puede deshacer.",
     "loadingSessions": "Cargando sesiones...",
     "sessionTitle": "Sesión {label}",
-    "empty": "Ningún template personal registrado todavía."
+    "empty": "Ningún template personal registrado todavía.",
+    "translationsTitle": "Nombre y traducción",
+    "nameEnLabel": "Nombre (EN)",
+    "nameEsLabel": "Nombre (ES)",
+    "saveNames": "Guardar nombres",
+    "savingNames": "Guardando...",
+    "saveNamesError": "Error al guardar los nombres.",
+    "namesSaved": "¡Guardado!",
+    "sessionNameLabel": "Nombre de la sesión"
   },
   "nimbusUsuarios": {
     "title": "Usuarios",

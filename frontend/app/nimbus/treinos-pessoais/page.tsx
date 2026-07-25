@@ -10,6 +10,8 @@ import {
   addSessionToAdminSelfTemplate,
   addExerciseToAdminSelfSession,
   deleteAdminSelfTemplate,
+  updateAdminSelfTemplate,
+  updateAdminSelfSession,
 } from "@/lib/api/admin";
 import { orderFor, labelFor } from "@/lib/session-scheme";
 import { AuthGuard } from "@/components/auth-guard";
@@ -24,6 +26,67 @@ import { TemplateBannerUpload } from "@/components/template-banner-upload";
 import type { SelfTemplateCategory, SessionScheme } from "@/lib/types";
 
 const CATEGORY_OPTIONS: SelfTemplateCategory[] = ["GERAL", "HOME", "PREMIUM", "PRONTOS"];
+
+/**
+ * Fase 55.2: edição do nome PT + tradução EN/ES — mesmo componente serve o
+ * nome do template e o de cada sessão, só muda o rótulo do primeiro campo e
+ * a função de submit (`onSave`). Sempre pré-preenchido com o valor atual
+ * (nunca abre em branco), com feedback local de "salvo" que some sozinho.
+ */
+function NameTranslationEditor({
+  nameLabel,
+  initialName,
+  initialEN,
+  initialES,
+  onSave,
+}: {
+  nameLabel: string;
+  initialName: string;
+  initialEN?: string;
+  initialES?: string;
+  onSave: (input: { name: string; nameEN?: string; nameES?: string }) => Promise<unknown>;
+}) {
+  const t = useTranslations("nimbusTreinosPessoais");
+  const [name, setName] = useState(initialName);
+  const [nameEN, setNameEN] = useState(initialEN ?? "");
+  const [nameES, setNameES] = useState(initialES ?? "");
+  const [saved, setSaved] = useState(false);
+
+  const mutation = useMutation({
+    mutationFn: () => onSave({ name: name.trim(), nameEN: nameEN.trim(), nameES: nameES.trim() }),
+    onSuccess: () => {
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2000);
+    },
+  });
+
+  return (
+    <form
+      className="flex flex-wrap items-end gap-2"
+      onSubmit={(e) => {
+        e.preventDefault();
+        mutation.mutate();
+      }}
+    >
+      <div className="flex min-w-[160px] flex-1 flex-col gap-1">
+        <Label>{nameLabel}</Label>
+        <Input required value={name} onChange={(e) => setName(e.target.value)} />
+      </div>
+      <div className="flex min-w-[160px] flex-1 flex-col gap-1">
+        <Label>{t("nameEnLabel")}</Label>
+        <Input value={nameEN} onChange={(e) => setNameEN(e.target.value)} />
+      </div>
+      <div className="flex min-w-[160px] flex-1 flex-col gap-1">
+        <Label>{t("nameEsLabel")}</Label>
+        <Input value={nameES} onChange={(e) => setNameES(e.target.value)} />
+      </div>
+      <Button type="submit" variant="secondary" size="sm" disabled={mutation.isPending}>
+        {mutation.isPending ? t("savingNames") : saved ? t("namesSaved") : t("saveNames")}
+      </Button>
+      {mutation.isError && <p className="w-full text-xs text-danger">{t("saveNamesError")}</p>}
+    </form>
+  );
+}
 
 /**
  * Fase 34.5 — curadoria de templates "Meu treino pessoal" (origin: SELF).
@@ -211,6 +274,22 @@ function TreinosPessoaisContent() {
                     {detailQuery.isLoading && (
                       <p className="text-sm text-muted">{t("loadingSessions")}</p>
                     )}
+
+                    {detailQuery.data?.program && (
+                      <div className="rounded-md border border-border p-3">
+                        <h4 className="mb-2 font-display text-sm font-bold text-accent">
+                          {t("translationsTitle")}
+                        </h4>
+                        <NameTranslationEditor
+                          nameLabel={t("nameLabel")}
+                          initialName={detailQuery.data.program.name}
+                          initialEN={detailQuery.data.program.translations?.EN}
+                          initialES={detailQuery.data.program.translations?.ES}
+                          onSave={(input) => updateAdminSelfTemplate(tpl.id, input).then(invalidate)}
+                        />
+                      </div>
+                    )}
+
                     {(detailQuery.data?.program.workouts ?? []).map((session) => {
                       const sessionExercises = [...(session.exercises ?? [])].sort(
                         (a, b) => a.order - b.order
@@ -220,6 +299,17 @@ function TreinosPessoaisContent() {
                           <h4 className="mb-2 font-display text-sm font-bold text-accent">
                             {t("sessionTitle", { label: labelFor(tpl.sessionScheme, session.letter) })}
                           </h4>
+                          <div className="mb-3">
+                            <NameTranslationEditor
+                              nameLabel={t("sessionNameLabel")}
+                              initialName={session.name}
+                              initialEN={session.translations?.EN}
+                              initialES={session.translations?.ES}
+                              onSave={(input) =>
+                                updateAdminSelfSession(tpl.id, session.id, input).then(invalidate)
+                              }
+                            />
+                          </div>
                           {sessionExercises.length > 0 && (
                             <ul className="mb-3 flex flex-col gap-1">
                               {sessionExercises.map((ex) => (

@@ -378,3 +378,87 @@ describe("Fase 52 — 1 treino pessoal ativo por vez (substituição)", () => {
     expect(activeSelfPrograms[0].name).toBe("Template SELF Teste — Substituição B");
   });
 });
+
+describe("Fase 55.2 — admin edita nome PT + tradução EN/ES do template e da sessão", () => {
+  let templateId55: string;
+  let sessionId55: string;
+
+  beforeAll(async () => {
+    const created = await supertest(server.server)
+      .post("/api/admin/self-templates")
+      .set("Authorization", `Bearer ${adminToken}`)
+      .send({ name: "Template SELF Teste 55.2", sessionScheme: "LETTER" });
+    templateId55 = created.body.program.id;
+
+    const session = await supertest(server.server)
+      .post(`/api/admin/self-templates/${templateId55}/sessions`)
+      .set("Authorization", `Bearer ${adminToken}`)
+      .send({ letter: "A" });
+    sessionId55 = session.body.session.id;
+  });
+
+  // O nome muda ao longo destes testes (edição é o próprio objetivo), então
+  // `cleanupTestPrograms` (filtro por prefixo do nome ORIGINAL) não pegaria
+  // mais este template no afterAll global — apaga por id explicitamente
+  // aqui (cascata manual, mesma ordem de cleanupTestPrograms).
+  afterAll(async () => {
+    await prisma.workoutExercise.deleteMany({ where: { workoutId: sessionId55 } });
+    await prisma.workout.deleteMany({ where: { programId: templateId55 } });
+    await prisma.workoutProgram.deleteMany({ where: { id: templateId55 } });
+  });
+
+  it("PERSONAL não pode editar o nome do template (403)", async () => {
+    const r = await supertest(server.server)
+      .put(`/api/admin/self-templates/${templateId55}`)
+      .set("Authorization", `Bearer ${personalToken}`)
+      .send({ name: "Hackeado" });
+    expect(r.status).toBe(403);
+  });
+
+  it("ADMIN edita o nome PT + EN/ES do template", async () => {
+    const r = await supertest(server.server)
+      .put(`/api/admin/self-templates/${templateId55}`)
+      .set("Authorization", `Bearer ${adminToken}`)
+      .send({ name: "Full Body Editado", nameEN: "Full Body Edited", nameES: "Full Body Editado ES" });
+    expect(r.status).toBe(200);
+    expect(r.body.program.name).toBe("Full Body Editado");
+    expect(r.body.program.translations).toEqual({ EN: "Full Body Edited", ES: "Full Body Editado ES" });
+  });
+
+  it("ADMIN edita só o nome PT (sem mandar EN/ES) — tradução já existente não é apagada", async () => {
+    const r = await supertest(server.server)
+      .put(`/api/admin/self-templates/${templateId55}`)
+      .set("Authorization", `Bearer ${adminToken}`)
+      .send({ name: "Full Body Editado de Novo" });
+    expect(r.status).toBe(200);
+    expect(r.body.program.name).toBe("Full Body Editado de Novo");
+    expect(r.body.program.translations).toEqual({ EN: "Full Body Edited", ES: "Full Body Editado ES" });
+  });
+
+  it("ADMIN não pode salvar nome PT vazio (400)", async () => {
+    const r = await supertest(server.server)
+      .put(`/api/admin/self-templates/${templateId55}`)
+      .set("Authorization", `Bearer ${adminToken}`)
+      .send({ name: "   " });
+    expect(r.status).toBe(400);
+  });
+
+  it("ADMIN edita o nome PT + EN/ES da sessão", async () => {
+    const r = await supertest(server.server)
+      .put(`/api/admin/self-templates/${templateId55}/sessions/${sessionId55}`)
+      .set("Authorization", `Bearer ${adminToken}`)
+      .send({ name: "Peito Editado", nameEN: "Chest Edited", nameES: "Pecho Editado" });
+    expect(r.status).toBe(200);
+    const editedSession = r.body.program.workouts.find((w: any) => w.id === sessionId55);
+    expect(editedSession.name).toBe("Peito Editado");
+    expect(editedSession.translations).toEqual({ EN: "Chest Edited", ES: "Pecho Editado" });
+  });
+
+  it("GET do template devolve as traduções salvas", async () => {
+    const r = await supertest(server.server)
+      .get(`/api/admin/self-templates/${templateId55}`)
+      .set("Authorization", `Bearer ${adminToken}`);
+    expect(r.status).toBe(200);
+    expect(r.body.program.translations).toEqual({ EN: "Full Body Edited", ES: "Full Body Editado ES" });
+  });
+});

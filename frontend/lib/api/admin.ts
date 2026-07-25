@@ -124,6 +124,29 @@ export function uploadAdminSelfTemplateBanner(programId: string, bannerDataUrl: 
   });
 }
 
+// Fase 55.2: edita o nome PT do template + a tradução EN/ES (campo vazio
+// depois de trim = "não mandou", não apaga tradução já existente no backend).
+export function updateAdminSelfTemplate(
+  programId: string,
+  input: { name: string; nameEN?: string; nameES?: string }
+) {
+  return apiFetch<{ program: WorkoutProgram }>(`/api/admin/self-templates/${programId}`, {
+    method: "PUT",
+    body: input,
+  });
+}
+
+export function updateAdminSelfSession(
+  programId: string,
+  sessionId: string,
+  input: { name: string; nameEN?: string; nameES?: string }
+) {
+  return apiFetch<{ program: WorkoutProgram }>(
+    `/api/admin/self-templates/${programId}/sessions/${sessionId}`,
+    { method: "PUT", body: input }
+  );
+}
+
 export function addSessionToAdminSelfTemplate(programId: string, letter: string) {
   return apiFetch<{ session: Workout }>(`/api/admin/self-templates/${programId}/sessions`, {
     method: "POST",

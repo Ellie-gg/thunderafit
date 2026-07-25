@@ -79,6 +79,8 @@ export interface Workout {
   exercises?: WorkoutExercise[];
   /** Presente na visão de programa do aluno (GET /api/workout-programs/:id). */
   suggestedNext?: boolean;
+  /** Fase 55.2: só presente em GET /api/admin/self-templates/:id (tela de edição de tradução). */
+  translations?: { EN?: string; ES?: string };
   /** Fase 34.5: presente em GET /api/workouts/:id (findByIdWithExercises). */
   program?: { origin: WorkoutProgramOrigin };
 }
@@ -134,6 +136,8 @@ export interface WorkoutProgram {
   createdAt: string;
   updatedAt: string;
   workouts?: Workout[];
+  /** Fase 55.2: só presente em GET /api/admin/self-templates/:id (tela de edição de tradução). */
+  translations?: { EN?: string; ES?: string };
 }
 
 export interface LoggedExercise {
