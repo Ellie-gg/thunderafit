@@ -182,30 +182,33 @@ function MeuTreinoPessoalContent() {
           <QueryError error={templatesQuery.error} onRetry={() => templatesQuery.refetch()} />
         )}
 
-        <div className="grid gap-3 sm:grid-cols-2">
-          {geralTemplates.map((tpl) => (
-            <Card key={tpl.id} className="flex flex-col gap-2">
-              <h2 className="font-display text-lg font-bold">{tpl.name}</h2>
-              <p className="text-xs text-muted">
-                {t("sessionCountScheme", {
-                  count: tpl.workouts?.length ?? 0,
-                  scheme:
-                    tpl.sessionScheme === "WEEKDAY" ? t("schemeWeekday") : t("schemeLetter"),
-                })}
-              </p>
-              <Button
-                className="mt-2"
-                disabled={applyMutation.isPending}
-                onClick={() => applyMutation.mutate(tpl.id)}
-              >
-                {applyMutation.isPending ? t("applying") : t("applyTemplate")}
-              </Button>
-            </Card>
-          ))}
-        </div>
-
-        {templatesQuery.isSuccess && geralTemplates.length === 0 && (
-          <p className="text-sm text-muted">{t("emptyState")}</p>
+        {/* GERAL é a listagem plana original (pré-carrossel, Fase 34.5) — hoje
+            sem nenhum template curado de verdade (todo conteúdo atual vive em
+            HOME/PRONTOS/PREMIUM), então esta seção não tem título próprio e
+            fica oculta por completo quando vazia, em vez de mostrar uma frase
+            solta sem contexto nenhum acima dela. */}
+        {geralTemplates.length > 0 && (
+          <div className="grid gap-3 sm:grid-cols-2">
+            {geralTemplates.map((tpl) => (
+              <Card key={tpl.id} className="flex flex-col gap-2">
+                <h2 className="font-display text-lg font-bold">{tpl.name}</h2>
+                <p className="text-xs text-muted">
+                  {t("sessionCountScheme", {
+                    count: tpl.workouts?.length ?? 0,
+                    scheme:
+                      tpl.sessionScheme === "WEEKDAY" ? t("schemeWeekday") : t("schemeLetter"),
+                  })}
+                </p>
+                <Button
+                  className="mt-2"
+                  disabled={applyMutation.isPending}
+                  onClick={() => applyMutation.mutate(tpl.id)}
+                >
+                  {applyMutation.isPending ? t("applying") : t("applyTemplate")}
+                </Button>
+              </Card>
+            ))}
+          </div>
         )}
 
         {applyMutation.isError && (
