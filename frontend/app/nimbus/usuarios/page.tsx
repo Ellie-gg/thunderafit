@@ -4,7 +4,7 @@ import { useTranslations } from "next-intl";
 import { useState } from "react";
 import Link from "next/link";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { listAdminUsers, updateUserRole } from "@/lib/api/admin";
+import { listAdminUsers, updateUserRole, updateUserPremium } from "@/lib/api/admin";
 import { ApiError } from "@/lib/api/client";
 import { useAuthStore } from "@/lib/store/auth-store";
 import { AuthGuard } from "@/components/auth-guard";
@@ -86,6 +86,77 @@ function RoleEditor({ user, onChanged }: { user: AdminUser; onChanged: () => voi
           onClick={() => mutation.mutate(pendingRole)}
         >
           {mutation.isPending ? t("roleEditor.saving") : t("roleEditor.confirmButton")}
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Fase 58: liga/desliga Premium manualmente — mesmo padrão inline de
+ * confirmação do `RoleEditor` acima, mas sem `<select>` (é um toggle
+ * binário): o rótulo do botão já é a ação ("Conceder"/"Revogar"), sem passo
+ * de edição separado. "Premium" atual é derivado por role (ALUNO:
+ * `alunoPremiumStatus !== "NONE"`; PERSONAL/NUTRICIONISTA:
+ * `planoAssinatura === "PLUS"`); ADMIN não tem esse controle (backend
+ * rejeita com 400, então nem mostramos o botão).
+ */
+function PremiumEditor({ user, onChanged }: { user: AdminUser; onChanged: () => void }) {
+  const t = useTranslations("nimbusUsuarios");
+  const tCommon = useTranslations("common");
+  const [confirming, setConfirming] = useState(false);
+
+  const isPremium =
+    user.role === "ALUNO"
+      ? user.alunoPremiumStatus != null && user.alunoPremiumStatus !== "NONE"
+      : user.planoAssinatura === "PLUS";
+
+  const mutation = useMutation({
+    mutationFn: (active: boolean) => updateUserPremium(user.id, active),
+    onSuccess: () => {
+      setConfirming(false);
+      onChanged();
+    },
+  });
+
+  if (user.role === "ADMIN") return null;
+
+  if (!confirming) {
+    return (
+      <Button type="button" variant="ghost" size="sm" onClick={() => setConfirming(true)}>
+        {isPremium ? t("premiumEditor.revoke") : t("premiumEditor.grant")}
+      </Button>
+    );
+  }
+
+  return (
+    <div className="flex flex-col items-end gap-1.5 rounded-md border border-accent/40 bg-accent/10 p-2">
+      <p className="text-xs text-accent">
+        {isPremium
+          ? t("premiumEditor.confirmRevoke", { email: user.email })
+          : t("premiumEditor.confirmGrant", { email: user.email })}
+      </p>
+      {mutation.isError && (
+        <p className="text-xs text-danger">
+          {mutation.error instanceof ApiError ? mutation.error.message : t("premiumEditor.genericError")}
+        </p>
+      )}
+      <div className="flex gap-2">
+        <Button type="button" size="sm" onClick={() => setConfirming(false)}>
+          {tCommon("cancel")}
+        </Button>
+        <Button
+          type="button"
+          variant="secondary"
+          size="sm"
+          disabled={mutation.isPending}
+          onClick={() => mutation.mutate(!isPremium)}
+        >
+          {mutation.isPending
+            ? t("premiumEditor.saving")
+            : isPremium
+              ? t("premiumEditor.revoke")
+              : t("premiumEditor.grant")}
         </Button>
       </div>
     </div>
@@ -178,6 +249,10 @@ function UsersContent() {
                       {t("viewAnamnesis")}
                     </Link>
                   )}
+                  <PremiumEditor
+                    user={u}
+                    onChanged={() => queryClient.invalidateQueries({ queryKey: ["admin", "users"] })}
+                  />
                   <RoleEditor
                     user={u}
                     onChanged={() => queryClient.invalidateQueries({ queryKey: ["admin", "users"] })}
