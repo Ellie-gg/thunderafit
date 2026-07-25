@@ -74,6 +74,33 @@ model User {
   // real acontecer. Nullable de propósito: não confundir "detectei PT" com
   // "o usuário escolheu PT".
   locale           Locale?
+  // Fase 56 (Aluno Premium — guardrails): entitlement do ALUNO pra
+  // desbloquear o carrossel PREMIUM de "Meu Treino Pessoal" (e, futuramente,
+  // criar/editar o próprio treino). Deliberadamente SEPARADO de
+  // planoAssinatura/limiteAlunos/stripeSubscriptionId acima — aqueles são
+  // conceitos de CAPACIDADE PROFISSIONAL (quantos alunos um Personal pode
+  // ter), isto é um plano de CONSUMO do próprio aluno. Como `role` é
+  // exclusivo por usuário (nunca PERSONAL-e-ALUNO ao mesmo tempo), não há
+  // colisão real em reaproveitar as colunas antigas, mas os nomes/semânticas
+  // (BASE/PLUS, "limite de alunos") não fazem sentido pra isso — daí colunas
+  // novas em vez de sobrecarregar as existentes.
+  alunoPremiumStatus    AlunoPremiumStatus @default(NONE)
+  // Data-limite de acesso vigente, cobre TANTO o teste grátis quanto uma
+  // assinatura paga futura (inclusive o período de carência após cancelar) —
+  // um único campo de "até quando", nunca null enquanto status != NONE.
+  alunoPremiumExpiresAt DateTime?
+  // Marcado na PRIMEIRA vez que o teste é iniciado e NUNCA mais limpo, nem
+  // após cancelar — é a trava contra abuso (cancelar e reiniciar o teste pra
+  // sempre ter acesso grátis). Ainda não impede múltiplas CONTAS (fora de
+  // escopo — mesma limitação já registrada em outras fases sobre não haver
+  // verificação de e-mail hoje).
+  alunoTrialUsedAt      DateTime?
+  // Fase 56: ainda não usado por nenhum fluxo de checkout real (o pagamento
+  // em si fica pra quando entrar em produção) — só reservado aqui pro
+  // webhook futuro linkar por customer, mesmo padrão do stripeSubscriptionId
+  // acima, mas numa coluna separada porque este é um segundo produto
+  // (assinatura do aluno), não o mesmo profissional.
+  stripeAlunoSubscriptionId String?  @unique
   createdAt        DateTime        @default(now())
   updatedAt        DateTime        @updatedAt
 
@@ -114,6 +141,20 @@ enum PlanoAssinatura {
   FREE
   BASE
   PLUS
+}
+
+// Fase 56: entitlement de Aluno Premium — TRIAL (7 dias, uma vez por conta) e
+// ACTIVE (assinatura paga, checkout ainda não implementado) concedem acesso;
+// CANCELED representa "cancelou mas ainda dentro do período pago" (mesmo
+// `alunoPremiumExpiresAt` como data-limite); depois de expirar, o acesso já
+// não é mais concedido, mas o status só volta pra NONE explicitamente (não há
+// job/cron que reescreva isso — a checagem de acesso sempre compara contra
+// `alunoPremiumExpiresAt`, nunca confia só no status armazenado).
+enum AlunoPremiumStatus {
+  NONE
+  TRIAL
+  ACTIVE
+  CANCELED
 }
 
 // ============================================================
