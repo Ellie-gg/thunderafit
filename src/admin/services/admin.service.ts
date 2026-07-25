@@ -13,6 +13,9 @@ import { exerciseTranslationsRepository } from "../../fitness/repository/exercis
 // Fase 55.2: mesmo motivo de exception ao desacoplamento acima — a tela de
 // admin agora edita a tradução de nome de programa/sessão diretamente.
 import { programTranslationsRepository } from "../../fitness/repository/program-translations.repository";
+// Fase 58: toggle manual de Premium — reaproveita os mesmos limites de
+// alunos por degrau já usados pelo billing real (PLUS = topo da escada).
+import { PLUS_LIMITE_ALUNOS, FREE_LIMITE_ALUNOS } from "../../billing/stripe";
 
 const VALID_SESSION_SCHEMES = ["LETTER", "WEEKDAY"] as const;
 type AdminSessionScheme = (typeof VALID_SESSION_SCHEMES)[number];
@@ -484,6 +487,51 @@ export const adminService = {
       "ROLE_CHANGE",
       targetUserId,
       `${oldRole} -> ${newRole}`
+    );
+    return { user: updated };
+  },
+
+  /**
+   * Fase 58: liga/desliga Premium manualmente — "Premium" significa uma
+   * coisa diferente por role: pro ALUNO é o entitlement de
+   * `alunoPremiumStatus`/`alunoPremiumExpiresAt` (mesmo modelo do teste
+   * grátis, Fase 56); pro PERSONAL/NUTRICIONISTA é subir pro degrau PLUS de
+   * `planoAssinatura` (o mais alto — não existe um degrau "Premium"
+   * separado pra profissional, então reaproveita o topo da escada
+   * existente). ADMIN não tem nenhum conceito de Premium — 400.
+   *
+   * Concessão manual do ALUNO usa uma data-limite bem distante (100 anos)
+   * em vez de null, pra caber no mesmo contrato de
+   * `alunoPremiumService.computeEntitlement` (que sempre compara
+   * `alunoPremiumExpiresAt` contra `now()` — nunca confia só no status).
+   */
+  async setUserPremium(adminId: string, targetUserId: string, active: boolean) {
+    const target = await adminRepository.findUserRoleById(targetUserId);
+    if (!target) {
+      const err = new Error("Usuário não encontrado.");
+      (err as any).statusCode = 404;
+      throw err;
+    }
+
+    let updated;
+    if (target.role === "ALUNO") {
+      const expiresAt = active ? new Date(Date.now() + 100 * 365 * 24 * 60 * 60 * 1000) : null;
+      updated = await adminRepository.setAlunoPremium(targetUserId, active, expiresAt);
+    } else if (target.role === "PERSONAL" || target.role === "NUTRICIONISTA") {
+      updated = active
+        ? await adminRepository.setPersonalPlano(targetUserId, "PLUS", PLUS_LIMITE_ALUNOS)
+        : await adminRepository.setPersonalPlano(targetUserId, "FREE", FREE_LIMITE_ALUNOS);
+    } else {
+      const err = new Error("Somente ALUNO ou PERSONAL/NUTRICIONISTA podem ter Premium.");
+      (err as any).statusCode = 400;
+      throw err;
+    }
+
+    await adminRepository.createAuditLog(
+      adminId,
+      "PREMIUM_TOGGLE",
+      targetUserId,
+      `${active ? "concedido" : "revogado"} (${target.role})`
     );
     return { user: updated };
   },

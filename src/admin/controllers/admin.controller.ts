@@ -165,6 +165,20 @@ export async function updateUserRoleHandler(
   }
 }
 
+export async function updateUserPremiumHandler(
+  request: FastifyRequest<{ Params: { id: string }; Body: { active?: boolean } }>,
+  reply: FastifyReply
+) {
+  try {
+    assertAdmin(request);
+    const adminId = (request as any).user.sub;
+    const result = await adminService.setUserPremium(adminId, request.params.id, request.body?.active === true);
+    return reply.status(200).send(result);
+  } catch (err: any) {
+    return handleError(err, reply);
+  }
+}
+
 // --- Fase 34.5: curadoria de templates SELF ("Meu treino pessoal") ---
 
 export async function listSelfTemplatesHandler(request: FastifyRequest, reply: FastifyReply) {

@@ -20,6 +20,7 @@ import {
   uploadSelfTemplateBannerHandler,
   updateSelfTemplateHandler,
   updateSelfSessionHandler,
+  updateUserPremiumHandler,
 } from "../controllers/admin.controller";
 
 export async function adminRoutes(fastify: FastifyInstance) {
@@ -48,6 +49,8 @@ export async function adminRoutes(fastify: FastifyInstance) {
   fastify.delete("/api/admin/exercises/:id", auth, deleteExerciseHandler);
 
   fastify.put("/api/admin/users/:id/role", auth, updateUserRoleHandler);
+  // Fase 58: concessão/revogação manual de Premium (ALUNO ou PERSONAL/NUTRI).
+  fastify.put("/api/admin/users/:id/premium", auth, updateUserPremiumHandler);
 
   // Fase 34.5: curadoria de templates SELF ("Meu treino pessoal").
   fastify.get("/api/admin/self-templates", auth, listSelfTemplatesHandler);

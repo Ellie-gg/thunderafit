@@ -921,6 +921,14 @@
       "saving": "Guardando...",
       "confirmButton": "Confirmar"
     },
+    "premiumEditor": {
+      "grant": "Conceder Premium",
+      "revoke": "Revocar Premium",
+      "confirmGrant": "¿Conceder Premium a {email}?",
+      "confirmRevoke": "¿Revocar el Premium de {email}?",
+      "genericError": "Error al cambiar el Premium.",
+      "saving": "Guardando..."
+    },
     "linkedSince": "desde {date}"
   },
   "nimbusAnamneseView": {
