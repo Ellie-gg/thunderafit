@@ -766,6 +766,34 @@ decisão/priorização futura):
     Modelo: Sonnet 5. 332/332 backend (+7 casos novos), 48/48 Jest/RTL,
     `tsc --noEmit` limpo (backend e frontend).*
 
+### Grupo L — 10 programas "Treinos Premium" + correção de texto solto. ✅ CONCLUÍDA (2026-07-25, registrada como Fase 57 no STATUS.md).
+
+62. ✅ **10 templates PREMIUM cadastrados** (5 femininos: Bumbum na Nuca
+    Extreme, Silhueta Ampulheta, Pernas Magníficas, Corpo Esculpido Pro,
+    Definição de Conjunto; 5 masculinos: Hipertrofia Extrema Pro, Shape
+    Inabalável, V-Taper Master, Monster Mass, Força & Volume Titã — 40
+    sessões, todos os ~90 exercícios distintos batendo 1:1 com o catálogo
+    existente, nenhum precisou ser criado). `prisma/seed-programas-premium.ts`,
+    idempotente por nome — rodado local e depois produção.
+63. ✅ **Técnicas de intensidade documentadas em `notes`** de cada
+    `WorkoutExercise` relevante (Drop-set, Drop-set duplo/triplo, Rest-Pause,
+    Bi-set, Pico de Contração, Cluster Set) — texto explicativo de como
+    executar, visível pro aluno na tela de execução do treino (mesmo campo
+    `notes` já existente, sem schema novo).
+64. ✅ **Tradução EN/ES completa** dos 10 programas + 40 sessões
+    (`prisma/seed-traducoes-programas-premium.ts`, mesmo padrão da Fase 55).
+65. ✅ **Correção de texto solto**: a seção "GERAL" (listagem plana
+    pré-Fase-52, sem título próprio e sem nenhum template curado real hoje)
+    mostrava "Nenhum treino pessoal disponível ainda." sem nenhum contexto
+    acima — agora some por completo quando vazia. O segundo lugar em que a
+    frase aparecia era a seção PREMIUM, que ficava vazia até este item 62
+    populá-la — resolvido pelo conteúdo, não por uma segunda mudança de UI.
+    Cadeado do banner PREMIUM (item 59, Fase 56) e o CTA de teste grátis já
+    existiam e passam a valer pra estes 10 templates sem nenhum código novo;
+    banners de imagem em si ficam pro fundador subir depois via
+    `/nimbus/treinos-pessoais`, mesmo fluxo manual já usado em HOME/PRONTOS.
+    *Modelo: Sonnet 5. 332/332 backend, 48/48 Jest/RTL, `tsc --noEmit` limpo.*
+
 ### Backlog operacional herdado
 Ver Seção 7 acima (Neon, billing, Android, webhook).
 
