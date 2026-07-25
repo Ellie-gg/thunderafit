@@ -882,7 +882,15 @@
     "deleteConfirm": "Excluir o template \"{name}\"? Não tem volta.",
     "loadingSessions": "Carregando sessões...",
     "sessionTitle": "Sessão {label}",
-    "empty": "Nenhum template pessoal cadastrado ainda."
+    "empty": "Nenhum template pessoal cadastrado ainda.",
+    "translationsTitle": "Nome e tradução",
+    "nameEnLabel": "Nome (EN)",
+    "nameEsLabel": "Nome (ES)",
+    "saveNames": "Salvar nomes",
+    "savingNames": "Salvando...",
+    "saveNamesError": "Erro ao salvar os nomes.",
+    "namesSaved": "Salvo!",
+    "sessionNameLabel": "Nome da sessão"
   },
   "nimbusUsuarios": {
     "title": "Usuários",

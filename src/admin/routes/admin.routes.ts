@@ -18,6 +18,8 @@ import {
   addExerciseToSelfSessionHandler,
   deleteSelfTemplateHandler,
   uploadSelfTemplateBannerHandler,
+  updateSelfTemplateHandler,
+  updateSelfSessionHandler,
 } from "../controllers/admin.controller";
 
 export async function adminRoutes(fastify: FastifyInstance) {
@@ -51,6 +53,9 @@ export async function adminRoutes(fastify: FastifyInstance) {
   fastify.get("/api/admin/self-templates", auth, listSelfTemplatesHandler);
   fastify.get("/api/admin/self-templates/:id", auth, getSelfTemplateHandler);
   fastify.post("/api/admin/self-templates", auth, createSelfTemplateHandler);
+  // Fase 55.2: edição de nome (PT + tradução EN/ES) do template e das sessões.
+  fastify.put("/api/admin/self-templates/:id", auth, updateSelfTemplateHandler);
+  fastify.put("/api/admin/self-templates/:id/sessions/:sessionId", auth, updateSelfSessionHandler);
   fastify.post("/api/admin/self-templates/:id/sessions", auth, addSessionToSelfTemplateHandler);
   fastify.post(
     "/api/admin/self-templates/:id/sessions/:sessionId/exercises",

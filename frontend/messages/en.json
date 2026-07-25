@@ -882,7 +882,15 @@
     "deleteConfirm": "Delete the template \"{name}\"? This can't be undone.",
     "loadingSessions": "Loading sessions...",
     "sessionTitle": "Session {label}",
-    "empty": "No personal templates registered yet."
+    "empty": "No personal templates registered yet.",
+    "translationsTitle": "Name & translation",
+    "nameEnLabel": "Name (EN)",
+    "nameEsLabel": "Name (ES)",
+    "saveNames": "Save names",
+    "savingNames": "Saving...",
+    "saveNamesError": "Error saving names.",
+    "namesSaved": "Saved!",
+    "sessionNameLabel": "Session name"
   },
   "nimbusUsuarios": {
     "title": "Users",
