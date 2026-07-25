@@ -850,6 +850,24 @@ decisão/priorização futura):
     *Modelo: Sonnet 5. 341/341 backend (+2 casos novos), 48/48 Jest/RTL,
     `tsc --noEmit` limpo (backend e frontend).*
 
+### Grupo O — Premium primeiro na vitrine + 3 programas de emagrecimento/EPOC. ✅ CONCLUÍDA (2026-07-25, registrada como Fase 60 no STATUS.md).
+
+70. ✅ **"Treinos Premium" vira o primeiro carrossel** em `/meu-treino-pessoal`
+    (antes vinha por último, depois de Prontos/Casa) — maior vitrine de
+    conversão da tela na frente, puro reorder de JSX, sem mudança de lógica.
+71. ✅ **3 novos templates PREMIUM** (Queima Fatal 360 — ABC; Metabolic Shred
+    Pro — ABCD; Corpo Trincado Extreme — ABCDE; 12 sessões no total),
+    focados em emagrecimento/EPOC — todos os exercícios batendo 1:1 com o
+    catálogo existente (incluindo os já cadastrados de condicionamento
+    metabólico: Burpees, Mountain Climbers, Polichinelo, Pular Corda,
+    Corrida Intervalada, Remo Ergométrico), nenhum precisou ser criado.
+    Técnicas novas documentadas em `notes` (Bi-set de Contraste, Bi-set
+    Antagonista, Bi-set de Exaustão, Bi-set/Rest-Pause Metabólico, Tri-set
+    Metabólico, Circuito de Alta Densidade), além das já usadas nos 10
+    templates anteriores (Drop-set, Pico de Contração). Tradução EN/ES
+    completa (3 programas + 12 sessões).
+    *Modelo: Sonnet 5. Seeds idempotentes, rodados local e em produção.*
+
 ### Backlog operacional herdado
 Ver Seção 7 acima (Neon, billing, Android, webhook).
 

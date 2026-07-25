@@ -228,6 +228,58 @@ function MeuTreinoPessoalContent() {
           </p>
         )}
 
+        {/* Fase 60: "Treinos Premium" primeiro — maior vitrine de conversão
+            da tela, na frente dos carrosséis gratuitos (antes vinha por
+            último). Decorativo até a Fase 56 (cadeado sempre `true`); agora
+            reflete o acesso real (teste grátis/assinatura). */}
+        <div className="flex flex-col gap-3">
+          <div>
+            <h2 className="font-display text-lg font-bold">{t("premiumSectionTitle")}</h2>
+            <p className="text-sm text-muted">{t("premiumSectionSubtitle")}</p>
+          </div>
+          {templatesQuery.isSuccess && premiumTemplates.length === 0 && (
+            <p className="text-sm text-muted">{t("emptyState")}</p>
+          )}
+          <SelfTemplateCarousel
+            templates={premiumTemplates}
+            locked={!premiumStatusQuery.data?.hasAccess}
+            onSelect={handleSelectPremium}
+          />
+          {premiumApplyMutation.isError &&
+            !(
+              premiumApplyMutation.error instanceof ApiError &&
+              premiumApplyMutation.error.status === 409 &&
+              premiumApplyMutation.error.data?.code === "SELF_PROGRAM_EXISTS"
+            ) && (
+              <p className="text-sm text-danger">
+                {premiumApplyMutation.error instanceof ApiError
+                  ? premiumApplyMutation.error.message
+                  : t("applyError")}
+              </p>
+            )}
+          {premiumNotice && !premiumStatusQuery.data?.hasAccess && (
+            <Card className="flex flex-col gap-2">
+              {premiumStatusQuery.data?.trialAvailable ? (
+                <>
+                  <p className="text-sm text-muted">{t("premiumTrialPitch")}</p>
+                  <Button
+                    variant="secondary"
+                    disabled={startTrialMutation.isPending}
+                    onClick={() => startTrialMutation.mutate()}
+                  >
+                    {startTrialMutation.isPending ? t("premiumStartingTrial") : t("premiumStartTrial")}
+                  </Button>
+                  {startTrialMutation.isError && (
+                    <p className="text-sm text-danger">{t("premiumTrialError")}</p>
+                  )}
+                </>
+              ) : (
+                <p className="text-sm text-muted">{t("premiumComingSoon")}</p>
+              )}
+            </Card>
+          )}
+        </div>
+
         {/* Fase 54: "Treinos Prontos" — carrossel funcional, substitui o
             antigo card estático "Crie seu treino do zero". */}
         <div className="flex flex-col gap-3">
@@ -275,55 +327,6 @@ function MeuTreinoPessoalContent() {
                   : t("applyError")}
               </p>
             )}
-        </div>
-
-        {/* Fase 52: "Treinos Premium" — decorativo, todo slide bloqueado. */}
-        <div className="flex flex-col gap-3">
-          <div>
-            <h2 className="font-display text-lg font-bold">{t("premiumSectionTitle")}</h2>
-            <p className="text-sm text-muted">{t("premiumSectionSubtitle")}</p>
-          </div>
-          {templatesQuery.isSuccess && premiumTemplates.length === 0 && (
-            <p className="text-sm text-muted">{t("emptyState")}</p>
-          )}
-          <SelfTemplateCarousel
-            templates={premiumTemplates}
-            locked={!premiumStatusQuery.data?.hasAccess}
-            onSelect={handleSelectPremium}
-          />
-          {premiumApplyMutation.isError &&
-            !(
-              premiumApplyMutation.error instanceof ApiError &&
-              premiumApplyMutation.error.status === 409 &&
-              premiumApplyMutation.error.data?.code === "SELF_PROGRAM_EXISTS"
-            ) && (
-              <p className="text-sm text-danger">
-                {premiumApplyMutation.error instanceof ApiError
-                  ? premiumApplyMutation.error.message
-                  : t("applyError")}
-              </p>
-            )}
-          {premiumNotice && !premiumStatusQuery.data?.hasAccess && (
-            <Card className="flex flex-col gap-2">
-              {premiumStatusQuery.data?.trialAvailable ? (
-                <>
-                  <p className="text-sm text-muted">{t("premiumTrialPitch")}</p>
-                  <Button
-                    variant="secondary"
-                    disabled={startTrialMutation.isPending}
-                    onClick={() => startTrialMutation.mutate()}
-                  >
-                    {startTrialMutation.isPending ? t("premiumStartingTrial") : t("premiumStartTrial")}
-                  </Button>
-                  {startTrialMutation.isError && (
-                    <p className="text-sm text-danger">{t("premiumTrialError")}</p>
-                  )}
-                </>
-              ) : (
-                <p className="text-sm text-muted">{t("premiumComingSoon")}</p>
-              )}
-            </Card>
-          )}
         </div>
 
         <p className="text-center text-sm text-muted">
