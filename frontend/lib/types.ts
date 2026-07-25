@@ -133,11 +133,15 @@ export interface WorkoutProgram {
   sessionScheme: SessionScheme;
   category: SelfTemplateCategory;
   bannerImageUrl: string | null;
+  /** Fase 59: descrição curta ("Foco") — só populada em templates SELF curados; null em qualquer outro programa. */
+  description: string | null;
   createdAt: string;
   updatedAt: string;
   workouts?: Workout[];
   /** Fase 55.2: só presente em GET /api/admin/self-templates/:id (tela de edição de tradução). */
   translations?: { EN?: string; ES?: string };
+  /** Fase 59: idem, tradução da descrição ("Foco"). */
+  translationDescriptions?: { EN?: string; ES?: string };
 }
 
 export interface LoggedExercise {

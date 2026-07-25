@@ -278,7 +278,9 @@
     "replaceDialogTitle": "Replace your active workout?",
     "replaceDialogMessage": "You already have \"{name}\" active. Applying this new workout erases the current one's set history — this can't be undone.",
     "replaceDialogConfirm": "Yes, replace it",
-    "replacing": "Replacing..."
+    "replacing": "Replacing...",
+    "previewSessionsLabel": "{count} session(s)",
+    "previewApplyButton": "Apply this workout"
   },
   "evolucao": {
     "noPreviousComparison": "No previous comparison yet",
@@ -894,7 +896,11 @@
     "savingNames": "Saving...",
     "saveNamesError": "Error saving names.",
     "namesSaved": "Saved!",
-    "sessionNameLabel": "Session name"
+    "sessionNameLabel": "Session name",
+    "descriptionLabel": "Description (Focus)",
+    "descriptionPlaceholder": "E.g.: Maximum glute hypertrophy, with thigh shaping...",
+    "descriptionEnLabel": "Description (EN)",
+    "descriptionEsLabel": "Description (ES)"
   },
   "nimbusUsuarios": {
     "title": "Users",

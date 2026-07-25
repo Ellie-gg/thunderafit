@@ -4,6 +4,7 @@ import { programTranslationsRepository } from "../repository/program-translation
 interface TranslatableProgram {
   id: string;
   name: string;
+  description?: string | null;
 }
 
 interface TranslatableWorkout {
@@ -27,7 +28,10 @@ export const programTranslationService = {
     const byId = new Map(translations.map((t) => [t.workoutProgramId, t]));
     return programs.map((p) => {
       const t = byId.get(p.id);
-      return t ? { ...p, name: t.name } : p;
+      // Fase 59: fallback por CAMPO, não por linha inteira — uma tradução
+      // criada antes da descrição existir tem `description: null`, então cai
+      // de volta pro texto canônico em PT em vez de virar um campo vazio.
+      return t ? { ...p, name: t.name, description: t.description ?? p.description } : p;
     });
   },
 

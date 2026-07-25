@@ -139,7 +139,14 @@ export function uploadAdminSelfTemplateBanner(programId: string, bannerDataUrl: 
 // depois de trim = "não mandou", não apaga tradução já existente no backend).
 export function updateAdminSelfTemplate(
   programId: string,
-  input: { name: string; nameEN?: string; nameES?: string }
+  input: {
+    name: string;
+    nameEN?: string;
+    nameES?: string;
+    description?: string;
+    descriptionEN?: string;
+    descriptionES?: string;
+  }
 ) {
   return apiFetch<{ program: WorkoutProgram }>(`/api/admin/self-templates/${programId}`, {
     method: "PUT",

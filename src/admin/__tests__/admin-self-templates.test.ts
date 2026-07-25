@@ -461,4 +461,34 @@ describe("Fase 55.2 — admin edita nome PT + tradução EN/ES do template e da 
     expect(r.status).toBe(200);
     expect(r.body.program.translations).toEqual({ EN: "Full Body Edited", ES: "Full Body Editado ES" });
   });
+
+  it("Fase 59: ADMIN define a descrição (Foco) em PT + EN/ES do template", async () => {
+    const r = await supertest(server.server)
+      .put(`/api/admin/self-templates/${templateId55}`)
+      .set("Authorization", `Bearer ${adminToken}`)
+      .send({
+        name: "Full Body Editado de Novo",
+        description: "Foco em força e hipertrofia geral.",
+        descriptionEN: "Focus on strength and general hypertrophy.",
+        descriptionES: "Enfoque en fuerza e hipertrofia general.",
+      });
+    expect(r.status).toBe(200);
+    expect(r.body.program.description).toBe("Foco em força e hipertrofia geral.");
+    expect(r.body.program.translationDescriptions).toEqual({
+      EN: "Focus on strength and general hypertrophy.",
+      ES: "Enfoque en fuerza e hipertrofia general.",
+    });
+    // O nome traduzido salvo antes não pode ter sido sobrescrito pelo nome
+    // em PT só porque esta chamada não reenviou nameEN/nameES.
+    expect(r.body.program.translations).toEqual({ EN: "Full Body Edited", ES: "Full Body Editado ES" });
+  });
+
+  it("Fase 59: enviar description vazia limpa a descrição em PT", async () => {
+    const r = await supertest(server.server)
+      .put(`/api/admin/self-templates/${templateId55}`)
+      .set("Authorization", `Bearer ${adminToken}`)
+      .send({ name: "Full Body Editado de Novo", description: "" });
+    expect(r.status).toBe(200);
+    expect(r.body.program.description).toBeNull();
+  });
 });

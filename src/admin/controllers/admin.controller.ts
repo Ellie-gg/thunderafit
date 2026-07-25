@@ -237,7 +237,14 @@ export async function uploadSelfTemplateBannerHandler(
 export async function updateSelfTemplateHandler(
   request: FastifyRequest<{
     Params: { id: string };
-    Body: { name?: string; nameEN?: string; nameES?: string };
+    Body: {
+      name?: string;
+      nameEN?: string;
+      nameES?: string;
+      description?: string;
+      descriptionEN?: string;
+      descriptionES?: string;
+    };
   }>,
   reply: FastifyReply
 ) {

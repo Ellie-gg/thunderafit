@@ -19,11 +19,15 @@ export const programTranslationsRepository = {
     return prisma.workoutProgramTranslation.findMany({ where: { workoutProgramId } });
   },
 
-  async upsertProgramTranslation(workoutProgramId: string, locale: Locale, name: string) {
+  // Fase 59: `description` opcional — chamadores que só traduzem o nome
+  // (comportamento anterior) continuam funcionando sem passar o 3º argumento;
+  // quando omitido, o UPDATE não toca na descrição já salva (undefined !==
+  // "limpar", é "não mandou").
+  async upsertProgramTranslation(workoutProgramId: string, locale: Locale, name: string, description?: string | null) {
     return prisma.workoutProgramTranslation.upsert({
       where: { workoutProgramId_locale: { workoutProgramId, locale } },
-      create: { workoutProgramId, locale, name },
-      update: { name },
+      create: { workoutProgramId, locale, name, description: description ?? null },
+      update: description !== undefined ? { name, description } : { name },
     });
   },
 
