@@ -794,6 +794,29 @@ decisão/priorização futura):
     `/nimbus/treinos-pessoais`, mesmo fluxo manual já usado em HOME/PRONTOS.
     *Modelo: Sonnet 5. 332/332 backend, 48/48 Jest/RTL, `tsc --noEmit` limpo.*
 
+### Grupo M — Admin: concessão/revogação manual de Premium por usuário. ✅ CONCLUÍDA (2026-07-25, registrada como Fase 58 no STATUS.md).
+
+66. ✅ **`PUT /api/admin/users/:id/premium`** (`{ active: boolean }`) — "Premium"
+    significa uma coisa diferente por role, resolvida no mesmo endpoint:
+    ALUNO vira `alunoPremiumStatus: ACTIVE` com `alunoPremiumExpiresAt` ~100
+    anos no futuro (mesmo contrato de `computeEntitlement` da Fase 56, que
+    sempre compara contra `now()` — nunca `null`); PERSONAL/NUTRICIONISTA
+    vira `planoAssinatura: PLUS` (não existe um degrau "Premium" separado
+    pro profissional, reaproveita o topo da escada já existente); ADMIN alvo
+    não tem esse conceito (400). Revogar não mexe em `alunoTrialUsedAt`
+    (quem já gastou o teste grátis não reganha elegibilidade só porque
+    perdeu um Premium concedido manualmente) nem em `stripeSubscriptionId`
+    (concessão manual nunca finge uma assinatura Stripe real).
+    **Exceção documentada** à regra "só o webhook escreve plano" (ver
+    `src/billing/AGENTS.md`) — uso pretendido é cortesia/suporte, não
+    substituto de cobrança real. Toda chamada grava `AdminAuditLog`
+    (`action: "PREMIUM_TOGGLE"`). UI em `/nimbus/usuarios`: botão inline
+    "Conceder"/"Revogar Premium" por linha de usuário (mesmo padrão de
+    confirmação do `RoleEditor` de edição de role já existente), ausente
+    pra linhas ADMIN.
+    *Modelo: Sonnet 5. 339/339 backend (+7 casos novos), 48/48 Jest/RTL,
+    `tsc --noEmit` limpo (backend e frontend).*
+
 ### Backlog operacional herdado
 Ver Seção 7 acima (Neon, billing, Android, webhook).
 

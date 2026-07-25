@@ -2,6 +2,7 @@ import { apiFetch } from "./client";
 import type {
   AdminOverview,
   AdminUsersResponse,
+  AdminUser,
   AdminLoginLogEntry,
   AdminSupportSlaThread,
   AdminAccessLogEntry,
@@ -86,6 +87,16 @@ export function updateUserRole(id: string, role: Role) {
   return apiFetch<{ user: { id: string; role: Role } }>(`/api/admin/users/${id}/role`, {
     method: "PUT",
     body: { role },
+  });
+}
+
+// Fase 58: concessão/revogação manual de Premium — ALUNO vira
+// alunoPremiumStatus ACTIVE/NONE; PERSONAL/NUTRICIONISTA vira
+// planoAssinatura PLUS/FREE. ADMIN não tem conceito de Premium (400).
+export function updateUserPremium(id: string, active: boolean) {
+  return apiFetch<{ user: AdminUser }>(`/api/admin/users/${id}/premium`, {
+    method: "PUT",
+    body: { active },
   });
 }
 

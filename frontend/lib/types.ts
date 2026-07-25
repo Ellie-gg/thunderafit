@@ -305,6 +305,10 @@ export interface AdminUser {
   role: Role;
   planoAssinatura: "FREE" | "BASE" | "PLUS";
   limiteAlunos: number;
+  // Fase 58: estado Premium do ALUNO (setável manualmente pelo admin) —
+  // undefined pra PERSONAL/NUTRICIONISTA/ADMIN, que não usam este campo.
+  alunoPremiumStatus?: "NONE" | "TRIAL" | "ACTIVE" | "CANCELED";
+  alunoPremiumExpiresAt?: string | null;
   lastLoginAt: string | null;
   createdAt: string;
   isOrphanAluno?: boolean;

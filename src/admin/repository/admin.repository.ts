@@ -49,6 +49,10 @@ export const adminRepository = {
           role: true,
           planoAssinatura: true,
           limiteAlunos: true,
+          // Fase 58: pra tela de admin mostrar o estado Premium vigente do
+          // ALUNO (setUserPremium abaixo escreve nestes dois campos).
+          alunoPremiumStatus: true,
+          alunoPremiumExpiresAt: true,
           lastLoginAt: true,
           createdAt: true,
         },
@@ -193,6 +197,31 @@ export const adminRepository = {
 
   async updateUserRole(id: string, role: "PERSONAL" | "ALUNO" | "NUTRICIONISTA" | "ADMIN") {
     return prisma.user.update({ where: { id }, data: { role } });
+  },
+
+  /**
+   * Fase 58: concessão/revogação MANUAL de Premium pelo admin — exceção
+   * documentada à regra de "só o webhook do Stripe escreve planoAssinatura"
+   * (ver src/billing/AGENTS.md), pra suporte/cortesia sem depender de
+   * cobrança real. `expiresAt: null` ao revogar não deixa `alunoTrialUsedAt`
+   * de lado — quem já usou o teste continua sem direito a um novo, mesmo
+   * após ganhar e perder um Premium concedido manualmente.
+   */
+  async setAlunoPremium(userId: string, active: boolean, expiresAt: Date | null) {
+    return prisma.user.update({
+      where: { id: userId },
+      data: {
+        alunoPremiumStatus: active ? "ACTIVE" : "NONE",
+        alunoPremiumExpiresAt: expiresAt,
+      },
+    });
+  },
+
+  async setPersonalPlano(userId: string, plano: "FREE" | "PLUS", limiteAlunos: number) {
+    return prisma.user.update({
+      where: { id: userId },
+      data: { planoAssinatura: plano, limiteAlunos },
+    });
   },
 
   async createAuditLog(adminId: string, action: string, targetUserId: string, details: string) {
