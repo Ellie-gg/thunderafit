@@ -73,6 +73,32 @@ function NextSessionCard({ program }: { program: WorkoutProgram }) {
   );
 }
 
+// Fase 55: quando o programa "Meu treino pessoal" aplicado tem banner, o
+// bloco "Meus treinos" mostra só o banner (mesmo overlay padronizado de
+// self-template-carousel.tsx) em vez do card de sugestão de sessão — abre
+// direto o programa (/programas/:id), onde o aluno escolhe o dia.
+function SelfProgramBannerCard({ program }: { program: WorkoutProgram }) {
+  return (
+    <Link
+      href={`/programas/${program.id}`}
+      className="relative block aspect-video w-full overflow-hidden rounded-xl border border-border"
+    >
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={program.bannerImageUrl!}
+        alt={program.name}
+        className="absolute inset-0 h-full w-full object-cover"
+      />
+      <div className="absolute inset-0 bg-gradient-to-r from-black/75 via-black/20 to-transparent" />
+      <div className="absolute inset-0 flex items-center px-4">
+        <h3 className="font-display text-xl font-black uppercase leading-[1.05] tracking-tight text-white [text-wrap:balance] [text-shadow:0_2px_8px_rgb(0_0_0_/_0.5)]">
+          {program.name}
+        </h3>
+      </div>
+    </Link>
+  );
+}
+
 function buildPersonalInviteText(t: ReturnType<typeof useTranslations>) {
   // Fase 24 (Parte 2): /register não existe mais — o cadastro acontece
   // dentro do fluxo unificado de e-mail em /login (mesma base do convite já
@@ -239,7 +265,11 @@ function DashboardContent() {
               {t("myWorkoutsLabel")}
             </span>
             {selfDetailPending ? null : selfProgramQuery.data?.program ? (
-              <NextSessionCard program={selfProgramQuery.data.program} />
+              selfProgramQuery.data.program.bannerImageUrl ? (
+                <SelfProgramBannerCard program={selfProgramQuery.data.program} />
+              ) : (
+                <NextSessionCard program={selfProgramQuery.data.program} />
+              )
             ) : (
               <Card className="flex flex-col gap-2">
                 <p className="text-sm text-muted">{t("selfWorkoutsEmpty")}</p>

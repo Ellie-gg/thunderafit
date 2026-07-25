@@ -2,6 +2,7 @@ import { SessionScheme, Locale } from "@prisma/client";
 import { workoutProgramsRepository, orderFor, WEEKDAY_ORDER } from "../repository/workout-programs.repository";
 import { relationsRepository } from "../repository/relations.repository";
 import { exerciseTranslationService } from "./exercise-translation.service";
+import { programTranslationService } from "./program-translation.service";
 
 const VALID_SCHEMES: SessionScheme[] = ["LETTER", "WEEKDAY"];
 
@@ -137,8 +138,28 @@ export const workoutProgramsService = {
 
   // --- Fase 34.5: "Meu treino pessoal" ---
 
-  async listSelfTemplates() {
-    return workoutProgramsRepository.listSelfTemplates();
+  /**
+   * Fase 55: templates traduzidos (nome do programa E de cada sessão) no
+   * locale ativo — mesmo padrão de fallback pro PT já usado em exercícios
+   * quando a tradução daquele registro específico ainda não existe.
+   */
+  async listSelfTemplates(locale: Locale) {
+    const programs = await workoutProgramsRepository.listSelfTemplates();
+    const translatedPrograms = await programTranslationService.translatePrograms(programs, locale);
+
+    // Sessões vêm aninhadas em cada programa (`workouts`) — achata todas
+    // numa lista só pra 1 chamada de tradução (mesmo motivo de
+    // exerciseTranslationService.translateNested em getProgram abaixo),
+    // depois redistribui de volta preservando a posição original.
+    const allWorkouts = translatedPrograms.flatMap((p) => p.workouts);
+    const translatedWorkouts = await programTranslationService.translateWorkouts(allWorkouts, locale);
+
+    let cursor = 0;
+    return translatedPrograms.map((p) => {
+      const workouts = translatedWorkouts.slice(cursor, cursor + p.workouts.length);
+      cursor += p.workouts.length;
+      return { ...p, workouts };
+    });
   },
 
   /**
@@ -226,7 +247,7 @@ export const workoutProgramsService = {
     const translatedExercises = await exerciseTranslationService.translateNested(allExercises, locale);
 
     let cursor = 0;
-    const translatedSessions = sessions.map((s) => {
+    const exerciseTranslatedSessions = sessions.map((s) => {
       const exercises = translatedExercises.slice(cursor, cursor + s.exercises.length);
       cursor += s.exercises.length;
       return {
@@ -236,7 +257,16 @@ export const workoutProgramsService = {
       };
     });
 
-    return { ...program, workouts: translatedSessions };
+    // Fase 55: nome do programa e de cada sessão, no mesmo locale — chamada
+    // separada da tradução de exercícios acima (linhas diferentes,
+    // WorkoutProgramTranslation/WorkoutTranslation, não ExerciseTranslation).
+    const [translatedProgram] = await programTranslationService.translatePrograms([program], locale);
+    const translatedSessions = await programTranslationService.translateWorkouts(
+      exerciseTranslatedSessions,
+      locale
+    );
+
+    return { ...translatedProgram, workouts: translatedSessions };
   },
 };
 

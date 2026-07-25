@@ -275,6 +275,13 @@ export const workoutProgramsRepository = {
           name: source.name,
           isTemplate: false,
           sessionScheme: source.sessionScheme,
+          // Fase 55: copia o banner do template pra instância aplicada — o
+          // dashboard do aluno (bloco "Meus treinos") mostra o banner em vez
+          // do card de sugestão de sessão quando ele existe. `category` NÃO
+          // é copiada de propósito (só faz sentido em templates; a instância
+          // aplicada fica no default GERAL, igual a qualquer outro programa
+          // fora de "Meu Treino Pessoal").
+          bannerImageUrl: source.bannerImageUrl,
         },
       });
       for (const w of source.workouts) {
