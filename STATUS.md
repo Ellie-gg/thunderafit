@@ -189,3 +189,4 @@
 - [x] Fase 53: 3 programas curados de Treino em Casa cadastrados + correção de tradução (muscleGroup desatualizado pós Fase 50/51)
 - [x] Fase 53.1: 3 correções no upload de banner (corte indevido, faixa por desvio de proporção, texto duplicado)
 - [x] Fase 54: Categoria "Treinos Prontos" (academia, grátis) substitui "Crie seu treino do zero" + 3 programas cadastrados
+- [x] Fase 55: i18n do nome de programa/sessão (`WorkoutProgramTranslation`/`WorkoutTranslation`) + banner copiado na aplicação do template + overlay de texto padronizado nos banners + banner substitui o card de sugestão no dashboard ("Meus treinos")

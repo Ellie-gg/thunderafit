@@ -667,6 +667,43 @@ decisão/priorização futura):
     *Modelo: Sonnet 5. 319/319 backend, 48/48 Jest/RTL, `tsc --noEmit` limpo.
     Seed idêntico em dev e produção (verificado antes/depois nos dois).*
 
+### Grupo J — i18n de nome de programa/sessão + redesign do overlay de banner + banner no dashboard. ✅ CONCLUÍDA (2026-07-25, registrada como Fase 55 no STATUS.md).
+
+
+52. ✅ **Tradução de `WorkoutProgram.name`/`Workout.name`** (pendência aberta no
+    item 49 acima) — novos modelos `WorkoutProgramTranslation`/`WorkoutTranslation`
+    (migration aditiva), mesmo contrato de fallback pro PT de
+    `ExerciseTranslation` (Fase 46), mas **sem cache em memória**: dataset
+    pequeno (só templates SELF curados) editado via HTTP real, então
+    consultar direto do banco evita complexidade de invalidação de cache
+    para ganho de performance desprezível. `listSelfTemplates`/`getProgram`
+    traduzem nome do programa e de cada sessão no locale ativo. Seed
+    `prisma/seed-traducoes-programas-treino-pessoal.ts` populou EN/ES dos 6
+    templates existentes (3 Casa + 3 Prontos) e suas 19 sessões — sem
+    endpoint de admin dedicado pra editar tradução (mesmo padrão já usado
+    pra `Exercise`: seed de script, não tela).
+53. ✅ **Reversão parcial do item 50 acima**: o fundador reportou que a
+    remoção do overlay de texto (Fase 53.1) foi um erro seu — o problema
+    real era texto DUPLICADO (banner com nome já embutido pela IA geradora
+    + overlay do app por cima), não a existência do overlay em si. A partir
+    de agora, banners são gerados **só como imagem crua** (sem nome
+    embutido) — o overlay do app volta a ser a única fonte do nome, e
+    passou a ser **padronizado** em todo template com banner (não
+    configurável por template): alinhado à esquerda, fonte grande/bold
+    (`font-display font-black uppercase`), gradiente restrito ao lado
+    esquerdo da imagem (não a imagem inteira). Aplicado em
+    `self-template-carousel.tsx` (carrossel de `/meu-treino-pessoal`).
+54. ✅ **Banner substitui o card de sugestão no dashboard do aluno**
+    (bloco "Meus treinos") — `applySelfTemplateToAluno` passou a copiar
+    `bannerImageUrl` do template pra instância aplicada (faltava; toda
+    instância aplicada tinha banner nulo mesmo vindo de um template
+    bannerizado). Quando o programa aplicado tem banner, o dashboard mostra
+    só o banner (mesmo overlay padronizado do item 53), abrindo direto
+    `/programas/:id` — o aluno escolhe o dia por lá. Sem banner, mantém o
+    card de sugestão de sessão (`NextSessionCard`) como já era.
+    *Modelo: Sonnet 5. 319/319 backend, 48/48 Jest/RTL, `tsc --noEmit`
+    limpo (backend e frontend).*
+
 ### Backlog operacional herdado
 Ver Seção 7 acima (Neon, billing, Android, webhook).
 

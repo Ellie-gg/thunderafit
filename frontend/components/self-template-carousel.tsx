@@ -122,11 +122,12 @@ function SelfTemplateSlide({
     );
   }
 
-  // O banner já vem com o nome estilizado embutido na própria imagem
-  // (gerado/escolhido pelo admin) — sem overlay de texto nem gradiente de
-  // legibilidade por cima: eram redundantes com o nome já desenhado na
-  // imagem. `alt` carrega o nome pra acessibilidade, já que não há mais
-  // texto visível na tela pra isso.
+  // Fase 55: overlay de texto padronizado pra TODO banner — a partir de
+  // agora os banners são gerados só como imagem "crua" (sem nome embutido
+  // pelo admin), então o app é a única fonte do nome visível. Gradiente só
+  // do lado esquerdo (não a imagem inteira) + texto grande/bold alinhado à
+  // esquerda, tentando aproximar a estética que os banners tinham quando o
+  // texto vinha embutido na própria imagem gerada por IA.
   return (
     <button
       type="button"
@@ -139,6 +140,12 @@ function SelfTemplateSlide({
         alt={template.name}
         className="absolute inset-0 h-full w-full object-cover"
       />
+      <div className="absolute inset-0 bg-gradient-to-r from-black/75 via-black/20 to-transparent" />
+      <div className="absolute inset-0 flex items-center px-4">
+        <h3 className="font-display text-xl font-black uppercase leading-[1.05] tracking-tight text-white [text-wrap:balance] [text-shadow:0_2px_8px_rgb(0_0_0_/_0.5)]">
+          {template.name}
+        </h3>
+      </div>
       {locked && <LockBadge />}
     </button>
   );
