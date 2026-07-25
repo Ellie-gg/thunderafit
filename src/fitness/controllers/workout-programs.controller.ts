@@ -145,6 +145,12 @@ export async function applySelfTemplateHandler(
         existingProgramName: err.existingProgramName,
       });
     }
+    // Fase 56: gate de Aluno Premium — code carrega pro frontend distinguir
+    // "sem acesso Premium" de qualquer outro erro genérico (mesmo motivo do
+    // SELF_PROGRAM_EXISTS acima).
+    if (err.code === "PREMIUM_REQUIRED") {
+      return reply.status(402).send({ error: err.message, code: err.code });
+    }
     return handleError(err, reply);
   }
 }

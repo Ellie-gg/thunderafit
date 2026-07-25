@@ -51,3 +51,18 @@ Tier limits are constants in `stripe.ts`, not DB config: `FREE_LIMITE_ALUNOS=3`,
 ## Current state
 
 Three tiers exist and are live in code: `FREE` (3 students, no directory access), `BASE` (20 students, can opt into the professional directory), `PLUS` (effectively unlimited students, priority placement in the directory — priority ordering itself lives outside this domain). Checkout supports monthly and annual intervals for both paid tiers (4 Stripe Price IDs total). Real Stripe products/prices and a live webhook endpoint are not yet configured in any environment (test-mode only, per `BILLING_SETUP.md`) — going live is a manual, explicit step (swap test keys for live keys and deploy), not a code change.
+
+## Aluno Premium (Fase 56 — guardrails only, no live checkout yet)
+
+A second, **independent** subscription concept for the `ALUNO` role — unlocks the `PREMIUM` carousel category of "Meu Treino Pessoal" (`prisma/schema.prisma`'s `SelfTemplateCategory`) and, in a future phase, create/edit-your-own-workout. Deliberately **not** built on `planoAssinatura`/`limiteAlunos`/`stripeSubscriptionId` above — those are professional-capacity concepts ("how many students can a Personal have"), this is an aluno's own consumption plan. Since `role` is exclusive per user (never PERSONAL-and-ALUNO at once) there's no real collision risk in sharing columns, but the semantics don't fit, so it gets its own fields:
+
+- `alunoPremiumStatus: AlunoPremiumStatus` (`NONE | TRIAL | ACTIVE | CANCELED`, default `NONE`).
+- `alunoPremiumExpiresAt: DateTime?` — the single "access until" deadline, covers both the trial and (later) a paid period/cancellation grace, all through one field.
+- `alunoTrialUsedAt: DateTime?` — set once, on first trial start, **never cleared** (not even on cancellation) — this is the anti-abuse guard against repeatedly restarting the trial. Does not prevent multi-account abuse (no email verification exists anywhere in this codebase yet — a pre-existing, documented gap, not new to this feature).
+- `stripeAlunoSubscriptionId: String? @unique` — reserved for the future real checkout/webhook; nothing writes to it yet.
+
+`aluno-premium.service.ts`'s `computeEntitlement` is the single source of truth for "does this user have access right now" — it **always** re-derives from `alunoPremiumExpiresAt > now`, never trusts the stored `alunoPremiumStatus` alone (no cron flips expired rows back to `NONE`; same "derive at read time" pattern as `workout-summary.service.ts`). `startTrial` grants 7 days (`ALUNO_PREMIUM_TRIAL_DAYS`, `stripe.ts`) once per account, rejecting both an already-used trial and an already-active entitlement (can't "restart" to extend).
+
+Pricing (`stripe.ts`): `ALUNO_PREMIUM_MONTHLY_PRICE_CENTS = 990`, plus a `ALUNO_PREMIUM_QUARTERLY_DISCOUNT_PCT = 30` off a 3-month commitment — **both are documented constants only**, not wired to any Stripe Price ID or checkout flow yet ("vamos refinar isso quando colocarmos o pagamento em produção" — founder's own words). Don't build a checkout session against these until that phase starts.
+
+**Enforcement lives in `fitness`, not here**: `workout-programs.service.ts`'s `applySelfTemplate` calls `alunoPremiumService.getEntitlement` and throws a `402` with `err.code = "PREMIUM_REQUIRED"` when the target template's `category === "PREMIUM"` and the aluno lacks access — this closed a real gap (the `PREMIUM` lock was previously decorative-only in the frontend; nothing on the backend stopped a direct API call from applying a locked template). Access is checked **only at apply-time**, not continuously — same convention as `limiteAlunos` above (a lapsed trial/subscription doesn't retroactively revoke an already-applied program).

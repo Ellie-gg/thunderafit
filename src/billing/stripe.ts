@@ -50,3 +50,18 @@ export type BillingInterval = "monthly" | "annual";
 export function stripePriceEnvVar(tier: PlanTier, interval: BillingInterval): string {
   return `STRIPE_PRICE_ID_${tier}_${interval === "annual" ? "ANNUAL" : "MONTHLY"}`;
 }
+
+// Fase 56 (Aluno Premium — guardrails): preço em centavos e desconto do
+// compromisso trimestral (30%, "vamos refinar isso quando colocarmos o
+// pagamento em produção" — por ora são só constantes documentadas, sem
+// nenhum STRIPE_PRICE_ID_ALUNO_PREMIUM_* real ainda; nenhum checkout as usa
+// hoje). `Math.round` porque centavos são inteiros — nunca fração de centavo.
+export const ALUNO_PREMIUM_TRIAL_DAYS = 7;
+export const ALUNO_PREMIUM_MONTHLY_PRICE_CENTS = 990;
+export const ALUNO_PREMIUM_QUARTERLY_MONTHS = 3;
+export const ALUNO_PREMIUM_QUARTERLY_DISCOUNT_PCT = 30;
+export const ALUNO_PREMIUM_QUARTERLY_PRICE_CENTS = Math.round(
+  ALUNO_PREMIUM_MONTHLY_PRICE_CENTS *
+    ALUNO_PREMIUM_QUARTERLY_MONTHS *
+    (1 - ALUNO_PREMIUM_QUARTERLY_DISCOUNT_PCT / 100)
+);
