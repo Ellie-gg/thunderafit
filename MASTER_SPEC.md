@@ -142,7 +142,14 @@ confiados sob `role === ADMIN` (visão ampliada, leitura). Roles: `PERSONAL`, `A
   Fase 23 (38 agentes em paralelo) não produziu nenhum resultado aproveitável (`started`
   sem `result`). O benchmarking usado até aqui (Gym WP como referência principal) veio
   de busca direta em conversa, não de pesquisa formal. Sem matriz de preço fechada —
-  ver Fase 38 no roadmap.
+  ver Fase 38 no roadmap. **Atualização Fase 56:** o fundador definiu o preço inicial do
+  "Aluno Premium" diretamente (sem pesquisa formal) — R$ 9,90/mês, teste grátis de 7
+  dias (uma vez por conta), 30% off no compromisso trimestral. Desbloqueia hoje o
+  carrossel PREMIUM de "Meu Treino Pessoal"; criar/editar o próprio treino é um degrau
+  futuro do mesmo plano, ainda não implementado. Só os *guardrails* (entitlement +
+  gate de aplicação) existem por enquanto — o checkout/Stripe real desta assinatura é
+  deliberadamente adiado pra quando o pagamento entrar em produção (ver `src/billing/
+  AGENTS.md`, seção "Aluno Premium").
 - **Regra de lojas (anti-steering):** assinatura vendida na **web**; o app mobile apenas
   consulta o status sincronizado — nunca linka checkout externo de dentro do app. Regra
   já vigente (não muda com o pivô); pesquisa 2024-26 completa sobre o estado atual das
@@ -717,6 +724,47 @@ decisão/priorização futura):
     `/nimbus/treinos-pessoais`, reaproveitando `programTranslationsRepository`
     do domínio fitness. *Modelo: Sonnet 5. 325/325 backend (+6 casos novos),
     48/48 Jest/RTL, `tsc --noEmit` limpo.*
+
+### Grupo K — Aluno Premium: guardrails (entitlement + teste grátis + gate real). ✅ CONCLUÍDA (2026-07-25, registrada como Fase 56 no STATUS.md).
+
+57. ✅ **Modelo de entitlement novo, separado do billing profissional** —
+    `AlunoPremiumStatus` (`NONE|TRIAL|ACTIVE|CANCELED`) + `alunoPremiumExpiresAt`
+    + `alunoTrialUsedAt` + `stripeAlunoSubscriptionId` em `User` (migration
+    aditiva). Deliberadamente não reaproveita `planoAssinatura`/`limiteAlunos`
+    (conceitos de capacidade profissional, não de consumo do aluno).
+    `aluno-premium.service.ts` deriva o acesso SEMPRE comparando
+    `alunoPremiumExpiresAt` contra `now()` (nunca confia só no status
+    armazenado — não há cron que reescreva pra `NONE` ao expirar).
+58. ✅ **Teste grátis de 7 dias, uma vez por conta pra sempre** —
+    `POST /api/billing/aluno/trial` (`ALUNO` only) rejeita quem já usou
+    (`alunoTrialUsedAt` setado e nunca limpo, nem no cancelamento — a
+    "segurança da regra" pedida pelo fundador) e quem já tem acesso vigente
+    (não dá pra "reiniciar" o teste em andamento pra esticar o prazo).
+    Sem cartão: nenhum fluxo de checkout foi tocado por este teste.
+59. ✅ **Gate real no backend** — até agora o cadeado do carrossel PREMIUM
+    era 100% decorativo (`locked` hardcoded `true` no frontend); qualquer
+    aluno já podia aplicar um template PREMIUM chamando a API direto. Corrigido
+    em `workoutProgramsService.applySelfTemplate`: categoria `PREMIUM` exige
+    `alunoPremiumService.getEntitlement(...).hasAccess`, senão `402` com
+    `code: "PREMIUM_REQUIRED"`. Checado só no momento de aplicar (mesma
+    convenção do `limiteAlunos` — não revoga retroativamente o que já foi
+    aplicado se o acesso expirar depois).
+60. ✅ **Preço documentado, não wireado**: R$ 9,90/mês
+    (`ALUNO_PREMIUM_MONTHLY_PRICE_CENTS`) + 30% off no compromisso trimestral
+    (`ALUNO_PREMIUM_QUARTERLY_DISCOUNT_PCT`) em `src/billing/stripe.ts` — só
+    constantes, sem nenhum `STRIPE_PRICE_ID_ALUNO_PREMIUM_*` real nem endpoint
+    de checkout ainda (explicitamente adiado pelo fundador: "vamos refinar
+    isso quando colocarmos o pagamento em produção").
+61. ✅ **Frontend**: `/meu-treino-pessoal` troca o cadeado hardcoded pelo
+    acesso real (`GET /api/billing/aluno/premium-status`); clicar num template
+    PREMIUM sem acesso mostra um CTA pra iniciar o teste grátis (ou, se já
+    usado, uma mensagem de "assinatura em breve") em vez do antigo aviso
+    genérico de "em breve" sempre-presente.
+    *Escopo explicitamente fora desta fase: criar/editar o próprio treino
+    (a segunda metade do pedido do fundador) — só os guardrails de
+    assinatura foram construídos agora, a feature em si fica pra depois.
+    Modelo: Sonnet 5. 332/332 backend (+7 casos novos), 48/48 Jest/RTL,
+    `tsc --noEmit` limpo (backend e frontend).*
 
 ### Backlog operacional herdado
 Ver Seção 7 acima (Neon, billing, Android, webhook).

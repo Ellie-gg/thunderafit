@@ -3,6 +3,7 @@ import { workoutProgramsRepository, orderFor, WEEKDAY_ORDER } from "../repositor
 import { relationsRepository } from "../repository/relations.repository";
 import { exerciseTranslationService } from "./exercise-translation.service";
 import { programTranslationService } from "./program-translation.service";
+import { alunoPremiumService } from "../../billing/services/aluno-premium.service";
 
 const VALID_SCHEMES: SessionScheme[] = ["LETTER", "WEEKDAY"];
 
@@ -176,6 +177,23 @@ export const workoutProgramsService = {
    * histórico já usado no delete manual do Personal).
    */
   async applySelfTemplate(sourceProgramId: string, alunoId: string, replace = false) {
+    // Fase 56: até agora o cadeado do carrossel PREMIUM era só visual — nada
+    // no backend impedia aplicar um template PREMIUM direto pela API. Aqui é
+    // o gate de verdade: sem teste grátis/assinatura vigente, nem chega a
+    // tentar aplicar.
+    const template = await workoutProgramsRepository.findProgramById(sourceProgramId);
+    if (template?.category === "PREMIUM") {
+      const entitlement = await alunoPremiumService.getEntitlement(alunoId);
+      if (!entitlement.hasAccess) {
+        const err = httpError(
+          "Este treino é exclusivo do Aluno Premium. Assine ou inicie o teste grátis de 7 dias.",
+          402
+        ) as any;
+        err.code = "PREMIUM_REQUIRED";
+        throw err;
+      }
+    }
+
     // Nota: `existing` (se houver) é sempre uma INSTÂNCIA aplicada
     // (isTemplate: false), nunca o mesmo registro do `sourceProgramId`
     // (sempre um TEMPLATE, isTemplate: true) — não há atalho de "mesmo id",

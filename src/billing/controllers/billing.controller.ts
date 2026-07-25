@@ -2,6 +2,7 @@ import { FastifyRequest, FastifyReply } from "fastify";
 import type Stripe from "stripe";
 import { getStripe } from "../stripe";
 import { billingService } from "../services/billing.service";
+import { alunoPremiumService } from "../services/aluno-premium.service";
 
 function handleError(err: any, reply: FastifyReply) {
   const status = err?.statusCode ?? 500;
@@ -93,6 +94,34 @@ export async function portalSessionHandler(request: FastifyRequest, reply: Fasti
   try {
     const url = await billingService.createPortalSession(sub);
     return reply.status(200).send({ url });
+  } catch (err) {
+    return handleError(err, reply);
+  }
+}
+
+// --- Fase 56: Aluno Premium (guardrails — checkout real fica pra depois) ---
+
+export async function alunoPremiumStatusHandler(request: FastifyRequest, reply: FastifyReply) {
+  const { sub, role } = (request as any).user;
+  if (role !== "ALUNO") {
+    return reply.status(403).send({ error: "Apenas alunos têm plano Premium de aluno." });
+  }
+  try {
+    const entitlement = await alunoPremiumService.getEntitlement(sub);
+    return reply.status(200).send(entitlement);
+  } catch (err) {
+    return handleError(err, reply);
+  }
+}
+
+export async function alunoPremiumStartTrialHandler(request: FastifyRequest, reply: FastifyReply) {
+  const { sub, role } = (request as any).user;
+  if (role !== "ALUNO") {
+    return reply.status(403).send({ error: "Apenas alunos podem iniciar o teste grátis." });
+  }
+  try {
+    const entitlement = await alunoPremiumService.startTrial(sub);
+    return reply.status(200).send(entitlement);
   } catch (err) {
     return handleError(err, reply);
   }

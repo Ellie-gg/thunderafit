@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { listSelfTemplates, applySelfTemplate } from "@/lib/api/workouts";
+import { getAlunoPremiumStatus, startAlunoPremiumTrial } from "@/lib/api/billing";
 import { ApiError } from "@/lib/api/client";
 import type { WorkoutProgram } from "@/lib/types";
 import { AuthGuard } from "@/components/auth-guard";
@@ -41,6 +42,12 @@ function MeuTreinoPessoalContent() {
   const router = useRouter();
   const queryClient = useQueryClient();
   const templatesQuery = useQuery({ queryKey: ["self-templates"], queryFn: listSelfTemplates });
+  // Fase 56: cadeado do carrossel Premium deixa de ser hardcoded — reflete o
+  // acesso de verdade (teste grátis ou assinatura vigente).
+  const premiumStatusQuery = useQuery({
+    queryKey: ["aluno-premium-status"],
+    queryFn: getAlunoPremiumStatus,
+  });
 
   const applyMutation = useMutation({
     mutationFn: (programId: string) => applySelfTemplate(programId),
@@ -108,6 +115,35 @@ function MeuTreinoPessoalContent() {
     },
   });
 
+  // Fase 56: mesmo fluxo funcional de "Treino em Casa"/"Treinos Prontos" —
+  // só chamado quando `premiumStatusQuery` já confirmou acesso (o backend
+  // também valida de novo, então um 402 aqui só aconteceria numa corrida rara
+  // — ex: o teste expirou entre o carregamento da tela e o clique).
+  const premiumApplyMutation = useMutation({
+    mutationFn: (programId: string) => applySelfTemplate(programId),
+    onSuccess: onApplySuccess,
+    onError: (error, programId) => {
+      if (error instanceof ApiError && error.status === 409 && error.data?.code === "SELF_PROGRAM_EXISTS") {
+        const template = premiumTemplates.find((tpl) => tpl.id === programId);
+        if (template) {
+          setPendingReplace({
+            template,
+            existingProgramName: String(error.data.existingProgramName ?? ""),
+          });
+        }
+      } else {
+        premiumStatusQuery.refetch();
+      }
+    },
+  });
+
+  const startTrialMutation = useMutation({
+    mutationFn: startAlunoPremiumTrial,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["aluno-premium-status"] });
+    },
+  });
+
   const templates = templatesQuery.data?.programs ?? [];
   const geralTemplates = templates.filter((tpl) => tpl.category === "GERAL");
   const prontosTemplates = templates.filter((tpl) => tpl.category === "PRONTOS");
@@ -124,7 +160,11 @@ function MeuTreinoPessoalContent() {
     homeApplyMutation.mutate(template.id);
   }
 
-  function handleSelectPremium() {
+  function handleSelectPremium(template: WorkoutProgram) {
+    if (premiumStatusQuery.data?.hasAccess) {
+      premiumApplyMutation.mutate(template.id);
+      return;
+    }
     setPremiumNotice(true);
   }
 
@@ -234,8 +274,44 @@ function MeuTreinoPessoalContent() {
           {templatesQuery.isSuccess && premiumTemplates.length === 0 && (
             <p className="text-sm text-muted">{t("emptyState")}</p>
           )}
-          <SelfTemplateCarousel templates={premiumTemplates} locked onSelect={handleSelectPremium} />
-          {premiumNotice && <p className="text-sm text-muted">{t("premiumComingSoon")}</p>}
+          <SelfTemplateCarousel
+            templates={premiumTemplates}
+            locked={!premiumStatusQuery.data?.hasAccess}
+            onSelect={handleSelectPremium}
+          />
+          {premiumApplyMutation.isError &&
+            !(
+              premiumApplyMutation.error instanceof ApiError &&
+              premiumApplyMutation.error.status === 409 &&
+              premiumApplyMutation.error.data?.code === "SELF_PROGRAM_EXISTS"
+            ) && (
+              <p className="text-sm text-danger">
+                {premiumApplyMutation.error instanceof ApiError
+                  ? premiumApplyMutation.error.message
+                  : t("applyError")}
+              </p>
+            )}
+          {premiumNotice && !premiumStatusQuery.data?.hasAccess && (
+            <Card className="flex flex-col gap-2">
+              {premiumStatusQuery.data?.trialAvailable ? (
+                <>
+                  <p className="text-sm text-muted">{t("premiumTrialPitch")}</p>
+                  <Button
+                    variant="secondary"
+                    disabled={startTrialMutation.isPending}
+                    onClick={() => startTrialMutation.mutate()}
+                  >
+                    {startTrialMutation.isPending ? t("premiumStartingTrial") : t("premiumStartTrial")}
+                  </Button>
+                  {startTrialMutation.isError && (
+                    <p className="text-sm text-danger">{t("premiumTrialError")}</p>
+                  )}
+                </>
+              ) : (
+                <p className="text-sm text-muted">{t("premiumComingSoon")}</p>
+              )}
+            </Card>
+          )}
         </div>
 
         <p className="text-center text-sm text-muted">
