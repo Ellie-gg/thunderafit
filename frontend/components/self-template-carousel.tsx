@@ -142,7 +142,7 @@ function SelfTemplateSlide({
       />
       <div className="absolute inset-0 bg-gradient-to-r from-black/75 via-black/20 to-transparent" />
       <div className="absolute inset-0 flex items-center px-4">
-        <h3 className="font-display text-xl font-black uppercase leading-[1.05] tracking-tight text-white [text-wrap:balance] [text-shadow:0_2px_8px_rgb(0_0_0_/_0.5)]">
+        <h3 className="font-display text-left text-sm font-black uppercase leading-[1.1] tracking-tight text-white [text-wrap:balance] [text-shadow:0_2px_8px_rgb(0_0_0_/_0.5)]">
           {template.name}
         </h3>
       </div>
