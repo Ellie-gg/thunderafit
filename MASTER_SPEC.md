@@ -999,6 +999,14 @@ decisão/priorização futura):
     template" em vez de sempre aberto no topo, como antes.
     *Modelo: Sonnet 5. Sem migration — puro frontend.*
 
+### Grupo V — Reordena seções de /personal/programas. ✅ CONCLUÍDA (2026-07-27, registrada como Fase 67 no STATUS.md)
+89. Ordem revisada por pedido do fundador: **Templates Premium** primeiro
+    (maior vitrine de conversão), **Templates Básico** em seguida, **"Criar
+    um novo template"** penúltimo, **"Meus Templates"** (os do próprio
+    Personal) por último — antes "Meus Templates" vinha primeiro. Puro
+    reorder de JSX, nenhuma lógica mudou.
+    *Modelo: Sonnet 5. Sem migration — puro frontend.*
+
 ### Backlog operacional herdado
 Ver Seção 7 acima (Neon, billing, Android, webhook).
 

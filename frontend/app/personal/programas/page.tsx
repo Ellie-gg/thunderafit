@@ -97,49 +97,9 @@ function ProgramasPersonalContent() {
           <QueryError error={programsQuery.error} onRetry={() => programsQuery.refetch()} />
         )}
 
-        <section className="flex flex-col gap-3">
-          <h2 className="font-display text-lg font-bold">
-            {t("templatesTitle", { count: templates.length })}
-          </h2>
-          {templates.length === 0 && (
-            <p className="text-sm text-muted">{t("noTemplatesYet")}</p>
-          )}
-          {templates.map((p) => (
-            <Link key={p.id} href={`/personal/programas/${p.id}`}>
-              <Card className="flex items-center justify-between transition-colors hover:border-accent">
-                <div>
-                  <span className="font-semibold">{p.name}</span>
-                  <p className="text-xs text-muted">
-                    {t("sessionsCount", { count: p.workouts?.length ?? 0 })}
-                  </p>
-                </div>
-                <div className="flex items-center gap-2">
-                  <DeleteProgramButton
-                    programId={p.id}
-                    isTemplate
-                    onDeleted={() =>
-                      queryClient.invalidateQueries({ queryKey: ["workout-programs", "personal"] })
-                    }
-                  />
-                  <span className="text-sm text-muted">{t("open")}</span>
-                </div>
-              </Card>
-            </Link>
-          ))}
-        </section>
-
-        {/* Fase 62: catálogo Básico — gratuito, curado pelo admin, disponível
-            pra todo Personal. */}
-        <section className="flex flex-col gap-3">
-          <div>
-            <h2 className="font-display text-lg font-bold">{t("basicoTitle")}</h2>
-            <p className="text-sm text-muted">{t("basicoSubtitle")}</p>
-          </div>
-          {catalogQuery.isSuccess && basicoTemplates.length === 0 && (
-            <p className="text-sm text-muted">{t("catalogEmpty")}</p>
-          )}
-          <SelfTemplateCarousel templates={basicoTemplates} onSelect={setPreviewTemplate} />
-        </section>
+        {/* Fase 67: ordem revisada — Premium primeiro (maior vitrine de
+            conversão da tela), Básico em seguida, "criar novo template"
+            penúltimo, "Meus Templates" (os do próprio Personal) por último. */}
 
         {/* Fase 62: catálogo Premium — reaproveita os mesmos templates
             origin: SELF, category: PREMIUM já vendidos pro aluno como "Aluno
@@ -177,6 +137,19 @@ function ProgramasPersonalContent() {
               </Button>
             </Card>
           )}
+        </section>
+
+        {/* Fase 62: catálogo Básico — gratuito, curado pelo admin, disponível
+            pra todo Personal. */}
+        <section className="flex flex-col gap-3">
+          <div>
+            <h2 className="font-display text-lg font-bold">{t("basicoTitle")}</h2>
+            <p className="text-sm text-muted">{t("basicoSubtitle")}</p>
+          </div>
+          {catalogQuery.isSuccess && basicoTemplates.length === 0 && (
+            <p className="text-sm text-muted">{t("catalogEmpty")}</p>
+          )}
+          <SelfTemplateCarousel templates={basicoTemplates} onSelect={setPreviewTemplate} />
         </section>
 
         {/* Fase 66: "Montagem Inteligente" saiu do dashboard (que ficou
@@ -281,6 +254,39 @@ function ProgramasPersonalContent() {
             </form>
           )}
         </Card>
+
+        {/* Fase 67: "Meus Templates" (os do próprio Personal) por último —
+            antes vinha primeiro; Premium/Básico/criar agora têm prioridade. */}
+        <section className="flex flex-col gap-3">
+          <h2 className="font-display text-lg font-bold">
+            {t("templatesTitle", { count: templates.length })}
+          </h2>
+          {templates.length === 0 && (
+            <p className="text-sm text-muted">{t("noTemplatesYet")}</p>
+          )}
+          {templates.map((p) => (
+            <Link key={p.id} href={`/personal/programas/${p.id}`}>
+              <Card className="flex items-center justify-between transition-colors hover:border-accent">
+                <div>
+                  <span className="font-semibold">{p.name}</span>
+                  <p className="text-xs text-muted">
+                    {t("sessionsCount", { count: p.workouts?.length ?? 0 })}
+                  </p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <DeleteProgramButton
+                    programId={p.id}
+                    isTemplate
+                    onDeleted={() =>
+                      queryClient.invalidateQueries({ queryKey: ["workout-programs", "personal"] })
+                    }
+                  />
+                  <span className="text-sm text-muted">{t("open")}</span>
+                </div>
+              </Card>
+            </Link>
+          ))}
+        </section>
       </main>
 
       {generatorOpen && <GenerateWorkoutModal onClose={() => setGeneratorOpen(false)} />}
