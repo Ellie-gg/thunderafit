@@ -27,6 +27,11 @@ import type { SelfTemplateCategory, SessionScheme } from "@/lib/types";
 
 const CATEGORY_OPTIONS: SelfTemplateCategory[] = ["GERAL", "HOME", "PREMIUM", "PRONTOS"];
 
+// Fase 62: mesma tela cura os 2 catálogos — "SELF" (aluno, "Meu treino
+// pessoal") e "PERSONAL_CATALOG" ("Templates Básico" do Personal, gratuito).
+type TemplateOrigin = "SELF" | "PERSONAL_CATALOG";
+const ORIGIN_TABS: TemplateOrigin[] = ["SELF", "PERSONAL_CATALOG"];
+
 /**
  * Fase 55.2: edição do nome PT + tradução EN/ES — mesmo componente serve o
  * nome do template e o de cada sessão, só muda o rótulo do primeiro campo e
@@ -150,9 +155,10 @@ function TreinosPessoaisContent() {
   const t = useTranslations("nimbusTreinosPessoais");
   const tCommon = useTranslations("common");
   const queryClient = useQueryClient();
+  const [origin, setOrigin] = useState<TemplateOrigin>("SELF");
   const templatesQuery = useQuery({
-    queryKey: ["admin", "self-templates"],
-    queryFn: listAdminSelfTemplates,
+    queryKey: ["admin", "self-templates", origin],
+    queryFn: () => listAdminSelfTemplates(origin),
   });
 
   const [name, setName] = useState("");
@@ -175,7 +181,7 @@ function TreinosPessoaisContent() {
   }
 
   const createMutation = useMutation({
-    mutationFn: () => createAdminSelfTemplate(name.trim(), scheme, category),
+    mutationFn: () => createAdminSelfTemplate(name.trim(), scheme, category, origin),
     onSuccess: (data) => {
       setName("");
       invalidate();
@@ -209,6 +215,28 @@ function TreinosPessoaisContent() {
           </p>
         </div>
 
+        {/* Fase 62: alterna entre os 2 catálogos curados nesta mesma tela —
+            "Meu treino pessoal" (aluno) e "Templates Básico" (Personal). */}
+        <div className="flex gap-2 border-b border-border">
+          {ORIGIN_TABS.map((o) => (
+            <button
+              key={o}
+              type="button"
+              onClick={() => {
+                setOrigin(o);
+                setExpandedId(null);
+              }}
+              className={`border-b-2 px-1 pb-2 text-sm font-semibold ${
+                origin === o
+                  ? "border-accent text-foreground"
+                  : "border-transparent text-muted hover:text-foreground"
+              }`}
+            >
+              {t(`originTab.${o}`)}
+            </button>
+          ))}
+        </div>
+
         <Card className="flex flex-col gap-3">
           <h2 className="font-display text-lg font-bold">{t("newTemplate")}</h2>
           <form
@@ -240,21 +268,26 @@ function TreinosPessoaisContent() {
                 <option value="WEEKDAY">{t("schemeOption.weekday")}</option>
               </select>
             </div>
-            <div className="flex flex-col gap-1.5">
-              <Label htmlFor="category">{t("categoryLabel")}</Label>
-              <select
-                id="category"
-                value={category}
-                onChange={(e) => setCategory(e.target.value as SelfTemplateCategory)}
-                className="h-11 rounded-md border border-border bg-surface px-3.5 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
-              >
-                {CATEGORY_OPTIONS.map((c) => (
-                  <option key={c} value={c}>
-                    {t(`categoryOption.${c}`)}
-                  </option>
-                ))}
-              </select>
-            </div>
+            {/* Fase 62: category é semântica só do catálogo do aluno (SELF)
+                — "Templates Básico" do Personal não tem carrossel por
+                categoria, então o seletor some pra esse origin. */}
+            {origin === "SELF" && (
+              <div className="flex flex-col gap-1.5">
+                <Label htmlFor="category">{t("categoryLabel")}</Label>
+                <select
+                  id="category"
+                  value={category}
+                  onChange={(e) => setCategory(e.target.value as SelfTemplateCategory)}
+                  className="h-11 rounded-md border border-border bg-surface px-3.5 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+                >
+                  {CATEGORY_OPTIONS.map((c) => (
+                    <option key={c} value={c}>
+                      {t(`categoryOption.${c}`)}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
             <Button type="submit" disabled={createMutation.isPending}>
               {createMutation.isPending ? t("creating") : t("createTemplate")}
             </Button>
@@ -285,8 +318,12 @@ function TreinosPessoaisContent() {
                     <h3 className="font-display text-lg font-bold">{tpl.name}</h3>
                     <p className="text-xs text-muted">
                       {t("sessionCount", { count: tpl.workouts?.length ?? 0 })}
-                      {" · "}
-                      {t(`categoryOption.${tpl.category}`)}
+                      {origin === "SELF" && (
+                        <>
+                          {" · "}
+                          {t(`categoryOption.${tpl.category}`)}
+                        </>
+                      )}
                     </p>
                   </div>
                   <div className="flex gap-2">

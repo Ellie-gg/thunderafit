@@ -280,7 +280,8 @@
     "replaceDialogConfirm": "Sí, reemplazar",
     "replacing": "Reemplazando...",
     "previewSessionsLabel": "{count} sesión(es)",
-    "previewApplyButton": "Aplicar este entrenamiento"
+    "previewApplyButton": "Aplicar este entrenamiento",
+    "previewSelectStudent": "Selecciona un alumno"
   },
   "evolucao": {
     "noPreviousComparison": "Sin comparación anterior todavía",
@@ -455,19 +456,23 @@
     "fazerUpgrade": "Mejora tu plan →",
     "verPlanos": "¿Necesitas más alumnos? Ver planes →",
     "planoAtivo": "Plan {plano} activo · administrar suscripción →",
-    "desde": "desde {data}",
-    "gerenciar": "Administrar →",
+    "gerenciarAlunos": "Gestionar alumnos →",
     "nenhumAlunoVinculado": "Aún no hay alumnos vinculados.",
     "limiteAtingidoBotao": "Límite alcanzado",
     "vincularNovoAluno": "Vincular nuevo alumno",
-    "treinosPrescritos": "Entrenamientos prescritos",
-    "alunoDesvinculado": "alumno desvinculado",
-    "sessoesCount": "{count} sesión(es)",
-    "nenhumProgramaAplicado": "Aún no se aplicó ningún programa a un alumno.",
+    "templatesDeTreino": "Templates de entrenamiento",
     "gerarTreinoRapido": "⚡ Generar Entrenamiento Rápido",
     "montarDoZero": "o crea un programa desde cero →",
     "verDuvidas": "Ver preguntas de los alumnos →",
     "abrir": "Abrir →"
+  },
+  "personalAlunosList": {
+    "titulo": "Gestionar alumnos",
+    "subtitulo": "Todos los alumnos vinculados a ti.",
+    "desde": "desde {data}",
+    "gerenciar": "Administrar →",
+    "semTreino": "Sin entrenamiento aplicado",
+    "nenhumAlunoVinculado": "Aún no hay alumnos vinculados."
   },
   "paymentReminderCard": {
     "titulo": "Recordatorio de pago",
@@ -585,13 +590,18 @@
     "createProgramError": "Error al crear el programa.",
     "creating": "Creando...",
     "createProgram": "Crear programa",
-    "templatesTitle": "Plantillas ({count})",
+    "templatesTitle": "Mis Templates ({count})",
     "noTemplatesYet": "Aún no hay plantillas.",
-    "appliedToStudentsTitle": "Aplicados a alumnos ({count})",
-    "noAppliedProgramsYet": "Aún no hay programas aplicados a alumnos.",
-    "unlinkedStudent": "alumno desvinculado",
     "sessionsCount": "{count} sesión(es)",
-    "open": "Abrir →"
+    "open": "Abrir →",
+    "basicoTitle": "Templates Básico",
+    "basicoSubtitle": "Templates gratuitos, disponibles para cualquier Personal Trainer.",
+    "premiumTitle": "Templates Premium",
+    "premiumSubtitle": "Exclusivos del plan Plus — el mismo catálogo de Aluno Premium.",
+    "catalogEmpty": "Aún no hay templates disponibles.",
+    "premiumUpgradePitch": "Suscríbete al plan Plus para prescribir estos templates a tus alumnos.",
+    "premiumUpgradeButton": "Suscribirse a Plus",
+    "catalogApplyError": "Error al aplicar el template."
   },
   "personalProgramaDetail": {
     "template": "Plantilla",
@@ -607,7 +617,14 @@
     "applyError": "Error al aplicar.",
     "applySuccess": "Programa aplicado al alumno.",
     "applying": "Aplicando...",
-    "applyProgram": "Aplicar programa"
+    "applyProgram": "Aplicar programa",
+    "saveAsTemplateTitle": "Guardar como plantilla",
+    "saveAsTemplateDescription": "Crea una plantilla nueva e independiente a partir de este entrenamiento, reaplicable a cualquier alumno vinculado. Es la única forma de usar este entrenamiento en otro alumno.",
+    "saveAsTemplateNamePlaceholder": "Nombre de la nueva plantilla",
+    "saveAsTemplateButton": "Guardar como plantilla",
+    "saveAsTemplateError": "Error al guardar como plantilla.",
+    "saveAsTemplateSuccess": "Plantilla \"{name}\" creada — abrir →",
+    "saving": "Guardando..."
   },
   "personalSessaoEditor": {
     "sessionNotFound": "Sesión no encontrada en este programa.",
@@ -860,6 +877,10 @@
   "nimbusTreinosPessoais": {
     "title": "Entrenamientos Personales (Mi Entrenamiento Personal)",
     "description": "Templates que cualquier alumno puede elegir y aplicar directamente, sin necesitar un Personal Trainer. {count} template(s) registrado(s).",
+    "originTab": {
+      "SELF": "Mi entrenamiento personal (alumno)",
+      "PERSONAL_CATALOG": "Templates Básico (Personal Trainer)"
+    },
     "newTemplate": "Nuevo template",
     "nameLabel": "Nombre",
     "namePlaceholder": "Ej: Full Body Principiante",

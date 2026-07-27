@@ -315,6 +315,86 @@ export const workoutProgramsRepository = {
     });
   },
 
+  /**
+   * Fase 62: cópia igual a `applyToAluno`, mas o destino é um TEMPLATE do
+   * próprio Personal (`isTemplate: true, alunoId: null`), não uma instância
+   * de aluno — usada por "salvar treino do aluno como template". Nome vem de
+   * parâmetro (não do `source.name`) pra não colidir/confundir com o nome da
+   * instância original.
+   */
+  async saveAsTemplate(sourceProgramId: string, personalId: string, name: string) {
+    const source = await prisma.workoutProgram.findUnique({
+      where: { id: sourceProgramId },
+      include: { workouts: { include: { exercises: true } } },
+    });
+    if (!source) return null;
+
+    return prisma.$transaction(async (tx) => {
+      const copy = await tx.workoutProgram.create({
+        data: {
+          personalId,
+          origin: "PERSONAL",
+          alunoId: null,
+          name,
+          isTemplate: true,
+          sessionScheme: source.sessionScheme,
+        },
+      });
+      for (const w of source.workouts) {
+        const newWorkout = await tx.workout.create({
+          data: {
+            programId: copy.id,
+            personalId,
+            alunoId: null,
+            name: w.name,
+            letter: w.letter,
+          },
+        });
+        if (w.exercises.length > 0) {
+          await tx.workoutExercise.createMany({
+            data: w.exercises.map((e) => ({
+              workoutId: newWorkout.id,
+              exerciseId: e.exerciseId,
+              sets: e.sets,
+              repsRange: e.repsRange,
+              restSeconds: e.restSeconds,
+              order: e.order,
+              notes: e.notes,
+            })),
+          });
+        }
+      }
+      return tx.workoutProgram.findUnique({
+        where: { id: copy.id },
+        include: { workouts: { include: { exercises: true } } },
+      });
+    });
+  },
+
+  // --- Fase 62: catálogo de templates pro Personal ---
+
+  /** Templates "Básico" — curados pelo admin, origin dedicada, sem billing. */
+  async listCatalogTemplates() {
+    return prisma.workoutProgram.findMany({
+      where: { origin: "PERSONAL_CATALOG", isTemplate: true },
+      orderBy: { createdAt: "desc" },
+      include: { workouts: { select: { id: true, letter: true, name: true } } },
+    });
+  },
+
+  /**
+   * Templates "Premium" do Personal — reaproveita os mesmos templates
+   * origin: SELF, category: PREMIUM já vendidos pro aluno (Fase 57/60), sem
+   * duplicar conteúdo.
+   */
+  async listPremiumSelfTemplates() {
+    return prisma.workoutProgram.findMany({
+      where: { origin: "SELF", isTemplate: true, category: "PREMIUM" },
+      orderBy: { createdAt: "desc" },
+      include: { workouts: { select: { id: true, letter: true, name: true } } },
+    });
+  },
+
   async deleteProgram(programId: string) {
     const workouts = await prisma.workout.findMany({
       where: { programId },

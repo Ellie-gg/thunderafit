@@ -244,9 +244,13 @@ export const adminRepository = {
   // domínio fitness) pra manter os domínios desacoplados, mesmo padrão já
   // usado no resto deste repository.
 
-  async listSelfTemplates() {
+  // Fase 62: `origin` agora é parametrizável — "PERSONAL_CATALOG" é o
+  // catálogo "Templates Básico" oferecido ao Personal, curado nesta MESMA
+  // tela de admin, sem nenhuma rota nova ("Templates Premium" do Personal
+  // não usa este catálogo: reaproveita os SELF/PREMIUM já existentes).
+  async listSelfTemplates(origin: "SELF" | "PERSONAL_CATALOG" = "SELF") {
     return prisma.workoutProgram.findMany({
-      where: { origin: "SELF" },
+      where: { origin },
       orderBy: { createdAt: "desc" },
       include: { workouts: { select: { id: true, letter: true, name: true } } },
     });
@@ -255,10 +259,11 @@ export const adminRepository = {
   async createSelfTemplate(
     name: string,
     sessionScheme: "LETTER" | "WEEKDAY",
-    category: "GERAL" | "HOME" | "PREMIUM" | "PRONTOS"
+    category: "GERAL" | "HOME" | "PREMIUM" | "PRONTOS",
+    origin: "SELF" | "PERSONAL_CATALOG" = "SELF"
   ) {
     return prisma.workoutProgram.create({
-      data: { name, origin: "SELF", personalId: null, isTemplate: true, sessionScheme, category },
+      data: { name, origin, personalId: null, isTemplate: true, sessionScheme, category },
     });
   },
 
@@ -272,8 +277,12 @@ export const adminRepository = {
   },
 
   async findSelfTemplateWithSessions(id: string) {
+    // Fase 62: aceita as 2 origins curadas pelo admin nesta tela (SELF e
+    // PERSONAL_CATALOG) — todo o resto do CRUD (nome/tradução/banner/
+    // sessões/exercícios/delete) passa por aqui primeiro pra confirmar
+    // existência, então os dois catálogos ganham o CRUD completo de graça.
     return prisma.workoutProgram.findFirst({
-      where: { id, origin: "SELF" },
+      where: { id, origin: { in: ["SELF", "PERSONAL_CATALOG"] } },
       include: {
         workouts: {
           orderBy: { letter: "asc" },

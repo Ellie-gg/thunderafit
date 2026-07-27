@@ -33,10 +33,17 @@ Read/written but owned by other domains:
   view (`hoursOpen`).
 - `Exercise` / `WorkoutExercise` (fitness domain) — full catalog CRUD, media
   upload, and a usage-count check before allowing delete.
-- `WorkoutProgram` / `Workout` (fitness domain) — SELF-origin templates only
-  (`origin: "SELF"`, `personalId: null`); queried directly via `prisma` here
-  rather than through the fitness repository, to keep the domains decoupled
-  (same pattern used throughout this repository).
+- `WorkoutProgram` / `Workout` (fitness domain) — SELF-origin templates
+  (`origin: "SELF"`, `personalId: null`) **and**, since Fase 62,
+  PERSONAL_CATALOG-origin templates (`origin: "PERSONAL_CATALOG"`, "Templates
+  Básico" — the free template library offered to every Personal, curated by
+  the same `/api/admin/self-templates/*` routes via an `origin` param on
+  create/list, default `SELF`); queried directly via `prisma` here rather
+  than through the fitness repository, to keep the domains decoupled (same
+  pattern used throughout this repository). "Templates Premium" for the
+  Personal is NOT curated here — it reuses the existing SELF/PREMIUM
+  templates as-is (same underlying rows sold to students as "Aluno
+  Premium").
 
 Reverse dependency: `src/anamnesis/services/anamnesis.service.ts` imports
 `adminRepository` directly to call `createAccessLog` whenever an ADMIN reads a

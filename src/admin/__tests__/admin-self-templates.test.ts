@@ -492,3 +492,63 @@ describe("Fase 55.2 — admin edita nome PT + tradução EN/ES do template e da 
     expect(r.body.program.description).toBeNull();
   });
 });
+
+describe("Fase 62 — mesma tela de admin também cura templates PERSONAL_CATALOG (Templates Básico do Personal)", () => {
+  let catalogTemplateId: string;
+
+  afterAll(async () => {
+    if (catalogTemplateId) {
+      const workouts = await prisma.workout.findMany({
+        where: { programId: catalogTemplateId },
+        select: { id: true },
+      });
+      await prisma.workoutExercise.deleteMany({ where: { workoutId: { in: workouts.map((w) => w.id) } } });
+      await prisma.workout.deleteMany({ where: { programId: catalogTemplateId } });
+      await prisma.workoutProgram.delete({ where: { id: catalogTemplateId } });
+    }
+  });
+
+  it("ADMIN cria um template com origin: PERSONAL_CATALOG (não SELF)", async () => {
+    const r = await supertest(server.server)
+      .post("/api/admin/self-templates")
+      .set("Authorization", `Bearer ${adminToken}`)
+      .send({ name: "Fase 62 — Básico Full Body", origin: "PERSONAL_CATALOG" });
+    expect(r.status).toBe(201);
+    expect(r.body.program.origin).toBe("PERSONAL_CATALOG");
+    expect(r.body.program.personalId).toBeNull();
+    expect(r.body.program.isTemplate).toBe(true);
+    catalogTemplateId = r.body.program.id;
+  });
+
+  it("GET /api/admin/self-templates?origin=SELF não lista o template PERSONAL_CATALOG", async () => {
+    const r = await supertest(server.server)
+      .get("/api/admin/self-templates?origin=SELF")
+      .set("Authorization", `Bearer ${adminToken}`);
+    expect(r.status).toBe(200);
+    expect(r.body.programs.some((p: any) => p.id === catalogTemplateId)).toBe(false);
+  });
+
+  it("GET /api/admin/self-templates?origin=PERSONAL_CATALOG lista o template", async () => {
+    const r = await supertest(server.server)
+      .get("/api/admin/self-templates?origin=PERSONAL_CATALOG")
+      .set("Authorization", `Bearer ${adminToken}`);
+    expect(r.status).toBe(200);
+    expect(r.body.programs.some((p: any) => p.id === catalogTemplateId)).toBe(true);
+  });
+
+  it("GET /api/workout-programs/self-templates (catálogo do aluno) NUNCA lista um template PERSONAL_CATALOG", async () => {
+    const r = await supertest(server.server)
+      .get("/api/workout-programs/self-templates")
+      .set("Authorization", `Bearer ${alunoToken}`);
+    expect(r.status).toBe(200);
+    expect(r.body.programs.some((p: any) => p.id === catalogTemplateId)).toBe(false);
+  });
+
+  it("ADMIN ainda consegue editar sessões/exercícios de um template PERSONAL_CATALOG pelo mesmo CRUD", async () => {
+    const s = await supertest(server.server)
+      .post(`/api/admin/self-templates/${catalogTemplateId}/sessions`)
+      .set("Authorization", `Bearer ${adminToken}`)
+      .send({ letter: "A" });
+    expect(s.status).toBe(201);
+  });
+});

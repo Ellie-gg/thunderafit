@@ -2,9 +2,8 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { listRelations } from "@/lib/api/relations";
-import { listWorkoutPrograms } from "@/lib/api/workouts";
 import { getBillingStatus } from "@/lib/api/billing";
 import { useAuthStore } from "@/lib/store/auth-store";
 import { AuthGuard } from "@/components/auth-guard";
@@ -13,31 +12,18 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { VoltageBar } from "@/components/voltage-bar";
 import { QueryError } from "@/components/query-error";
-import { DeleteProgramButton } from "@/components/delete-program-button";
 import { GenerateWorkoutModal } from "@/components/generate-workout-modal";
-import { useActiveIntlLocale } from "@/i18n/use-active-locale";
 import { useTranslations } from "next-intl";
 
 function PersonalDashboardContent() {
   const t = useTranslations("personalDashboard");
   const tc = useTranslations("common");
-  const intlLocale = useActiveIntlLocale();
   const user = useAuthStore((s) => s.user);
-  const queryClient = useQueryClient();
   const [generatorOpen, setGeneratorOpen] = useState(false);
 
   const relationsQuery = useQuery({
     queryKey: ["relations"],
     queryFn: listRelations,
-  });
-
-  // Fase 31: era uma lista plana de sessões soltas (GET /api/workouts) sem
-  // agrupar por programa — trocado por listWorkoutPrograms(), que já traz
-  // `workouts` (as sessões) aninhadas em cada programa, igual o hub do aluno
-  // e /personal/programas já fazem.
-  const programsQuery = useQuery({
-    queryKey: ["workout-programs", "personal"],
-    queryFn: () => listWorkoutPrograms(),
   });
 
   // Fase 20: o limite vem do backend (billing status), não do `user` do store
@@ -46,10 +32,6 @@ function PersonalDashboardContent() {
   const billingQuery = useQuery({ queryKey: ["billing-status"], queryFn: getBillingStatus });
 
   const alunos = relationsQuery.data?.relations ?? [];
-  const alunoEmailById = new Map(alunos.map((a) => [a.id, a.email]));
-  // "Treinos prescritos" = instâncias de verdade aplicadas a um aluno —
-  // templates ainda não foram prescritos a ninguém.
-  const instances = (programsQuery.data?.programs ?? []).filter((p) => !p.isTemplate);
   const limite = billingQuery.data?.limiteAlunos ?? user?.limiteAlunos ?? 0;
   const isPago = billingQuery.data && billingQuery.data.planoAssinatura !== "FREE";
   const noLimite = alunos.length >= limite;
@@ -112,36 +94,20 @@ function PersonalDashboardContent() {
             <QueryError error={relationsQuery.error} onRetry={() => relationsQuery.refetch()} />
           )}
 
-          <div className="flex flex-col gap-2">
-            {alunos.map((a) => (
-              <div
-                key={a.id}
-                className="flex items-center justify-between gap-3 rounded-md border border-border px-3 py-2"
-              >
-                {/* min-w-0 + break-all: sem isso, um e-mail longo não quebra
-                    linha (string sem espaços) e empurra o grupo da direita
-                    pra fora do card — mesmo padrão do hub do aluno. */}
-                <span className="min-w-0 flex-1 break-all text-sm">{a.email}</span>
-                <div className="flex shrink-0 items-center gap-3">
-                  <span className="text-xs text-muted">
-                    {t("desde", { data: new Date(a.createdAt).toLocaleDateString(intlLocale) })}
-                  </span>
-                  {/* Fase 29: substitui o link direto de Anamnese — agora é
-                      uma seção dentro do hub do aluno, junto com programas e
-                      evolução, em vez de um atalho solto. */}
-                  <Link
-                    href={`/personal/alunos/${a.id}`}
-                    className="text-xs font-semibold text-accent-secondary hover:underline"
-                  >
-                    {t("gerenciar")}
-                  </Link>
-                </div>
-              </div>
-            ))}
-            {relationsQuery.isSuccess && alunos.length === 0 && (
-              <p className="text-sm text-muted">{t("nenhumAlunoVinculado")}</p>
-            )}
-          </div>
+          {/* Fase 62: a lista completa de alunos (email a email) saiu daqui —
+              agora vive só na tela "Gerenciar alunos", que também mostra o
+              status de treino de cada um. Aqui fica só a contagem/limite. */}
+          {relationsQuery.isSuccess && alunos.length === 0 && (
+            <p className="text-sm text-muted">{t("nenhumAlunoVinculado")}</p>
+          )}
+          {relationsQuery.isSuccess && alunos.length > 0 && (
+            <Link
+              href="/personal/alunos"
+              className="text-sm font-semibold text-accent-secondary hover:underline"
+            >
+              {t("gerenciarAlunos")}
+            </Link>
+          )}
 
           <Button asChild variant={noLimite ? "secondary" : "default"} disabled={noLimite}>
             <Link href={noLimite ? "#" : "/personal/alunos/novo"}>
@@ -153,53 +119,16 @@ function PersonalDashboardContent() {
         <Card className="flex flex-col gap-3">
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold uppercase tracking-wide text-accent-secondary">
-              {t("treinosPrescritos")}
+              {t("templatesDeTreino")}
             </span>
           </div>
 
-          {programsQuery.isLoading && <p className="text-sm text-muted">{tc("loading")}</p>}
-
-          {programsQuery.isError && (
-            <QueryError error={programsQuery.error} onRetry={() => programsQuery.refetch()} />
-          )}
-
-          {/* Só o nome do programa + quantas sessões tem — clicar nele abre a
-              tela própria do programa (/personal/programas/[id]), onde cada
-              dia/letra é editado individualmente. Antes cada card já vinha
-              com TODAS as sessões expandidas inline aqui mesmo, duplicando o
-              que aquela tela já mostra bem e deixando o dashboard poluído
-              com vários alunos vinculados. */}
-          <div className="flex flex-col gap-3">
-            {instances.map((p) => (
-              <Link key={p.id} href={`/personal/programas/${p.id}`}>
-                <Card className="flex items-center justify-between gap-3 transition-colors hover:border-accent">
-                  {/* min-w-0 pra truncate funcionar dentro do flex row — sem
-                      isso, um nome de programa ou e-mail longo empurra o
-                      grupo de ações pra fora do card. */}
-                  <div className="min-w-0 flex-1">
-                    <span className="block truncate font-semibold">{p.name}</span>
-                    <p className="truncate text-xs text-muted">
-                      {p.alunoId ? alunoEmailById.get(p.alunoId) ?? t("alunoDesvinculado") : "—"} ·{" "}
-                      {t("sessoesCount", { count: p.workouts?.length ?? 0 })}
-                    </p>
-                  </div>
-                  <div className="flex shrink-0 items-center gap-2">
-                    <DeleteProgramButton
-                      programId={p.id}
-                      isTemplate={false}
-                      onDeleted={() =>
-                        queryClient.invalidateQueries({ queryKey: ["workout-programs", "personal"] })
-                      }
-                    />
-                    <span className="text-sm text-muted">{t("abrir")}</span>
-                  </div>
-                </Card>
-              </Link>
-            ))}
-            {programsQuery.isSuccess && instances.length === 0 && (
-              <p className="text-sm text-muted">{t("nenhumProgramaAplicado")}</p>
-            )}
-          </div>
+          {/* Fase 62: a lista de instâncias (treinos já prescritos a cada
+              aluno) saiu daqui — cada uma só se vê dentro do hub do próprio
+              aluno agora. O link "montar do zero" abaixo já leva pra
+              /personal/programas, agora a biblioteca completa de templates
+              (Meus/Básico/Premium) — sem precisar de um 2º link repetido
+              pro mesmo destino. */}
 
           {/* "Montagem Inteligente": CTA principal do dashboard (antes só um
               botão secundário "Criar novo programa", pouco descoberto — o

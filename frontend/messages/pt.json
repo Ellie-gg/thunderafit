@@ -280,7 +280,8 @@
     "replaceDialogConfirm": "Sim, trocar",
     "replacing": "Trocando...",
     "previewSessionsLabel": "{count} sessão(ões)",
-    "previewApplyButton": "Aplicar este treino"
+    "previewApplyButton": "Aplicar este treino",
+    "previewSelectStudent": "Selecione um aluno"
   },
   "evolucao": {
     "noPreviousComparison": "Sem comparação anterior ainda",
@@ -455,19 +456,23 @@
     "fazerUpgrade": "Faça upgrade do plano →",
     "verPlanos": "Precisa de mais alunos? Ver planos →",
     "planoAtivo": "Plano {plano} ativo · gerenciar assinatura →",
-    "desde": "desde {data}",
-    "gerenciar": "Gerenciar →",
+    "gerenciarAlunos": "Gerenciar alunos →",
     "nenhumAlunoVinculado": "Nenhum aluno vinculado ainda.",
     "limiteAtingidoBotao": "Limite atingido",
     "vincularNovoAluno": "Vincular novo aluno",
-    "treinosPrescritos": "Treinos prescritos",
-    "alunoDesvinculado": "aluno desvinculado",
-    "sessoesCount": "{count} sessão(ões)",
-    "nenhumProgramaAplicado": "Nenhum programa aplicado a um aluno ainda.",
+    "templatesDeTreino": "Templates de treino",
     "gerarTreinoRapido": "⚡ Gerar Treino Rápido",
     "montarDoZero": "ou monte um programa do zero →",
     "verDuvidas": "Ver dúvidas dos alunos →",
     "abrir": "Abrir →"
+  },
+  "personalAlunosList": {
+    "titulo": "Gerenciar alunos",
+    "subtitulo": "Todos os alunos vinculados a você.",
+    "desde": "desde {data}",
+    "gerenciar": "Gerenciar →",
+    "semTreino": "Sem treino aplicado",
+    "nenhumAlunoVinculado": "Nenhum aluno vinculado ainda."
   },
   "paymentReminderCard": {
     "titulo": "Lembrete de pagamento",
@@ -585,13 +590,18 @@
     "createProgramError": "Erro ao criar programa.",
     "creating": "Criando...",
     "createProgram": "Criar programa",
-    "templatesTitle": "Templates ({count})",
+    "templatesTitle": "Meus Templates ({count})",
     "noTemplatesYet": "Nenhum template ainda.",
-    "appliedToStudentsTitle": "Aplicados a alunos ({count})",
-    "noAppliedProgramsYet": "Nenhum programa aplicado a alunos ainda.",
-    "unlinkedStudent": "aluno desvinculado",
     "sessionsCount": "{count} sessão(ões)",
-    "open": "Abrir →"
+    "open": "Abrir →",
+    "basicoTitle": "Templates Básico",
+    "basicoSubtitle": "Templates gratuitos, disponíveis para qualquer Personal.",
+    "premiumTitle": "Templates Premium",
+    "premiumSubtitle": "Templates exclusivos do plano Plus — o mesmo catálogo do Aluno Premium.",
+    "catalogEmpty": "Nenhum template disponível ainda.",
+    "premiumUpgradePitch": "Assine o plano Plus para prescrever estes templates aos seus alunos.",
+    "premiumUpgradeButton": "Assinar Plus",
+    "catalogApplyError": "Erro ao aplicar o template."
   },
   "personalProgramaDetail": {
     "template": "Template",
@@ -607,7 +617,14 @@
     "applyError": "Erro ao aplicar.",
     "applySuccess": "Programa aplicado ao aluno.",
     "applying": "Aplicando...",
-    "applyProgram": "Aplicar programa"
+    "applyProgram": "Aplicar programa",
+    "saveAsTemplateTitle": "Salvar como template",
+    "saveAsTemplateDescription": "Cria um template novo e independente a partir deste treino, reaplicável a qualquer aluno vinculado. É o único jeito de usar este treino em outro aluno.",
+    "saveAsTemplateNamePlaceholder": "Nome do novo template",
+    "saveAsTemplateButton": "Salvar como template",
+    "saveAsTemplateError": "Erro ao salvar como template.",
+    "saveAsTemplateSuccess": "Template \"{name}\" criado — abrir →",
+    "saving": "Salvando..."
   },
   "personalSessaoEditor": {
     "sessionNotFound": "Sessão não encontrada neste programa.",
@@ -860,6 +877,10 @@
   "nimbusTreinosPessoais": {
     "title": "Treinos Pessoais (Meu Treino Pessoal)",
     "description": "Templates que qualquer aluno pode escolher e aplicar direto, sem precisar de um Personal. {count} template(s) cadastrado(s).",
+    "originTab": {
+      "SELF": "Meu treino pessoal (aluno)",
+      "PERSONAL_CATALOG": "Templates Básico (Personal)"
+    },
     "newTemplate": "Novo template",
     "nameLabel": "Nome",
     "namePlaceholder": "Ex: Full Body Iniciante",

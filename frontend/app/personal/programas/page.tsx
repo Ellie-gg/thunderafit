@@ -5,10 +5,16 @@ import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { listWorkoutPrograms, createWorkoutProgram } from "@/lib/api/workouts";
+import {
+  listWorkoutPrograms,
+  createWorkoutProgram,
+  listPersonalCatalog,
+  applyCatalogTemplate,
+} from "@/lib/api/workouts";
 import { listRelations } from "@/lib/api/relations";
+import { getBillingStatus } from "@/lib/api/billing";
 import { ApiError } from "@/lib/api/client";
-import type { SessionScheme } from "@/lib/types";
+import type { SessionScheme, WorkoutProgram } from "@/lib/types";
 import { AuthGuard } from "@/components/auth-guard";
 import { AppHeader } from "@/components/app-header";
 import { Card } from "@/components/ui/card";
@@ -17,6 +23,8 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { QueryError } from "@/components/query-error";
 import { DeleteProgramButton } from "@/components/delete-program-button";
+import { SelfTemplateCarousel } from "@/components/self-template-carousel";
+import { TemplatePreviewDialog } from "@/components/template-preview-dialog";
 
 function ProgramasPersonalContent() {
   const t = useTranslations("personalProgramasList");
@@ -36,6 +44,25 @@ function ProgramasPersonalContent() {
   const [targetAlunoId, setTargetAlunoId] = useState("");
   const [sessionScheme, setSessionScheme] = useState<SessionScheme>("LETTER");
 
+  // Fase 62: catálogo Básico (gratuito, curado pelo admin) + Premium
+  // (reaproveita os templates SELF/PREMIUM já vendidos pro aluno).
+  const catalogQuery = useQuery({
+    queryKey: ["workout-programs", "personal-catalog"],
+    queryFn: listPersonalCatalog,
+  });
+  const billingQuery = useQuery({ queryKey: ["billing-status"], queryFn: getBillingStatus });
+  const isPlus = billingQuery.data?.planoAssinatura === "PLUS";
+  const [previewTemplate, setPreviewTemplate] = useState<WorkoutProgram | null>(null);
+
+  const applyCatalogMutation = useMutation({
+    mutationFn: (vars: { programId: string; alunoId: string }) =>
+      applyCatalogTemplate(vars.programId, vars.alunoId),
+    onSuccess: () => {
+      setPreviewTemplate(null);
+      queryClient.invalidateQueries({ queryKey: ["workout-programs", "personal"] });
+    },
+  });
+
   const createMutation = useMutation({
     mutationFn: () => createWorkoutProgram(name.trim(), sessionScheme),
     onSuccess: (data) => {
@@ -47,10 +74,9 @@ function ProgramasPersonalContent() {
 
   const programs = programsQuery.data?.programs ?? [];
   const templates = programs.filter((p) => p.isTemplate);
-  const instances = programs.filter((p) => !p.isTemplate);
-  // Sem isso, a lista de "Aplicados a alunos" mostrava só o nome do programa
-  // — impossível saber qual aluno recebeu qual, sobretudo com vários alunos.
-  const alunoEmailById = new Map(relationsQuery.data?.relations.map((r) => [r.id, r.email]) ?? []);
+  const catalogPrograms = catalogQuery.data?.programs ?? [];
+  const basicoTemplates = catalogPrograms.filter((p) => p.tier === "BASICO");
+  const premiumTemplates = catalogPrograms.filter((p) => p.tier === "PREMIUM");
 
   return (
     <>
@@ -179,38 +205,63 @@ function ProgramasPersonalContent() {
           ))}
         </section>
 
+        {/* Fase 62: catálogo Básico — gratuito, curado pelo admin, disponível
+            pra todo Personal. */}
         <section className="flex flex-col gap-3">
-          <h2 className="font-display text-lg font-bold">
-            {t("appliedToStudentsTitle", { count: instances.length })}
-          </h2>
-          {instances.length === 0 && (
-            <p className="text-sm text-muted">{t("noAppliedProgramsYet")}</p>
+          <div>
+            <h2 className="font-display text-lg font-bold">{t("basicoTitle")}</h2>
+            <p className="text-sm text-muted">{t("basicoSubtitle")}</p>
+          </div>
+          {catalogQuery.isSuccess && basicoTemplates.length === 0 && (
+            <p className="text-sm text-muted">{t("catalogEmpty")}</p>
           )}
-          {instances.map((p) => (
-            <Link key={p.id} href={`/personal/programas/${p.id}`}>
-              <Card className="flex items-center justify-between transition-colors hover:border-accent">
-                <div>
-                  <span className="font-semibold">{p.name}</span>
-                  <p className="text-xs text-muted">
-                    {p.alunoId ? alunoEmailById.get(p.alunoId) ?? t("unlinkedStudent") : "—"} ·{" "}
-                    {t("sessionsCount", { count: p.workouts?.length ?? 0 })}
-                  </p>
-                </div>
-                <div className="flex items-center gap-2">
-                  <DeleteProgramButton
-                    programId={p.id}
-                    isTemplate={false}
-                    onDeleted={() =>
-                      queryClient.invalidateQueries({ queryKey: ["workout-programs", "personal"] })
-                    }
-                  />
-                  <span className="text-sm text-muted">{t("open")}</span>
-                </div>
-              </Card>
-            </Link>
-          ))}
+          <SelfTemplateCarousel templates={basicoTemplates} onSelect={setPreviewTemplate} />
+        </section>
+
+        {/* Fase 62: catálogo Premium — reaproveita os mesmos templates
+            origin: SELF, category: PREMIUM já vendidos pro aluno como "Aluno
+            Premium" (Fase 57/60); exige plano Plus do Personal. */}
+        <section className="flex flex-col gap-3">
+          <div>
+            <h2 className="font-display text-lg font-bold">{t("premiumTitle")}</h2>
+            <p className="text-sm text-muted">{t("premiumSubtitle")}</p>
+          </div>
+          {catalogQuery.isSuccess && premiumTemplates.length === 0 && (
+            <p className="text-sm text-muted">{t("catalogEmpty")}</p>
+          )}
+          <SelfTemplateCarousel
+            templates={premiumTemplates}
+            locked={!isPlus}
+            onSelect={setPreviewTemplate}
+          />
+          {!isPlus && premiumTemplates.length > 0 && (
+            <Card className="flex flex-col gap-2">
+              <p className="text-sm text-muted">{t("premiumUpgradePitch")}</p>
+              <Button asChild variant="secondary">
+                <Link href="/personal/upgrade">{t("premiumUpgradeButton")}</Link>
+              </Button>
+            </Card>
+          )}
         </section>
       </main>
+
+      {previewTemplate && (
+        <TemplatePreviewDialog
+          template={previewTemplate}
+          alunoOptions={relationsQuery.data?.relations ?? []}
+          onApplyToAluno={(alunoId) =>
+            applyCatalogMutation.mutate({ programId: previewTemplate.id, alunoId })
+          }
+          onCancel={() => setPreviewTemplate(null)}
+        />
+      )}
+      {applyCatalogMutation.isError && (
+        <p className="px-6 text-sm text-danger">
+          {applyCatalogMutation.error instanceof ApiError
+            ? applyCatalogMutation.error.message
+            : t("catalogApplyError")}
+        </p>
+      )}
     </>
   );
 }
