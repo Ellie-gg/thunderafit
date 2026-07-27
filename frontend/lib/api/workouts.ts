@@ -152,6 +152,33 @@ export function applySelfTemplate(programId: string, replace?: boolean) {
   );
 }
 
+// Fase 62: transforma uma instância já aplicada num template reaplicável do
+// Personal — único jeito de reaproveitar o treino de um aluno pra outro
+// (apply() agora rejeita instâncias).
+export function saveInstanceAsTemplate(programId: string, name: string) {
+  return apiFetch<{ program: WorkoutProgram }>(`/api/workout-programs/${programId}/save-as-template`, {
+    method: "POST",
+    body: { name },
+  });
+}
+
+// Fase 62: catálogo de templates do Personal — "Básico" (origin:
+// PERSONAL_CATALOG) + "Premium" (reaproveita origin: SELF, category:
+// PREMIUM, mesmo catálogo do Aluno Premium), cada item já vem anotado com
+// `tier`.
+export function listPersonalCatalog() {
+  return apiFetch<{ programs: WorkoutProgram[] }>("/api/workout-programs/personal-catalog");
+}
+
+// Premium exige plano Plus vigente — sem ele, 402 com
+// `ApiError.data.code === "PREMIUM_TEMPLATE_REQUIRED"`.
+export function applyCatalogTemplate(programId: string, alunoId: string) {
+  return apiFetch<{ program: WorkoutProgram }>(
+    `/api/workout-programs/personal-catalog/${programId}/apply`,
+    { method: "POST", body: { alunoId } }
+  );
+}
+
 // Fase 31: apaga um programa (template ou instância aplicada) — sem volta,
 // por isso todo lugar que usa isto exige confirmação antes de chamar
 // (ver DeleteProgramButton).

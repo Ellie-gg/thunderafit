@@ -280,7 +280,8 @@
     "replaceDialogConfirm": "Yes, replace it",
     "replacing": "Replacing...",
     "previewSessionsLabel": "{count} session(s)",
-    "previewApplyButton": "Apply this workout"
+    "previewApplyButton": "Apply this workout",
+    "previewSelectStudent": "Select a student"
   },
   "evolucao": {
     "noPreviousComparison": "No previous comparison yet",
@@ -455,19 +456,23 @@
     "fazerUpgrade": "Upgrade your plan →",
     "verPlanos": "Need more students? See plans →",
     "planoAtivo": "{plano} plan active · manage subscription →",
-    "desde": "since {data}",
-    "gerenciar": "Manage →",
+    "gerenciarAlunos": "Manage students →",
     "nenhumAlunoVinculado": "No students linked yet.",
     "limiteAtingidoBotao": "Limit reached",
     "vincularNovoAluno": "Link a new student",
-    "treinosPrescritos": "Prescribed workouts",
-    "alunoDesvinculado": "unlinked student",
-    "sessoesCount": "{count} session(s)",
-    "nenhumProgramaAplicado": "No program applied to a student yet.",
+    "templatesDeTreino": "Workout templates",
     "gerarTreinoRapido": "⚡ Generate Quick Workout",
     "montarDoZero": "or build a program from scratch →",
     "verDuvidas": "See students' questions →",
     "abrir": "Open →"
+  },
+  "personalAlunosList": {
+    "titulo": "Manage students",
+    "subtitulo": "All students linked to you.",
+    "desde": "since {data}",
+    "gerenciar": "Manage →",
+    "semTreino": "No workout applied",
+    "nenhumAlunoVinculado": "No students linked yet."
   },
   "paymentReminderCard": {
     "titulo": "Payment reminder",
@@ -585,13 +590,18 @@
     "createProgramError": "Error creating program.",
     "creating": "Creating...",
     "createProgram": "Create program",
-    "templatesTitle": "Templates ({count})",
+    "templatesTitle": "My Templates ({count})",
     "noTemplatesYet": "No templates yet.",
-    "appliedToStudentsTitle": "Applied to students ({count})",
-    "noAppliedProgramsYet": "No programs applied to students yet.",
-    "unlinkedStudent": "unlinked student",
     "sessionsCount": "{count} session(s)",
-    "open": "Open →"
+    "open": "Open →",
+    "basicoTitle": "Basic Templates",
+    "basicoSubtitle": "Free templates, available to any Personal Trainer.",
+    "premiumTitle": "Premium Templates",
+    "premiumSubtitle": "Exclusive to the Plus plan — the same catalog as Aluno Premium.",
+    "catalogEmpty": "No templates available yet.",
+    "premiumUpgradePitch": "Subscribe to the Plus plan to prescribe these templates to your students.",
+    "premiumUpgradeButton": "Subscribe to Plus",
+    "catalogApplyError": "Error applying the template."
   },
   "personalProgramaDetail": {
     "template": "Template",
@@ -607,7 +617,14 @@
     "applyError": "Error applying.",
     "applySuccess": "Program applied to the student.",
     "applying": "Applying...",
-    "applyProgram": "Apply program"
+    "applyProgram": "Apply program",
+    "saveAsTemplateTitle": "Save as template",
+    "saveAsTemplateDescription": "Creates a new, independent template from this workout, reapplicable to any linked student. It's the only way to use this workout for another student.",
+    "saveAsTemplateNamePlaceholder": "New template name",
+    "saveAsTemplateButton": "Save as template",
+    "saveAsTemplateError": "Error saving as template.",
+    "saveAsTemplateSuccess": "Template \"{name}\" created — open →",
+    "saving": "Saving..."
   },
   "personalSessaoEditor": {
     "sessionNotFound": "Session not found in this program.",
@@ -860,6 +877,10 @@
   "nimbusTreinosPessoais": {
     "title": "Personal Workouts (My Personal Workout)",
     "description": "Templates that any student can pick and apply directly, without needing a Personal Trainer. {count} template(s) registered.",
+    "originTab": {
+      "SELF": "My personal workout (student)",
+      "PERSONAL_CATALOG": "Basic templates (Personal Trainer)"
+    },
     "newTemplate": "New template",
     "nameLabel": "Name",
     "namePlaceholder": "E.g.: Full Body Beginner",

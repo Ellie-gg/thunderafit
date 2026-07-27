@@ -69,9 +69,11 @@ test("Personal abre o hub do aluno pelo dashboard, vê o programa aplicado e a e
     alunoLogin.accessToken
   );
 
-  // --- Personal navega pelo dashboard até o hub (não digita a URL direto) ---
+  // --- Personal navega pelo dashboard → Gerenciar alunos → hub (não digita a URL direto) ---
   await loginViaUI(page, personalEmail, password);
   await expect(page).toHaveURL(/\/personal\/dashboard$/);
+  await page.getByRole("link", { name: "Gerenciar alunos →" }).click();
+  await expect(page).toHaveURL(/\/personal\/alunos$/);
   await page.getByRole("link", { name: "Gerenciar →" }).click();
   await expect(page).toHaveURL(new RegExp(`/personal/alunos/${alunoId}$`));
 

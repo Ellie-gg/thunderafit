@@ -107,8 +107,12 @@ export function getAlunoAnamnesisAsAdmin(alunoId: string) {
 
 // --- Fase 34.5: curadoria de templates SELF ("Meu treino pessoal") ---
 
-export function listAdminSelfTemplates() {
-  return apiFetch<{ programs: WorkoutProgram[] }>("/api/admin/self-templates");
+// Fase 62: `origin` filtra entre o catálogo do aluno ("SELF", default) e o
+// catálogo "Templates Básico" do Personal ("PERSONAL_CATALOG") — mesma tela
+// de admin cura os dois, sem endpoint novo.
+export function listAdminSelfTemplates(origin?: "SELF" | "PERSONAL_CATALOG") {
+  const qs = origin ? `?origin=${origin}` : "";
+  return apiFetch<{ programs: WorkoutProgram[] }>(`/api/admin/self-templates${qs}`);
 }
 
 export function getAdminSelfTemplate(programId: string) {
@@ -118,11 +122,12 @@ export function getAdminSelfTemplate(programId: string) {
 export function createAdminSelfTemplate(
   name: string,
   sessionScheme?: SessionScheme,
-  category?: SelfTemplateCategory
+  category?: SelfTemplateCategory,
+  origin?: "SELF" | "PERSONAL_CATALOG"
 ) {
   return apiFetch<{ program: WorkoutProgram }>("/api/admin/self-templates", {
     method: "POST",
-    body: { name, sessionScheme, category },
+    body: { name, sessionScheme, category, origin },
   });
 }
 

@@ -538,8 +538,9 @@ export const adminService = {
 
   // --- Fase 34.5: curadoria de templates SELF ("Meu treino pessoal") ---
 
-  async listSelfTemplates() {
-    return adminRepository.listSelfTemplates();
+  async listSelfTemplates(origin?: string) {
+    const o = origin === "PERSONAL_CATALOG" ? "PERSONAL_CATALOG" : "SELF";
+    return adminRepository.listSelfTemplates(o);
   },
 
   /**
@@ -672,7 +673,7 @@ export const adminService = {
     return this.getSelfTemplate(programId);
   },
 
-  async createSelfTemplate(name: string, sessionScheme?: string, category?: string) {
+  async createSelfTemplate(name: string, sessionScheme?: string, category?: string, origin?: string) {
     if (!name?.trim()) {
       const err = new Error("Nome do template é obrigatório.");
       (err as any).statusCode = 400;
@@ -684,13 +685,17 @@ export const adminService = {
       (err as any).statusCode = 400;
       throw err;
     }
+    // Fase 62: "PERSONAL_CATALOG" (Templates Básico do Personal) não usa
+    // `category` — o campo é semântica só de SELF (carrossel do aluno); fica
+    // no default GERAL, ignorado no frontend pra esse origin.
+    const o = origin === "PERSONAL_CATALOG" ? "PERSONAL_CATALOG" : "SELF";
     const cat = (category ?? "GERAL") as AdminSelfTemplateCategory;
-    if (!VALID_SELF_TEMPLATE_CATEGORIES.includes(cat)) {
+    if (o === "SELF" && !VALID_SELF_TEMPLATE_CATEGORIES.includes(cat)) {
       const err = new Error("category deve ser GERAL, HOME ou PREMIUM.");
       (err as any).statusCode = 400;
       throw err;
     }
-    return adminRepository.createSelfTemplate(name.trim(), scheme, cat);
+    return adminRepository.createSelfTemplate(name.trim(), scheme, cat, o);
   },
 
   /**

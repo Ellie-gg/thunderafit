@@ -4,6 +4,7 @@ import { relationsRepository } from "../repository/relations.repository";
 import { exerciseTranslationService } from "./exercise-translation.service";
 import { programTranslationService } from "./program-translation.service";
 import { alunoPremiumService } from "../../billing/services/aluno-premium.service";
+import { billingService } from "../../billing/services/billing.service";
 
 const VALID_SCHEMES: SessionScheme[] = ["LETTER", "WEEKDAY"];
 
@@ -76,6 +77,17 @@ export const workoutProgramsService = {
     if (source.origin !== "PERSONAL" || source.personalId !== personalId) {
       throw httpError("Você não tem permissão para aplicar este programa.", 403);
     }
+    // Fase 62: uma instância já aplicada a um aluno (isTemplate: false) não
+    // pode ser aplicada a OUTRO aluno direto — precisa virar template antes
+    // (saveInstanceAsTemplate abaixo). Sem esta checagem, dava pra aplicar o
+    // treino específico de um aluno a outro sem passar por nenhum passo
+    // explícito de "isso agora é reaplicável".
+    if (!source.isTemplate) {
+      throw httpError(
+        "Só é possível aplicar um template a um aluno. Salve este treino como template primeiro.",
+        403
+      );
+    }
 
     // Mesmo contrato de vínculo de POST /api/workouts: só aplica a um aluno
     // realmente vinculado a este profissional.
@@ -135,6 +147,106 @@ export const workoutProgramsService = {
 
   async listForAluno(alunoId: string) {
     return workoutProgramsRepository.listByAluno(alunoId);
+  },
+
+  /**
+   * Fase 62: transforma uma instância já aplicada a um aluno num template
+   * reaplicável do Personal — é o único jeito de "reaproveitar" o treino de
+   * um aluno pra outro, agora que `apply()` acima rejeita instâncias.
+   */
+  async saveInstanceAsTemplate(programId: string, personalId: string, name: string) {
+    if (!name?.trim()) throw httpError("Nome do template é obrigatório.", 400);
+    const program = await workoutProgramsRepository.findProgramById(programId);
+    if (!program) throw httpError("Programa não encontrado.", 404);
+    if (program.origin !== "PERSONAL" || program.personalId !== personalId) {
+      throw httpError("Você não tem permissão para editar este programa.", 403);
+    }
+    if (program.isTemplate) {
+      throw httpError("Este programa já é um template.", 400);
+    }
+    const template = await workoutProgramsRepository.saveAsTemplate(programId, personalId, name.trim());
+    if (!template) throw httpError("Falha ao salvar como template.", 500);
+    return template;
+  },
+
+  // --- Fase 62: catálogo de templates pro Personal (Básico + Premium) ---
+
+  /**
+   * Básico = origin: PERSONAL_CATALOG (curado pelo admin, gratuito pra todo
+   * Personal). Premium = reaproveita origin: SELF, category: PREMIUM — o
+   * MESMO catálogo já vendido pro aluno como "Aluno Premium" (Fase 57/60),
+   * sem duplicar conteúdo nem schema. Cada item vem anotado com `tier` pro
+   * frontend agrupar em 2 seções sem precisar conhecer a origin interna.
+   */
+  async listPersonalCatalog(locale: Locale) {
+    const [basico, premium] = await Promise.all([
+      workoutProgramsRepository.listCatalogTemplates(),
+      workoutProgramsRepository.listPremiumSelfTemplates(),
+    ]);
+    const tagged = [
+      ...basico.map((p) => ({ ...p, tier: "BASICO" as const })),
+      ...premium.map((p) => ({ ...p, tier: "PREMIUM" as const })),
+    ];
+    const translatedPrograms = await programTranslationService.translatePrograms(tagged, locale);
+    const allWorkouts = translatedPrograms.flatMap((p) => p.workouts);
+    const translatedWorkouts = await programTranslationService.translateWorkouts(allWorkouts, locale);
+
+    let cursor = 0;
+    return translatedPrograms.map((p) => {
+      const workouts = translatedWorkouts.slice(cursor, cursor + p.workouts.length);
+      cursor += p.workouts.length;
+      return { ...p, workouts };
+    });
+  },
+
+  /**
+   * Aplica (COPIA) um template do catálogo (Básico ou Premium) a um aluno —
+   * mesma cópia que `applyToAluno` já faz pro Personal aplicar o PRÓPRIO
+   * template (a função é origin-agnóstica: só recebe o id, não filtra
+   * origin), então reaproveitada sem nenhuma mudança. Premium exige plano
+   * Plus vigente do Personal (não confundir com `alunoPremiumService`, que é
+   * o teste grátis/assinatura do ALUNO — conceito separado).
+   */
+  async applyCatalogTemplate(sourceProgramId: string, personalId: string, alunoId: string) {
+    if (!alunoId) throw httpError("alunoId é obrigatório.", 400);
+    const source = await workoutProgramsRepository.findProgramById(sourceProgramId);
+    if (!source || !source.isTemplate) throw httpError("Template não encontrado.", 404);
+
+    const isBasico = source.origin === "PERSONAL_CATALOG";
+    const isPremium = source.origin === "SELF" && source.category === "PREMIUM";
+    if (!isBasico && !isPremium) throw httpError("Template não encontrado.", 404);
+
+    if (isPremium) {
+      const status = await billingService.getStatus(personalId);
+      if (status.planoAssinatura !== "PLUS") {
+        const err = httpError(
+          "Este template é exclusivo do plano Plus. Faça upgrade para aplicá-lo.",
+          402
+        ) as any;
+        err.code = "PREMIUM_TEMPLATE_REQUIRED";
+        throw err;
+      }
+    }
+
+    const relation = await relationsRepository.findByPersonalAndAluno(personalId, alunoId);
+    if (!relation) {
+      throw httpError("Aluno não vinculado a este profissional.", 403);
+    }
+
+    const existing = await workoutProgramsRepository.findAppliedProgramForAlunoByPersonal(
+      personalId,
+      alunoId
+    );
+    if (existing) {
+      throw httpError(
+        `Este aluno já tem o programa "${existing.name}" aplicado por você. Exclua-o antes de aplicar um novo.`,
+        409
+      );
+    }
+
+    const copy = await workoutProgramsRepository.applyToAluno(sourceProgramId, personalId, alunoId);
+    if (!copy) throw httpError("Falha ao aplicar o programa.", 500);
+    return copy;
   },
 
   // --- Fase 34.5: "Meu treino pessoal" ---

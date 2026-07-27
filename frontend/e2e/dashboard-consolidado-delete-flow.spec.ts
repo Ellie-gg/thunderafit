@@ -3,12 +3,12 @@ import { loginViaUI } from "./auth-helpers";
 
 /**
  * Fase 31:
- * 1) o dashboard do Personal agrupa "Treinos prescritos" por programa (não
- *    mais uma lista plana de sessões soltas) — cada card mostra só o nome do
- *    programa + quantas sessões tem; clicar abre a tela própria do programa
- *    (as sessões individuais deixaram de aparecer expandidas inline aqui,
- *    correção de UX pedida pelo fundador: card repetido por aluno vinculado
- *    ficava poluído);
+ * 1) o hub do aluno agrupa o programa aplicado por nome (não uma lista plana
+ *    de sessões soltas) — o card mostra só o nome do programa + quantas
+ *    sessões tem; clicar abre a tela própria do programa (as sessões
+ *    individuais deixaram de aparecer expandidas inline aqui). Fase 62:
+ *    essa listagem saiu do dashboard (que agora só mostra o link "Gerenciar
+ *    alunos") e vive só dentro do hub de cada aluno;
  * 2) excluir um template (com confirmação) — some da lista de Templates;
  * 3) excluir uma instância aplicada a um aluno a partir do hub (com
  *    confirmação) — o backend realmente apaga tudo (programa, sessão,
@@ -29,7 +29,7 @@ async function backendJson(path: string, body: unknown, token?: string) {
   return res.json();
 }
 
-test("dashboard agrupa treinos prescritos por programa, sem expandir sessões inline", async ({ page }) => {
+test("hub do aluno agrupa o treino prescrito por programa, sem expandir sessões inline", async ({ page }) => {
   const stamp = Date.now();
   const personalEmail = `e2e_consol_personal_${stamp}@thunderafit.test`;
   const alunoEmail = `e2e_consol_aluno_${stamp}@thunderafit.test`;
@@ -56,6 +56,7 @@ test("dashboard agrupa treinos prescritos por programa, sem expandir sessões in
 
   await loginViaUI(page, personalEmail, password);
   await expect(page).toHaveURL(/\/personal\/dashboard$/);
+  await page.goto(`/personal/alunos/${aluno.user.id}`);
 
   // O card mostra só o nome do programa + quantas sessões tem — as sessões
   // individuais NÃO aparecem expandidas aqui (isso fica pra dentro da tela
@@ -63,7 +64,6 @@ test("dashboard agrupa treinos prescritos por programa, sem expandir sessões in
   // precisar de um link por sessão.
   const group = page.locator("a", { hasText: programName }).first();
   await expect(group).toBeVisible({ timeout: 15000 });
-  await expect(group.getByText(alunoEmail)).toBeVisible();
   await expect(group.getByText("2 sessão(ões)")).toBeVisible();
 
   await group.click();

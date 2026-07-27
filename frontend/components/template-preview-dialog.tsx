@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { labelFor } from "@/lib/session-scheme";
@@ -14,19 +15,30 @@ import type { WorkoutProgram } from "@/lib/types";
  * nova) antes de o aluno confirmar. "Aplicar" fecha o preview e dispara o
  * MESMO fluxo de sempre (`onApply`), incluindo o diálogo de troca em caso de
  * 409 — não muda nada do que já existia, só adia a decisão por uma tela.
+ *
+ * Fase 62: reaproveitado também pelo catálogo de templates do Personal
+ * (Básico/Premium) — quando `alunoOptions` é passado, o botão de aplicar
+ * vira um select de aluno vinculado + `onApplyToAluno(alunoId)`, em vez do
+ * `onApply()` sem argumento (o aluno aplica pra si mesmo; o Personal precisa
+ * escolher a quem).
  */
 export function TemplatePreviewDialog({
   template,
   onApply,
+  onApplyToAluno,
+  alunoOptions,
   onCancel,
 }: {
   template: WorkoutProgram;
-  onApply: () => void;
+  onApply?: () => void;
+  onApplyToAluno?: (alunoId: string) => void;
+  alunoOptions?: { id: string; email: string }[];
   onCancel: () => void;
 }) {
   const t = useTranslations("meuTreinoPessoal");
   const tCommon = useTranslations("common");
   const sessions = template.workouts ?? [];
+  const [selectedAluno, setSelectedAluno] = useState("");
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
@@ -54,13 +66,40 @@ export function TemplatePreviewDialog({
           </div>
         )}
 
+        {alunoOptions && (
+          <select
+            value={selectedAluno}
+            onChange={(e) => setSelectedAluno(e.target.value)}
+            className="h-11 rounded-md border border-border bg-surface px-3.5 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+          >
+            <option value="" disabled>
+              {t("previewSelectStudent")}
+            </option>
+            {alunoOptions.map((a) => (
+              <option key={a.id} value={a.id}>
+                {a.email}
+              </option>
+            ))}
+          </select>
+        )}
+
         <div className="flex justify-end gap-2">
           <Button type="button" variant="ghost" onClick={onCancel}>
             {tCommon("cancel")}
           </Button>
-          <Button type="button" onClick={onApply}>
-            {t("previewApplyButton")}
-          </Button>
+          {alunoOptions ? (
+            <Button
+              type="button"
+              disabled={!selectedAluno}
+              onClick={() => onApplyToAluno?.(selectedAluno)}
+            >
+              {t("previewApplyButton")}
+            </Button>
+          ) : (
+            <Button type="button" onClick={onApply}>
+              {t("previewApplyButton")}
+            </Button>
+          )}
         </div>
       </div>
     </div>

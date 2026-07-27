@@ -116,7 +116,10 @@ export type SessionScheme = "LETTER" | "WEEKDAY";
 // Fase 34: origin distingue um programa PRESCRITO por um Personal de um
 // template SELF (curado pelo admin, aplicado direto pelo aluno — Fase 34.5).
 // personalId é null exatamente quando origin é SELF.
-export type WorkoutProgramOrigin = "PERSONAL" | "SELF";
+// Fase 62: catálogo "Templates Básico" do Personal (curado pelo admin,
+// gratuito, personalId/alunoId sempre null) — o equivalente de SELF, do
+// lado do Personal em vez do aluno.
+export type WorkoutProgramOrigin = "PERSONAL" | "SELF" | "PERSONAL_CATALOG";
 
 // Fase 52: só relevante em templates SELF (isTemplate: true, origin: SELF) —
 // "Meu Treino Pessoal" agrupa em carrossel por categoria. GERAL = lista plana
@@ -142,6 +145,8 @@ export interface WorkoutProgram {
   translations?: { EN?: string; ES?: string };
   /** Fase 59: idem, tradução da descrição ("Foco"). */
   translationDescriptions?: { EN?: string; ES?: string };
+  /** Fase 62: só presente em GET /api/workout-programs/personal-catalog. */
+  tier?: "BASICO" | "PREMIUM";
 }
 
 export interface LoggedExercise {

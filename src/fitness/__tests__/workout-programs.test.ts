@@ -685,3 +685,247 @@ describe("Fase 34 — origin (PERSONAL | SELF) em WorkoutProgram", () => {
     await prisma.workoutProgram.delete({ where: { id: selfTemplate.id } });
   });
 });
+
+// Fase 62: alunos DEDICADOS pros testes abaixo — todos os 5 alunos
+// compartilhados do topo do arquivo (aluno1..5) já têm um programa aplicado
+// por `personalId` em blocos anteriores (a regra de "1 programa aplicado
+// por aluno, por Personal" bloquearia um novo apply com 409). Mesmo padrão
+// já usado no resto do arquivo (ex: "outro Personal" com registro próprio).
+async function criarAlunoVinculado(email: string) {
+  const reg = await supertest(server.server)
+    .post("/api/auth/register")
+    .send({ email, password: pw, role: "ALUNO" });
+  await supertest(server.server)
+    .post("/api/relations")
+    .set("Authorization", `Bearer ${personalToken}`)
+    .send({ alunoId: reg.body.user.id });
+  return reg.body.user.id as string;
+}
+
+describe("Fase 62 — apply() exige template (instância não vai direto pra outro aluno)", () => {
+  it("aplicar uma INSTÂNCIA (isTemplate: false) a outro aluno retorna 403", async () => {
+    const alunoA = await criarAlunoVinculado("wp_fase62_instancia_a@thunderafit.test");
+    const alunoB = await criarAlunoVinculado("wp_fase62_instancia_b@thunderafit.test");
+
+    const tpl = await supertest(server.server)
+      .post("/api/workout-programs")
+      .set("Authorization", `Bearer ${personalToken}`)
+      .send({ name: "Fase 62 — template pra virar instância" });
+    await supertest(server.server)
+      .post(`/api/workout-programs/${tpl.body.program.id}/sessions`)
+      .set("Authorization", `Bearer ${personalToken}`)
+      .send({ letter: "A" });
+
+    const instance = await supertest(server.server)
+      .post(`/api/workout-programs/${tpl.body.program.id}/apply`)
+      .set("Authorization", `Bearer ${personalToken}`)
+      .send({ alunoId: alunoA });
+    expect(instance.status).toBe(201);
+    expect(instance.body.program.isTemplate).toBe(false);
+
+    // Tenta aplicar a INSTÂNCIA (não o template original) a outro aluno.
+    const r = await supertest(server.server)
+      .post(`/api/workout-programs/${instance.body.program.id}/apply`)
+      .set("Authorization", `Bearer ${personalToken}`)
+      .send({ alunoId: alunoB });
+    expect(r.status).toBe(403);
+  });
+});
+
+describe("Fase 62 — salvar instância como template", () => {
+  it("cria template, aplica a um aluno, e salva a instância como um NOVO template reaplicável", async () => {
+    const alunoA = await criarAlunoVinculado("wp_fase62_salvar_a@thunderafit.test");
+    const alunoB = await criarAlunoVinculado("wp_fase62_salvar_b@thunderafit.test");
+
+    const tpl = await supertest(server.server)
+      .post("/api/workout-programs")
+      .set("Authorization", `Bearer ${personalToken}`)
+      .send({ name: "Fase 62 — origem" });
+    await supertest(server.server)
+      .post(`/api/workout-programs/${tpl.body.program.id}/sessions`)
+      .set("Authorization", `Bearer ${personalToken}`)
+      .send({ letter: "A" });
+
+    const instance = await supertest(server.server)
+      .post(`/api/workout-programs/${tpl.body.program.id}/apply`)
+      .set("Authorization", `Bearer ${personalToken}`)
+      .send({ alunoId: alunoA });
+    expect(instance.status).toBe(201);
+
+    const saved = await supertest(server.server)
+      .post(`/api/workout-programs/${instance.body.program.id}/save-as-template`)
+      .set("Authorization", `Bearer ${personalToken}`)
+      .send({ name: "Fase 62 — salvo como template" });
+    expect(saved.status).toBe(201);
+    expect(saved.body.program.isTemplate).toBe(true);
+    expect(saved.body.program.alunoId).toBeNull();
+    expect(saved.body.program.name).toBe("Fase 62 — salvo como template");
+    expect(saved.body.program.workouts).toHaveLength(1);
+
+    // Agora o novo template PODE ser aplicado a outro aluno.
+    const reapplied = await supertest(server.server)
+      .post(`/api/workout-programs/${saved.body.program.id}/apply`)
+      .set("Authorization", `Bearer ${personalToken}`)
+      .send({ alunoId: alunoB });
+    expect(reapplied.status).toBe(201);
+  });
+
+  it("outro Personal não pode salvar como template um programa que não é dele (403)", async () => {
+    const outro = await supertest(server.server)
+      .post("/api/auth/register")
+      .send({ email: "wp_outro_save_template@thunderafit.test", password: pw, role: "PERSONAL" });
+    const outroToken = (
+      await supertest(server.server)
+        .post("/api/auth/login")
+        .send({ email: "wp_outro_save_template@thunderafit.test", password: pw })
+    ).body.accessToken;
+
+    const tpl = await supertest(server.server)
+      .post("/api/workout-programs")
+      .set("Authorization", `Bearer ${personalToken}`)
+      .send({ name: "Fase 62 — não deveria poder salvar" });
+
+    const r = await supertest(server.server)
+      .post(`/api/workout-programs/${tpl.body.program.id}/save-as-template`)
+      .set("Authorization", `Bearer ${outroToken}`)
+      .send({ name: "tentativa" });
+    expect(r.status).toBe(403);
+  });
+
+  it("tentar salvar um TEMPLATE (não uma instância) como template retorna 400", async () => {
+    const tpl = await supertest(server.server)
+      .post("/api/workout-programs")
+      .set("Authorization", `Bearer ${personalToken}`)
+      .send({ name: "Fase 62 — já é template" });
+
+    const r = await supertest(server.server)
+      .post(`/api/workout-programs/${tpl.body.program.id}/save-as-template`)
+      .set("Authorization", `Bearer ${personalToken}`)
+      .send({ name: "tentativa" });
+    expect(r.status).toBe(400);
+  });
+});
+
+describe("Fase 62 — catálogo de templates do Personal (Básico + Premium)", () => {
+  let basicoTemplateId: string;
+  let premiumTemplateId: string;
+  let catalogPersonalId: string;
+  let catalogPersonalToken: string;
+  let catalogAlunoId: string;
+
+  beforeAll(async () => {
+    const basico = await prisma.workoutProgram.create({
+      data: { name: "Fase 62 — Básico de teste", origin: "PERSONAL_CATALOG", isTemplate: true },
+    });
+    basicoTemplateId = basico.id;
+    await prisma.workout.create({
+      data: { programId: basico.id, name: "Sessão A", letter: "A" },
+    });
+
+    // Fase 62: "Premium" do Personal reaproveita origin: SELF, category:
+    // PREMIUM — nenhum campo/catálogo novo pra esse tier.
+    const premium = await prisma.workoutProgram.create({
+      data: { name: "Fase 62 — Premium de teste", origin: "SELF", isTemplate: true, category: "PREMIUM" },
+    });
+    premiumTemplateId = premium.id;
+    await prisma.workout.create({
+      data: { programId: premium.id, name: "Sessão A", letter: "A" },
+    });
+
+    const regP = await supertest(server.server)
+      .post("/api/auth/register")
+      .send({ email: "wp_catalogo_personal@thunderafit.test", password: pw, role: "PERSONAL" });
+    catalogPersonalId = regP.body.user.id;
+    catalogPersonalToken = (
+      await supertest(server.server)
+        .post("/api/auth/login")
+        .send({ email: "wp_catalogo_personal@thunderafit.test", password: pw })
+    ).body.accessToken;
+
+    const regA = await supertest(server.server)
+      .post("/api/auth/register")
+      .send({ email: "wp_catalogo_aluno@thunderafit.test", password: pw, role: "ALUNO" });
+    catalogAlunoId = regA.body.user.id;
+    await supertest(server.server)
+      .post("/api/relations")
+      .set("Authorization", `Bearer ${catalogPersonalToken}`)
+      .send({ alunoId: catalogAlunoId });
+  });
+
+  afterAll(async () => {
+    for (const id of [basicoTemplateId, premiumTemplateId]) {
+      const workouts = await prisma.workout.findMany({ where: { programId: id }, select: { id: true } });
+      await prisma.workoutExercise.deleteMany({ where: { workoutId: { in: workouts.map((w) => w.id) } } });
+      await prisma.workout.deleteMany({ where: { programId: id } });
+      await prisma.workoutProgram.delete({ where: { id } });
+    }
+    // ClientRelation não tem FK declarada pro User (sem onDelete cascade) —
+    // limpa explicitamente antes de apagar os usuários, mesmo padrão já
+    // usado no resto do arquivo pra Personals/alunos criados ad-hoc.
+    await prisma.clientRelation.deleteMany({ where: { personalId: catalogPersonalId } });
+    await prisma.user.deleteMany({
+      where: { email: { in: ["wp_catalogo_personal@thunderafit.test", "wp_catalogo_aluno@thunderafit.test"] } },
+    });
+  });
+
+  it("GET /api/workout-programs/personal-catalog lista o Básico e o Premium (nunca origin PERSONAL/SELF fora de category PREMIUM)", async () => {
+    const r = await supertest(server.server)
+      .get("/api/workout-programs/personal-catalog")
+      .set("Authorization", `Bearer ${catalogPersonalToken}`);
+    expect(r.status).toBe(200);
+    const ids = r.body.programs.map((p: any) => p.id);
+    expect(ids).toContain(basicoTemplateId);
+    expect(ids).toContain(premiumTemplateId);
+    const basicoItem = r.body.programs.find((p: any) => p.id === basicoTemplateId);
+    const premiumItem = r.body.programs.find((p: any) => p.id === premiumTemplateId);
+    expect(basicoItem.tier).toBe("BASICO");
+    expect(premiumItem.tier).toBe("PREMIUM");
+  });
+
+  it("aplica um template Básico a um aluno sem checar plano (plano FREE padrão)", async () => {
+    const r = await supertest(server.server)
+      .post(`/api/workout-programs/personal-catalog/${basicoTemplateId}/apply`)
+      .set("Authorization", `Bearer ${catalogPersonalToken}`)
+      .send({ alunoId: catalogAlunoId });
+    expect(r.status).toBe(201);
+    expect(r.body.program.origin).toBe("PERSONAL");
+    expect(r.body.program.personalId).toBe(catalogPersonalId);
+    expect(r.body.program.alunoId).toBe(catalogAlunoId);
+
+    await supertest(server.server)
+      .delete(`/api/workout-programs/${r.body.program.id}`)
+      .set("Authorization", `Bearer ${catalogPersonalToken}`);
+  });
+
+  it("aplicar um template Premium com plano FREE/BASE retorna 402 PREMIUM_TEMPLATE_REQUIRED", async () => {
+    const r = await supertest(server.server)
+      .post(`/api/workout-programs/personal-catalog/${premiumTemplateId}/apply`)
+      .set("Authorization", `Bearer ${catalogPersonalToken}`)
+      .send({ alunoId: catalogAlunoId });
+    expect(r.status).toBe(402);
+    expect(r.body.code).toBe("PREMIUM_TEMPLATE_REQUIRED");
+  });
+
+  it("plano PLUS libera a aplicação do template Premium", async () => {
+    await prisma.user.update({ where: { id: catalogPersonalId }, data: { planoAssinatura: "PLUS" } });
+
+    const r = await supertest(server.server)
+      .post(`/api/workout-programs/personal-catalog/${premiumTemplateId}/apply`)
+      .set("Authorization", `Bearer ${catalogPersonalToken}`)
+      .send({ alunoId: catalogAlunoId });
+    expect(r.status).toBe(201);
+    expect(r.body.program.origin).toBe("PERSONAL");
+
+    await supertest(server.server)
+      .delete(`/api/workout-programs/${r.body.program.id}`)
+      .set("Authorization", `Bearer ${catalogPersonalToken}`);
+  });
+
+  it("aplicar a um aluno não vinculado retorna 403", async () => {
+    const r = await supertest(server.server)
+      .post(`/api/workout-programs/personal-catalog/${basicoTemplateId}/apply`)
+      .set("Authorization", `Bearer ${catalogPersonalToken}`)
+      .send({ alunoId: aluno1Id });
+    expect(r.status).toBe(403);
+  });
+});

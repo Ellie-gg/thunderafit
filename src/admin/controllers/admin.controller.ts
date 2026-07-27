@@ -181,10 +181,13 @@ export async function updateUserPremiumHandler(
 
 // --- Fase 34.5: curadoria de templates SELF ("Meu treino pessoal") ---
 
-export async function listSelfTemplatesHandler(request: FastifyRequest, reply: FastifyReply) {
+export async function listSelfTemplatesHandler(
+  request: FastifyRequest<{ Querystring: { origin?: string } }>,
+  reply: FastifyReply
+) {
   try {
     assertAdmin(request);
-    const programs = await adminService.listSelfTemplates();
+    const programs = await adminService.listSelfTemplates(request.query.origin);
     return reply.status(200).send({ programs });
   } catch (err: any) {
     return handleError(err, reply);
@@ -205,7 +208,9 @@ export async function getSelfTemplateHandler(
 }
 
 export async function createSelfTemplateHandler(
-  request: FastifyRequest<{ Body: { name: string; sessionScheme?: string; category?: string } }>,
+  request: FastifyRequest<{
+    Body: { name: string; sessionScheme?: string; category?: string; origin?: string };
+  }>,
   reply: FastifyReply
 ) {
   try {
@@ -213,7 +218,8 @@ export async function createSelfTemplateHandler(
     const program = await adminService.createSelfTemplate(
       request.body.name,
       request.body.sessionScheme,
-      request.body.category
+      request.body.category,
+      request.body.origin
     );
     return reply.status(201).send({ program });
   } catch (err: any) {

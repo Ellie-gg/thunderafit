@@ -341,6 +341,13 @@ enum SessionScheme {
 enum WorkoutProgramOrigin {
   PERSONAL
   SELF
+  // Fase 62: catálogo "Templates Básico" curado pelo admin, oferecido a todo
+  // Personal (gratuito) — o equivalente de SELF, só que do lado do Personal
+  // em vez do aluno. personalId/alunoId sempre null. "Templates Premium" do
+  // Personal NÃO usa este valor: reaproveita os templates origin: SELF,
+  // category: PREMIUM que já existem (mesmo catálogo vendido como "Aluno
+  // Premium"), sem duplicar conteúdo.
+  PERSONAL_CATALOG
 }
 
 model WorkoutProgram {
