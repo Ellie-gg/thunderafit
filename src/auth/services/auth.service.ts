@@ -326,6 +326,57 @@ export async function updateAvatar(userId: string, avatarDataUrl: string | null)
   return safeUser;
 }
 
+const MIN_PASSWORD_LENGTH = 8;
+
+/**
+ * Fase 80 — botão "Trocar senha" no perfil. Dois casos:
+ * - Conta tradicional (`passwordHash` já existe): exige `currentPassword` e
+ *   confere contra o hash salvo (mesmo `bcrypt.compare` do `login`) antes de
+ *   trocar — sem isso, qualquer um com uma sessão ativa roubada poderia
+ *   trocar a senha sem saber a atual.
+ * - Conta só-Google (`passwordHash` null, Fase 77): não tem senha "atual"
+ *   pra conferir — define a senha pela primeira vez direto. A partir daí a
+ *   conta pode entrar tanto por senha quanto por Google (googleId continua
+ *   setado, não é limpo aqui).
+ */
+export async function changePassword(
+  userId: string,
+  currentPassword: string | null,
+  newPassword: string
+) {
+  if (!newPassword || newPassword.length < MIN_PASSWORD_LENGTH) {
+    const err = new Error(`A nova senha deve ter pelo menos ${MIN_PASSWORD_LENGTH} caracteres.`);
+    (err as Error & { statusCode: number }).statusCode = 400;
+    throw err;
+  }
+
+  const user = await authRepository.findById(userId);
+  if (!user) {
+    const err = new Error("Usuário não encontrado.");
+    (err as Error & { statusCode: number }).statusCode = 404;
+    throw err;
+  }
+
+  if (user.passwordHash) {
+    if (!currentPassword) {
+      const err = new Error("Senha atual é obrigatória.");
+      (err as Error & { statusCode: number }).statusCode = 400;
+      throw err;
+    }
+    const matches = await bcrypt.compare(currentPassword, user.passwordHash);
+    if (!matches) {
+      const err = new Error("Senha atual incorreta.");
+      (err as Error & { statusCode: number }).statusCode = 401;
+      throw err;
+    }
+  }
+
+  const newHash = await bcrypt.hash(newPassword, BCRYPT_SALT_ROUNDS);
+  const updated = await authRepository.updatePasswordHash(userId, newHash);
+  const { passwordHash: _ph, refreshTokenHash: _rth, ...safeUser } = updated;
+  return safeUser;
+}
+
 const VALID_LOCALES: Locale[] = ["PT", "EN", "ES"];
 
 /**

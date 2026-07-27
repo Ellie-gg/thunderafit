@@ -589,6 +589,17 @@
     "respondido": "Answered",
     "aberto": "Open"
   },
+  "changePassword": {
+    "title": "Change password",
+    "description": "If your account was created with Google and you never set a password, just fill in the new one — leave \"current password\" blank.",
+    "currentPasswordLabel": "Current password",
+    "currentPasswordHint": "Leave blank if you've never set a password (account created with Google).",
+    "newPasswordLabel": "New password (min. 8 characters)",
+    "saveError": "Couldn't change your password.",
+    "saveSuccess": "Password updated successfully.",
+    "saving": "Saving...",
+    "saveButton": "Save new password"
+  },
   "faleConosco": {
     "eyebrow": "Support",
     "title": "Contact Us",
@@ -1060,6 +1071,13 @@
       "confirmRevoke": "Revoke Premium from {email}?",
       "genericError": "Error changing Premium.",
       "saving": "Saving..."
+    },
+    "deleteUser": {
+      "button": "Remove",
+      "confirmMessage": "Permanently remove {email}? This action cannot be undone — all workouts, connections, messages, and other data owned by this user will be deleted (or unlinked, when they belong to another user).",
+      "confirmButton": "Remove permanently",
+      "deleting": "Removing...",
+      "genericError": "Error removing the user."
     },
     "linkedSince": "since {date}"
   },

@@ -78,6 +78,14 @@ export const authRepository = {
     });
   },
 
+  /** Fase 80: troca (ou define, pra conta Google sem senha própria) o passwordHash. */
+  async updatePasswordHash(userId: string, passwordHash: string) {
+    return prisma.user.update({
+      where: { id: userId },
+      data: { passwordHash },
+    });
+  },
+
   /** i18n: escolha explícita de idioma (Configurações). `null` volta a detectar automaticamente. */
   async updateLocale(userId: string, locale: Locale | null) {
     return prisma.user.update({

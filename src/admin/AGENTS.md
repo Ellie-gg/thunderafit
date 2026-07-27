@@ -78,6 +78,23 @@ into an admin-owned table.
   can apply without a Personal relationship; the aluno only *copies*, never
   edits — enforced by other domains, not this one, but this is where they are
   authored.
+- **Fase 80 — `DELETE /api/admin/users/:id`** (permanent user removal), same
+  2 guards as `updateUserRole` (can't remove yourself; can't remove the last
+  ADMIN), then a manual cascade in `adminRepository.deleteUser` — see the
+  long comment right above that function for the full rationale. Short
+  version: **no table in this schema has a real DB-level FK to `User`**
+  (every `userId`/`alunoId`/`personalId`-style column is a bare `String`,
+  no `@relation` declared), so deleting a `User` row alone would never
+  throw an FK-violation — but it WOULD leave orphaned rows in ~10 tables if
+  nothing else were done. The cascade deletes data that only makes sense
+  WITH this user (Anamnesis, Notification, LoginLog, ContactMessage, any
+  2-sided relation where this user is either side — ClientRelation,
+  ConnectionRequest/Message, SupportThread/Message, DietPlan), but for a
+  `WorkoutProgram`/`Workout` this user created as `personalId` FOR A
+  DIFFERENT SURVIVING ALUNO, it only nulls out `personalId` — deleting the
+  Personal must never destroy an unrelated aluno's real workout history.
+  `AdminAccessLog`/`AdminAuditLog` are deliberately NEVER touched (audit
+  trail survives the deleted actor/target on purpose).
 
 ## Handle with care
 
@@ -104,6 +121,11 @@ into an admin-owned table.
   scoped to that one route only — don't reuse the pattern globally without
   reason, it exists purely because base64 video/GIF payloads exceed Fastify's
   1MB default.
+- `deleteUser`'s cascade runs inside a single `$transaction` with a raised
+  20s timeout (default is 5s) — a Personal with many alunos/programs can
+  have a lot to touch. If you add a NEW table with a `userId`-style column
+  in the future, you must add it to this cascade by hand — nothing enforces
+  this automatically (no FK means no DB-level safety net either way).
 
 ## Current state
 
@@ -112,5 +134,11 @@ All routes are mounted under `/api/admin/*` and require authentication
 handler (route-level `preHandler` only checks the JWT is valid, not the
 role). Covered by `__tests__/admin.test.ts` (overview/users/logins/SLA/
 access-logs + cross-domain "wide view" cases for relations/workouts/support/
-anamnesis), `admin-user-role.test.ts` (role-edit guards), and dedicated
-suites for exercise CRUD, exercise media upload, and SELF template curation.
+anamnesis), `admin-user-role.test.ts` (role-edit guards), `admin-delete-user.test.ts`
+(guards + cascade correctness, incl. the "Personal removed, aluno's program
+survives with personalId nulled" case), and dedicated suites for exercise
+CRUD, exercise media upload, and SELF template curation.
+- Fase 80: `GET /api/admin/users` also returns `name`/`avatarUrl` now (was
+  email-only before) — the frontend user list shows a `UserAvatar` + name
+  (falling back to email when `name` is null), same component the app
+  header already uses.

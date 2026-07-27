@@ -165,6 +165,20 @@ export async function updateUserRoleHandler(
   }
 }
 
+export async function deleteUserHandler(
+  request: FastifyRequest<{ Params: { id: string } }>,
+  reply: FastifyReply
+) {
+  try {
+    assertAdmin(request);
+    const adminId = (request as any).user.sub;
+    const result = await adminService.deleteUser(adminId, request.params.id);
+    return reply.status(200).send(result);
+  } catch (err: any) {
+    return handleError(err, reply);
+  }
+}
+
 export async function updateUserPremiumHandler(
   request: FastifyRequest<{ Params: { id: string }; Body: { active?: boolean } }>,
   reply: FastifyReply

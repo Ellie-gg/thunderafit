@@ -324,6 +324,8 @@ export interface AdminOverview {
 export interface AdminUser {
   id: string;
   email: string;
+  name: string | null;
+  avatarUrl: string | null;
   role: Role;
   planoAssinatura: "FREE" | "BASE" | "PLUS";
   limiteAlunos: number;
