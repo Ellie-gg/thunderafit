@@ -87,8 +87,8 @@ test("Personal fica disponível, aluno busca e solicita, Personal aceita, aluno 
   // Sai dos pendentes → aparece no histórico como Aceita.
   await expect(page.getByText("Aceita").first()).toBeVisible();
 
-  // --- 4. Vínculo real criado: o aluno aparece nos alunos do Personal ---
-  await page.goto("/personal/dashboard");
+  // --- 4. Vínculo real criado: o aluno aparece na tela "Gerenciar alunos" ---
+  await page.goto("/personal/alunos");
   await expect(page.getByText(alunoEmail)).toBeVisible({ timeout: 30000 });
 
   // --- 5. Aluno vê a solicitação como Aceita ---

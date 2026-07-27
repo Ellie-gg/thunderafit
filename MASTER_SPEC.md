@@ -883,6 +883,44 @@ decisão/priorização futura):
 74. Rótulo do bloco "Meus treinos" renomeado para "Meus Treinos Pessoais" (PT/EN/ES).
     *Modelo: Sonnet 5. Sem migration — puro ajuste de frontend/i18n.*
 
+### Grupo Q — Personal: "Gerenciar alunos" + Templates (Meus/Básico/Premium) + regra "instância não vira template de outro aluno sem salvar antes". ✅ CONCLUÍDA (2026-07-26, registrada como Fase 62 no STATUS.md)
+75. Dashboard do Personal reestruturado: o card "Alunos vinculados" perde a
+    listagem inline (email a email) e ganha um link "Gerenciar alunos →" pra
+    uma tela nova (`/personal/alunos`), que lista todos os alunos com um selo
+    "Sem treino aplicado" quando aplicável — preserva a visibilidade que a
+    lista antiga do dashboard dava, sem poluir a tela principal. O card
+    "Treinos prescritos" vira "Templates de treino": para de listar
+    instâncias soltas (cada uma só se vê dentro do hub do próprio aluno
+    agora) e vira um atalho pra biblioteca de templates.
+76. **Lacuna de segurança fechada**: `workoutProgramsService.apply()`
+    permitia aplicar QUALQUER programa `origin: PERSONAL` do Personal a um
+    aluno — inclusive uma instância já aplicada a OUTRO aluno, sem nenhuma
+    checagem de que fosse um template reaplicável. Agora `apply()` rejeita
+    (403) uma origem que não seja `isTemplate: true`. A única forma de
+    reaproveitar o treino de um aluno pra outro é o novo botão "Salvar como
+    template" na tela do programa (`POST /api/workout-programs/:id/save-as-template`),
+    que copia a instância pra um template novo e independente
+    (`isTemplate: true, alunoId: null`) — mesma semântica de cópia (nunca
+    referência) já usada em `applyToAluno`.
+77. `/personal/programas` vira "Templates de treino" com 3 seções: **Meus
+    Templates** (fluxo de sempre, inalterado) → **Templates Básico** (novo
+    catálogo gratuito, `origin: PERSONAL_CATALOG`, curado pelo admin na MESMA
+    tela `/nimbus/treinos-pessoais` que já cura os templates SELF do aluno,
+    via um seletor "Para quem" na criação) → **Templates Premium** (reaproveita,
+    sem duplicar, os 13 templates `origin: SELF, category: PREMIUM` já
+    vendidos ao aluno como "Aluno Premium" — Fase 57/60; exige plano Plus do
+    Personal, 402 `PREMIUM_TEMPLATE_REQUIRED` sem ele). Clicar num template do
+    catálogo reaproveita o `TemplatePreviewDialog` (Fase 59), agora com um
+    select de aluno vinculado embutido antes de aplicar — aplica direto, sem
+    exigir clonagem prévia pra "Meus Templates" (decisão confirmada com o
+    fundador).
+78. 2 templates Básico de exemplo cadastrados via
+    `prisma/seed-templates-basico-personal.ts` ("Full Body Iniciante" — 3
+    sessões, "Upper/Lower Básico" — 2 sessões), idempotente, rodado local e em
+    produção.
+    *Modelo: Sonnet 5. 1 migration (só `PERSONAL_CATALOG` como novo valor do
+    enum `WorkoutProgramOrigin` — nenhuma coluna nova).*
+
 ### Backlog operacional herdado
 Ver Seção 7 acima (Neon, billing, Android, webhook).
 

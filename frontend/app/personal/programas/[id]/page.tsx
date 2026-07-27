@@ -5,7 +5,12 @@ import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { getWorkoutProgram, addProgramSession, applyProgram } from "@/lib/api/workouts";
+import {
+  getWorkoutProgram,
+  addProgramSession,
+  applyProgram,
+  saveInstanceAsTemplate,
+} from "@/lib/api/workouts";
 import { listRelations } from "@/lib/api/relations";
 import { ApiError } from "@/lib/api/client";
 import { orderFor, maxSessionsFor, sortByScheme, labelFor } from "@/lib/session-scheme";
@@ -14,6 +19,7 @@ import { AppHeader } from "@/components/app-header";
 import { Card } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { QueryError } from "@/components/query-error";
 
 function ProgramaDetalheContent() {
@@ -38,6 +44,7 @@ function ProgramaDetalheContent() {
   const alunoIdParam = searchParams.get("alunoId") ?? "";
   const [applyAlunoId, setApplyAlunoId] = useState(alunoIdParam);
   const query = alunoIdParam ? `?alunoId=${alunoIdParam}` : "";
+  const [templateName, setTemplateName] = useState("");
 
   const addSessionMutation = useMutation({
     mutationFn: (letter: string) => addProgramSession(programId, { letter }),
@@ -51,6 +58,16 @@ function ProgramaDetalheContent() {
     mutationFn: () => applyProgram(programId, applyAlunoId),
     onSuccess: () => {
       setApplyAlunoId("");
+      queryClient.invalidateQueries({ queryKey: ["workout-programs", "personal"] });
+    },
+  });
+
+  // Fase 62: única forma de reaplicar o treino de UM aluno a outro — apply()
+  // agora exige um template (isTemplate: true); a instância precisa virar
+  // um template novo primeiro.
+  const saveAsTemplateMutation = useMutation({
+    mutationFn: () => saveInstanceAsTemplate(programId, templateName.trim()),
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["workout-programs", "personal"] });
     },
   });
@@ -126,41 +143,82 @@ function ProgramaDetalheContent() {
               </Card>
             )}
 
-            {/* Aplicar a aluno */}
-            <Card className="flex flex-col gap-3">
-              <h2 className="font-display text-lg font-bold">{t("applyToStudentTitle")}</h2>
-              <p className="text-xs text-muted">{t("applyToStudentDescription")}</p>
-              <select
-                value={applyAlunoId}
-                onChange={(e) => setApplyAlunoId(e.target.value)}
-                className="h-11 rounded-md border border-border bg-surface px-3.5 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
-              >
-                <option value="" disabled>
-                  {t("selectStudent")}
-                </option>
-                {relationsQuery.data?.relations.map((r) => (
-                  <option key={r.id} value={r.id}>
-                    {r.email}
+            {/* Fase 62: "Aplicar a aluno" só faz sentido pra um TEMPLATE —
+                uma instância já aplicada a um aluno precisa virar template
+                primeiro (card abaixo) antes de poder ir pra outro aluno. */}
+            {program.isTemplate && (
+              <Card className="flex flex-col gap-3">
+                <h2 className="font-display text-lg font-bold">{t("applyToStudentTitle")}</h2>
+                <p className="text-xs text-muted">{t("applyToStudentDescription")}</p>
+                <select
+                  value={applyAlunoId}
+                  onChange={(e) => setApplyAlunoId(e.target.value)}
+                  className="h-11 rounded-md border border-border bg-surface px-3.5 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+                >
+                  <option value="" disabled>
+                    {t("selectStudent")}
                   </option>
-                ))}
-              </select>
-              {applyMutation.isError && (
-                <p className="text-sm text-danger">
-                  {applyMutation.error instanceof ApiError
-                    ? applyMutation.error.message
-                    : t("applyError")}
-                </p>
-              )}
-              {applyMutation.isSuccess && (
-                <p className="text-sm text-success">{t("applySuccess")}</p>
-              )}
-              <Button
-                disabled={!applyAlunoId || applyMutation.isPending || sessions.length === 0}
-                onClick={() => applyMutation.mutate()}
-              >
-                {applyMutation.isPending ? t("applying") : t("applyProgram")}
-              </Button>
-            </Card>
+                  {relationsQuery.data?.relations.map((r) => (
+                    <option key={r.id} value={r.id}>
+                      {r.email}
+                    </option>
+                  ))}
+                </select>
+                {applyMutation.isError && (
+                  <p className="text-sm text-danger">
+                    {applyMutation.error instanceof ApiError
+                      ? applyMutation.error.message
+                      : t("applyError")}
+                  </p>
+                )}
+                {applyMutation.isSuccess && (
+                  <p className="text-sm text-success">{t("applySuccess")}</p>
+                )}
+                <Button
+                  disabled={!applyAlunoId || applyMutation.isPending || sessions.length === 0}
+                  onClick={() => applyMutation.mutate()}
+                >
+                  {applyMutation.isPending ? t("applying") : t("applyProgram")}
+                </Button>
+              </Card>
+            )}
+
+            {/* Fase 62: única forma de reaproveitar o treino DESTE aluno pra
+                outro — vira um template novo (independente), que aí sim
+                aparece com o card "Aplicar a aluno" acima. */}
+            {!program.isTemplate && (
+              <Card className="flex flex-col gap-3">
+                <h2 className="font-display text-lg font-bold">{t("saveAsTemplateTitle")}</h2>
+                <p className="text-xs text-muted">{t("saveAsTemplateDescription")}</p>
+                <Input
+                  value={templateName || program.name}
+                  onChange={(e) => setTemplateName(e.target.value)}
+                  placeholder={t("saveAsTemplateNamePlaceholder")}
+                />
+                {saveAsTemplateMutation.isError && (
+                  <p className="text-sm text-danger">
+                    {saveAsTemplateMutation.error instanceof ApiError
+                      ? saveAsTemplateMutation.error.message
+                      : t("saveAsTemplateError")}
+                  </p>
+                )}
+                {saveAsTemplateMutation.isSuccess && (
+                  <Link
+                    href={`/personal/programas/${saveAsTemplateMutation.data.program.id}`}
+                    className="text-sm font-semibold text-accent-secondary hover:underline"
+                  >
+                    {t("saveAsTemplateSuccess", { name: saveAsTemplateMutation.data.program.name })}
+                  </Link>
+                )}
+                <Button
+                  variant="secondary"
+                  disabled={saveAsTemplateMutation.isPending || !(templateName || program.name).trim()}
+                  onClick={() => saveAsTemplateMutation.mutate()}
+                >
+                  {saveAsTemplateMutation.isPending ? t("saving") : t("saveAsTemplateButton")}
+                </Button>
+              </Card>
+            )}
           </>
         )}
       </main>

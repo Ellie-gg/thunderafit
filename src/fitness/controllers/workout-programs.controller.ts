@@ -106,6 +106,56 @@ export async function deleteProgramHandler(
 // Fase 34.5: catálogo de templates "Meu treino pessoal" — qualquer usuário
 // autenticado pode ver (a tela em si só é oferecida ao ALUNO no frontend,
 // mas não há dado sensível aqui pra restringir por role no backend).
+export async function saveInstanceAsTemplateHandler(
+  request: FastifyRequest<{ Params: { id: string }; Body: { name: string } }>,
+  reply: FastifyReply
+) {
+  try {
+    assertProfessional(request);
+    const personalId = (request as any).user.sub;
+    const program = await workoutProgramsService.saveInstanceAsTemplate(
+      request.params.id,
+      personalId,
+      request.body.name
+    );
+    return reply.status(201).send({ program });
+  } catch (err) {
+    return handleError(err, reply);
+  }
+}
+
+// Fase 62: catálogo de templates pro Personal (Básico + Premium).
+export async function listPersonalCatalogHandler(request: FastifyRequest, reply: FastifyReply) {
+  try {
+    assertProfessional(request);
+    const programs = await workoutProgramsService.listPersonalCatalog(resolveRequestLocale(request));
+    return reply.status(200).send({ programs });
+  } catch (err) {
+    return handleError(err, reply);
+  }
+}
+
+export async function applyCatalogTemplateHandler(
+  request: FastifyRequest<{ Params: { id: string }; Body: { alunoId: string } }>,
+  reply: FastifyReply
+) {
+  try {
+    assertProfessional(request);
+    const personalId = (request as any).user.sub;
+    const program = await workoutProgramsService.applyCatalogTemplate(
+      request.params.id,
+      personalId,
+      request.body.alunoId
+    );
+    return reply.status(201).send({ program });
+  } catch (err: any) {
+    if (err.code === "PREMIUM_TEMPLATE_REQUIRED") {
+      return reply.status(402).send({ error: err.message, code: err.code });
+    }
+    return handleError(err, reply);
+  }
+}
+
 export async function listSelfTemplatesHandler(request: FastifyRequest, reply: FastifyReply) {
   try {
     const programs = await workoutProgramsService.listSelfTemplates(resolveRequestLocale(request));
