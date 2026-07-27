@@ -119,14 +119,21 @@ function buildPersonalInviteText(t: ReturnType<typeof useTranslations>) {
 
 // Fase 36: convite copiável quando o aluno ainda não tem nenhum Personal
 // vinculado — mesmo padrão de "copiar texto pronto + feedback de copiado"
-// já usado em VincularAlunoForm (Fase 12).
+// já usado em VincularAlunoForm (Fase 12). Fase 65: ganhou um ícone no
+// título pra bater com o card irmão "Começar agora" do novo empty-state de
+// primeiro acesso — mesmo tratamento visual nos dois lugares onde aparece.
 function InvitePersonalCard() {
   const t = useTranslations("alunoDashboard");
   const [copied, setCopied] = useState(false);
 
   return (
     <Card className="flex flex-col gap-3">
-      <h2 className="font-display text-lg font-bold">{t("noPersonalTitle")}</h2>
+      <div className="flex items-center gap-2">
+        <span className="text-xl" aria-hidden>
+          🧑‍💼
+        </span>
+        <h2 className="font-display text-lg font-bold">{t("noPersonalTitle")}</h2>
+      </div>
       <p className="text-sm text-muted">{t("noPersonalDescription")}</p>
       <Button
         type="button"
@@ -140,6 +147,44 @@ function InvitePersonalCard() {
         {copied ? t("inviteCopied") : t("copyInvite")}
       </Button>
     </Card>
+  );
+}
+
+// Fase 65: tela de primeiro acesso (ou "zerado" — sem programa nenhum e sem
+// Personal vinculado) — antes eram 3 mensagens soltas e sobrepostas (o card
+// de topo "noProgramsYet" + o fallback de Bloco 1 + o fallback de Bloco 2,
+// que podiam aparecer os 3 juntos). Substituídas por um único par de cards
+// de ação clara: "Começar agora" (escolher um treino pronto, sem precisar de
+// Personal) OU "Tem seu próprio Personal?" (convite, já existia). Escopo
+// confirmado com o fundador: só troca quando o aluno não tem NADA ainda —
+// com Personal vinculado ou plano de dieta já ativo, o resto da tela
+// continua como sempre.
+function FirstTimeEmptyState() {
+  const t = useTranslations("alunoDashboard");
+
+  return (
+    <>
+      <Card className="flex flex-col gap-3 border-accent/40">
+        <div className="flex items-center gap-2">
+          <span className="text-xl" aria-hidden>
+            🚀
+          </span>
+          <h2 className="font-display text-lg font-bold">{t("firstTimeStartTitle")}</h2>
+        </div>
+        <p className="text-sm text-muted">{t("firstTimeStartDescription")}</p>
+        <Button asChild>
+          <Link href="/meu-treino-pessoal">{t("firstTimeStartButton")}</Link>
+        </Button>
+      </Card>
+
+      <div className="flex items-center gap-3">
+        <span className="h-px flex-1 bg-border" aria-hidden />
+        <span className="text-xs font-semibold uppercase tracking-wide text-muted">{t("or")}</span>
+        <span className="h-px flex-1 bg-border" aria-hidden />
+      </div>
+
+      <InvitePersonalCard />
+    </>
   );
 }
 
@@ -222,6 +267,11 @@ function DashboardContent() {
     myPersonalsQuery.data.personals.some((p) => p.professionalType === "PERSONAL");
 
   const hasAnythingYet = allPrograms.length > 0 || hasNutricionista;
+  // Fase 65: só entra no empty-state de primeiro acesso quando as 2 queries
+  // que decidem "tem algo?" já resolveram — antes disso, nem mostra o
+  // esqueleto antigo nem o novo, só o "Carregando..." abaixo.
+  const isFirstTime =
+    programsQuery.isSuccess && myPersonalsQuery.isSuccess && !hasAnythingYet && !hasPersonalRelation;
 
   return (
     <>
@@ -231,7 +281,7 @@ function DashboardContent() {
           <h1 className="font-display text-2xl font-bold tracking-tight">
             {t("greeting", { name: firstNameOrEmailPrefix(user) })}
           </h1>
-          <p className="text-sm text-muted">{t("subtitle")}</p>
+          <p className="text-sm text-muted">{isFirstTime ? t("firstTimeSubtitle") : t("subtitle")}</p>
         </div>
 
         {programsQuery.isLoading && <p className="text-sm text-muted">{t("loadingWorkouts")}</p>}
@@ -240,54 +290,51 @@ function DashboardContent() {
           <QueryError error={programsQuery.error} onRetry={() => programsQuery.refetch()} />
         )}
 
-        {programsQuery.isSuccess &&
-          myPersonalsQuery.isSuccess &&
-          !hasAnythingYet &&
-          !hasPersonalRelation && (
-            <Card>
-              <p className="text-sm text-muted">{t("noProgramsYet")}</p>
-            </Card>
-          )}
-
-        {/* Bloco 1 (Fase 36): treinos prescritos por um Personal de verdade. */}
-        {programsQuery.isSuccess && (
-          <div className="flex flex-col gap-3">
-            <span className="text-xs font-semibold uppercase tracking-wide text-muted">
-              {t("personalPrescribedLabel")}
-            </span>
-            {personalDetailPending ? null : personalProgramQuery.data?.program ? (
-              <NextSessionCard program={personalProgramQuery.data.program} />
-            ) : hasPersonalRelation ? (
-              <Card>
-                <p className="text-sm text-muted">{t("noPersonalPrescription")}</p>
-              </Card>
-            ) : (
-              myPersonalsQuery.isSuccess && <InvitePersonalCard />
+        {isFirstTime ? (
+          <FirstTimeEmptyState />
+        ) : (
+          <>
+            {/* Bloco 1 (Fase 36): treinos prescritos por um Personal de verdade. */}
+            {programsQuery.isSuccess && (
+              <div className="flex flex-col gap-3">
+                <span className="text-xs font-semibold uppercase tracking-wide text-muted">
+                  {t("personalPrescribedLabel")}
+                </span>
+                {personalDetailPending ? null : personalProgramQuery.data?.program ? (
+                  <NextSessionCard program={personalProgramQuery.data.program} />
+                ) : hasPersonalRelation ? (
+                  <Card>
+                    <p className="text-sm text-muted">{t("noPersonalPrescription")}</p>
+                  </Card>
+                ) : (
+                  myPersonalsQuery.isSuccess && <InvitePersonalCard />
+                )}
+              </div>
             )}
-          </div>
-        )}
 
-        {/* Bloco 2 (Fase 36): templates "Meu treino pessoal" (Fase 34.5) já aplicados. */}
-        {programsQuery.isSuccess && (
-          <div className="flex flex-col gap-3">
-            <span className="text-xs font-semibold uppercase tracking-wide text-muted">
-              {t("myWorkoutsLabel")}
-            </span>
-            {selfDetailPending ? null : selfProgramQuery.data?.program ? (
-              selfProgramQuery.data.program.bannerImageUrl ? (
-                <SelfProgramBannerCard program={selfProgramQuery.data.program} />
-              ) : (
-                <NextSessionCard program={selfProgramQuery.data.program} />
-              )
-            ) : (
-              <Card className="flex flex-col gap-2">
-                <p className="text-sm text-muted">{t("selfWorkoutsEmpty")}</p>
-                <Button asChild variant="secondary">
-                  <Link href="/meu-treino-pessoal">{t("viewAvailableWorkouts")}</Link>
-                </Button>
-              </Card>
+            {/* Bloco 2 (Fase 36): templates "Meu treino pessoal" (Fase 34.5) já aplicados. */}
+            {programsQuery.isSuccess && (
+              <div className="flex flex-col gap-3">
+                <span className="text-xs font-semibold uppercase tracking-wide text-muted">
+                  {t("myWorkoutsLabel")}
+                </span>
+                {selfDetailPending ? null : selfProgramQuery.data?.program ? (
+                  selfProgramQuery.data.program.bannerImageUrl ? (
+                    <SelfProgramBannerCard program={selfProgramQuery.data.program} />
+                  ) : (
+                    <NextSessionCard program={selfProgramQuery.data.program} />
+                  )
+                ) : (
+                  <Card className="flex flex-col gap-2">
+                    <p className="text-sm text-muted">{t("selfWorkoutsEmpty")}</p>
+                    <Button asChild variant="secondary">
+                      <Link href="/meu-treino-pessoal">{t("viewAvailableWorkouts")}</Link>
+                    </Button>
+                  </Card>
+                )}
+              </div>
             )}
-          </div>
+          </>
         )}
 
         {weeklySummary && (

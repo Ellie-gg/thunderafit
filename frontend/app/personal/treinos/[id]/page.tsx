@@ -10,6 +10,7 @@ import { AppHeader } from "@/components/app-header";
 import { Card } from "@/components/ui/card";
 import { AddExerciseForm } from "@/components/add-exercise-form";
 import { ExerciseReorderButtons } from "@/components/exercise-reorder-buttons";
+import { ExerciseDeleteButton } from "@/components/exercise-delete-button";
 
 function PersonalWorkoutContent() {
   const t = useTranslations("personalTreinoDetail");
@@ -81,8 +82,15 @@ function PersonalWorkoutContent() {
                     <p className="text-xs text-muted">{ex.exercise?.muscleGroup}</p>
                   </div>
                 </div>
-                <div className="font-mono-nums text-sm text-muted">
-                  {ex.sets}x {ex.repsRange} · {ex.restSeconds}s
+                <div className="flex items-center gap-2">
+                  <span className="font-mono-nums text-sm text-muted">
+                    {ex.sets}x {ex.repsRange} · {ex.restSeconds}s
+                  </span>
+                  <ExerciseDeleteButton
+                    workoutId={workoutId}
+                    workoutExerciseId={ex.id}
+                    onDeleted={() => queryClient.invalidateQueries({ queryKey: ["workout", workoutId] })}
+                  />
                 </div>
               </div>
               {ex.notes && (

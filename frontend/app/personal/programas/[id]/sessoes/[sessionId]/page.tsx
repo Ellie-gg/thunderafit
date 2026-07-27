@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import { QueryError } from "@/components/query-error";
 import { AddExerciseForm } from "@/components/add-exercise-form";
 import { ExerciseReorderButtons } from "@/components/exercise-reorder-buttons";
+import { ExerciseDeleteButton } from "@/components/exercise-delete-button";
 
 /**
  * Fase 26: tela própria por sessão — substitui o acordeão inline que existia
@@ -89,6 +90,14 @@ function SessaoContent() {
               <h1 className="font-display text-2xl font-bold tracking-tight">
                 {t("sessionTitle", { label: labelFor(scheme, session.letter) })}
               </h1>
+              {/* Fase 65: preview somente-leitura no mesmo layout visual do
+                  aluno — antes o Personal só via a lista de edição crua. */}
+              <Link
+                href={`/personal/programas/${programId}/sessoes/${sessionId}/visualizar${query}`}
+                className="mt-1 inline-block text-sm font-semibold text-accent-secondary hover:underline"
+              >
+                {t("viewAsStudent")}
+              </Link>
             </div>
 
             <Card className="flex flex-col gap-3">
@@ -103,7 +112,7 @@ function SessaoContent() {
                         disabledDown={i === sessionExercises.length - 1}
                         onMoved={invalidateProgram}
                       />
-                      <div>
+                      <div className="flex-1">
                         <span className="font-mono-nums text-xs text-muted">#{ex.order}</span>{" "}
                         {ex.exercise?.name}{" "}
                         <span className="text-xs text-muted">
@@ -113,6 +122,11 @@ function SessaoContent() {
                           <p className="text-xs text-muted">{t("notes", { notes: ex.notes })}</p>
                         )}
                       </div>
+                      <ExerciseDeleteButton
+                        workoutId={session.id}
+                        workoutExerciseId={ex.id}
+                        onDeleted={invalidateProgram}
+                      />
                     </li>
                   ))}
                 </ul>

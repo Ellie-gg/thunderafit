@@ -43,10 +43,12 @@ export const workoutsRepository = {
     const workout = await prisma.workout.findUnique({
       where: { id },
       include: {
-        // Fase 34.5: só o origin do programa — o frontend usa isso pra
-        // decidir se mostra o CTA de upsell ("convide um Personal") ao final
-        // de um treino origin: SELF, sem precisar de uma chamada à parte.
-        program: { select: { origin: true } },
+        // Fase 34.5: origin do programa — o frontend usa isso pra decidir se
+        // mostra o CTA de upsell ("convide um Personal") ao final de um
+        // treino origin: SELF, sem precisar de uma chamada à parte.
+        // Fase 65: sessionScheme também, pro preview "ver como o aluno vê"
+        // do Personal rotular a sessão certo (letra vs dia da semana).
+        program: { select: { origin: true, sessionScheme: true } },
         exercises: {
           orderBy: { order: "asc" },
           include: {
@@ -117,6 +119,26 @@ export const workoutsRepository = {
       await tx.workoutExercise.update({ where: { id: current.id }, data: { order: neighbor.order } });
       await tx.workoutExercise.update({ where: { id: neighbor.id }, data: { order: current.order } });
       return "moved";
+    });
+  },
+
+  /**
+   * Fase 65: remove um exercício prescrito — antes só dava pra adicionar ou
+   * reordenar, nunca excluir. `SetLog` não tem `onDelete: Cascade` (mesmo
+   * motivo documentado em `deleteProgram` do domínio de programas), então
+   * apaga as séries registradas daquele exercício antes de apagar a
+   * prescrição em si, dentro da mesma transação.
+   */
+  async deleteExercise(workoutId: string, workoutExerciseId: string): Promise<"not_found" | "deleted"> {
+    return prisma.$transaction(async (tx) => {
+      const exercise = await tx.workoutExercise.findFirst({
+        where: { id: workoutExerciseId, workoutId },
+      });
+      if (!exercise) return "not_found";
+
+      await tx.setLog.deleteMany({ where: { workoutExerciseId } });
+      await tx.workoutExercise.delete({ where: { id: workoutExerciseId } });
+      return "deleted";
     });
   },
 };

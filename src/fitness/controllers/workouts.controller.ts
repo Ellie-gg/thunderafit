@@ -147,6 +147,22 @@ export async function moveExerciseHandler(
   }
 }
 
+export async function deleteExerciseHandler(
+  request: FastifyRequest<{ Params: { id: string; exerciseId: string } }>,
+  reply: FastifyReply
+) {
+  const personalId = (request as any).user.sub;
+  const { id, exerciseId } = request.params;
+
+  try {
+    const exercises = await workoutsService.deleteExercise(id, personalId, exerciseId);
+    return reply.status(200).send({ exercises });
+  } catch (err: any) {
+    const status = (err as any).statusCode ?? 500;
+    return reply.status(status).send({ error: err.message });
+  }
+}
+
 export async function getWorkoutHandler(
   request: FastifyRequest<{ Params: { id: string } }>,
   reply: FastifyReply

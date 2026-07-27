@@ -116,6 +116,26 @@ export const workoutsService = {
     return workoutsRepository.findExercisesOrdered(workoutId);
   },
 
+  // Fase 65: mesma checagem de posse de moveExercise/addExercise — só o
+  // Personal dono do treino pode remover um exercício prescrito.
+  async deleteExercise(workoutId: string, personalId: string, workoutExerciseId: string) {
+    const workout = await workoutsRepository.findById(workoutId);
+    if (!workout || workout.personalId !== personalId) {
+      const err = new Error("Treino não encontrado.");
+      (err as any).statusCode = 404;
+      throw err;
+    }
+
+    const result = await workoutsRepository.deleteExercise(workoutId, workoutExerciseId);
+    if (result === "not_found") {
+      const err = new Error("Exercício não encontrado neste treino.");
+      (err as any).statusCode = 404;
+      throw err;
+    }
+
+    return workoutsRepository.findExercisesOrdered(workoutId);
+  },
+
   async getWorkout(workoutId: string, userId: string, role: string | undefined, locale: Locale) {
     const workout = await workoutsRepository.findByIdWithExercises(workoutId);
     if (!workout) {
