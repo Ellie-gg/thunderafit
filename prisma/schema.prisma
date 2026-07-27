@@ -447,6 +447,9 @@ enum WorkoutTag {
   HIPERTROFIA
   DEFINICAO
   EXPRESS
+  INICIANTE
+  INTERMEDIARIO
+  AVANCADO
 }
 
 model Workout {
