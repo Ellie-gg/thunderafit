@@ -386,6 +386,12 @@ model WorkoutProgram {
   description    String?
   // Fase 55: i18n do nome — ver WorkoutProgramTranslation.
   translations   WorkoutProgramTranslation[]
+  // Fase 63: tags livres pra filtro rápido por chip no carrossel "Treinos
+  // Premium" (que hoje acumula muitos banners e prejudica a navegação) —
+  // só editável em templates `origin: SELF` (qualquer categoria) no admin;
+  // um template pode ter 0, 1 ou várias tags. Array nativo do Postgres, sem
+  // tabela de junção (poucas tags fixas, nunca crescem por input do admin).
+  tags           WorkoutTag[]  @default([])
 
   // Perf (triagem 2026-07-24): listByPersonal/listByAluno filtram por uma
   // dessas colunas + orderBy createdAt — nenhuma tinha índice antes.
@@ -430,6 +436,17 @@ enum SelfTemplateCategory {
   // Substitui o antigo card estático "Crie seu treino do zero" na tela do
   // aluno.
   PRONTOS
+}
+
+// Fase 63: tags de filtro rápido (chips) pro carrossel "Treinos Premium" —
+// muitos banners hoje prejudicam a navegação; o aluno filtra por chip antes
+// de rolar o carrossel inteiro. Fixas de propósito (poucas, curadas), não um
+// campo de texto livre.
+enum WorkoutTag {
+  FEMININO
+  HIPERTROFIA
+  DEFINICAO
+  EXPRESS
 }
 
 model Workout {

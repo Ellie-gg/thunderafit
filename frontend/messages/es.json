@@ -270,6 +270,14 @@
     "homeSectionSubtitle": "Sin equipo de gimnasio — entrenamientos pensados para hacer en casa.",
     "premiumSectionTitle": "Entrenamientos Premium",
     "premiumSectionSubtitle": "Programas exclusivos con curaduría especial.",
+    "premiumTagFilter": {
+      "TODOS": "Todos",
+      "FEMININO": "Femenino",
+      "HIPERTROFIA": "Hipertrofia",
+      "DEFINICAO": "Definición",
+      "EXPRESS": "Express"
+    },
+    "premiumTagFilterEmpty": "Aún no hay entrenamientos Premium con esa tag.",
     "premiumComingSoon": "Suscripción Premium próximamente — tu prueba gratis ya fue utilizada.",
     "premiumTrialPitch": "Desbloquea los entrenamientos Premium con 7 días gratis, sin compromiso.",
     "premiumStartTrial": "Iniciar prueba gratis de 7 días",
@@ -898,6 +906,13 @@
       "HOME": "Entrenamiento en Casa",
       "PREMIUM": "Entrenamientos Premium",
       "PRONTOS": "Entrenamientos Listos"
+    },
+    "tagsLabel": "Tags (filtro rápido)",
+    "tagOption": {
+      "FEMININO": "Femenino",
+      "HIPERTROFIA": "Hipertrofia",
+      "DEFINICAO": "Definición",
+      "EXPRESS": "Express"
     },
     "creating": "Creando...",
     "createTemplate": "Crear template",

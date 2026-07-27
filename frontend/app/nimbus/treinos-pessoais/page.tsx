@@ -11,6 +11,7 @@ import {
   addExerciseToAdminSelfSession,
   deleteAdminSelfTemplate,
   updateAdminSelfTemplate,
+  updateAdminSelfTemplateTags,
   updateAdminSelfSession,
 } from "@/lib/api/admin";
 import { orderFor, labelFor } from "@/lib/session-scheme";
@@ -23,9 +24,90 @@ import { Label } from "@/components/ui/label";
 import { QueryError } from "@/components/query-error";
 import { AddExerciseForm } from "@/components/add-exercise-form";
 import { TemplateBannerUpload } from "@/components/template-banner-upload";
-import type { SelfTemplateCategory, SessionScheme } from "@/lib/types";
+import type { SelfTemplateCategory, SessionScheme, WorkoutTag } from "@/lib/types";
 
 const CATEGORY_OPTIONS: SelfTemplateCategory[] = ["GERAL", "HOME", "PREMIUM", "PRONTOS"];
+
+// Fase 63: tags de filtro rápido (chips) — só fazem sentido em templates
+// origin: SELF (o carrossel "Treinos Premium" é do aluno).
+const TAG_OPTIONS: WorkoutTag[] = ["FEMININO", "HIPERTROFIA", "DEFINICAO", "EXPRESS"];
+
+function toggleTag(tags: WorkoutTag[], tag: WorkoutTag): WorkoutTag[] {
+  return tags.includes(tag) ? tags.filter((t) => t !== tag) : [...tags, tag];
+}
+
+/**
+ * Fase 63: checkboxes de tags (multi-seleção) — usado tanto no formulário de
+ * criação (estado local, salvo junto com o template logo após criar) quanto
+ * na edição de um template já existente (mutação própria, mesmo padrão de
+ * "salvo" que some sozinho de `NameTranslationEditor`).
+ */
+function TagCheckboxes({
+  tLabel,
+  selected,
+  onToggle,
+}: {
+  tLabel: (tag: WorkoutTag) => string;
+  selected: WorkoutTag[];
+  onToggle: (tag: WorkoutTag) => void;
+}) {
+  return (
+    <div className="flex flex-wrap gap-2">
+      {TAG_OPTIONS.map((tag) => (
+        <button
+          key={tag}
+          type="button"
+          aria-pressed={selected.includes(tag)}
+          onClick={() => onToggle(tag)}
+          className={
+            selected.includes(tag)
+              ? "rounded-full border border-accent bg-accent/10 px-3 py-1 text-xs font-semibold text-accent"
+              : "rounded-full border border-border px-3 py-1 text-xs text-muted hover:border-accent"
+          }
+        >
+          {tLabel(tag)}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function TemplateTagEditor({ programId, initialTags }: { programId: string; initialTags: WorkoutTag[] }) {
+  const t = useTranslations("nimbusTreinosPessoais");
+  const [tags, setTags] = useState<WorkoutTag[]>(initialTags);
+  const [saved, setSaved] = useState(false);
+
+  const mutation = useMutation({
+    mutationFn: () => updateAdminSelfTemplateTags(programId, tags),
+    onSuccess: () => {
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2000);
+    },
+  });
+
+  return (
+    <div className="flex flex-col gap-2">
+      <Label>{t("tagsLabel")}</Label>
+      <TagCheckboxes
+        tLabel={(tag) => t(`tagOption.${tag}`)}
+        selected={tags}
+        onToggle={(tag) => setTags((prev) => toggleTag(prev, tag))}
+      />
+      <div>
+        <Button
+          type="button"
+          variant="secondary"
+          size="sm"
+          disabled={mutation.isPending}
+          onClick={() => mutation.mutate()}
+        >
+          {mutation.isPending ? t("savingNames") : saved ? t("namesSaved") : t("saveNames")}
+        </Button>
+      </div>
+      {mutation.isError && <p className="text-xs text-danger">{t("saveNamesError")}</p>}
+    </div>
+  );
+}
 
 // Fase 62: mesma tela cura os 2 catálogos — "SELF" (aluno, "Meu treino
 // pessoal") e "PERSONAL_CATALOG" ("Templates Básico" do Personal, gratuito).
@@ -164,6 +246,7 @@ function TreinosPessoaisContent() {
   const [name, setName] = useState("");
   const [scheme, setScheme] = useState<SessionScheme>("LETTER");
   const [category, setCategory] = useState<SelfTemplateCategory>("GERAL");
+  const [newTags, setNewTags] = useState<WorkoutTag[]>([]);
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
   // Fase 34.5: a listagem só traz {id, letter, name} por sessão (sem
@@ -181,9 +264,18 @@ function TreinosPessoaisContent() {
   }
 
   const createMutation = useMutation({
-    mutationFn: () => createAdminSelfTemplate(name.trim(), scheme, category, origin),
+    mutationFn: async () => {
+      const created = await createAdminSelfTemplate(name.trim(), scheme, category, origin);
+      // Fase 63: tags só existem em SELF — atalho pra já sair marcado, sem
+      // precisar reabrir o template recém-criado pra editar de novo.
+      if (origin === "SELF" && newTags.length > 0) {
+        await updateAdminSelfTemplateTags(created.program.id, newTags);
+      }
+      return created;
+    },
     onSuccess: (data) => {
       setName("");
+      setNewTags([]);
       invalidate();
       setExpandedId(data.program.id);
     },
@@ -292,6 +384,18 @@ function TreinosPessoaisContent() {
               {createMutation.isPending ? t("creating") : t("createTemplate")}
             </Button>
           </form>
+          {/* Fase 63: tags são semântica só de SELF (filtro do carrossel
+              Premium do aluno) — some pra Templates Básico, igual category. */}
+          {origin === "SELF" && (
+            <div className="flex flex-col gap-1.5">
+              <Label>{t("tagsLabel")}</Label>
+              <TagCheckboxes
+                tLabel={(tag) => t(`tagOption.${tag}`)}
+                selected={newTags}
+                onToggle={(tag) => setNewTags((prev) => toggleTag(prev, tag))}
+              />
+            </div>
+          )}
           {createMutation.isError && (
             <p className="text-sm text-danger">{t("createError")}</p>
           )}
@@ -379,6 +483,14 @@ function TreinosPessoaisContent() {
                           initialDescriptionES={detailQuery.data.program.translationDescriptions?.ES}
                           onSave={(input) => updateAdminSelfTemplate(tpl.id, input).then(invalidate)}
                         />
+                        {origin === "SELF" && (
+                          <div className="mt-3 border-t border-border pt-3">
+                            <TemplateTagEditor
+                              programId={tpl.id}
+                              initialTags={detailQuery.data.program.tags}
+                            />
+                          </div>
+                        )}
                       </div>
                     )}
 
