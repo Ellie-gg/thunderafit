@@ -2,6 +2,7 @@ import { FastifyInstance, FastifyRequest, FastifyReply } from "fastify";
 import {
   registerHandler,
   loginHandler,
+  googleAuthHandler,
   refreshHandler,
   logoutHandler,
   protectedHandler,
@@ -21,6 +22,10 @@ export async function authRoutes(fastify: FastifyInstance) {
 
   // Login
   fastify.post("/api/auth/login", loginHandler);
+
+  // Fase 77: SSO Google — login se a conta já existir (vincula por e-mail
+  // verificado), ou pede `role` pra criar uma conta nova (needsRole: true).
+  fastify.post("/api/auth/google", googleAuthHandler);
 
   // Checagem de existência de e-mail (fluxo de auth unificado, Fase 24) —
   // pública, sem preHandler de auth.

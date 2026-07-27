@@ -25,6 +25,18 @@ variable "allowed_origin" {
   type        = string
 }
 
+variable "google_client_id" {
+  description = <<-EOT
+    Fase 77 — Client ID OAuth 2.0 ("Web application") do SSO Google, criado
+    em console.cloud.google.com/apis/credentials. NÃO é secreto (por isso é
+    uma variável normal, não um Secret Manager secret) — vira GOOGLE_CLIENT_ID
+    no backend (verificação do idToken) e NEXT_PUBLIC_GOOGLE_CLIENT_ID no
+    build do frontend (inicializa o botão "Entrar com o Google").
+  EOT
+  type        = string
+  default     = ""
+}
+
 variable "billing_account_id" {
   description = "ID da conta de billing, só necessário para o alerta de orçamento (budget.tf). Deixe em branco para pular."
   type        = string

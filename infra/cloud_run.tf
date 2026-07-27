@@ -86,6 +86,11 @@ resource "google_cloud_run_v2_service" "backend" {
         name  = "GCS_BUCKET_NAME"
         value = google_storage_bucket.exercise_media.name
       }
+      # Fase 77 — SSO Google: não é secreto, só valida a audience do idToken.
+      env {
+        name  = "GOOGLE_CLIENT_ID"
+        value = var.google_client_id
+      }
     }
   }
 
