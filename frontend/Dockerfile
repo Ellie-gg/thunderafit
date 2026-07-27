@@ -14,6 +14,11 @@ COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 # BACKEND_URL is read at request time by app/api/[...path]/route.ts, not at
 # build time — nothing backend-URL-related needs to be known here.
+# NEXT_PUBLIC_GOOGLE_CLIENT_ID (Fase 77) is the opposite: Next.js inlines
+# NEXT_PUBLIC_* vars into the client bundle AT BUILD TIME, so it must be a
+# build arg here, not a runtime env var on the Cloud Run service.
+ARG NEXT_PUBLIC_GOOGLE_CLIENT_ID
+ENV NEXT_PUBLIC_GOOGLE_CLIENT_ID=$NEXT_PUBLIC_GOOGLE_CLIENT_ID
 RUN npm run build
 
 FROM node:25-slim AS runner

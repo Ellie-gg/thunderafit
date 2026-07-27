@@ -8,6 +8,10 @@ process.env.DATABASE_URL =
   process.env.DATABASE_URL ??
   "postgresql://thunderafit:thunderafit_secret@localhost:5432/thunderafit_db?schema=public";
 
+// Fase 77 (SSO Google): OAuth2Client é mockado nos testes (ver
+// google-sso.test.ts) — o valor real só importa em produção.
+process.env.GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID ?? "test-google-client-id.apps.googleusercontent.com";
+
 // Fase 20 (billing): valores dummy de teste. A verificação de assinatura do
 // webhook é cripto local (HMAC) e funciona com qualquer segredo; chamadas à
 // API do Stripe (checkout/portal) são mockadas nos testes.

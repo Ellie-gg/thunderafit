@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useMutation } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
-import { checkEmailRequest, loginRequest, registerRequest } from "@/lib/api/auth";
+import { checkEmailRequest, loginRequest, registerRequest, googleAuthRequest } from "@/lib/api/auth";
 import { ApiError } from "@/lib/api/client";
 import { useAuthStore } from "@/lib/store/auth-store";
 import { dashboardPathForRole } from "@/lib/auth/redirect";
@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
+import { GoogleSignInButton } from "@/components/google-sign-in-button";
 import type { Role } from "@/lib/types";
 
 /**
@@ -112,6 +113,10 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
   const [signupRole, setSignupRole] = useState<SignupRole | null>(null);
+  // Fase 77 — SSO Google: quando preenchido, a tela de escolha de papel
+  // (signup-role, reaproveitada do cadastro tradicional) sabe que deve
+  // finalizar direto pelo Google em vez de seguir pro passo de nome/senha.
+  const [googleIdToken, setGoogleIdToken] = useState<string | null>(null);
 
   const checkEmailMutation = useMutation({
     mutationFn: () => checkEmailRequest(email.trim()),
@@ -137,12 +142,32 @@ export default function LoginPage() {
     },
   });
 
+  // Fase 77 — SSO Google: mesmo endpoint pros 2 casos. Sem `role`: login
+  // direto se a conta já existir (o clique no botão do Google já chama
+  // assim). Com `role`: finaliza uma conta nova (chamado a partir do passo
+  // signup-role, reaproveitado do cadastro tradicional).
+  const googleAuthMutation = useMutation({
+    mutationFn: (vars: { idToken: string; role?: Role }) => googleAuthRequest(vars.idToken, vars.role),
+    onSuccess: (data, vars) => {
+      if (data.needsRole) {
+        setEmail(data.email);
+        setGoogleIdToken(vars.idToken);
+        setStep("signup-role");
+        return;
+      }
+      setSession(data.user);
+      router.push(dashboardPathForRole(data.user.role));
+    },
+  });
+
   function backToEmail() {
     setStep("email");
     setPassword("");
     setName("");
     setSignupRole(null);
+    setGoogleIdToken(null);
     checkEmailMutation.reset();
+    googleAuthMutation.reset();
   }
 
   const emailLooksValid = /\S+@\S+\.\S+/.test(email);
@@ -201,6 +226,29 @@ export default function LoginPage() {
               {checkEmailMutation.isPending ? t("emailStep.submitting") : t("continue")}
             </Button>
           </form>
+
+          {/* Sem NEXT_PUBLIC_GOOGLE_CLIENT_ID configurado (ex: ambiente local
+              sem .env preenchido ainda), some com o divisor também — não
+              faz sentido mostrar "ou" sem nada embaixo. */}
+          {process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID && (
+            <>
+              <div className="my-5 flex items-center gap-3">
+                <div className="h-px flex-1 bg-border" />
+                <span className="text-xs text-muted">{t("orDivider")}</span>
+                <div className="h-px flex-1 bg-border" />
+              </div>
+
+              <GoogleSignInButton
+                onCredential={(idToken) => googleAuthMutation.mutate({ idToken })}
+              />
+
+              {googleAuthMutation.isError && (
+                <p className="mt-3 text-sm text-danger">
+                  {errorMessage(googleAuthMutation.error, t("connectionError"))}
+                </p>
+              )}
+            </>
+          )}
         </Card>
       )}
 
@@ -290,13 +338,28 @@ export default function LoginPage() {
             {signupRole ? t(`roles.${roleTranslationKey(signupRole)}.description`) : " "}
           </p>
 
+          {googleAuthMutation.isError && (
+            <p className="mb-3 text-sm text-danger">
+              {errorMessage(googleAuthMutation.error, t("connectionError"))}
+            </p>
+          )}
+
           <Button
             type="button"
             variant="accentSecondary"
-            disabled={!signupRole}
-            onClick={() => setStep("signup-details")}
+            disabled={!signupRole || googleAuthMutation.isPending}
+            onClick={() => {
+              // Fase 77: veio do botão do Google — já temos o idToken
+              // verificado, só falta o papel. Cria a conta direto, sem
+              // passar pelo passo de nome/senha (Google já dá o nome).
+              if (googleIdToken) {
+                googleAuthMutation.mutate({ idToken: googleIdToken, role: signupRole! });
+                return;
+              }
+              setStep("signup-details");
+            }}
           >
-            {t("continue")}
+            {googleAuthMutation.isPending ? t("loginStep.submitting") : t("continue")}
           </Button>
         </Card>
       )}

@@ -1,5 +1,6 @@
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
+import { OAuth2Client } from "google-auth-library";
 import { Role, Locale } from "@prisma/client";
 import { authRepository } from "../repository/auth.repository";
 import { relationsService } from "../../fitness/services/relations.service";
@@ -97,6 +98,14 @@ export async function login(input: LoginInput, ipAddress: string | null = null) 
     throw err;
   }
 
+  // Fase 77: conta criada via Google SSO nunca tem passwordHash — orienta em
+  // vez de deixar bcrypt.compare quebrar contra null.
+  if (!user.passwordHash) {
+    const err = new Error("Esta conta usa login com Google. Continue com o Google.");
+    (err as Error & { statusCode: number }).statusCode = 401;
+    throw err;
+  }
+
   const passwordMatch = await bcrypt.compare(input.password, user.passwordHash);
   if (!passwordMatch) {
     const err = new Error("Credenciais inválidas.");
@@ -125,6 +134,87 @@ export async function login(input: LoginInput, ipAddress: string | null = null) 
 
   const { passwordHash: _ph, refreshTokenHash: _rth, ...safeUser } = user;
   return { accessToken, refreshToken, user: safeUser };
+}
+
+const SELF_SERVICE_ROLES: Role[] = ["PERSONAL", "ALUNO", "NUTRICIONISTA"];
+
+/**
+ * Fase 77 — SSO Google. Fluxo (mesmo endpoint pros 2 casos, diferenciados
+ * pela presença de `role`):
+ *
+ * 1. Frontend manda só o `idToken` (Google Identity Services, botão "Entrar
+ *    com o Google"). Verificamos a assinatura/audience/expiração aqui — NUNCA
+ *    confiamos em claims decodificadas sem verificar (um idToken forjado
+ *    passaria despercebido).
+ * 2. Se já existe conta com esse e-mail: login direto (e-mail já é
+ *    verificado pelo próprio Google, então vincular automaticamente por
+ *    e-mail é seguro — mesmo padrão adotado por Google/Microsoft/etc.).
+ *    Vincula `googleId` na conta se ainda não tinha (1ª vez entrando via
+ *    Google numa conta criada por senha).
+ * 3. Se NÃO existe conta: não dá pra criar ainda — falta o `role`
+ *    (Google não informa isso). Devolve `{ needsRole: true }` sem criar
+ *    nada; o frontend mostra a mesma tela de escolha de papel do cadastro
+ *    tradicional e chama este endpoint de novo, agora com `role` preenchido.
+ * 4. Com `role` presente e conta ainda não existente: cria a conta
+ *    (passwordHash null — só entra por Google daqui pra frente, a menos que
+ *    defina uma senha depois por um fluxo futuro de "adicionar senha").
+ */
+export async function loginOrRegisterWithGoogle(idToken: string, role?: Role) {
+  const clientId = getEnv("GOOGLE_CLIENT_ID");
+  const client = new OAuth2Client(clientId);
+
+  let payload;
+  try {
+    const ticket = await client.verifyIdToken({ idToken, audience: clientId });
+    payload = ticket.getPayload();
+  } catch {
+    const err = new Error("Token do Google inválido ou expirado.");
+    (err as Error & { statusCode: number }).statusCode = 401;
+    throw err;
+  }
+
+  if (!payload?.email || !payload.email_verified) {
+    const err = new Error("E-mail do Google não verificado.");
+    (err as Error & { statusCode: number }).statusCode = 401;
+    throw err;
+  }
+
+  const { email, sub: googleId, name } = payload;
+  let user = await authRepository.findByEmail(email);
+
+  if (!user) {
+    if (!role) {
+      return { needsRole: true as const, email };
+    }
+    if (!SELF_SERVICE_ROLES.includes(role)) {
+      const err = new Error("role deve ser PERSONAL, ALUNO ou NUTRICIONISTA.");
+      (err as Error & { statusCode: number }).statusCode = 400;
+      throw err;
+    }
+    user = await authRepository.createUser({
+      email,
+      passwordHash: null,
+      role,
+      name: name?.trim() || null,
+      googleId,
+    });
+  } else if (!user.googleId) {
+    user = await authRepository.linkGoogleId(user.id, googleId);
+  }
+
+  const jwtPayload: JwtPayload = { sub: user.id, email: user.email, role: user.role };
+  const { accessToken, refreshToken } = generateTokens(jwtPayload);
+
+  const refreshTokenHash = await bcrypt.hash(refreshToken, BCRYPT_SALT_ROUNDS);
+  await authRepository.updateRefreshTokenHash(user.id, refreshTokenHash);
+  await authRepository.recordLogin(user.id, null);
+
+  if (user.role === "ALUNO") {
+    await relationsService.checkAndFireDueReminders(user.id);
+  }
+
+  const { passwordHash: _ph, refreshTokenHash: _rth, ...safeUser } = user;
+  return { needsRole: false as const, accessToken, refreshToken, user: safeUser };
 }
 
 /**

@@ -34,7 +34,15 @@ datasource db {
 model User {
   id               String          @id @default(uuid())
   email            String          @unique
-  passwordHash     String
+  // Fase 77 (SSO Google): nullable — uma conta criada via Google nunca tem
+  // senha própria (login() detecta isso e orienta o usuário a continuar com
+  // o Google em vez de tentar bcrypt.compare contra null). Contas
+  // tradicionais continuam sempre com hash real.
+  passwordHash     String?
+  // Fase 77: sub do Google (estável mesmo se o e-mail mudar) — usado pra
+  // vincular a conta na volta; null em toda conta criada pelo cadastro
+  // tradicional até a primeira vez que ela entrar via Google.
+  googleId         String?         @unique
   role             Role
   refreshTokenHash String?
   // Fase 39 — cadastro mínimo de nome: capturado no cadastro a partir de

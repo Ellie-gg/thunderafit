@@ -11,7 +11,15 @@ admin bootstrap, or password reset — those live in `src/admin`.
 ## Main entities (Prisma)
 
 - `User` — the only model this domain writes to directly.
-  - `passwordHash` — bcrypt, 12 salt rounds. Never returned by any handler.
+  - `passwordHash` — bcrypt, 12 salt rounds, **nullable since Fase 77**: an
+    account created via Google SSO never has one. `login()` checks for
+    `null` first and returns a friendly "use Google instead" error rather
+    than calling `bcrypt.compare` against `null`.
+  - `googleId` — nullable, `@unique`, Fase 77. The Google `sub` claim
+    (stable identity, unlike email). `null` until the first Google
+    sign-in — set either at account creation (new Google-only account) or
+    linked onto an existing password account the first time it signs in
+    via Google.
   - `refreshTokenHash` — bcrypt hash of the *current* refresh token, or
     `null` (logged out / never logged in / invalidated). Never the raw
     token.
@@ -50,6 +58,22 @@ admin bootstrap, or password reset — those live in `src/admin`.
   never the user record, role, or id — it's a public, unauthenticated
   endpoint used by the unified signup/login flow, keep it that way to avoid
   turning it into an account-enumeration/info-leak endpoint.
+- **Fase 77 — Google SSO auto-links by e-mail, on purpose.** If a Google
+  idToken's `email` matches an existing password account, `POST
+  /api/auth/google` logs into THAT account (and sets `googleId` on it) —
+  no separate confirmation step. This is safe specifically because Google
+  itself verified `email_verified` before issuing the token (an unverified
+  email is rejected with 401 before any lookup happens) — same trust model
+  every major SSO provider uses. Don't extend this same "trust the
+  provider's verified email" auto-link logic to a lower-trust identity
+  provider without re-evaluating this assumption.
+- Google SSO reuses `SELF_SERVICE_ROLES` (`PERSONAL|ALUNO|NUTRICIONISTA`) —
+  same restriction as traditional `/register`, `ADMIN` still can't be
+  self-created through either path. The frontend's role-picker step
+  (`signup-role`) only ever offers `ALUNO`/`PERSONAL` as chips today
+  (`SignupRole` type in `frontend/app/login/page.tsx`) — `NUTRICIONISTA` is
+  accepted server-side but has no UI entry point via either signup path,
+  pre-existing behavior unrelated to Fase 77.
 
 ## Handle with care
 
@@ -83,7 +107,31 @@ admin bootstrap, or password reset — those live in `src/admin`.
   a call-throttle, not a failure counter; don't assume a "success" concept
   applies there.
 - JWT secrets (`JWT_SECRET`, `JWT_REFRESH_SECRET`) are required env vars —
-  `getEnv()` throws immediately if missing, no silent fallback.
+  `getEnv()` throws immediately if missing, no silent fallback. Same for
+  `GOOGLE_CLIENT_ID` (Fase 77) — required by `loginOrRegisterWithGoogle`,
+  same `getEnv()` pattern.
+- **`POST /api/auth/google` is a single endpoint serving 2 distinct calls**,
+  told apart by whether `role` is present in the body — not 2 routes. 1st
+  call (no `role`): verify idToken, login if the account exists, else
+  return `{ needsRole: true, email }` WITHOUT creating anything. 2nd call
+  (idToken + role, only reached if the 1st said `needsRole: true`): create
+  the account. The frontend re-sends the SAME idToken on the 2nd call
+  (`googleIdToken` state in `login/page.tsx`) — the backend re-verifies it
+  from scratch both times, it never trusts a client-echoed payload.
+- Google Identity Services (the "Entrar com o Google" button,
+  `frontend/components/google-sign-in-button.tsx`) is loaded via a plain
+  `<script>` tag, not an npm package — avoids a new client dependency for
+  what's fundamentally just `window.google.accounts.id.initialize/
+  renderButton`. If `NEXT_PUBLIC_GOOGLE_CLIENT_ID` isn't set, the button
+  (and its "ou"/divider on the login page) renders nothing — never throws —
+  so a local dev environment without Google credentials configured still
+  has a fully working traditional login/signup flow.
+- `NEXT_PUBLIC_GOOGLE_CLIENT_ID` must be present at **Next.js build time**
+  (baked into the client bundle), not just at Cloud Run runtime — wired as
+  a Docker `--build-arg` in `infra/cloudbuild.tf`'s frontend trigger, sourced
+  from the same `var.google_client_id` Terraform variable the backend's
+  runtime `GOOGLE_CLIENT_ID` env var uses. Changing the Client ID requires a
+  new frontend build, not just a Cloud Run env var update.
 
 ## Current state
 
@@ -91,6 +139,10 @@ Live endpoints (all under `/api/auth`):
 - `POST /register` — public, creates `PERSONAL|ALUNO|NUTRICIONISTA`.
 - `POST /login` — public, rate-limited, sets httpOnly cookies + returns
   tokens in body (for non-browser clients).
+- `POST /google` — public, Fase 77 SSO Google (see "Handle with care" above
+  for the 2-call shape). Not rate-limited like `/login`/`/check-email` —
+  the real anti-abuse control is Google's own idToken verification/expiry,
+  not this domain's IP+email limiter.
 - `POST /check-email` — public, rate-limited, `{ exists }` only.
 - `POST /refresh` — public, reads refresh token from body or cookie, rotates
   tokens.

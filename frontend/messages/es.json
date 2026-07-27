@@ -97,6 +97,7 @@
   "login": {
     "connectionError": "No se pudo conectar con el servidor.",
     "continue": "Continuar",
+    "orDivider": "o",
     "backToEmail": "← cambiar correo",
     "backToRole": "← cambiar perfil",
     "passwordField": {
