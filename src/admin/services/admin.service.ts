@@ -39,6 +39,11 @@ const TEMPLATE_BANNER_DATA_URL_REGEX = /^data:image\/(png|jpeg|webp);base64,[A-Z
 const VALID_SELF_TEMPLATE_CATEGORIES = ["GERAL", "HOME", "PREMIUM", "PRONTOS"] as const;
 type AdminSelfTemplateCategory = (typeof VALID_SELF_TEMPLATE_CATEGORIES)[number];
 
+// Fase 63: tags de filtro rápido (chips) — só editáveis em templates
+// `origin: SELF` (qualquer categoria), nunca em PERSONAL_CATALOG.
+const VALID_WORKOUT_TAGS = ["FEMININO", "HIPERTROFIA", "DEFINICAO", "EXPRESS"] as const;
+type AdminWorkoutTag = (typeof VALID_WORKOUT_TAGS)[number];
+
 // Fase 33: CRUD do catálogo de exercícios.
 const VALID_DIFFICULTY_LEVELS = ["INICIANTE", "INTERMEDIARIO", "AVANCADO"] as const;
 type DifficultyLevel = (typeof VALID_DIFFICULTY_LEVELS)[number];
@@ -738,6 +743,33 @@ export const adminService = {
 
     const url = await uploadTemplateBanner(buffer, contentType, extension);
     return adminRepository.updateSelfTemplateBanner(programId, url);
+  },
+
+  /**
+   * Fase 63: tags de filtro rápido (chips) do carrossel "Treinos Premium" —
+   * só faz sentido em templates `origin: SELF` (curados no aluno); um
+   * PERSONAL_CATALOG (Templates Básico) rejeita com 400 em vez de gravar
+   * silenciosamente um campo que nunca é lido nesse origin.
+   */
+  async updateSelfTemplateTags(programId: string, tags: string[]) {
+    const template = await adminRepository.findSelfTemplateWithSessions(programId);
+    if (!template) {
+      const err = new Error("Template não encontrado.");
+      (err as any).statusCode = 404;
+      throw err;
+    }
+    if (template.origin !== "SELF") {
+      const err = new Error("Tags só podem ser definidas em templates do aluno (Meu treino pessoal).");
+      (err as any).statusCode = 400;
+      throw err;
+    }
+    const invalid = tags.filter((t) => !VALID_WORKOUT_TAGS.includes(t as AdminWorkoutTag));
+    if (invalid.length > 0) {
+      const err = new Error(`Tag(s) inválida(s): ${invalid.join(", ")}.`);
+      (err as any).statusCode = 400;
+      throw err;
+    }
+    return adminRepository.updateSelfTemplateTags(programId, tags as AdminWorkoutTag[]);
   },
 
   async addSessionToSelfTemplate(programId: string, name: string | undefined, letter: string) {

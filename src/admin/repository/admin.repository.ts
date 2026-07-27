@@ -1,4 +1,5 @@
 import prisma from "../../lib/prisma";
+import { WorkoutTag } from "@prisma/client";
 
 export const adminRepository = {
   async countUsersByRole() {
@@ -273,6 +274,16 @@ export const adminRepository = {
     return prisma.workoutProgram.update({
       where: { id },
       data: { bannerImageUrl },
+    });
+  },
+
+  // Fase 63: tags de filtro rápido (chips) — sempre substitui a lista
+  // inteira (nunca soma/subtrai uma tag por vez), mesmo contrato simples de
+  // "manda o estado final" já usado pelo formulário de admin.
+  async updateSelfTemplateTags(id: string, tags: WorkoutTag[]) {
+    return prisma.workoutProgram.update({
+      where: { id },
+      data: { tags },
     });
   },
 

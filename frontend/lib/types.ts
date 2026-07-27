@@ -126,6 +126,10 @@ export type WorkoutProgramOrigin = "PERSONAL" | "SELF" | "PERSONAL_CATALOG";
 // de sempre (default de todo programa não-SELF também, sem uso ali).
 export type SelfTemplateCategory = "GERAL" | "HOME" | "PREMIUM" | "PRONTOS";
 
+// Fase 63: tags de filtro rápido (chips) do carrossel "Treinos Premium" —
+// só editáveis em templates origin: SELF (qualquer categoria).
+export type WorkoutTag = "FEMININO" | "HIPERTROFIA" | "DEFINICAO" | "EXPRESS";
+
 export interface WorkoutProgram {
   id: string;
   personalId: string | null;
@@ -147,6 +151,8 @@ export interface WorkoutProgram {
   translationDescriptions?: { EN?: string; ES?: string };
   /** Fase 62: só presente em GET /api/workout-programs/personal-catalog. */
   tier?: "BASICO" | "PREMIUM";
+  /** Fase 63: filtro rápido por chip — só populado em templates origin: SELF. */
+  tags: WorkoutTag[];
 }
 
 export interface LoggedExercise {

@@ -18,6 +18,7 @@ import type {
   Workout,
   WorkoutExercise,
   WorkoutProgram,
+  WorkoutTag,
 } from "../types";
 
 export function getAdminOverview() {
@@ -137,6 +138,15 @@ export function uploadAdminSelfTemplateBanner(programId: string, bannerDataUrl: 
   return apiFetch<{ program: WorkoutProgram }>(`/api/admin/self-templates/${programId}/banner`, {
     method: "PUT",
     body: { bannerDataUrl },
+  });
+}
+
+// Fase 63: tags de filtro rápido (chips) — só templates origin: SELF;
+// substitui a lista inteira (nunca soma/subtrai uma tag por vez).
+export function updateAdminSelfTemplateTags(programId: string, tags: WorkoutTag[]) {
+  return apiFetch<{ program: WorkoutProgram }>(`/api/admin/self-templates/${programId}/tags`, {
+    method: "PUT",
+    body: { tags },
   });
 }
 

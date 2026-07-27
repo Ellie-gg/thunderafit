@@ -240,6 +240,19 @@ export async function uploadSelfTemplateBannerHandler(
   }
 }
 
+export async function updateSelfTemplateTagsHandler(
+  request: FastifyRequest<{ Params: { id: string }; Body: { tags?: string[] } }>,
+  reply: FastifyReply
+) {
+  try {
+    assertAdmin(request);
+    const program = await adminService.updateSelfTemplateTags(request.params.id, request.body.tags ?? []);
+    return reply.status(200).send({ program });
+  } catch (err: any) {
+    return handleError(err, reply);
+  }
+}
+
 export async function updateSelfTemplateHandler(
   request: FastifyRequest<{
     Params: { id: string };

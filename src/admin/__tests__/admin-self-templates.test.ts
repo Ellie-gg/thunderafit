@@ -551,4 +551,79 @@ describe("Fase 62 — mesma tela de admin também cura templates PERSONAL_CATALO
       .send({ letter: "A" });
     expect(s.status).toBe(201);
   });
+
+  it("PUT .../tags rejeita um template PERSONAL_CATALOG (400) — tags só fazem sentido em SELF", async () => {
+    const r = await supertest(server.server)
+      .put(`/api/admin/self-templates/${catalogTemplateId}/tags`)
+      .set("Authorization", `Bearer ${adminToken}`)
+      .send({ tags: ["EXPRESS"] });
+    expect(r.status).toBe(400);
+  });
+});
+
+describe("Fase 63 — tags de filtro rápido (chips) em templates SELF", () => {
+  let taggedTemplateId: string;
+
+  it("ADMIN define múltiplas tags num template SELF", async () => {
+    const created = await supertest(server.server)
+      .post("/api/admin/self-templates")
+      .set("Authorization", `Bearer ${adminToken}`)
+      .send({ name: "Fase 63 — Treino com Tags" });
+    taggedTemplateId = created.body.program.id;
+    expect(created.body.program.tags).toEqual([]);
+
+    const r = await supertest(server.server)
+      .put(`/api/admin/self-templates/${taggedTemplateId}/tags`)
+      .set("Authorization", `Bearer ${adminToken}`)
+      .send({ tags: ["FEMININO", "HIPERTROFIA"] });
+    expect(r.status).toBe(200);
+    expect(r.body.program.tags.sort()).toEqual(["FEMININO", "HIPERTROFIA"]);
+  });
+
+  it("substituir as tags troca a lista inteira (não soma)", async () => {
+    const r = await supertest(server.server)
+      .put(`/api/admin/self-templates/${taggedTemplateId}/tags`)
+      .set("Authorization", `Bearer ${adminToken}`)
+      .send({ tags: ["EXPRESS"] });
+    expect(r.status).toBe(200);
+    expect(r.body.program.tags).toEqual(["EXPRESS"]);
+  });
+
+  it("lista vazia limpa todas as tags", async () => {
+    const r = await supertest(server.server)
+      .put(`/api/admin/self-templates/${taggedTemplateId}/tags`)
+      .set("Authorization", `Bearer ${adminToken}`)
+      .send({ tags: [] });
+    expect(r.status).toBe(200);
+    expect(r.body.program.tags).toEqual([]);
+  });
+
+  it("rejeita uma tag inválida (400)", async () => {
+    const r = await supertest(server.server)
+      .put(`/api/admin/self-templates/${taggedTemplateId}/tags`)
+      .set("Authorization", `Bearer ${adminToken}`)
+      .send({ tags: ["NAO_EXISTE"] });
+    expect(r.status).toBe(400);
+  });
+
+  it("GET /api/workout-programs/self-templates (catálogo do aluno) devolve as tags do template", async () => {
+    await supertest(server.server)
+      .put(`/api/admin/self-templates/${taggedTemplateId}/tags`)
+      .set("Authorization", `Bearer ${adminToken}`)
+      .send({ tags: ["DEFINICAO"] });
+
+    const r = await supertest(server.server)
+      .get("/api/workout-programs/self-templates")
+      .set("Authorization", `Bearer ${alunoToken}`);
+    const tpl = r.body.programs.find((p: any) => p.id === taggedTemplateId);
+    expect(tpl.tags).toEqual(["DEFINICAO"]);
+  });
+
+  it("PERSONAL não pode definir tags (403)", async () => {
+    const r = await supertest(server.server)
+      .put(`/api/admin/self-templates/${taggedTemplateId}/tags`)
+      .set("Authorization", `Bearer ${personalToken}`)
+      .send({ tags: ["EXPRESS"] });
+    expect(r.status).toBe(403);
+  });
 });
