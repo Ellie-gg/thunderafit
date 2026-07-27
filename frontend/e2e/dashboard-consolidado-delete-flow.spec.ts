@@ -80,7 +80,7 @@ test("Personal exclui um template com confirmação — some da lista", async ({
   await loginViaUI(page, personalEmail, password);
   await expect(page).toHaveURL(/\/personal\/dashboard$/);
 
-  await page.goto("/personal/programas");
+  await page.goto("/personal/programas?criar=1");
   await page.locator("#name").fill(programName);
   await page.getByRole("button", { name: "Criar programa" }).click();
   await expect(page.getByRole("heading", { name: programName })).toBeVisible({ timeout: 30000 });
