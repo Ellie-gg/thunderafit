@@ -17,3 +17,9 @@ no cadastro do Aluno e personal deverá incluir país estado cidade
 -----------------------------------------------------------------
 
 rate limit
+
+
+--------------------------------------
+psql "$DATABASE_URL" -c 'SELECT name FROM "Exercise" ORDER BY name;'
+psql "$DATABASE_URL" -c "SELECT name FROM \"ExerciseTranslation\" WHERE locale = 'EN' ORDER BY name;"
+psql "$DATABASE_URL" -c "SELECT name FROM \"ExerciseTranslation\" WHERE locale = 'ES' ORDER BY name;"
