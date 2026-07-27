@@ -232,13 +232,25 @@ function ProgramasPersonalContent() {
           <SelfTemplateCarousel
             templates={premiumTemplates}
             locked={!isPlus}
-            onSelect={setPreviewTemplate}
+            onSelect={(tpl) => {
+              // Sem plano Plus, nem abre o preview — vai direto pra tela de
+              // compra (mesmo comportamento do cadeado do aluno gratuito:
+              // clicar num template pago não deixa ver/tentar aplicar antes
+              // de resolver o acesso). `?from=templates` deixa a tela de
+              // upgrade destacar especificamente qual plano libera os
+              // templates, em vez do texto genérico de sempre.
+              if (!isPlus) {
+                router.push("/personal/upgrade?from=templates");
+                return;
+              }
+              setPreviewTemplate(tpl);
+            }}
           />
           {!isPlus && premiumTemplates.length > 0 && (
             <Card className="flex flex-col gap-2">
               <p className="text-sm text-muted">{t("premiumUpgradePitch")}</p>
               <Button asChild variant="secondary">
-                <Link href="/personal/upgrade">{t("premiumUpgradeButton")}</Link>
+                <Link href="/personal/upgrade?from=templates">{t("premiumUpgradeButton")}</Link>
               </Button>
             </Card>
           )}

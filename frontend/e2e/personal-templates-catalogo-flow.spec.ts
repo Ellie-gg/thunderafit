@@ -153,6 +153,23 @@ test("Templates de treino: aplica um Básico direto a um aluno; Premium fica blo
     timeout: 15000,
   });
 
+  // --- Fase 64: clicar num template Premium bloqueado redireciona pra
+  // compra do plano, com aviso específico de qual plano libera ---
+  const premiumCatalog = await backendJson(
+    "/api/workout-programs/personal-catalog",
+    null,
+    personalLogin.accessToken,
+    "GET"
+  );
+  const premiumTemplateName = premiumCatalog.programs.find(
+    (p: { tier: string }) => p.tier === "PREMIUM"
+  ).name;
+  await page.getByText(premiumTemplateName).first().click();
+  await expect(page).toHaveURL(/\/personal\/upgrade\?from=templates$/);
+  await expect(
+    page.getByText("Templates Premium são exclusivos do plano Plus")
+  ).toBeVisible({ timeout: 15000 });
+
   // --- Admin concede Plus ao Personal → Premium libera ---
   await fetch(`${BACKEND_URL}/api/admin/users/${personalReg.user.id}/premium`, {
     method: "PUT",
@@ -163,8 +180,15 @@ test("Templates de treino: aplica um Básico direto a um aluno; Premium fica blo
     body: JSON.stringify({ active: true }),
   });
 
-  await page.reload();
+  await page.goto("/personal/programas");
   await expect(page.getByText("Assine o plano Plus para prescrever estes templates")).toHaveCount(0, {
     timeout: 15000,
   });
+
+  // Com Plus, clicar num template Premium agora abre o preview (não redireciona).
+  await page.getByText(premiumTemplateName).first().click();
+  await expect(page.getByRole("button", { name: "Aplicar este treino" })).toBeVisible({
+    timeout: 15000,
+  });
+  await expect(page).toHaveURL(/\/personal\/programas$/);
 });

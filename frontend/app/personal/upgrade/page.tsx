@@ -44,7 +44,7 @@ function TierCard({
     },
     PLUS: {
       nome: "Plus",
-      beneficios: [t("tierPlusBeneficio1"), t("tierPlusBeneficio2")],
+      beneficios: [t("tierPlusBeneficio1"), t("tierPlusBeneficio2"), t("tierPlusBeneficio3")],
       destaque: true,
     },
   };
@@ -127,6 +127,11 @@ function UpgradeContent() {
   const searchParams = useSearchParams();
   const status = searchParams.get("status"); // success | cancel (retorno do Stripe)
 
+  // Fase 64: `?from=templates` chega de um clique num template Premium
+  // bloqueado em /personal/programas — destaca especificamente qual plano
+  // libera o acesso, em vez do texto genérico de sempre.
+  const from = searchParams.get("from");
+
   const statusQuery = useQuery({ queryKey: ["billing-status"], queryFn: getBillingStatus });
 
   const checkoutMutation = useMutation({
@@ -178,6 +183,12 @@ function UpgradeContent() {
         {status === "cancel" && (
           <Card>
             <p className="text-sm text-muted">{t("checkoutCancelado")}</p>
+          </Card>
+        )}
+
+        {from === "templates" && tier !== "PLUS" && (
+          <Card style={{ borderTopWidth: "4px", borderTopColor: "var(--accent)" }}>
+            <p className="text-sm text-foreground">{t("avisoTemplatesPremium")}</p>
           </Card>
         )}
 
