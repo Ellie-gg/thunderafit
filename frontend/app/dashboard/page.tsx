@@ -50,17 +50,26 @@ function NextSessionCard({ program }: { program: WorkoutProgram }) {
 
   return (
     <Card className="flex flex-col gap-4 border-accent/40">
-      <div className="flex items-center justify-between">
-        <span className="text-xs font-semibold uppercase tracking-wide text-accent-secondary">
-          {program.name}
-        </span>
-        <span className="font-mono-nums text-xs text-muted">
+      <div className="flex items-center justify-between gap-2">
+        <Link
+          href={`/programas/${program.id}`}
+          className="truncate text-xs font-semibold uppercase tracking-wide text-accent-secondary hover:underline"
+        >
+          {program.name} →
+        </Link>
+        <span className="shrink-0 font-mono-nums text-xs text-muted">
           {t("setsCount", { done: doneSets, total: totalSets })}
         </span>
       </div>
-      <h2 className="font-display text-xl font-bold">
-        {labelFor(program.sessionScheme, nextSession.letter)} — {nextSession.name}
-      </h2>
+      {/* Fase 61: letra grande do dia/treino + nome da sessão do dia (antes o
+          h2 repetia "letra — nome do programa"; agora o nome do PROGRAMA vira
+          o link acima, e aqui só entra letra + nome do treino do dia). */}
+      <div className="flex flex-col gap-0.5 sm:flex-row sm:items-baseline sm:gap-3">
+        <span className="font-display text-4xl font-black leading-none sm:text-5xl">
+          {labelFor(program.sessionScheme, nextSession.letter)}
+        </span>
+        <span className="font-display text-lg font-bold text-foreground/85">{nextSession.name}</span>
+      </div>
       <p className="text-xs text-muted">
         {t("exerciseCount", { count: nextExercises.length })}
         {estimatedMinutes > 0 && t("estimatedMinutesSuffix", { minutes: estimatedMinutes })}
