@@ -1,9 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   listWorkoutPrograms,
@@ -25,12 +25,20 @@ import { QueryError } from "@/components/query-error";
 import { DeleteProgramButton } from "@/components/delete-program-button";
 import { SelfTemplateCarousel } from "@/components/self-template-carousel";
 import { TemplatePreviewDialog } from "@/components/template-preview-dialog";
+import { GenerateWorkoutModal } from "@/components/generate-workout-modal";
 
 function ProgramasPersonalContent() {
   const t = useTranslations("personalProgramasList");
   const tCommon = useTranslations("common");
   const router = useRouter();
+  const searchParams = useSearchParams();
   const queryClient = useQueryClient();
+  // Fase 66: "Explorar Templates" do dashboard já chega aqui mostrando as
+  // listas; "+ Criar treino do zero" chega com `?criar=1` pra abrir direto o
+  // formulário, que agora vive escondido atrás de um botão em vez de sempre
+  // visível no topo da tela.
+  const [showCreateForm, setShowCreateForm] = useState(searchParams.get("criar") === "1");
+  const [generatorOpen, setGeneratorOpen] = useState(false);
   const programsQuery = useQuery({
     queryKey: ["workout-programs", "personal"],
     queryFn: () => listWorkoutPrograms(),
@@ -83,91 +91,6 @@ function ProgramasPersonalContent() {
       <AppHeader />
       <main className="flex flex-1 flex-col gap-6 px-6 py-8">
         <h1 className="font-display text-2xl font-bold tracking-tight">{t("title")}</h1>
-
-        <Card className="flex flex-col gap-3">
-          <h2 className="font-display text-lg font-bold">{t("newProgramTitle")}</h2>
-          <p className="text-xs text-muted">{t("newProgramDescription")}</p>
-          <form
-            className="flex flex-col gap-3"
-            onSubmit={(e) => {
-              e.preventDefault();
-              if (name.trim()) createMutation.mutate();
-            }}
-          >
-            <div className="flex flex-col gap-1.5">
-              <Label htmlFor="name">{t("programNameLabel")}</Label>
-              <Input
-                id="name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder={t("programNamePlaceholder")}
-              />
-            </div>
-
-            <div className="flex flex-col gap-1.5">
-              <Label>{t("sessionNamingLabel")}</Label>
-              <div className="flex gap-2">
-                <button
-                  type="button"
-                  onClick={() => setSessionScheme("LETTER")}
-                  aria-pressed={sessionScheme === "LETTER"}
-                  className={
-                    sessionScheme === "LETTER"
-                      ? "flex-1 rounded-md border border-accent bg-accent/10 px-3 py-2 text-sm font-semibold text-accent"
-                      : "flex-1 rounded-md border border-border px-3 py-2 text-sm text-muted hover:border-accent"
-                  }
-                >
-                  {t("letterScheme")}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setSessionScheme("WEEKDAY")}
-                  aria-pressed={sessionScheme === "WEEKDAY"}
-                  className={
-                    sessionScheme === "WEEKDAY"
-                      ? "flex-1 rounded-md border border-accent bg-accent/10 px-3 py-2 text-sm font-semibold text-accent"
-                      : "flex-1 rounded-md border border-border px-3 py-2 text-sm text-muted hover:border-accent"
-                  }
-                >
-                  {t("weekdayScheme")}
-                </button>
-              </div>
-              <p className="text-xs text-muted">
-                {sessionScheme === "WEEKDAY" ? t("upTo7Sessions") : t("upTo5Sessions")}{" "}
-                {t("chooseHowMany")}
-              </p>
-            </div>
-
-            <div className="flex flex-col gap-1.5">
-              <Label htmlFor="targetAluno">{t("targetAlunoLabel")}</Label>
-              <select
-                id="targetAluno"
-                value={targetAlunoId}
-                onChange={(e) => setTargetAlunoId(e.target.value)}
-                className="h-11 rounded-md border border-border bg-surface px-3.5 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
-              >
-                <option value="">{t("pureTemplateOption")}</option>
-                {relationsQuery.data?.relations.map((r) => (
-                  <option key={r.id} value={r.id}>
-                    {r.email}
-                  </option>
-                ))}
-              </select>
-              <p className="text-xs text-muted">{t("targetAlunoHint")}</p>
-            </div>
-
-            {createMutation.isError && (
-              <p className="text-sm text-danger">
-                {createMutation.error instanceof ApiError
-                  ? createMutation.error.message
-                  : t("createProgramError")}
-              </p>
-            )}
-            <Button type="submit" disabled={createMutation.isPending || !name.trim()}>
-              {createMutation.isPending ? t("creating") : t("createProgram")}
-            </Button>
-          </form>
-        </Card>
 
         {programsQuery.isLoading && <p className="text-sm text-muted">{tCommon("loading")}</p>}
         {programsQuery.isError && (
@@ -255,7 +178,112 @@ function ProgramasPersonalContent() {
             </Card>
           )}
         </section>
+
+        {/* Fase 66: "Montagem Inteligente" saiu do dashboard (que ficou
+            focado só em "Explorar Templates"/"Criar treino do zero") e mora
+            aqui agora, junto do formulário manual — os 2 jeitos de criar um
+            template novo, lado a lado. O formulário fica escondido atrás de
+            "+ Criar template" em vez de sempre aberto no topo da tela. */}
+        <Card className="flex flex-col gap-3">
+          <h2 className="font-display text-lg font-bold">{t("createNewTitle")}</h2>
+          <div className="flex flex-wrap gap-2">
+            <Button variant="secondary" onClick={() => setGeneratorOpen(true)}>
+              {t("smartGenerator")}
+            </Button>
+            <Button
+              variant={showCreateForm ? "secondary" : "default"}
+              onClick={() => setShowCreateForm((v) => !v)}
+            >
+              {showCreateForm ? t("cancelCreate") : t("createTemplateButton")}
+            </Button>
+          </div>
+
+          {showCreateForm && (
+            <form
+              className="flex flex-col gap-3 border-t border-border pt-3"
+              onSubmit={(e) => {
+                e.preventDefault();
+                if (name.trim()) createMutation.mutate();
+              }}
+            >
+              <div className="flex flex-col gap-1.5">
+                <Label htmlFor="name">{t("programNameLabel")}</Label>
+                <Input
+                  id="name"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder={t("programNamePlaceholder")}
+                />
+              </div>
+
+              <div className="flex flex-col gap-1.5">
+                <Label>{t("sessionNamingLabel")}</Label>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setSessionScheme("LETTER")}
+                    aria-pressed={sessionScheme === "LETTER"}
+                    className={
+                      sessionScheme === "LETTER"
+                        ? "flex-1 rounded-md border border-accent bg-accent/10 px-3 py-2 text-sm font-semibold text-accent"
+                        : "flex-1 rounded-md border border-border px-3 py-2 text-sm text-muted hover:border-accent"
+                    }
+                  >
+                    {t("letterScheme")}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setSessionScheme("WEEKDAY")}
+                    aria-pressed={sessionScheme === "WEEKDAY"}
+                    className={
+                      sessionScheme === "WEEKDAY"
+                        ? "flex-1 rounded-md border border-accent bg-accent/10 px-3 py-2 text-sm font-semibold text-accent"
+                        : "flex-1 rounded-md border border-border px-3 py-2 text-sm text-muted hover:border-accent"
+                    }
+                  >
+                    {t("weekdayScheme")}
+                  </button>
+                </div>
+                <p className="text-xs text-muted">
+                  {sessionScheme === "WEEKDAY" ? t("upTo7Sessions") : t("upTo5Sessions")}{" "}
+                  {t("chooseHowMany")}
+                </p>
+              </div>
+
+              <div className="flex flex-col gap-1.5">
+                <Label htmlFor="targetAluno">{t("targetAlunoLabel")}</Label>
+                <select
+                  id="targetAluno"
+                  value={targetAlunoId}
+                  onChange={(e) => setTargetAlunoId(e.target.value)}
+                  className="h-11 rounded-md border border-border bg-surface px-3.5 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+                >
+                  <option value="">{t("pureTemplateOption")}</option>
+                  {relationsQuery.data?.relations.map((r) => (
+                    <option key={r.id} value={r.id}>
+                      {r.email}
+                    </option>
+                  ))}
+                </select>
+                <p className="text-xs text-muted">{t("targetAlunoHint")}</p>
+              </div>
+
+              {createMutation.isError && (
+                <p className="text-sm text-danger">
+                  {createMutation.error instanceof ApiError
+                    ? createMutation.error.message
+                    : t("createProgramError")}
+                </p>
+              )}
+              <Button type="submit" disabled={createMutation.isPending || !name.trim()}>
+                {createMutation.isPending ? t("creating") : t("createProgram")}
+              </Button>
+            </form>
+          )}
+        </Card>
       </main>
+
+      {generatorOpen && <GenerateWorkoutModal onClose={() => setGeneratorOpen(false)} />}
 
       {previewTemplate && (
         <TemplatePreviewDialog
@@ -281,7 +309,9 @@ function ProgramasPersonalContent() {
 export default function ProgramasPersonalPage() {
   return (
     <AuthGuard allowedRoles={["PERSONAL", "NUTRICIONISTA"]}>
-      <ProgramasPersonalContent />
+      <Suspense fallback={null}>
+        <ProgramasPersonalContent />
+      </Suspense>
     </AuthGuard>
   );
 }

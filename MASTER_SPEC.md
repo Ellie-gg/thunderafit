@@ -979,6 +979,26 @@ decisão/priorização futura):
     confirmada com o fundador).
     *Modelo: Sonnet 5. Sem migration.*
 
+### Grupo U — Dashboard do Personal redesenhado (mockup do fundador). ✅ CONCLUÍDA (2026-07-27, registrada como Fase 66 no STATUS.md)
+87. Dashboard do Personal reduzido a 2 cards de ação clara: "📋 Biblioteca de
+    Templates" (⚡ "Explorar Templates" como CTA principal → `/personal/programas`;
+    "ou monte um programa do zero →" como link secundário, levando pra mesma
+    tela já com o formulário manual aberto via `?criar=1`) e "👥 Meus Alunos"
+    (vincular aluno, contagem/limite de alunos — mantidos abaixo do botão
+    principal, decisão confirmada com o fundador — "Gerenciar alunos →", e um
+    acesso rápido embutido pra "Dúvidas de alunos (N pendentes)", contando
+    client-side as threads `ABERTO` a partir da mesma listagem que
+    `/personal/duvidas` já usa, sem endpoint novo). Selo de plano ativo
+    (⚡ "Plano Plus/Base Ativo") logo abaixo da saudação.
+88. "Montagem Inteligente" saiu do dashboard (decisão confirmada com o
+    fundador) e passou a morar em `/personal/programas`, ao lado do
+    formulário manual — os 2 jeitos de criar um template novo, lado a lado
+    numa seção "Criar um novo template" no fim da tela. A tela agora mostra
+    primeiro os templates já criados (Meus/Básico/Premium) e só depois a
+    opção de criar; o formulário fica escondido atrás de um botão "+ Criar
+    template" em vez de sempre aberto no topo, como antes.
+    *Modelo: Sonnet 5. Sem migration — puro frontend.*
+
 ### Backlog operacional herdado
 Ver Seção 7 acima (Neon, billing, Android, webhook).
 
