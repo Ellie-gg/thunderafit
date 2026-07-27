@@ -1007,6 +1007,27 @@ decisão/priorização futura):
     reorder de JSX, nenhuma lógica mudou.
     *Modelo: Sonnet 5. Sem migration — puro frontend.*
 
+### Grupo W — Curadoria de novos exercícios de Cardio e Alongamento. ✅ CONCLUÍDA (2026-07-27, registrada como Fase 68 no STATUS.md)
+90. Ambas as categorias já existiam (10 exercícios cada) — expandidas via
+    curadoria real no YouTube: 11 novos em `Cardio` (foco pedido: equipamento
+    de academia — Assault Bike, Ergômetro de Braço, Versaclimber, Ski Erg,
+    Sled Push — mais alguns movimentos de condicionamento com kettlebell/
+    halteres) e 12 novos em `Alongamento` (pescoço, trapézio superior,
+    flexores/extensores de antebraço-punho, mobilidade torácica e de
+    tornozelo, banda iliotibial, grande dorsal, postura do pombo). Fica em
+    21/22 exercícios por categoria — bem abaixo do teto de 50 pedido.
+91. Todo `mediaUrl` foi verificado via a API oEmbed real do YouTube antes de
+    entrar no banco (confirma que o vídeo existe e pega título/canal) —
+    nenhuma URL foi inventada. Um candidato ("Alongamento Sentado com Flexão
+    à Frente") foi descartado por retornar 404 na verificação; outros (ex:
+    battle rope, star jumps, overhead shoulder stretch) foram descartados na
+    curadoria por não ter um vídeo curto/confiável o bastante — regra
+    explícita do pedido: sem vídeo bom, não adiciona o exercício.
+    *Modelo: Sonnet 5. Seed idempotente (`prisma/seed-cardio-alongamento.ts`),
+    rodado local e em produção; `data/exercises_seed.json` atualizado junto
+    pra manter o bootstrap de banco novo e os testes de contagem do catálogo
+    consistentes com o banco de verdade.*
+
 ### Backlog operacional herdado
 Ver Seção 7 acima (Neon, billing, Android, webhook).
 
