@@ -91,6 +91,26 @@ resource "google_cloud_run_v2_service" "backend" {
         name  = "GOOGLE_CLIENT_ID"
         value = var.google_client_id
       }
+      # Fase 78 — "Fale Conosco" (Gmail SMTP, sem custo). CONTACT_GMAIL_USER/
+      # CONTACT_EMAIL_TO não são secretos (são só o e-mail remetente/
+      # destinatário); a App Password em si é a única parte sensível.
+      env {
+        name  = "CONTACT_GMAIL_USER"
+        value = var.contact_gmail_user
+      }
+      env {
+        name  = "CONTACT_EMAIL_TO"
+        value = var.contact_email_to
+      }
+      env {
+        name = "CONTACT_GMAIL_APP_PASSWORD"
+        value_source {
+          secret_key_ref {
+            secret  = google_secret_manager_secret.contact_gmail_app_password.secret_id
+            version = "latest"
+          }
+        }
+      }
     }
   }
 

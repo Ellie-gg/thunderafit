@@ -49,6 +49,19 @@ delivery is entirely pull-based from the client.
   level — the values above are simply the ones currently in use by callers.
   Adding a new notification type doesn't require a migration, but also means
   there's no compile-time or DB-level guard against typos in `type`.
+- **Fase 79 — clicking a notification navigates, it doesn't just mark it
+  read.** `resolveNotificationPath(type, role)` in
+  `frontend/components/notification-bell.tsx` maps `(type, viewer's own
+  role)` to a route — resolved 100% client-side, no `link`/URL column on
+  this model. This works because the viewer IS always the recipient
+  (`userId`), so their role is already known locally; it's also why the
+  same `type` (e.g. `new_message`, `support_new_thread`) can point ALUNO
+  and PERSONAL/NUTRICIONISTA to different pages without any backend
+  change. **If you add a new `notify()` call site with a new `type` value,
+  add a matching case to `resolveNotificationPath` too** — an unmapped type
+  silently falls through to `null` (click just marks read, same as the
+  pre-Fase-79 behavior), which is a quiet UX regression, not an error
+  anyone will notice without testing the click.
 - `message` is stored fully rendered (already interpolated with names,
   subjects, etc.) at write time — there's no template stored separately, so
   changing copy going forward does not affect already-created rows, and
