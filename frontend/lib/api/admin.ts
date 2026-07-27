@@ -91,6 +91,11 @@ export function updateUserRole(id: string, role: Role) {
   });
 }
 
+// Fase 80 — remoção definitiva de usuário (cascade manual no backend).
+export function deleteAdminUser(id: string) {
+  return apiFetch<{ ok: boolean }>(`/api/admin/users/${id}`, { method: "DELETE" });
+}
+
 // Fase 58: concessão/revogação manual de Premium — ALUNO vira
 // alunoPremiumStatus ACTIVE/NONE; PERSONAL/NUTRICIONISTA vira
 // planoAssinatura PLUS/FREE. ADMIN não tem conceito de Premium (400).

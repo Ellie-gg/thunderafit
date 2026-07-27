@@ -219,6 +219,37 @@ export async function updateAvatarHandler(
 }
 
 /**
+ * Fase 80 — botão "Trocar senha" no perfil. Qualquer role autenticada.
+ * `currentPassword` é opcional no body (conta só-Google, Fase 77, não tem
+ * senha atual pra conferir) — a validação de quando é obrigatória vive no
+ * service, não aqui.
+ */
+export async function changePasswordHandler(
+  request: FastifyRequest<{ Body: { currentPassword?: string; newPassword?: string } }>,
+  reply: FastifyReply
+) {
+  const user = (request as FastifyRequest & { user?: { sub: string } }).user;
+  if (!user) {
+    return reply.status(401).send({ error: "Não autenticado." });
+  }
+  if (!request.body?.newPassword) {
+    return reply.status(400).send({ error: "newPassword é obrigatório." });
+  }
+
+  try {
+    const updatedUser = await authService.changePassword(
+      user.sub,
+      request.body.currentPassword ?? null,
+      request.body.newPassword
+    );
+    return reply.status(200).send({ user: updatedUser });
+  } catch (err) {
+    const error = err as Error & { statusCode?: number };
+    return reply.status(error.statusCode ?? 500).send({ error: error.message });
+  }
+}
+
+/**
  * i18n: escolha explícita de idioma (tela de Configurações) — sincroniza
  * entre dispositivos. Qualquer role autenticada. `locale: null` volta a
  * detectar automaticamente.

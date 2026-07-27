@@ -497,6 +497,51 @@ export const adminService = {
   },
 
   /**
+   * Fase 80 — remoção definitiva de usuário. Mesmas 2 travas de
+   * `updateUserRole` (não pode se auto-remover; não pode remover o último
+   * ADMIN) — remover a si mesmo deixaria o admin sem conseguir se
+   * re-autenticar pra continuar usando o painel, e remover o último ADMIN
+   * travaria toda a área /nimbus até alguém rodar o seed manual de novo.
+   * O cascade de dados de verdade vive em `adminRepository.deleteUser`.
+   */
+  async deleteUser(adminId: string, targetUserId: string) {
+    if (targetUserId === adminId) {
+      const err = new Error("Você não pode remover sua própria conta.");
+      (err as any).statusCode = 400;
+      throw err;
+    }
+
+    const target = await adminRepository.findUserById(targetUserId);
+    if (!target) {
+      const err = new Error("Usuário não encontrado.");
+      (err as any).statusCode = 404;
+      throw err;
+    }
+
+    if (target.role === "ADMIN") {
+      const adminCount = await adminRepository.countUsersWithRole("ADMIN");
+      if (adminCount <= 1) {
+        const err = new Error("Não é possível remover o último administrador do sistema.");
+        (err as any).statusCode = 400;
+        throw err;
+      }
+    }
+
+    await adminRepository.deleteUser(targetUserId);
+    // Fase 80: log ANTES seria mais intuitivo, mas createAuditLog não tem FK
+    // pra User — registrar depois de apagar funciona igual, e assim só grava
+    // se a remoção de verdade aconteceu (não sobra log de uma tentativa que
+    // falhou no meio da transação).
+    await adminRepository.createAuditLog(
+      adminId,
+      "USER_DELETE",
+      targetUserId,
+      `${target.email} (${target.role})`
+    );
+    return { ok: true };
+  },
+
+  /**
    * Fase 58: liga/desliga Premium manualmente — "Premium" significa uma
    * coisa diferente por role: pro ALUNO é o entitlement de
    * `alunoPremiumStatus`/`alunoPremiumExpiresAt` (mesmo modelo do teste

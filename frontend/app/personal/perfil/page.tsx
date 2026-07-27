@@ -17,6 +17,7 @@ import { AvatarUpload } from "@/components/avatar-upload";
 import { CityStateInput } from "@/components/city-state-input";
 import { SpecialtyChips } from "@/components/specialty-chips";
 import { ProfessionalCard } from "@/components/professional-card";
+import { ChangePasswordCard } from "@/components/change-password-card";
 import type { Specialty } from "@/lib/constants/professional-directory";
 import { useAuthStore } from "@/lib/store/auth-store";
 
@@ -77,6 +78,8 @@ function PerfilContent() {
           <h2 className="mb-3 font-display text-lg font-bold">{t("photoTitle")}</h2>
           <AvatarUpload />
         </Card>
+
+        <ChangePasswordCard />
 
         {profileQuery.isLoading && <p className="text-sm text-muted">{tCommon("loading")}</p>}
         {profileQuery.isError && (

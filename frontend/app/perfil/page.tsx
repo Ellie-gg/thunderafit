@@ -11,6 +11,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { AvatarUpload } from "@/components/avatar-upload";
 import { CityStateInput } from "@/components/city-state-input";
+import { ChangePasswordCard } from "@/components/change-password-card";
 
 /**
  * Fase 30: tela mínima de perfil do aluno — só a foto por enquanto (o
@@ -68,6 +69,8 @@ function PerfilContent() {
           <h2 className="mb-3 font-display text-lg font-bold">{t("photoTitle")}</h2>
           <AvatarUpload />
         </Card>
+
+        <ChangePasswordCard />
 
         <Card className="flex flex-col gap-3">
           <div>

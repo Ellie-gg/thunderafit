@@ -4,7 +4,7 @@ import { useTranslations } from "next-intl";
 import { useState } from "react";
 import Link from "next/link";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { listAdminUsers, updateUserRole, updateUserPremium } from "@/lib/api/admin";
+import { listAdminUsers, updateUserRole, updateUserPremium, deleteAdminUser } from "@/lib/api/admin";
 import { ApiError } from "@/lib/api/client";
 import { useAuthStore } from "@/lib/store/auth-store";
 import { AuthGuard } from "@/components/auth-guard";
@@ -12,6 +12,7 @@ import { AppHeader } from "@/components/app-header";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { QueryError } from "@/components/query-error";
+import { UserAvatar } from "@/components/user-avatar";
 import { useActiveIntlLocale } from "@/i18n/use-active-locale";
 import type { AdminUser, Role } from "@/lib/types";
 
@@ -163,6 +164,66 @@ function PremiumEditor({ user, onChanged }: { user: AdminUser; onChanged: () => 
   );
 }
 
+/**
+ * Fase 80 — remoção definitiva de usuário. Mesmo padrão inline de
+ * confirmação do `RoleEditor`/`PremiumEditor` acima — ação irreversível
+ * (cascade manual no backend), então nunca aplica no primeiro clique. O
+ * próprio admin logado não pode se auto-remover aqui — escondido de
+ * propósito, mesmo espírito do `RoleEditor` (o backend também bloqueia).
+ */
+function DeleteUserButton({ user, onDeleted }: { user: AdminUser; onDeleted: () => void }) {
+  const t = useTranslations("nimbusUsuarios");
+  const tCommon = useTranslations("common");
+  const currentUserId = useAuthStore((s) => s.user?.id);
+  const [confirming, setConfirming] = useState(false);
+
+  const mutation = useMutation({
+    mutationFn: () => deleteAdminUser(user.id),
+    onSuccess: () => {
+      setConfirming(false);
+      onDeleted();
+    },
+  });
+
+  if (user.id === currentUserId) return null;
+
+  if (!confirming) {
+    return (
+      <Button type="button" variant="ghost" size="sm" onClick={() => setConfirming(true)}>
+        {t("deleteUser.button")}
+      </Button>
+    );
+  }
+
+  return (
+    <div className="flex flex-col items-end gap-1.5 rounded-md border border-danger/40 bg-danger/10 p-2">
+      <p className="text-xs text-danger">
+        {t("deleteUser.confirmMessage", { email: user.email })}
+      </p>
+      {mutation.isError && (
+        <p className="text-xs text-danger">
+          {mutation.error instanceof ApiError ? mutation.error.message : t("deleteUser.genericError")}
+        </p>
+      )}
+      <div className="flex gap-2">
+        <Button type="button" size="sm" onClick={() => setConfirming(false)}>
+          {tCommon("cancel")}
+        </Button>
+        <Button
+          type="button"
+          variant="secondary"
+          size="sm"
+          disabled={mutation.isPending}
+          className="border-danger/60 text-danger hover:border-danger"
+          onClick={() => mutation.mutate()}
+        >
+          {mutation.isPending ? t("deleteUser.deleting") : t("deleteUser.confirmButton")}
+        </Button>
+      </div>
+    </div>
+  );
+}
+
 function UsersContent() {
   const t = useTranslations("nimbusUsuarios");
   const tCommon = useTranslations("common");
@@ -224,11 +285,15 @@ function UsersContent() {
                 data-testid={`user-row-${u.id}`}
                 className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-border px-3 py-2"
               >
-                <div className="flex flex-col">
-                  <span className="text-sm font-semibold">{u.email}</span>
-                  <span className="text-xs text-muted">
-                    {u.role} · {t("linkedSince", { date: new Date(u.createdAt).toLocaleDateString(intlLocale) })}
-                  </span>
+                <div className="flex items-center gap-3">
+                  <UserAvatar email={u.email} avatarUrl={u.avatarUrl} size={36} />
+                  <div className="flex flex-col">
+                    <span className="text-sm font-semibold">{u.name?.trim() || u.email}</span>
+                    {u.name?.trim() && <span className="text-xs text-muted">{u.email}</span>}
+                    <span className="text-xs text-muted">
+                      {u.role} · {t("linkedSince", { date: new Date(u.createdAt).toLocaleDateString(intlLocale) })}
+                    </span>
+                  </div>
                 </div>
                 <div className="flex items-center gap-2">
                   {u.isOrphanAluno && (
@@ -256,6 +321,10 @@ function UsersContent() {
                   <RoleEditor
                     user={u}
                     onChanged={() => queryClient.invalidateQueries({ queryKey: ["admin", "users"] })}
+                  />
+                  <DeleteUserButton
+                    user={u}
+                    onDeleted={() => queryClient.invalidateQueries({ queryKey: ["admin", "users"] })}
                   />
                 </div>
               </div>
