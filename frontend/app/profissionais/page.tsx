@@ -1,22 +1,24 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   searchProfessionals,
   listConnectionRequests,
   createConnectionRequest,
+  getMyProfile,
+  updateMyProfile,
   type ConnectionStatus,
 } from "@/lib/api/connections";
 import { ApiError } from "@/lib/api/client";
 import { AuthGuard } from "@/components/auth-guard";
 import { AppHeader } from "@/components/app-header";
 import { Card } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { QueryError } from "@/components/query-error";
+import { CityStateInput } from "@/components/city-state-input";
+import { ProfessionalCard } from "@/components/professional-card";
 
 function StatusBadge({ status }: { status: ConnectionStatus }) {
   const t = useTranslations("profissionais");
@@ -32,12 +34,48 @@ function StatusBadge({ status }: { status: ConnectionStatus }) {
 function ProfissionaisContent() {
   const t = useTranslations("profissionais");
   const queryClient = useQueryClient();
-  const [location, setLocation] = useState("");
-  const [submitted, setSubmitted] = useState<string | undefined>(undefined);
+  const [city, setCity] = useState("");
+  const [state, setState] = useState("");
+  const [submitted, setSubmitted] = useState<{ city?: string; state?: string } | undefined>(undefined);
+  const [hydrated, setHydrated] = useState(false);
+  // Trava contra uma corrida real: se o aluno já começar a digitar antes do
+  // perfil terminar de carregar (rede lenta, ou só um usuário rápido), o
+  // efeito de pré-preenchimento abaixo NÃO pode sobrescrever o que ele já
+  // digitou quando a resposta chegar — só preenche os campos de verdade se
+  // o usuário ainda não tiver tocado neles.
+  const userEditedRef = useRef(false);
+
+  // Fase 75: se o aluno já tem cidade salva de uma busca anterior, pré-
+  // preenche o formulário e já dispara a busca sozinha — só mostra o campo
+  // vazio pedindo a cidade na primeira vez.
+  const profileQuery = useQuery({ queryKey: ["my-profile"], queryFn: getMyProfile });
+  useEffect(() => {
+    if (profileQuery.data && !hydrated) {
+      const savedCity = profileQuery.data.profile.city ?? "";
+      const savedState = profileQuery.data.profile.state ?? "";
+      if (!userEditedRef.current) {
+        setCity(savedCity);
+        setState(savedState);
+      }
+      if (savedCity || savedState) {
+        setSubmitted({ city: savedCity || undefined, state: savedState || undefined });
+      }
+      setHydrated(true);
+    }
+  }, [profileQuery.data, hydrated]);
+
+  const saveCityMutation = useMutation({
+    mutationFn: (vars: { city: string; state: string }) =>
+      updateMyProfile({ city: vars.city || null, state: vars.state || null }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["my-profile"] });
+    },
+  });
 
   const searchQuery = useQuery({
-    queryKey: ["professionals-search", submitted ?? ""],
+    queryKey: ["professionals-search", submitted?.city ?? "", submitted?.state ?? ""],
     queryFn: () => searchProfessionals(submitted),
+    enabled: hydrated,
   });
   const requestsQuery = useQuery({
     queryKey: ["connection-requests"],
@@ -72,22 +110,29 @@ function ProfissionaisContent() {
 
         <Card className="flex flex-col gap-3">
           <form
-            className="flex items-end gap-2"
+            className="flex flex-col gap-3"
             onSubmit={(e) => {
               e.preventDefault();
-              setSubmitted(location.trim() || undefined);
+              const trimmedCity = city.trim();
+              setSubmitted({ city: trimmedCity || undefined, state: state || undefined });
+              saveCityMutation.mutate({ city: trimmedCity, state });
             }}
           >
-            <div className="flex flex-1 flex-col gap-1.5">
-              <Label htmlFor="location">{t("locationLabel")}</Label>
-              <Input
-                id="location"
-                value={location}
-                onChange={(e) => setLocation(e.target.value)}
-                placeholder={t("locationPlaceholder")}
-              />
-            </div>
-            <Button type="submit">{t("searchButton")}</Button>
+            <CityStateInput
+              city={city}
+              state={state}
+              onCityChange={(v) => {
+                userEditedRef.current = true;
+                setCity(v);
+              }}
+              onStateChange={(v) => {
+                userEditedRef.current = true;
+                setState(v);
+              }}
+            />
+            <Button type="submit" className="self-start">
+              {t("searchButton")}
+            </Button>
           </form>
         </Card>
 
@@ -99,7 +144,7 @@ function ProfissionaisContent() {
           <Card>
             <p className="text-sm text-muted">
               {t("noResultsFound", {
-                location: submitted ? t("inLocationSuffix", { location: submitted }) : "",
+                location: submitted?.city ? t("inLocationSuffix", { location: submitted.city }) : "",
               })}
             </p>
           </Card>
@@ -111,27 +156,21 @@ function ProfissionaisContent() {
             return (
               <Card
                 key={p.id}
-                className="flex flex-col gap-2"
+                className="flex flex-col gap-3"
                 style={{
-                  borderTopWidth: p.planoAssinatura === "PLUS" ? "3px" : "3px",
+                  borderTopWidth: "3px",
                   borderTopColor: p.planoAssinatura === "PLUS" ? "var(--accent)" : "var(--role-personal)",
                 }}
               >
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <p className="font-semibold">{p.email.split("@")[0]}</p>
-                      {/* Billing 3 degraus: Plus aparece com destaque no diretório. */}
-                      {p.planoAssinatura === "PLUS" && (
-                        <span className="rounded-full bg-accent/15 px-2 py-0.5 text-xs font-semibold text-accent">
-                          ★ Plus
-                        </span>
-                      )}
-                    </div>
-                    {p.location && <p className="text-xs text-muted">📍 {p.location}</p>}
-                  </div>
-                </div>
-                {p.bio && <p className="text-sm text-muted">{p.bio}</p>}
+                <ProfessionalCard
+                  email={p.email}
+                  avatarUrl={p.avatarUrl}
+                  city={p.city}
+                  state={p.state}
+                  bio={p.bio}
+                  specialties={p.specialties}
+                  isPlus={p.planoAssinatura === "PLUS"}
+                />
                 {myStatus ? (
                   <div className="self-start">
                     <StatusBadge status={myStatus} />
@@ -170,8 +209,10 @@ function ProfissionaisContent() {
             <Card key={r.id} className="flex items-center justify-between">
               <div>
                 <p className="font-semibold">{r.counterpart.email.split("@")[0]}</p>
-                {r.counterpart.location && (
-                  <p className="text-xs text-muted">📍 {r.counterpart.location}</p>
+                {(r.counterpart.city || r.counterpart.state) && (
+                  <p className="text-xs text-muted">
+                    📍 {[r.counterpart.city, r.counterpart.state].filter(Boolean).join(", ")}
+                  </p>
                 )}
               </div>
               <StatusBadge status={r.status} />

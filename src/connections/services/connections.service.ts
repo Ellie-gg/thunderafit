@@ -1,6 +1,8 @@
+import { Specialty } from "@prisma/client";
 import { connectionsRepository } from "../repository/connections.repository";
 import { relationsService } from "../../fitness/services/relations.service";
 import { notificationsService } from "../../notifications/services/notifications.service";
+import { isValidBrState, isValidSpecialty } from "../constants";
 
 type ProfessionalRole = "PERSONAL" | "NUTRICIONISTA";
 
@@ -11,8 +13,20 @@ function httpError(message: string, statusCode: number) {
 }
 
 export const connectionsService = {
-  async searchProfessionals(location: string | undefined, role: ProfessionalRole) {
-    return connectionsRepository.searchProfessionals({ role, location: location?.trim() || undefined });
+  async searchProfessionals(
+    params: { city?: string; state?: string; specialties?: string[] },
+    role: ProfessionalRole
+  ) {
+    if (params.state && !isValidBrState(params.state)) {
+      throw httpError("UF inválida.", 400);
+    }
+    const specialties = params.specialties?.filter(isValidSpecialty) as Specialty[] | undefined;
+    return connectionsRepository.searchProfessionals({
+      role,
+      city: params.city?.trim() || undefined,
+      state: params.state || undefined,
+      specialties: specialties?.length ? specialties : undefined,
+    });
   },
 
   async getMyProfile(userId: string) {
@@ -21,15 +35,39 @@ export const connectionsService = {
     return profile;
   },
 
+  /**
+   * Fase 75: `city`/`state` podem ser salvos por QUALQUER papel (é assim que
+   * o aluno guarda a cidade usada na busca de profissionais) — só
+   * `availableForNewStudents`/`bio`/`specialties` continuam exclusivos de
+   * papéis profissionais (perfil público de verdade).
+   */
   async updateMyProfile(
     userId: string,
     role: string,
-    data: { availableForNewStudents?: boolean; location?: string | null; bio?: string | null }
+    data: {
+      availableForNewStudents?: boolean;
+      bio?: string | null;
+      city?: string | null;
+      state?: string | null;
+      specialties?: string[];
+    }
   ) {
-    if (role !== "PERSONAL" && role !== "NUTRICIONISTA") {
+    const isProfessional = role === "PERSONAL" || role === "NUTRICIONISTA";
+    if (
+      (data.availableForNewStudents !== undefined || data.bio !== undefined || data.specialties !== undefined) &&
+      !isProfessional
+    ) {
       throw httpError("Apenas profissionais têm perfil público.", 403);
     }
-    const clean: { availableForNewStudents?: boolean; location?: string | null; bio?: string | null } = {};
+
+    const clean: {
+      availableForNewStudents?: boolean;
+      bio?: string | null;
+      city?: string | null;
+      state?: string | null;
+      specialties?: Specialty[];
+    } = {};
+
     if (typeof data.availableForNewStudents === "boolean") {
       // Gate de degrau: Free não pode ATIVAR disponibilidade no diretório
       // (Base+ ganhou esse acesso nesta fase). Desligar continua sempre
@@ -45,8 +83,18 @@ export const connectionsService = {
       }
       clean.availableForNewStudents = data.availableForNewStudents;
     }
-    if (data.location !== undefined) clean.location = data.location?.toString().trim() || null;
     if (data.bio !== undefined) clean.bio = data.bio?.toString().trim() || null;
+    if (data.city !== undefined) clean.city = data.city?.toString().trim() || null;
+    if (data.state !== undefined) {
+      const state = data.state?.toString().trim().toUpperCase() || null;
+      if (state && !isValidBrState(state)) throw httpError("UF inválida.", 400);
+      clean.state = state;
+    }
+    if (data.specialties !== undefined) {
+      const invalid = data.specialties.filter((s) => !isValidSpecialty(s));
+      if (invalid.length > 0) throw httpError(`Especialidade inválida: ${invalid.join(", ")}.`, 400);
+      clean.specialties = data.specialties as Specialty[];
+    }
     return connectionsRepository.updateProfile(userId, clean);
   },
 
@@ -116,8 +164,15 @@ export const connectionsService = {
         professionalType: r.professionalType,
         createdAt: r.createdAt,
         counterpart: counterpart
-          ? { id: counterpart.id, email: counterpart.email, location: counterpart.location, bio: counterpart.bio }
-          : { id: counterpartId, email: "(usuário removido)", location: null, bio: null },
+          ? {
+              id: counterpart.id,
+              email: counterpart.email,
+              city: counterpart.city,
+              state: counterpart.state,
+              bio: counterpart.bio,
+              avatarUrl: counterpart.avatarUrl,
+            }
+          : { id: counterpartId, email: "(usuário removido)", city: null, state: null, bio: null, avatarUrl: null },
       };
     });
   },
