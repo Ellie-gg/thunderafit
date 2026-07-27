@@ -868,6 +868,21 @@ decisão/priorização futura):
     completa (3 programas + 12 sessões).
     *Modelo: Sonnet 5. Seeds idempotentes, rodados local e em produção.*
 
+### Grupo P — Card de próxima sessão do dashboard: destaque no dia + link do programa. ✅ CONCLUÍDA (2026-07-26, registrada como Fase 61 no STATUS.md)
+72. `NextSessionCard` (dashboard do aluno): o nome do programa (antes só um rótulo
+    estático) virou link pra `/programas/:id`, mesmo padrão visual de link com seta
+    já usado em outros pontos da tela (`text-accent-secondary`, `hover:underline`,
+    seta `→` ao final). Isso resolve o pedido de poder trocar de sessão manualmente
+    quando não quiser seguir a sugestão automática.
+73. A letra do treino ganhou destaque bem maior (`text-4xl`/`text-5xl`), e o nome
+    da sessão do dia passou a ser um elemento separado, em fonte menor e tom de
+    branco levemente mais escuro (`text-foreground/85`) — antes o cabeçalho
+    duplicava a letra (uma vez no rótulo do programa via `letra — nome`, sem
+    diferenciação visual entre letra e nome da sessão). Layout responsivo
+    (empilhado no mobile, lado a lado a partir de `sm:`).
+74. Rótulo do bloco "Meus treinos" renomeado para "Meus Treinos Pessoais" (PT/EN/ES).
+    *Modelo: Sonnet 5. Sem migration — puro ajuste de frontend/i18n.*
+
 ### Backlog operacional herdado
 Ver Seção 7 acima (Neon, billing, Android, webhook).
 
