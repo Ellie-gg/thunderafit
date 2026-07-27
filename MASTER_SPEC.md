@@ -937,6 +937,19 @@ decisão/priorização futura):
     pra cobrir os dois casos.
     *Modelo: Sonnet 5. 1 migration (novo enum `WorkoutTag` + coluna `tags`).*
 
+### Grupo S — Redireciona pra compra do plano ao clicar num template Premium bloqueado. ✅ CONCLUÍDA (2026-07-27, registrada como Fase 64 no STATUS.md)
+81. Em `/personal/programas`, clicar num template do carrossel Premium sem
+    plano Plus não abre mais o preview (que deixava ver as sessões e só
+    falhava depois, no apply, com 402) — redireciona direto pra
+    `/personal/upgrade?from=templates`, mesmo espírito do cadeado do carrossel
+    Premium do aluno gratuito (gate no clique, não só um cadeado decorativo).
+82. `/personal/upgrade` ganha um aviso específico
+    ("Templates Premium são exclusivos do plano Plus...") quando chega via
+    `?from=templates`, e o card do plano Plus lista "Acesso aos Templates
+    Premium de treino" como benefício — antes a tela não mencionava templates
+    em lugar nenhum.
+    *Modelo: Sonnet 5. Sem migration — puro frontend.*
+
 ### Backlog operacional herdado
 Ver Seção 7 acima (Neon, billing, Android, webhook).
 
