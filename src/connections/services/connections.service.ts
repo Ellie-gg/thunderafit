@@ -99,12 +99,17 @@ export const connectionsService = {
   },
 
   /**
-   * Aluno solicita vínculo a um profissional disponível. Nunca cria o vínculo
-   * direto — deixa a solicitação PENDENTE e notifica o profissional.
+   * Fase 76: aluno inicia contato mandando uma MENSAGEM (em vez de um clique
+   * cego em "Solicitar vínculo") — a mensagem é o que cria a solicitação,
+   * deixando-a PENDENTE, e os dois lados podem continuar a conversa
+   * (`sendMessage`) enquanto ela não for recusada. Nunca cria o vínculo
+   * direto — isso só acontece quando o profissional aceita.
    */
-  async createRequest(alunoId: string, professionalId: string) {
+  async createRequest(alunoId: string, professionalId: string, message: string) {
     if (!professionalId) throw httpError("professionalId é obrigatório.", 400);
     if (professionalId === alunoId) throw httpError("Solicitação inválida.", 400);
+    const trimmedMessage = message?.toString().trim();
+    if (!trimmedMessage) throw httpError("Escreva uma mensagem para enviar.", 400);
 
     const professional = await connectionsRepository.findUserById(professionalId);
     if (
@@ -119,7 +124,7 @@ export const connectionsService = {
 
     const existing = await connectionsRepository.findRequestByPair(alunoId, professionalId);
     if (existing?.status === "PENDENTE") {
-      throw httpError("Você já tem uma solicitação pendente com este profissional.", 409);
+      throw httpError("Você já tem uma conversa pendente com este profissional.", 409);
     }
     if (existing?.status === "ACEITA") {
       throw httpError("Você já está vinculado a este profissional.", 409);
@@ -130,14 +135,48 @@ export const connectionsService = {
       professionalId,
       professional.role as ProfessionalRole
     );
+    await connectionsRepository.createMessage(request.id, alunoId, trimmedMessage);
 
     await notificationsService.notify(
       professionalId,
       "connection_request",
-      "Você recebeu uma nova solicitação de vínculo de um aluno."
+      "Você recebeu uma nova mensagem de um aluno."
     );
 
     return request;
+  },
+
+  /**
+   * Fase 76: mensagem de acompanhamento numa conversa já existente — pode
+   * ser enviada pelo aluno OU pelo profissional (os dois lados da mesma
+   * ConnectionRequest), enquanto ela não estiver RECUSADA.
+   */
+  async sendMessage(requestId: string, senderId: string, body: string) {
+    const trimmed = body?.toString().trim();
+    if (!trimmed) throw httpError("Escreva uma mensagem para enviar.", 400);
+
+    const request = await connectionsRepository.findRequestById(requestId);
+    if (!request) throw httpError("Conversa não encontrada.", 404);
+    if (request.alunoId !== senderId && request.professionalId !== senderId) {
+      throw httpError("Você não tem permissão sobre esta conversa.", 403);
+    }
+    if (request.status === "RECUSADA") {
+      throw httpError("Esta conversa foi encerrada.", 409);
+    }
+
+    const created = await connectionsRepository.createMessage(requestId, senderId, trimmed);
+    const recipientId = request.alunoId === senderId ? request.professionalId : request.alunoId;
+    await notificationsService.notify(recipientId, "new_message", "Você recebeu uma nova mensagem.");
+    return created;
+  },
+
+  async listMessages(requestId: string, userId: string) {
+    const request = await connectionsRepository.findRequestById(requestId);
+    if (!request) throw httpError("Conversa não encontrada.", 404);
+    if (request.alunoId !== userId && request.professionalId !== userId) {
+      throw httpError("Você não tem permissão sobre esta conversa.", 403);
+    }
+    return connectionsRepository.listMessages(requestId);
   },
 
   /** Profissional vê as solicitações recebidas; aluno vê o status das suas. */

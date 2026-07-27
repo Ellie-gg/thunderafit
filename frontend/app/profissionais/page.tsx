@@ -19,6 +19,7 @@ import { Button } from "@/components/ui/button";
 import { QueryError } from "@/components/query-error";
 import { CityStateInput } from "@/components/city-state-input";
 import { ProfessionalCard } from "@/components/professional-card";
+import { ConversationThread } from "@/components/conversation-thread";
 
 function StatusBadge({ status }: { status: ConnectionStatus }) {
   const t = useTranslations("profissionais");
@@ -82,9 +83,19 @@ function ProfissionaisContent() {
     queryFn: listConnectionRequests,
   });
 
+  // Fase 76: "Solicitar vínculo" virou "Enviar mensagem" — abre uma caixa de
+  // composição inline no card em vez de disparar um clique cego; a 1ª
+  // mensagem é o que cria a solicitação.
+  const [composingId, setComposingId] = useState<string | null>(null);
+  const [messageDraft, setMessageDraft] = useState("");
+  const [expandedRequestId, setExpandedRequestId] = useState<string | null>(null);
+
   const requestMutation = useMutation({
-    mutationFn: (professionalId: string) => createConnectionRequest(professionalId),
+    mutationFn: (vars: { professionalId: string; message: string }) =>
+      createConnectionRequest(vars.professionalId, vars.message),
     onSuccess: () => {
+      setComposingId(null);
+      setMessageDraft("");
       queryClient.invalidateQueries({ queryKey: ["connection-requests"] });
     },
   });
@@ -175,16 +186,62 @@ function ProfissionaisContent() {
                   <div className="self-start">
                     <StatusBadge status={myStatus} />
                   </div>
+                ) : composingId === p.id ? (
+                  <form
+                    className="flex flex-col gap-2"
+                    onSubmit={(e) => {
+                      e.preventDefault();
+                      if (messageDraft.trim()) {
+                        requestMutation.mutate({ professionalId: p.id, message: messageDraft.trim() });
+                      }
+                    }}
+                  >
+                    <textarea
+                      autoFocus
+                      value={messageDraft}
+                      onChange={(e) => setMessageDraft(e.target.value)}
+                      rows={2}
+                      placeholder={t("messagePlaceholder")}
+                      className="resize-none rounded-md border border-border bg-surface px-3 py-2 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+                    />
+                    <div className="flex gap-2">
+                      <Button
+                        type="submit"
+                        size="sm"
+                        disabled={requestMutation.isPending || !messageDraft.trim()}
+                      >
+                        {requestMutation.isPending ? t("sending") : t("sendMessage")}
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="secondary"
+                        size="sm"
+                        onClick={() => {
+                          setComposingId(null);
+                          setMessageDraft("");
+                        }}
+                      >
+                        {t("cancel")}
+                      </Button>
+                    </div>
+                    {requestMutation.isError && requestMutation.variables?.professionalId === p.id && (
+                      <p className="text-xs text-danger">
+                        {requestMutation.error instanceof ApiError
+                          ? requestMutation.error.message
+                          : t("sendRequestError")}
+                      </p>
+                    )}
+                  </form>
                 ) : (
                   <Button
                     variant="secondary"
                     className="self-start"
-                    disabled={requestMutation.isPending}
-                    onClick={() => requestMutation.mutate(p.id)}
+                    onClick={() => {
+                      setComposingId(p.id);
+                      setMessageDraft("");
+                    }}
                   >
-                    {requestMutation.isPending && requestMutation.variables === p.id
-                      ? t("sending")
-                      : t("requestConnection")}
+                    {t("sendMessage")}
                   </Button>
                 )}
               </Card>
@@ -192,30 +249,31 @@ function ProfissionaisContent() {
           })}
         </div>
 
-        {requestMutation.isError && (
-          <p className="text-sm text-danger">
-            {requestMutation.error instanceof ApiError
-              ? requestMutation.error.message
-              : t("sendRequestError")}
-          </p>
-        )}
-
         <section className="flex flex-col gap-3 border-t border-border pt-6">
           <h2 className="font-display text-lg font-bold">{t("myRequests")}</h2>
           {requestsQuery.isSuccess && requests.length === 0 && (
             <p className="text-sm text-muted">{t("noRequestsSent")}</p>
           )}
           {requests.map((r) => (
-            <Card key={r.id} className="flex items-center justify-between">
-              <div>
-                <p className="font-semibold">{r.counterpart.email.split("@")[0]}</p>
-                {(r.counterpart.city || r.counterpart.state) && (
-                  <p className="text-xs text-muted">
-                    📍 {[r.counterpart.city, r.counterpart.state].filter(Boolean).join(", ")}
-                  </p>
-                )}
-              </div>
-              <StatusBadge status={r.status} />
+            <Card key={r.id} className="flex flex-col gap-2">
+              <button
+                type="button"
+                className="flex items-center justify-between text-left"
+                onClick={() => setExpandedRequestId((cur) => (cur === r.id ? null : r.id))}
+              >
+                <div>
+                  <p className="font-semibold">{r.counterpart.email.split("@")[0]}</p>
+                  {(r.counterpart.city || r.counterpart.state) && (
+                    <p className="text-xs text-muted">
+                      📍 {[r.counterpart.city, r.counterpart.state].filter(Boolean).join(", ")}
+                    </p>
+                  )}
+                </div>
+                <StatusBadge status={r.status} />
+              </button>
+              {expandedRequestId === r.id && (
+                <ConversationThread requestId={r.id} closed={r.status === "RECUSADA"} />
+              )}
             </Card>
           ))}
         </section>

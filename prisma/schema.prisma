@@ -246,6 +246,12 @@ model ConnectionRequest {
   status           ConnectionRequestStatus @default(PENDENTE)
   createdAt        DateTime                @default(now())
   updatedAt        DateTime                @updatedAt
+  // Fase 76: "Solicitar vínculo" virou "Enviar mensagem" — a solicitação
+  // agora nasce com uma mensagem em vez de um clique cego, e os dois lados
+  // podem continuar trocando mensagens (pra trocar contato, etc.) enquanto
+  // ela estiver PENDENTE ou já ACEITA. RECUSADA fecha a conversa até uma
+  // nova solicitação reabrir a mesma linha (mesmo comportamento de sempre).
+  messages         ConnectionMessage[]
 
   // Um par aluno↔profissional tem no máximo uma solicitação (re-solicitar
   // após recusa reusa a mesma linha, voltando a PENDENTE).
@@ -262,6 +268,20 @@ enum ConnectionRequestStatus {
   PENDENTE
   ACEITA
   RECUSADA
+}
+
+// Fase 76: mensagens de uma conversa de contato (aluno↔profissional),
+// presas a uma ConnectionRequest — não existe conversa sem uma solicitação
+// por trás (a primeira mensagem É o que cria a solicitação).
+model ConnectionMessage {
+  id                  String            @id @default(uuid())
+  connectionRequestId String
+  connectionRequest   ConnectionRequest @relation(fields: [connectionRequestId], references: [id])
+  senderId            String
+  body                String
+  createdAt           DateTime          @default(now())
+
+  @@index([connectionRequestId, createdAt])
 }
 
 // ============================================================

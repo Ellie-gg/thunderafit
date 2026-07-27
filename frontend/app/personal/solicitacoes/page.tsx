@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   listConnectionRequests,
@@ -13,6 +14,7 @@ import { AppHeader } from "@/components/app-header";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { QueryError } from "@/components/query-error";
+import { ConversationThread } from "@/components/conversation-thread";
 import { useTranslations } from "next-intl";
 
 function StatusBadge({ status }: { status: ConnectionStatus }) {
@@ -31,6 +33,7 @@ function SolicitacoesContent() {
   const tc = useTranslations("common");
   const queryClient = useQueryClient();
   const requestsQuery = useQuery({ queryKey: ["connection-requests"], queryFn: listConnectionRequests });
+  const [expandedRequestId, setExpandedRequestId] = useState<string | null>(null);
 
   const invalidate = () => {
     queryClient.invalidateQueries({ queryKey: ["connection-requests"] });
@@ -84,6 +87,10 @@ function SolicitacoesContent() {
                   </p>
                 )}
               </div>
+              {/* Fase 76: a mensagem do aluno (o que antes era um clique cego
+                  em "Solicitar vínculo") já aparece aberta aqui — o Personal
+                  lê o contexto e pode responder antes de decidir. */}
+              <ConversationThread requestId={r.id} />
               <div className="flex gap-2">
                 <Button
                   disabled={acceptMutation.isPending || rejectMutation.isPending}
@@ -109,9 +116,18 @@ function SolicitacoesContent() {
           <section className="flex flex-col gap-3 border-t border-border pt-6">
             <h2 className="font-display text-lg font-bold">{t("historico")}</h2>
             {respondidas.map((r) => (
-              <Card key={r.id} className="flex items-center justify-between">
-                <span className="text-sm">{r.counterpart.email}</span>
-                <StatusBadge status={r.status} />
+              <Card key={r.id} className="flex flex-col gap-2">
+                <button
+                  type="button"
+                  className="flex items-center justify-between text-left"
+                  onClick={() => setExpandedRequestId((cur) => (cur === r.id ? null : r.id))}
+                >
+                  <span className="text-sm">{r.counterpart.email}</span>
+                  <StatusBadge status={r.status} />
+                </button>
+                {expandedRequestId === r.id && (
+                  <ConversationThread requestId={r.id} closed={r.status === "RECUSADA"} />
+                )}
               </Card>
             ))}
           </section>

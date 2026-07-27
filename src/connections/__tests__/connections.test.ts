@@ -66,6 +66,8 @@ beforeAll(async () => {
 
 afterAll(async () => {
   const allIds = Object.values(ids);
+  const requests = await prisma.connectionRequest.findMany({ where: { alunoId: { in: allIds } } });
+  await prisma.connectionMessage.deleteMany({ where: { connectionRequestId: { in: requests.map((r) => r.id) } } });
   await prisma.connectionRequest.deleteMany({ where: { alunoId: { in: allIds } } });
   await prisma.clientRelation.deleteMany({ where: { personalId: { in: allIds } } });
   await prisma.notification.deleteMany({ where: { userId: { in: allIds } } });
@@ -191,7 +193,7 @@ describe("Billing 3 degraus — gate de disponibilidade no diretório + priorida
 describe("Fase 21 BLOCO 1 — solicitação + aprovação manual", () => {
   it("aluno solicita → PENDENTE; profissional vê pendente; aluno vê status", async () => {
     const r = await supertest(server.server).post("/api/connection-requests").set(auth("aluno"))
-      .send({ professionalId: ids.proPalhoca });
+      .send({ professionalId: ids.proPalhoca, message: "Oi, gostaria de treinar com você." });
     expect(r.status).toBe(201);
     expect(r.body.request.status).toBe("PENDENTE");
 
@@ -208,20 +210,26 @@ describe("Fase 21 BLOCO 1 — solicitação + aprovação manual", () => {
 
   it("solicitação duplicada pendente → 409", async () => {
     const r = await supertest(server.server).post("/api/connection-requests").set(auth("aluno"))
-      .send({ professionalId: ids.proPalhoca });
+      .send({ professionalId: ids.proPalhoca, message: "Oi, gostaria de treinar com você." });
     expect(r.status).toBe(409);
   });
 
   it("solicitar a profissional não disponível → 409", async () => {
     const r = await supertest(server.server).post("/api/connection-requests").set(auth("aluno"))
-      .send({ professionalId: ids.proHidden });
+      .send({ professionalId: ids.proHidden, message: "Oi!" });
     expect(r.status).toBe(409);
   });
 
   it("não-aluno não pode solicitar (403)", async () => {
     const r = await supertest(server.server).post("/api/connection-requests").set(auth("proCuritiba"))
-      .send({ professionalId: ids.proPalhoca });
+      .send({ professionalId: ids.proPalhoca, message: "Oi, gostaria de treinar com você." });
     expect(r.status).toBe(403);
+  });
+
+  it("sem mensagem → 400 (Fase 76: a mensagem é obrigatória, substitui o clique cego)", async () => {
+    const r = await supertest(server.server).post("/api/connection-requests").set(auth("aluno2"))
+      .send({ professionalId: ids.proPalhoca });
+    expect(r.status).toBe(400);
   });
 
   it("profissional ACEITA → cria ClientRelation real + status ACEITA + notifica aluno", async () => {
@@ -252,7 +260,7 @@ describe("Fase 21 BLOCO 1 — solicitação + aprovação manual", () => {
 
   it("RECUSAR: aluno2 solicita a proCuritiba, que recusa → RECUSADA, sem vínculo, aluno notificado", async () => {
     const created = await supertest(server.server).post("/api/connection-requests").set(auth("aluno2"))
-      .send({ professionalId: ids.proCuritiba });
+      .send({ professionalId: ids.proCuritiba, message: "Oi, gostaria de treinar com você." });
     const reqId = created.body.request.id;
     const r = await supertest(server.server).post(`/api/connection-requests/${reqId}/reject`).set(auth("proCuritiba"));
     expect(r.status).toBe(200);
@@ -268,7 +276,7 @@ describe("Fase 21 BLOCO 1 — solicitação + aprovação manual", () => {
 
   it("re-solicitar após recusa é permitido (volta a PENDENTE)", async () => {
     const r = await supertest(server.server).post("/api/connection-requests").set(auth("aluno2"))
-      .send({ professionalId: ids.proCuritiba });
+      .send({ professionalId: ids.proCuritiba, message: "Oi, gostaria de treinar com você." });
     expect(r.status).toBe(201);
     expect(r.body.request.status).toBe("PENDENTE");
   });
@@ -276,7 +284,7 @@ describe("Fase 21 BLOCO 1 — solicitação + aprovação manual", () => {
   it("ACEITAR com profissional no LIMITE (3/3) → 403 e a solicitação PERMANECE PENDENTE", async () => {
     // full3 (4º aluno) solicita ao proFull, que já tem 3/3.
     const created = await supertest(server.server).post("/api/connection-requests").set(auth("full3"))
-      .send({ professionalId: ids.proFull });
+      .send({ professionalId: ids.proFull, message: "Oi, gostaria de treinar com você." });
     const reqId = created.body.request.id;
     const r = await supertest(server.server).post(`/api/connection-requests/${reqId}/accept`).set(auth("proFull"));
     expect(r.status).toBe(403); // limite atingido, propagado do relations.service
@@ -288,5 +296,80 @@ describe("Fase 21 BLOCO 1 — solicitação + aprovação manual", () => {
       where: { personalId_alunoId: { personalId: ids.proFull, alunoId: ids.full3 } },
     });
     expect(rel).toBeNull();
+  });
+});
+
+describe("Fase 76 — mensagens (conversa aluno↔profissional)", () => {
+  it("a 1ª mensagem do aluno já fica registrada na conversa", async () => {
+    const created = await supertest(server.server).post("/api/connection-requests").set(auth("full3"))
+      .send({ professionalId: ids.proCuritiba, message: "Oi! Posso treinar com você às terças?" });
+    expect(created.status).toBe(201);
+    const reqId = created.body.request.id;
+
+    const r = await supertest(server.server).get(`/api/connection-requests/${reqId}/messages`).set(auth("full3"));
+    expect(r.status).toBe(200);
+    expect(r.body.messages).toHaveLength(1);
+    expect(r.body.messages[0].body).toBe("Oi! Posso treinar com você às terças?");
+    expect(r.body.messages[0].senderId).toBe(ids.full3);
+  });
+
+  it("profissional responde na mesma conversa; aluno vê a resposta; notificação criada", async () => {
+    const list = await supertest(server.server).get("/api/connection-requests").set(auth("proCuritiba"));
+    const thread = list.body.requests.find((q: any) => q.counterpart.id === ids.full3);
+
+    const r = await supertest(server.server)
+      .post(`/api/connection-requests/${thread.id}/messages`)
+      .set(auth("proCuritiba"))
+      .send({ body: "Pode sim! Me chama no WhatsApp (11) 90000-0000." });
+    expect(r.status).toBe(201);
+
+    const messages = await supertest(server.server)
+      .get(`/api/connection-requests/${thread.id}/messages`)
+      .set(auth("full3"));
+    expect(messages.body.messages).toHaveLength(2);
+    expect(messages.body.messages[1].body).toContain("WhatsApp");
+
+    const notifs = await prisma.notification.findMany({ where: { userId: ids.full3, type: "new_message" } });
+    expect(notifs.length).toBeGreaterThanOrEqual(1);
+  });
+
+  it("quem não faz parte da conversa não pode ler nem enviar (403)", async () => {
+    const list = await supertest(server.server).get("/api/connection-requests").set(auth("proCuritiba"));
+    const thread = list.body.requests.find((q: any) => q.counterpart.id === ids.full3);
+
+    const readR = await supertest(server.server)
+      .get(`/api/connection-requests/${thread.id}/messages`)
+      .set(auth("proPalhoca"));
+    expect(readR.status).toBe(403);
+
+    const sendR = await supertest(server.server)
+      .post(`/api/connection-requests/${thread.id}/messages`)
+      .set(auth("proPalhoca"))
+      .send({ body: "Não sou parte disso." });
+    expect(sendR.status).toBe(403);
+  });
+
+  it("mensagem vazia → 400", async () => {
+    const list = await supertest(server.server).get("/api/connection-requests").set(auth("proCuritiba"));
+    const thread = list.body.requests.find((q: any) => q.counterpart.id === ids.full3);
+
+    const r = await supertest(server.server)
+      .post(`/api/connection-requests/${thread.id}/messages`)
+      .set(auth("proCuritiba"))
+      .send({ body: "   " });
+    expect(r.status).toBe(400);
+  });
+
+  it("conversa RECUSADA não aceita mais mensagens (409)", async () => {
+    const created = await supertest(server.server).post("/api/connection-requests").set(auth("full2"))
+      .send({ professionalId: ids.proCuritiba, message: "Oi, tem vaga?" });
+    const reqId = created.body.request.id;
+    await supertest(server.server).post(`/api/connection-requests/${reqId}/reject`).set(auth("proCuritiba"));
+
+    const r = await supertest(server.server)
+      .post(`/api/connection-requests/${reqId}/messages`)
+      .set(auth("full2"))
+      .send({ body: "Ainda dá pra treinar?" });
+    expect(r.status).toBe(409);
   });
 });

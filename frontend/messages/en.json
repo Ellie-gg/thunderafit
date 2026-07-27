@@ -376,16 +376,26 @@
     "statusRejected": "Rejected",
     "discover": "Discover",
     "title": "Find a Personal Trainer",
-    "subtitle": "Search by city/state and request a connection. The professional approves it manually.",
+    "subtitle": "Search by city/state and send a message. You two exchange contact here before the professional accepts.",
     "searchButton": "Search",
     "searching": "Searching...",
     "noResultsFound": "No professionals available{location}. Try another location or leave the field empty to see all.",
     "inLocationSuffix": " in \"{location}\"",
     "sending": "Sending...",
-    "requestConnection": "Request connection",
-    "sendRequestError": "Couldn't send the request.",
-    "myRequests": "My requests",
-    "noRequestsSent": "You haven't sent any request yet."
+    "sendMessage": "Send message",
+    "messagePlaceholder": "E.g.: Hi! I'd like to train with you, what are your hours?",
+    "cancel": "Cancel",
+    "sendRequestError": "Couldn't send the message.",
+    "myRequests": "My conversations",
+    "noRequestsSent": "You haven't sent any message yet."
+  },
+  "conversationThread": {
+    "loading": "Loading messages...",
+    "placeholder": "Write a message...",
+    "send": "Send",
+    "sending": "Sending...",
+    "sendError": "Couldn't send the message.",
+    "closed": "This conversation is closed."
   },
   "exerciseExecutionCard": {
     "markAsDoneAriaLabel": "Mark {name} as done",

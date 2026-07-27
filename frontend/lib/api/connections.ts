@@ -38,6 +38,17 @@ export interface ConnectionRequestView {
   counterpart: { id: string; email: string; city: string | null; state: string | null; bio: string | null; avatarUrl: string | null };
 }
 
+// Fase 76: "Solicitar vínculo" virou "Enviar mensagem" — a 1ª mensagem do
+// aluno cria a ConnectionRequest; os dois lados seguem conversando por essas
+// mesmas rotas enquanto ela não for recusada.
+export interface ConnectionMessageView {
+  id: string;
+  connectionRequestId: string;
+  senderId: string;
+  body: string;
+  createdAt: string;
+}
+
 export function searchProfessionals(params?: { city?: string; state?: string; specialties?: Specialty[] }) {
   const qs = new URLSearchParams();
   if (params?.city) qs.set("city", params.city);
@@ -63,10 +74,10 @@ export function updateMyProfile(data: {
   return apiFetch<{ profile: MyProfile }>("/api/professionals/me", { method: "PUT", body: data });
 }
 
-export function createConnectionRequest(professionalId: string) {
-  return apiFetch<{ request: unknown }>("/api/connection-requests", {
+export function createConnectionRequest(professionalId: string, message: string) {
+  return apiFetch<{ request: { id: string; status: ConnectionStatus } }>("/api/connection-requests", {
     method: "POST",
-    body: { professionalId },
+    body: { professionalId, message },
   });
 }
 
@@ -80,4 +91,15 @@ export function acceptConnectionRequest(id: string) {
 
 export function rejectConnectionRequest(id: string) {
   return apiFetch<{ request: unknown }>(`/api/connection-requests/${id}/reject`, { method: "POST" });
+}
+
+export function listConnectionMessages(requestId: string) {
+  return apiFetch<{ messages: ConnectionMessageView[] }>(`/api/connection-requests/${requestId}/messages`);
+}
+
+export function sendConnectionMessage(requestId: string, body: string) {
+  return apiFetch<{ message: ConnectionMessageView }>(`/api/connection-requests/${requestId}/messages`, {
+    method: "POST",
+    body: { body },
+  });
 }
