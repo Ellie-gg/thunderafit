@@ -9,37 +9,50 @@ import { ApiError } from "@/lib/api/client";
 import { AuthGuard } from "@/components/auth-guard";
 import { AppHeader } from "@/components/app-header";
 import { Card } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { QueryError } from "@/components/query-error";
 import { AvailabilityBadge } from "@/components/availability-badge";
 import { AvatarUpload } from "@/components/avatar-upload";
+import { CityStateInput } from "@/components/city-state-input";
+import { SpecialtyChips } from "@/components/specialty-chips";
+import { ProfessionalCard } from "@/components/professional-card";
+import type { Specialty } from "@/lib/constants/professional-directory";
+import { useAuthStore } from "@/lib/store/auth-store";
 
 function PerfilContent() {
   const t = useTranslations("personalProfile");
   const tCommon = useTranslations("common");
   const queryClient = useQueryClient();
   const profileQuery = useQuery({ queryKey: ["my-profile"], queryFn: getMyProfile });
+  const sessionUser = useAuthStore((s) => s.user);
 
   const [available, setAvailable] = useState(false);
-  const [location, setLocation] = useState("");
+  const [city, setCity] = useState("");
+  const [state, setState] = useState("");
   const [bio, setBio] = useState("");
+  const [specialties, setSpecialties] = useState<Specialty[]>([]);
   const [hydrated, setHydrated] = useState(false);
 
   // Popula o form uma vez, quando o perfil carrega.
   useEffect(() => {
     if (profileQuery.data && !hydrated) {
       setAvailable(profileQuery.data.profile.availableForNewStudents);
-      setLocation(profileQuery.data.profile.location ?? "");
+      setCity(profileQuery.data.profile.city ?? "");
+      setState(profileQuery.data.profile.state ?? "");
       setBio(profileQuery.data.profile.bio ?? "");
+      setSpecialties(profileQuery.data.profile.specialties ?? []);
       setHydrated(true);
     }
   }, [profileQuery.data, hydrated]);
 
+  function toggleSpecialty(s: Specialty) {
+    setSpecialties((prev) => (prev.includes(s) ? prev.filter((x) => x !== s) : [...prev, s]));
+  }
+
   const saveMutation = useMutation({
     mutationFn: () =>
-      updateMyProfile({ availableForNewStudents: available, location, bio }),
+      updateMyProfile({ availableForNewStudents: available, city, state, bio, specialties }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["my-profile"] });
     },
@@ -110,27 +123,48 @@ function PerfilContent() {
               </p>
             )}
 
-            <div className="flex flex-col gap-1.5">
-              <Label htmlFor="location">{t("locationLabel")}</Label>
-              <Input
-                id="location"
-                value={location}
-                onChange={(e) => setLocation(e.target.value)}
-                placeholder={t("locationPlaceholder")}
-              />
-            </div>
+            {/* Fase 75: cidade/especialidades/bio só aparecem com a
+                disponibilidade ligada — são os campos do cartão público, não
+                fazem sentido pra quem não vai aparecer no diretório. */}
+            {available && (
+              <>
+                <CityStateInput city={city} state={state} onCityChange={setCity} onStateChange={setState} />
 
-            <div className="flex flex-col gap-1.5">
-              <Label htmlFor="bio">{t("bioLabel")}</Label>
-              <textarea
-                id="bio"
-                value={bio}
-                onChange={(e) => setBio(e.target.value)}
-                rows={3}
-                className="rounded-md border border-border bg-surface px-3.5 py-2 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
-                placeholder={t("bioPlaceholder")}
-              />
-            </div>
+                <div className="flex flex-col gap-1.5">
+                  <Label>{t("specialtiesLabel")}</Label>
+                  <SpecialtyChips selected={specialties} onToggle={toggleSpecialty} />
+                </div>
+
+                <div className="flex flex-col gap-1.5">
+                  <Label htmlFor="bio">{t("bioLabel")}</Label>
+                  <textarea
+                    id="bio"
+                    value={bio}
+                    onChange={(e) => setBio(e.target.value)}
+                    rows={3}
+                    className="rounded-md border border-border bg-surface px-3.5 py-2 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+                    placeholder={t("bioPlaceholder")}
+                  />
+                </div>
+
+                <div className="flex flex-col gap-2 border-t border-border pt-4">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-muted">
+                    {t("previewTitle")}
+                  </p>
+                  <Card className="bg-surface-raised">
+                    <ProfessionalCard
+                      email={profileQuery.data?.profile.email ?? ""}
+                      avatarUrl={sessionUser?.avatarUrl ?? null}
+                      city={city || null}
+                      state={state || null}
+                      bio={bio || null}
+                      specialties={specialties}
+                      isPlus={profileQuery.data?.profile.planoAssinatura === "PLUS"}
+                    />
+                  </Card>
+                </div>
+              </>
+            )}
 
             {saveMutation.isError && (
               <p className="text-sm text-danger">

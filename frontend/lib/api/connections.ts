@@ -1,11 +1,15 @@
 import { apiFetch } from "./client";
+import type { Specialty } from "@/lib/constants/professional-directory";
 
 export interface ProfessionalPublic {
   id: string;
   email: string;
   role: "PERSONAL" | "NUTRICIONISTA";
-  location: string | null;
   bio: string | null;
+  city: string | null;
+  state: string | null;
+  specialties: Specialty[];
+  avatarUrl: string | null;
   // Billing 3 degraus: nunca é "FREE" aqui (o backend já filtra quem aparece
   // no diretório) — só serve pro frontend destacar quem é PLUS.
   planoAssinatura: "FREE" | "BASE" | "PLUS";
@@ -16,8 +20,11 @@ export interface MyProfile {
   email: string;
   role: string;
   availableForNewStudents: boolean;
-  location: string | null;
   bio: string | null;
+  city: string | null;
+  state: string | null;
+  specialties: Specialty[];
+  avatarUrl: string | null;
   planoAssinatura: "FREE" | "BASE" | "PLUS";
 }
 
@@ -28,12 +35,18 @@ export interface ConnectionRequestView {
   status: ConnectionStatus;
   professionalType: "PERSONAL" | "NUTRICIONISTA";
   createdAt: string;
-  counterpart: { id: string; email: string; location: string | null; bio: string | null };
+  counterpart: { id: string; email: string; city: string | null; state: string | null; bio: string | null; avatarUrl: string | null };
 }
 
-export function searchProfessionals(location?: string) {
-  const qs = location ? `?location=${encodeURIComponent(location)}` : "";
-  return apiFetch<{ professionals: ProfessionalPublic[] }>(`/api/professionals/search${qs}`);
+export function searchProfessionals(params?: { city?: string; state?: string; specialties?: Specialty[] }) {
+  const qs = new URLSearchParams();
+  if (params?.city) qs.set("city", params.city);
+  if (params?.state) qs.set("state", params.state);
+  if (params?.specialties?.length) qs.set("specialties", params.specialties.join(","));
+  const query = qs.toString();
+  return apiFetch<{ professionals: ProfessionalPublic[] }>(
+    `/api/professionals/search${query ? `?${query}` : ""}`
+  );
 }
 
 export function getMyProfile() {
@@ -42,8 +55,10 @@ export function getMyProfile() {
 
 export function updateMyProfile(data: {
   availableForNewStudents?: boolean;
-  location?: string | null;
   bio?: string | null;
+  city?: string | null;
+  state?: string | null;
+  specialties?: Specialty[];
 }) {
   return apiFetch<{ profile: MyProfile }>("/api/professionals/me", { method: "PUT", body: data });
 }

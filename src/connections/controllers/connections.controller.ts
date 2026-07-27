@@ -7,14 +7,22 @@ function handleError(err: any, reply: FastifyReply) {
 }
 
 export async function searchProfessionalsHandler(
-  request: FastifyRequest<{ Querystring: { location?: string; role?: string } }>,
+  request: FastifyRequest<{
+    Querystring: { city?: string; state?: string; specialties?: string; role?: string };
+  }>,
   reply: FastifyReply
 ) {
   try {
     // NUTRICIONISTA é tecnicamente suportado, mas a UI só expõe PERSONAL
     // (Fase 18). Default PERSONAL; só aceita os dois papéis profissionais.
     const role = request.query.role === "NUTRICIONISTA" ? "NUTRICIONISTA" : "PERSONAL";
-    const professionals = await connectionsService.searchProfessionals(request.query.location, role);
+    const specialties = request.query.specialties
+      ? request.query.specialties.split(",").map((s) => s.trim()).filter(Boolean)
+      : undefined;
+    const professionals = await connectionsService.searchProfessionals(
+      { city: request.query.city, state: request.query.state, specialties },
+      role
+    );
     return reply.status(200).send({ professionals });
   } catch (err) {
     return handleError(err, reply);
@@ -32,7 +40,13 @@ export async function getMyProfileHandler(request: FastifyRequest, reply: Fastif
 
 export async function updateMyProfileHandler(
   request: FastifyRequest<{
-    Body: { availableForNewStudents?: boolean; location?: string | null; bio?: string | null };
+    Body: {
+      availableForNewStudents?: boolean;
+      bio?: string | null;
+      city?: string | null;
+      state?: string | null;
+      specialties?: string[];
+    };
   }>,
   reply: FastifyReply
 ) {

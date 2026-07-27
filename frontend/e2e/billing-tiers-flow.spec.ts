@@ -50,7 +50,7 @@ test("Personal FREE não consegue ativar disponibilidade no diretório e vê o c
   await page.goto("/personal/perfil");
   await expect(page.getByRole("heading", { name: "Perfil público" })).toBeVisible();
 
-  const toggle = page.getByRole("switch", { name: "Disponível para novos alunos" });
+  const toggle = page.getByRole("switch", { name: "Aparecer no diretório de Personal Trainers" });
   await expect(toggle).toBeDisabled();
   await expect(page.getByText("Disponibilidade no diretório é um recurso dos planos Base e Plus.")).toBeVisible();
   await page.getByRole("link", { name: "Fazer upgrade" }).click();
@@ -78,18 +78,18 @@ test("Personal Base ativa disponibilidade; Personal Plus aparece com destaque e 
   await fetch(`${BACKEND_URL}/api/professionals/me`, {
     method: "PUT",
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${baseLogin.accessToken}` },
-    body: JSON.stringify({ availableForNewStudents: true, location: cidade }),
+    body: JSON.stringify({ availableForNewStudents: true, city: cidade }),
   });
   await fetch(`${BACKEND_URL}/api/professionals/me`, {
     method: "PUT",
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${plusLogin.accessToken}` },
-    body: JSON.stringify({ availableForNewStudents: true, location: cidade }),
+    body: JSON.stringify({ availableForNewStudents: true, city: cidade }),
   });
 
   await loginViaUI(page, alunoEmail, password);
   await expect(page).toHaveURL(/\/dashboard$/);
   await page.goto("/profissionais");
-  await page.locator("#location").fill(cidade);
+  await page.locator("#city-input").fill(cidade);
   await page.getByRole("button", { name: "Buscar" }).click();
 
   await expect(page.getByText("★ Plus")).toBeVisible();

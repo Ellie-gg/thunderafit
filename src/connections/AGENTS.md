@@ -10,9 +10,20 @@ approval request flow that gates the creation of the real `ClientRelation`
 ## Main entities
 
 - **`User` public profile fields** (not a separate model — fields live on
-  `User` itself): `availableForNewStudents`, `location` (free text, no geo),
-  `bio`, plus `planoAssinatura` (surfaced read-only for the search result to
-  highlight Plus).
+  `User` itself): `availableForNewStudents`, `bio`, plus `planoAssinatura`
+  (surfaced read-only for the search result to highlight Plus).
+- **Fase 75 — structured city/state + specialties**: `city`/`state` (2-letter
+  UF, validated against the fixed `BR_STATES` list in
+  `src/connections/constants.ts`) replaced the old free-text `location`
+  field (still present in the schema/DB, but dead — nothing reads or writes
+  it anymore; not dropped to avoid a destructive migration for a field that
+  never had a real UI in front of it). `specialties: Specialty[]` is a fixed
+  enum (10 values) for multiple-choice tagging. Both the ALUNO (their saved
+  search city) and the professional (their public profile city) use the
+  exact same two fields — search matches by equality (case-insensitive on
+  `city`), not `contains`, so the two sides always agree on format.
+  `avatarUrl` is now also in the public-profile select, for the search
+  result/preview card.
 - **`ConnectionRequest`** — one row per (alunoId, professionalId) pair
   (`@@unique([alunoId, professionalId])`). `status`: `PENDENTE` → `ACEITA` |
   `RECUSADA`. Re-requesting after a rejection reuses the same row (upsert),
@@ -65,6 +76,14 @@ approval request flow that gates the creation of the real `ClientRelation`
   in sync if the plan model or its downgrade behavior changes elsewhere
   (e.g. `applyFreePlan`, referenced in service comments, must keep clearing
   `availableForNewStudents`).
+- `updateMyProfile`'s role check is per-field, not per-request: `city`/`state`
+  can be set by ANY authenticated role (this is how the ALUNO persists their
+  search city via the exact same `PUT /api/professionals/me` endpoint used
+  by the professional's own profile screen) — only
+  `availableForNewStudents`/`bio`/`specialties` are professional-only (403
+  for ALUNO). Don't tighten the role check back to "professionals only" for
+  the whole endpoint without re-routing the aluno's city save somewhere else
+  first.
 
 ## Current state
 
@@ -73,3 +92,18 @@ approval request flow that gates the creation of the real `ClientRelation`
   PERSONAL and only accepts these two values.
 - No pagination on `searchProfessionals` or `listRequests`.
 - No cancel/withdraw endpoint for the ALUNO side of a pending request.
+- Fase 75: the "use my current location" button
+  (`frontend/components/city-state-input.tsx`) calls the free, keyless
+  Nominatim (OpenStreetMap) reverse-geocoding API directly from the browser
+  — no backend proxy, no API key, but it's a third-party service with no SLA
+  and a fair-use rate limit; if it fails or the browser denies permission,
+  typing the city manually always still works.
+- The Personal profile form
+  (`frontend/app/personal/perfil/page.tsx`) only reveals city/UF/specialties/
+  bio/preview when `availableForNewStudents` is on — since those fields are
+  gated behind that toggle, there's no race between a slow profile fetch and
+  the user typing (the inputs don't exist until data has loaded). The
+  aluno-facing city forms (`/profissionais`, `/perfil`) do NOT have that
+  luxury — their fields render immediately, so both guard against the
+  prefill effect clobbering fast-typed input with a `userEditedRef`; don't
+  remove that guard when touching either page.
