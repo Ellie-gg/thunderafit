@@ -279,9 +279,12 @@
       "FEMININO": "Women's",
       "HIPERTROFIA": "Hypertrophy",
       "DEFINICAO": "Toning",
-      "EXPRESS": "Express"
+      "EXPRESS": "Express",
+      "INICIANTE": "Beginner",
+      "INTERMEDIARIO": "Intermediate",
+      "AVANCADO": "Advanced"
     },
-    "premiumTagFilterEmpty": "No Premium workout with that tag yet.",
+    "premiumTagFilterEmpty": "No Premium workout with that filter yet.",
     "premiumComingSoon": "Premium subscription coming soon — your free trial has already been used.",
     "premiumTrialPitch": "Unlock Premium workouts with a free 7-day trial, no commitment.",
     "premiumStartTrial": "Start 7-day free trial",
