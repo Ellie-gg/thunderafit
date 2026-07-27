@@ -17,6 +17,14 @@ const ROLE_ACCENT_VAR: Record<Role, string> = {
   ADMIN: "var(--role-admin)",
 };
 
+// Fase 65: teto defensivo — em todo uso real (séries, exercícios), `total`
+// nunca passa de ~20; mas `limiteAlunos` do plano Plus é 1_000_000
+// ("ilimitado"), e sem teto isso tentava montar 1 milhão de `<div>`,
+// travando a tela. Acima do teto, cada segmento passa a valer mais de uma
+// unidade — a proporção preenchida continua correta, só a granularidade
+// visual muda.
+const MAX_SEGMENTS = 100;
+
 /**
  * Elemento de assinatura do design system ThunderaFit: uma barra segmentada
  * que "carrega" como um relâmpago acumulando energia, em vez de uma barra de
@@ -24,7 +32,9 @@ const ROLE_ACCENT_VAR: Record<Role, string> = {
  * lista de treinos (por treino) e execução (por exercício).
  */
 export function VoltageBar({ total, filled, className, role }: VoltageBarProps) {
-  const segments = Array.from({ length: Math.max(total, 1) }, (_, i) => i < filled);
+  const segmentCount = Math.min(Math.max(total, 1), MAX_SEGMENTS);
+  const filledSegments = Math.round((filled / Math.max(total, 1)) * segmentCount);
+  const segments = Array.from({ length: segmentCount }, (_, i) => i < filledSegments);
   const style = role ? ({ "--voltage-accent": ROLE_ACCENT_VAR[role] } as React.CSSProperties) : undefined;
 
   return (

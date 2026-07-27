@@ -81,8 +81,8 @@ export interface Workout {
   suggestedNext?: boolean;
   /** Fase 55.2: só presente em GET /api/admin/self-templates/:id (tela de edição de tradução). */
   translations?: { EN?: string; ES?: string };
-  /** Fase 34.5: presente em GET /api/workouts/:id (findByIdWithExercises). */
-  program?: { origin: WorkoutProgramOrigin };
+  /** Fase 34.5: presente em GET /api/workouts/:id (findByIdWithExercises). Fase 65: sessionScheme também. */
+  program?: { origin: WorkoutProgramOrigin; sessionScheme?: SessionScheme };
 }
 
 // Fase 35/36: resumo pós-treino — devolvido junto da resposta de conclusão de

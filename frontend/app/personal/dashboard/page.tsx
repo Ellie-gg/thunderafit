@@ -34,7 +34,12 @@ function PersonalDashboardContent() {
   const alunos = relationsQuery.data?.relations ?? [];
   const limite = billingQuery.data?.limiteAlunos ?? user?.limiteAlunos ?? 0;
   const isPago = billingQuery.data && billingQuery.data.planoAssinatura !== "FREE";
-  const noLimite = alunos.length >= limite;
+  // Fase 65: plano Plus é "ilimitado" (limiteAlunos = 1_000_000 no backend,
+  // só um sentinel) — mostrar "X/1000000" ou uma barra quase toda vazia não
+  // faz sentido nenhum pro Personal, então o bloco de contagem some por
+  // completo pra esse plano.
+  const isPlus = billingQuery.data?.planoAssinatura === "PLUS";
+  const noLimite = !isPlus && alunos.length >= limite;
 
   return (
     <>
@@ -52,11 +57,17 @@ function PersonalDashboardContent() {
             <span className="text-xs font-semibold uppercase tracking-wide text-accent-secondary">
               {t("alunosVinculados")}
             </span>
-            <span className="font-mono-nums text-xs text-muted">
-              {alunos.length}/{limite}
-            </span>
+            {!isPlus && (
+              <span className="font-mono-nums text-xs text-muted">
+                {alunos.length}/{limite}
+              </span>
+            )}
           </div>
-          <VoltageBar total={limite} filled={alunos.length} role="PERSONAL" />
+          {isPlus ? (
+            <p className="text-sm text-muted">{t("alunosIlimitados")}</p>
+          ) : (
+            <VoltageBar total={limite} filled={alunos.length} role="PERSONAL" />
+          )}
 
           {noLimite && (
             <Link

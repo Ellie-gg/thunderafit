@@ -192,8 +192,12 @@
   "alunoDashboard": {
     "greeting": "Hola, {name}",
     "subtitle": "¿Listo para el entrenamiento de hoy?",
+    "firstTimeSubtitle": "¿Listo para tu primer entrenamiento?",
+    "firstTimeStartTitle": "Comenzar ahora",
+    "firstTimeStartDescription": "Elige un entrenamiento listo de nuestra biblioteca y empieza hoy mismo.",
+    "firstTimeStartButton": "Ver entrenamientos disponibles",
+    "or": "o",
     "loadingWorkouts": "Cargando entrenamientos...",
-    "noProgramsYet": "Todavía no tienes ningún entrenamiento o plan de alimentación. Invita a tu Entrenador Personal a continuación, o elige un entrenamiento listo en \"Mis Entrenamientos\".",
     "personalPrescribedLabel": "Prescrito por tu Entrenador Personal",
     "noPersonalPrescription": "Tu Entrenador Personal todavía no te ha prescrito ningún entrenamiento.",
     "myWorkoutsLabel": "Mis Entrenamientos Personales",
@@ -378,6 +382,13 @@
     "moveDownAriaLabel": "Mover ejercicio hacia abajo",
     "moveError": "Error al mover."
   },
+  "exerciseDeleteButton": {
+    "deleteAriaLabel": "Eliminar ejercicio",
+    "confirmDelete": "¿Eliminar este ejercicio del entrenamiento?",
+    "confirmDeleteButton": "Sí, eliminar",
+    "deleting": "Eliminando...",
+    "deleteError": "Error al eliminar."
+  },
   "duvidasList": {
     "title": "Dudas",
     "subtitle": "Chatea con tu Personal Trainer.",
@@ -460,6 +471,7 @@
     "greeting": "Hola, {nome}",
     "subtitle": "Tus alumnos y entrenamientos prescritos.",
     "alunosVinculados": "Alumnos vinculados",
+    "alunosIlimitados": "Alumnos ilimitados — sin límite para vincular.",
     "limiteAtingido": "Límite de alumnos alcanzado.",
     "fazerUpgrade": "Mejora tu plan →",
     "verPlanos": "¿Necesitas más alumnos? Ver planes →",
@@ -643,7 +655,13 @@
     "notes": "Nota: {notes}",
     "nextSession": "Siguiente: {label} →",
     "creating": "Creando...",
-    "nextSessionError": "Error al crear la siguiente sesión."
+    "nextSessionError": "Error al crear la siguiente sesión.",
+    "viewAsStudent": "Ver como lo ve el alumno →"
+  },
+  "personalSessaoVisualizar": {
+    "backToEdit": "← Volver a la edición",
+    "previewLabel": "Vista previa (solo lectura)",
+    "noExercises": "Aún no hay ejercicios prescritos en esta sesión."
   },
   "personalTreinoDetail": {
     "loadingWorkout": "Cargando rutina...",
