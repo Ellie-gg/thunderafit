@@ -11,6 +11,7 @@ import {
   updateExerciseHandler,
   deleteExerciseHandler,
   updateUserRoleHandler,
+  deleteUserHandler,
   listSelfTemplatesHandler,
   getSelfTemplateHandler,
   createSelfTemplateHandler,
@@ -50,6 +51,8 @@ export async function adminRoutes(fastify: FastifyInstance) {
   fastify.delete("/api/admin/exercises/:id", auth, deleteExerciseHandler);
 
   fastify.put("/api/admin/users/:id/role", auth, updateUserRoleHandler);
+  // Fase 80: remoção definitiva de usuário (cascade manual, ver adminRepository.deleteUser).
+  fastify.delete("/api/admin/users/:id", auth, deleteUserHandler);
   // Fase 58: concessão/revogação manual de Premium (ALUNO ou PERSONAL/NUTRI).
   fastify.put("/api/admin/users/:id/premium", auth, updateUserPremiumHandler);
 

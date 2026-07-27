@@ -8,6 +8,7 @@ import {
   protectedHandler,
   checkEmailHandler,
   updateAvatarHandler,
+  changePasswordHandler,
   updateLocaleHandler,
 } from "../controllers/auth.controller";
 
@@ -53,6 +54,15 @@ export async function authRoutes(fastify: FastifyInstance) {
       preHandler: [(fastify as any).authenticate],
     },
     updateAvatarHandler
+  );
+
+  // Fase 80: trocar (ou definir, conta só-Google) a senha (qualquer role autenticada)
+  fastify.put(
+    "/api/auth/me/password",
+    {
+      preHandler: [(fastify as any).authenticate],
+    },
+    changePasswordHandler
   );
 
   // i18n: escolha explícita de idioma (qualquer role autenticada)

@@ -63,3 +63,13 @@ export function updateLocaleRequest(locale: "PT" | "EN" | "ES" | null) {
     body: { locale },
   });
 }
+
+// Fase 80 — "Trocar senha" no perfil. `currentPassword` omitido é só válido
+// pra uma conta que ainda não tem senha própria (Google SSO) — o backend
+// rejeita com 400 se for obrigatória e vier ausente.
+export function changePasswordRequest(currentPassword: string | undefined, newPassword: string) {
+  return apiFetch<{ user: User }>("/api/auth/me/password", {
+    method: "PUT",
+    body: { currentPassword, newPassword },
+  });
+}

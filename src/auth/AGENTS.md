@@ -143,6 +143,11 @@ Live endpoints (all under `/api/auth`):
   for the 2-call shape). Not rate-limited like `/login`/`/check-email` —
   the real anti-abuse control is Google's own idToken verification/expiry,
   not this domain's IP+email limiter.
+- `PUT /me/password` — authenticated, any role, Fase 80 "change password"
+  button (perfil screens). Not rate-limited — unlike `/login`, a wrong
+  `currentPassword` here requires an already-valid session token, so brute
+  forcing it is a much smaller attack surface (session hijack, not a public
+  credential guess).
 - `POST /check-email` — public, rate-limited, `{ exists }` only.
 - `POST /refresh` — public, reads refresh token from body or cookie, rotates
   tokens.

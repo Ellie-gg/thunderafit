@@ -589,6 +589,17 @@
     "respondido": "Respondida",
     "aberto": "Abierta"
   },
+  "changePassword": {
+    "title": "Cambiar contraseña",
+    "description": "Si tu cuenta fue creada con Google y nunca definiste una contraseña, solo completa la nueva — deja \"contraseña actual\" en blanco.",
+    "currentPasswordLabel": "Contraseña actual",
+    "currentPasswordHint": "Déjalo en blanco si nunca has definido una contraseña (cuenta creada con Google).",
+    "newPasswordLabel": "Nueva contraseña (mín. 8 caracteres)",
+    "saveError": "No se pudo cambiar la contraseña.",
+    "saveSuccess": "Contraseña actualizada con éxito.",
+    "saving": "Guardando...",
+    "saveButton": "Guardar nueva contraseña"
+  },
   "faleConosco": {
     "eyebrow": "Soporte",
     "title": "Contáctanos",
@@ -1060,6 +1071,13 @@
       "confirmRevoke": "¿Revocar el Premium de {email}?",
       "genericError": "Error al cambiar el Premium.",
       "saving": "Guardando..."
+    },
+    "deleteUser": {
+      "button": "Eliminar",
+      "confirmMessage": "¿Eliminar a {email} de forma permanente? Esta acción no se puede deshacer — todos los entrenamientos, vínculos, mensajes y demás datos de este usuario serán eliminados (o desvinculados, cuando pertenezcan a otro usuario).",
+      "confirmButton": "Eliminar definitivamente",
+      "deleting": "Eliminando...",
+      "genericError": "Error al eliminar el usuario."
     },
     "linkedSince": "desde {date}"
   },
