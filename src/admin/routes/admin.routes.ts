@@ -19,6 +19,7 @@ import {
   deleteSelfTemplateHandler,
   uploadSelfTemplateBannerHandler,
   updateSelfTemplateHandler,
+  updateSelfTemplateTagsHandler,
   updateSelfSessionHandler,
   updateUserPremiumHandler,
 } from "../controllers/admin.controller";
@@ -59,6 +60,8 @@ export async function adminRoutes(fastify: FastifyInstance) {
   // Fase 55.2: edição de nome (PT + tradução EN/ES) do template e das sessões.
   fastify.put("/api/admin/self-templates/:id", auth, updateSelfTemplateHandler);
   fastify.put("/api/admin/self-templates/:id/sessions/:sessionId", auth, updateSelfSessionHandler);
+  // Fase 63: tags de filtro rápido (chips) — sempre substitui a lista inteira.
+  fastify.put("/api/admin/self-templates/:id/tags", auth, updateSelfTemplateTagsHandler);
   fastify.post("/api/admin/self-templates/:id/sessions", auth, addSessionToSelfTemplateHandler);
   fastify.post(
     "/api/admin/self-templates/:id/sessions/:sessionId/exercises",

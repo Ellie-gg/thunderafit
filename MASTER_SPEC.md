@@ -921,6 +921,22 @@ decisão/priorização futura):
     *Modelo: Sonnet 5. 1 migration (só `PERSONAL_CATALOG` como novo valor do
     enum `WorkoutProgramOrigin` — nenhuma coluna nova).*
 
+### Grupo R — Filtro rápido por tags (chips) no carrossel Premium. ✅ CONCLUÍDA (2026-07-26, registrada como Fase 63 no STATUS.md)
+79. Carrossel "Treinos Premium" de `/meu-treino-pessoal` acumulou muitos
+    banners (13 templates) e a rolagem prejudicava a navegação. Adicionadas
+    chips de filtro rápido — **Todos / Feminino / Hipertrofia / Definição /
+    Express** — acima do carrossel; clicar numa chip filtra client-side
+    (`tpl.tags.includes(tag)`), sem chamada nova ao backend.
+80. Novo campo `WorkoutProgram.tags` (`WorkoutTag[]`, array nativo do
+    Postgres, default `[]`) — um template pode ter 0, 1 ou várias tags
+    (confirmado com o fundador: não é 1-pra-1). Editável só em templates
+    `origin: SELF` (`PUT /api/admin/self-templates/:id/tags`, 400 se tentado
+    num template `PERSONAL_CATALOG`) — a mesma tela de admin
+    (`/nimbus/treinos-pessoais`) ganha o seletor de tags tanto na criação
+    quanto na edição de um template já existente, confirmado com o fundador
+    pra cobrir os dois casos.
+    *Modelo: Sonnet 5. 1 migration (novo enum `WorkoutTag` + coluna `tags`).*
+
 ### Backlog operacional herdado
 Ver Seção 7 acima (Neon, billing, Android, webhook).
 

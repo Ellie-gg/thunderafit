@@ -8,7 +8,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { listSelfTemplates, applySelfTemplate } from "@/lib/api/workouts";
 import { getAlunoPremiumStatus, startAlunoPremiumTrial } from "@/lib/api/billing";
 import { ApiError } from "@/lib/api/client";
-import type { WorkoutProgram } from "@/lib/types";
+import type { WorkoutProgram, WorkoutTag } from "@/lib/types";
 import { AuthGuard } from "@/components/auth-guard";
 import { AppHeader } from "@/components/app-header";
 import { Card } from "@/components/ui/card";
@@ -17,6 +17,18 @@ import { QueryError } from "@/components/query-error";
 import { SelfTemplateCarousel } from "@/components/self-template-carousel";
 import { ReplaceSelfTemplateDialog } from "@/components/replace-self-template-dialog";
 import { TemplatePreviewDialog } from "@/components/template-preview-dialog";
+
+// Fase 63: filtro rápido por chip do carrossel "Treinos Premium" — hoje com
+// muitos banners, o que prejudica a navegação (rolar tudo pra achar um
+// treino do interesse). "TODOS" não é uma tag de verdade, é o estado "sem
+// filtro".
+const PREMIUM_TAG_FILTERS: Array<WorkoutTag | "TODOS"> = [
+  "TODOS",
+  "FEMININO",
+  "HIPERTROFIA",
+  "DEFINICAO",
+  "EXPRESS",
+];
 
 /**
  * Fase 34.5 — "Meu treino pessoal": templates curados pelo admin (origin:
@@ -153,11 +165,17 @@ function MeuTreinoPessoalContent() {
     },
   });
 
+  const [premiumTagFilter, setPremiumTagFilter] = React.useState<WorkoutTag | "TODOS">("TODOS");
+
   const templates = templatesQuery.data?.programs ?? [];
   const geralTemplates = templates.filter((tpl) => tpl.category === "GERAL");
   const prontosTemplates = templates.filter((tpl) => tpl.category === "PRONTOS");
   const homeTemplates = templates.filter((tpl) => tpl.category === "HOME");
   const premiumTemplates = templates.filter((tpl) => tpl.category === "PREMIUM");
+  const premiumTemplatesFiltered =
+    premiumTagFilter === "TODOS"
+      ? premiumTemplates
+      : premiumTemplates.filter((tpl) => tpl.tags?.includes(premiumTagFilter));
 
   function handleSelectProntos(template: WorkoutProgram) {
     setPremiumNotice(false);
@@ -237,11 +255,39 @@ function MeuTreinoPessoalContent() {
             <h2 className="font-display text-lg font-bold">{t("premiumSectionTitle")}</h2>
             <p className="text-sm text-muted">{t("premiumSectionSubtitle")}</p>
           </div>
+          {/* Fase 63: chips de filtro rápido — só aparecem quando há
+              templates Premium pra filtrar (some por completo se a lista
+              estiver vazia, mesmo espírito de "sem caso especial vazio" já
+              usado no resto da tela). */}
+          {premiumTemplates.length > 0 && (
+            <div className="flex flex-wrap gap-2">
+              {PREMIUM_TAG_FILTERS.map((tag) => (
+                <button
+                  key={tag}
+                  type="button"
+                  aria-pressed={premiumTagFilter === tag}
+                  onClick={() => setPremiumTagFilter(tag)}
+                  className={
+                    premiumTagFilter === tag
+                      ? "rounded-full border border-accent bg-accent/10 px-3 py-1.5 text-xs font-semibold text-accent"
+                      : "rounded-full border border-border px-3 py-1.5 text-xs text-muted hover:border-accent"
+                  }
+                >
+                  {t(`premiumTagFilter.${tag}`)}
+                </button>
+              ))}
+            </div>
+          )}
           {templatesQuery.isSuccess && premiumTemplates.length === 0 && (
             <p className="text-sm text-muted">{t("emptyState")}</p>
           )}
+          {templatesQuery.isSuccess &&
+            premiumTemplates.length > 0 &&
+            premiumTemplatesFiltered.length === 0 && (
+              <p className="text-sm text-muted">{t("premiumTagFilterEmpty")}</p>
+            )}
           <SelfTemplateCarousel
-            templates={premiumTemplates}
+            templates={premiumTemplatesFiltered}
             locked={!premiumStatusQuery.data?.hasAccess}
             onSelect={handleSelectPremium}
           />
