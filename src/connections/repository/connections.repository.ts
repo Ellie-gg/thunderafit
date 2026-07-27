@@ -1,3 +1,4 @@
+import { Specialty } from "@prisma/client";
 import prisma from "../../lib/prisma";
 
 type ProfessionalRole = "PERSONAL" | "NUTRICIONISTA";
@@ -7,15 +8,33 @@ const PUBLIC_PROFILE_SELECT = {
   id: true,
   email: true,
   role: true,
-  location: true,
   bio: true,
+  city: true,
+  state: true,
+  specialties: true,
+  avatarUrl: true,
+  planoAssinatura: true,
+} as const;
+
+const MY_PROFILE_SELECT = {
+  id: true,
+  email: true,
+  role: true,
+  availableForNewStudents: true,
+  bio: true,
+  city: true,
+  state: true,
+  specialties: true,
+  avatarUrl: true,
   planoAssinatura: true,
 } as const;
 
 export const connectionsRepository = {
   /**
-   * Busca profissionais disponíveis (opt-in) por role e localização (texto,
-   * correspondência parcial case-insensitive). Retorna só o perfil público.
+   * Busca profissionais disponíveis (opt-in) por role + cidade/UF/
+   * especialidades. Fase 75: cidade/UF viraram estruturados — igualdade
+   * exata (case-insensitive na cidade), não mais `contains` por texto livre.
+   * Retorna só o perfil público.
    *
    * `planoAssinatura: { not: "FREE" }` é defesa em profundidade: o degrau
    * Free nunca pode ATIVAR `availableForNewStudents` (gate em
@@ -28,15 +47,20 @@ export const connectionsRepository = {
    * antiguidade dentro do mesmo degrau — `orderBy` num enum usa a ordem de
    * DECLARAÇÃO no schema (FREE, BASE, PLUS), então `desc` põe PLUS na frente.
    */
-  searchProfessionals(params: { role: ProfessionalRole; location?: string }) {
+  searchProfessionals(params: {
+    role: ProfessionalRole;
+    city?: string;
+    state?: string;
+    specialties?: Specialty[];
+  }) {
     return prisma.user.findMany({
       where: {
         role: params.role,
         availableForNewStudents: true,
         planoAssinatura: { not: "FREE" },
-        ...(params.location
-          ? { location: { contains: params.location, mode: "insensitive" } }
-          : {}),
+        ...(params.city ? { city: { equals: params.city, mode: "insensitive" } } : {}),
+        ...(params.state ? { state: params.state } : {}),
+        ...(params.specialties?.length ? { specialties: { hasSome: params.specialties } } : {}),
       },
       select: PUBLIC_PROFILE_SELECT,
       orderBy: [{ planoAssinatura: "desc" }, { createdAt: "asc" }],
@@ -46,34 +70,24 @@ export const connectionsRepository = {
   getProfile(userId: string) {
     return prisma.user.findUnique({
       where: { id: userId },
-      select: {
-        id: true,
-        email: true,
-        role: true,
-        availableForNewStudents: true,
-        location: true,
-        bio: true,
-        planoAssinatura: true,
-      },
+      select: MY_PROFILE_SELECT,
     });
   },
 
   updateProfile(
     userId: string,
-    data: { availableForNewStudents?: boolean; location?: string | null; bio?: string | null }
+    data: {
+      availableForNewStudents?: boolean;
+      bio?: string | null;
+      city?: string | null;
+      state?: string | null;
+      specialties?: Specialty[];
+    }
   ) {
     return prisma.user.update({
       where: { id: userId },
       data,
-      select: {
-        id: true,
-        email: true,
-        role: true,
-        availableForNewStudents: true,
-        location: true,
-        bio: true,
-        planoAssinatura: true,
-      },
+      select: MY_PROFILE_SELECT,
     });
   },
 
@@ -121,7 +135,7 @@ export const connectionsRepository = {
   usersByIds(ids: string[]) {
     return prisma.user.findMany({
       where: { id: { in: ids } },
-      select: { id: true, email: true, location: true, bio: true },
+      select: { id: true, email: true, city: true, state: true, bio: true, avatarUrl: true },
     });
   },
 };

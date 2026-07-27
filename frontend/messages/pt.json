@@ -146,7 +146,13 @@
   "alunoProfile": {
     "eyebrow": "Perfil",
     "title": "Meu perfil",
-    "photoTitle": "Foto de perfil"
+    "photoTitle": "Foto de perfil",
+    "cityTitle": "Cidade de busca",
+    "cityDescription": "Usada pra pré-preencher a busca em \"Encontrar Personal\" — você pode trocar quando quiser.",
+    "saveError": "Não foi possível salvar.",
+    "saveSuccess": "Cidade salva.",
+    "saving": "Salvando...",
+    "saveButton": "Salvar cidade"
   },
   "personalProfile": {
     "eyebrow": "Perfil",
@@ -154,22 +160,43 @@
     "subtitle": "Ative a disponibilidade para aparecer na busca de alunos. Você aprova cada solicitação manualmente.",
     "photoTitle": "Foto de perfil",
     "availability": {
-      "title": "Disponível para novos alunos",
-      "description": "Quando ligado, seu perfil aparece na busca por localização.",
-      "toggleAria": "Disponível para novos alunos"
+      "title": "Aparecer no diretório de Personal Trainers",
+      "description": "Quando ligado, seu perfil aparece na busca por cidade/UF/especialidade.",
+      "toggleAria": "Aparecer no diretório de Personal Trainers"
     },
     "freeNotice": {
       "text": "Disponibilidade no diretório é um recurso dos planos Base e Plus.",
       "upgradeLink": "Fazer upgrade"
     },
-    "locationLabel": "Localização (cidade/estado)",
-    "locationPlaceholder": "Ex: Palhoça, SC",
-    "bioLabel": "Bio / especialidade",
+    "specialtiesLabel": "Especialidades / modalidades",
+    "bioLabel": "Bio",
     "bioPlaceholder": "Ex: Especialista em treino funcional e reabilitação.",
+    "previewTitle": "Como você vai aparecer para o aluno",
     "saveError": "Não foi possível salvar.",
     "saveSuccess": "Perfil salvo.",
     "saving": "Salvando...",
     "saveButton": "Salvar perfil"
+  },
+  "cityStateInput": {
+    "cityLabel": "Cidade",
+    "cityPlaceholder": "Ex: Palhoça",
+    "stateLabel": "UF",
+    "stateEmpty": "—",
+    "useMyLocation": "📍 Usar minha localização atual",
+    "locating": "Localizando...",
+    "locationError": "Não foi possível obter sua localização. Digite a cidade manualmente."
+  },
+  "specialty": {
+    "HIPERTROFIA": "Hipertrofia",
+    "EMAGRECIMENTO": "Emagrecimento / Definição",
+    "FORCA_POWERLIFTING": "Força / Powerlifting",
+    "FUNCIONAL": "Funcional",
+    "REABILITACAO": "Reabilitação / Fisioterapia",
+    "TERCEIRA_IDADE": "Terceira Idade",
+    "GESTANTES": "Gestantes",
+    "CROSSFIT": "Crossfit",
+    "CORRIDA_CARDIO": "Corrida / Cardio",
+    "NUTRICAO_ESPORTIVA": "Nutrição Esportiva"
   },
   "vincularAlunoForm": {
     "title": "Vincular novo aluno",
@@ -350,8 +377,6 @@
     "discover": "Descobrir",
     "title": "Encontrar Personal",
     "subtitle": "Busque por cidade/estado e solicite vínculo. O profissional aprova manualmente.",
-    "locationLabel": "Localização (cidade/estado)",
-    "locationPlaceholder": "Ex: Palhoça, SC",
     "searchButton": "Buscar",
     "searching": "Buscando...",
     "noResultsFound": "Nenhum profissional disponível{location}. Tente outra localização ou deixe o campo vazio para ver todos.",

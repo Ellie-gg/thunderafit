@@ -57,8 +57,8 @@ test("Personal fica disponível, aluno busca e solicita, Personal aceita, aluno 
   await expect(page).toHaveURL(/\/personal\/dashboard$/);
   await page.goto("/personal/perfil");
   await expect(page.getByRole("heading", { name: "Perfil público" })).toBeVisible({ timeout: 30000 });
-  await page.getByRole("switch", { name: "Disponível para novos alunos" }).click();
-  await page.locator("#location").fill(cidade);
+  await page.getByRole("switch", { name: "Aparecer no diretório de Personal Trainers" }).click();
+  await page.locator("#city-input").fill(cidade);
   await page.locator("#bio").fill("Treino de teste E2E");
   await page.getByRole("button", { name: "Salvar perfil" }).click();
   await expect(page.getByText("Perfil salvo.")).toBeVisible();
@@ -68,7 +68,7 @@ test("Personal fica disponível, aluno busca e solicita, Personal aceita, aluno 
   await expect(page).toHaveURL(/\/dashboard$/);
   await page.goto("/profissionais");
   await expect(page.getByRole("heading", { name: "Encontrar Personal" })).toBeVisible({ timeout: 30000 });
-  await page.locator("#location").fill(cidade);
+  await page.locator("#city-input").fill(cidade);
   await page.getByRole("button", { name: "Buscar" }).click();
 
   const proCard = page.locator("div", { hasText: personalEmail.split("@")[0] });

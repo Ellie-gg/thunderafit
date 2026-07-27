@@ -146,7 +146,13 @@
   "alunoProfile": {
     "eyebrow": "Profile",
     "title": "My profile",
-    "photoTitle": "Profile photo"
+    "photoTitle": "Profile photo",
+    "cityTitle": "Search city",
+    "cityDescription": "Used to pre-fill your search in \"Find a Trainer\" — you can change it anytime.",
+    "saveError": "Couldn't save.",
+    "saveSuccess": "City saved.",
+    "saving": "Saving...",
+    "saveButton": "Save city"
   },
   "personalProfile": {
     "eyebrow": "Profile",
@@ -154,22 +160,43 @@
     "subtitle": "Turn on availability to appear in the student search. You approve each request manually.",
     "photoTitle": "Profile photo",
     "availability": {
-      "title": "Available for new students",
-      "description": "When on, your profile appears in location-based search.",
-      "toggleAria": "Available for new students"
+      "title": "Show up in the Personal Trainer directory",
+      "description": "When on, your profile appears in city/state/specialty search.",
+      "toggleAria": "Show up in the Personal Trainer directory"
     },
     "freeNotice": {
       "text": "Directory availability is a Base and Plus plan feature.",
       "upgradeLink": "Upgrade"
     },
-    "locationLabel": "Location (city/state)",
-    "locationPlaceholder": "E.g., Boston, MA",
-    "bioLabel": "Bio / specialty",
+    "specialtiesLabel": "Specialties / modalities",
+    "bioLabel": "Bio",
     "bioPlaceholder": "E.g., Specialist in functional training and rehabilitation.",
+    "previewTitle": "How you'll appear to students",
     "saveError": "Couldn't save.",
     "saveSuccess": "Profile saved.",
     "saving": "Saving...",
     "saveButton": "Save profile"
+  },
+  "cityStateInput": {
+    "cityLabel": "City",
+    "cityPlaceholder": "E.g., Boston",
+    "stateLabel": "State",
+    "stateEmpty": "—",
+    "useMyLocation": "📍 Use my current location",
+    "locating": "Locating...",
+    "locationError": "Couldn't get your location. Type your city manually."
+  },
+  "specialty": {
+    "HIPERTROFIA": "Hypertrophy",
+    "EMAGRECIMENTO": "Weight Loss / Toning",
+    "FORCA_POWERLIFTING": "Strength / Powerlifting",
+    "FUNCIONAL": "Functional",
+    "REABILITACAO": "Rehabilitation / Physical Therapy",
+    "TERCEIRA_IDADE": "Senior Fitness",
+    "GESTANTES": "Prenatal",
+    "CROSSFIT": "Crossfit",
+    "CORRIDA_CARDIO": "Running / Cardio",
+    "NUTRICAO_ESPORTIVA": "Sports Nutrition"
   },
   "vincularAlunoForm": {
     "title": "Link new student",
@@ -350,8 +377,6 @@
     "discover": "Discover",
     "title": "Find a Personal Trainer",
     "subtitle": "Search by city/state and request a connection. The professional approves it manually.",
-    "locationLabel": "Location (city/state)",
-    "locationPlaceholder": "E.g.: Palhoça, SC",
     "searchButton": "Search",
     "searching": "Searching...",
     "noResultsFound": "No professionals available{location}. Try another location or leave the field empty to see all.",

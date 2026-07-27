@@ -78,7 +78,11 @@ function SolicitacoesContent() {
             <Card key={r.id} className="flex flex-col gap-3">
               <div>
                 <p className="font-semibold">{r.counterpart.email}</p>
-                {r.counterpart.location && <p className="text-xs text-muted">📍 {r.counterpart.location}</p>}
+                {(r.counterpart.city || r.counterpart.state) && (
+                  <p className="text-xs text-muted">
+                    📍 {[r.counterpart.city, r.counterpart.state].filter(Boolean).join(", ")}
+                  </p>
+                )}
               </div>
               <div className="flex gap-2">
                 <Button

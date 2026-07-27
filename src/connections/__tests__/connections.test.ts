@@ -45,18 +45,18 @@ beforeAll(async () => {
   });
   await prisma.user.update({ where: { id: ids.proPlus }, data: { planoAssinatura: "PLUS" } });
 
-  // Perfis: define disponibilidade + localização via o próprio endpoint.
+  // Perfis: define disponibilidade + cidade/UF/especialidades via o próprio endpoint.
   await supertest(server.server).put("/api/professionals/me").set(auth("proPalhoca"))
-    .send({ availableForNewStudents: true, location: "Palhoça, SC", bio: "Treino funcional" });
+    .send({ availableForNewStudents: true, city: "Palhoça", state: "SC", bio: "Treino funcional", specialties: ["FUNCIONAL"] });
   await supertest(server.server).put("/api/professionals/me").set(auth("proCuritiba"))
-    .send({ availableForNewStudents: true, location: "Curitiba, PR", bio: "Musculação" });
+    .send({ availableForNewStudents: true, city: "Curitiba", state: "PR", bio: "Musculação", specialties: ["HIPERTROFIA"] });
   await supertest(server.server).put("/api/professionals/me").set(auth("proFull"))
-    .send({ availableForNewStudents: true, location: "Palhoça, SC" });
+    .send({ availableForNewStudents: true, city: "Palhoça", state: "SC" });
   await supertest(server.server).put("/api/professionals/me").set(auth("proPlus"))
-    .send({ availableForNewStudents: true, location: "Palhoça, SC" });
-  // proHidden preenche localização mas NÃO ativa disponibilidade.
+    .send({ availableForNewStudents: true, city: "Palhoça", state: "SC" });
+  // proHidden preenche cidade mas NÃO ativa disponibilidade.
   await supertest(server.server).put("/api/professionals/me").set(auth("proHidden"))
-    .send({ location: "Palhoça, SC" });
+    .send({ city: "Palhoça", state: "SC" });
 
   // proFull vincula 3 alunos diretamente (fica 3/3).
   for (let i = 0; i < 3; i++) {
@@ -74,10 +74,10 @@ afterAll(async () => {
   await server.close();
 }, 30000);
 
-describe("Fase 21 BLOCO 1 — busca de profissionais (opt-in + localização)", () => {
-  it("busca por 'Palhoça' encontra os disponíveis de Palhoça, NÃO o de Curitiba nem o oculto", async () => {
+describe("Fase 21/75 BLOCO 1 — busca de profissionais (opt-in + cidade/UF/especialidade)", () => {
+  it("busca por cidade 'Palhoça' encontra os disponíveis de Palhoça, NÃO o de Curitiba nem o oculto", async () => {
     const r = await supertest(server.server)
-      .get("/api/professionals/search?location=palho") // parcial + case-insensitive
+      .get("/api/professionals/search?city=palho%C3%A7a") // case-insensitive
       .set(auth("aluno"));
     expect(r.status).toBe(200);
     const emails = r.body.professionals.map((p: any) => p.email);
@@ -88,9 +88,32 @@ describe("Fase 21 BLOCO 1 — busca de profissionais (opt-in + localização)", 
     expect(emails).not.toContain("conn_pro_hidden@thunderafit.test"); // não disponível
   });
 
-  it("busca por 'Curitiba' encontra só o de Curitiba", async () => {
+  it("busca por cidade 'Curitiba' encontra só o de Curitiba", async () => {
     const r = await supertest(server.server)
-      .get("/api/professionals/search?location=curitiba")
+      .get("/api/professionals/search?city=curitiba")
+      .set(auth("aluno"));
+    const emails = r.body.professionals.map((p: any) => p.email);
+    expect(emails).toEqual(["conn_pro_curitiba@thunderafit.test"]);
+  });
+
+  it("busca por UF filtra corretamente", async () => {
+    const r = await supertest(server.server)
+      .get("/api/professionals/search?state=PR")
+      .set(auth("aluno"));
+    const emails = r.body.professionals.map((p: any) => p.email);
+    expect(emails).toEqual(["conn_pro_curitiba@thunderafit.test"]);
+  });
+
+  it("UF inválida → 400", async () => {
+    const r = await supertest(server.server)
+      .get("/api/professionals/search?state=XX")
+      .set(auth("aluno"));
+    expect(r.status).toBe(400);
+  });
+
+  it("busca por especialidade filtra corretamente", async () => {
+    const r = await supertest(server.server)
+      .get("/api/professionals/search?specialties=HIPERTROFIA")
       .set(auth("aluno"));
     const emails = r.body.professionals.map((p: any) => p.email);
     expect(emails).toEqual(["conn_pro_curitiba@thunderafit.test"]);
@@ -102,10 +125,16 @@ describe("Fase 21 BLOCO 1 — busca de profissionais (opt-in + localização)", 
     expect(emails).not.toContain("conn_pro_hidden@thunderafit.test");
   });
 
-  it("ALUNO não consegue editar perfil público (403)", async () => {
+  it("ALUNO não consegue editar perfil público (403), mas consegue salvar sua cidade de busca", async () => {
     const r = await supertest(server.server).put("/api/professionals/me").set(auth("aluno"))
       .send({ availableForNewStudents: true });
     expect(r.status).toBe(403);
+
+    const cityR = await supertest(server.server).put("/api/professionals/me").set(auth("aluno"))
+      .send({ city: "Palhoça", state: "SC" });
+    expect(cityR.status).toBe(200);
+    expect(cityR.body.profile.city).toBe("Palhoça");
+    expect(cityR.body.profile.state).toBe("SC");
   });
 });
 
@@ -120,17 +149,17 @@ describe("Billing 3 degraus — gate de disponibilidade no diretório + priorida
     expect(check?.availableForNewStudents).toBe(false);
   });
 
-  it("Personal FREE ainda pode salvar localização/bio (só a disponibilidade é bloqueada)", async () => {
+  it("Personal FREE ainda pode salvar cidade/bio (só a disponibilidade é bloqueada)", async () => {
     const r = await supertest(server.server).put("/api/professionals/me").set(auth("proFree"))
-      .send({ location: "Palhoça, SC" });
+      .send({ city: "Palhoça", state: "SC" });
     expect(r.status).toBe(200);
-    expect(r.body.profile.location).toBe("Palhoça, SC");
+    expect(r.body.profile.city).toBe("Palhoça");
   });
 
   it("Personal FREE nunca aparece no diretório mesmo que o campo já estivesse true no banco (defesa em profundidade)", async () => {
     // Simula um registro inconsistente (ex: dado antigo de antes do gate existir).
     await prisma.user.update({ where: { id: ids.proFree }, data: { availableForNewStudents: true } });
-    const r = await supertest(server.server).get("/api/professionals/search?location=palho").set(auth("aluno"));
+    const r = await supertest(server.server).get("/api/professionals/search?city=palho%C3%A7a").set(auth("aluno"));
     const emails = r.body.professionals.map((p: any) => p.email);
     expect(emails).not.toContain("conn_pro_free@thunderafit.test");
     await prisma.user.update({ where: { id: ids.proFree }, data: { availableForNewStudents: false } });
@@ -143,7 +172,7 @@ describe("Billing 3 degraus — gate de disponibilidade no diretório + priorida
   });
 
   it("Plus aparece ANTES de Base nos resultados de busca (destaque/prioridade)", async () => {
-    const r = await supertest(server.server).get("/api/professionals/search?location=palho").set(auth("aluno"));
+    const r = await supertest(server.server).get("/api/professionals/search?city=palho%C3%A7a").set(auth("aluno"));
     const emails = r.body.professionals.map((p: any) => p.email);
     const plusIndex = emails.indexOf("conn_pro_plus@thunderafit.test");
     const baseIndex = emails.indexOf("conn_pro_palhoca@thunderafit.test");
@@ -153,7 +182,7 @@ describe("Billing 3 degraus — gate de disponibilidade no diretório + priorida
   });
 
   it("resultado da busca inclui planoAssinatura, pro frontend destacar o Plus", async () => {
-    const r = await supertest(server.server).get("/api/professionals/search?location=palho").set(auth("aluno"));
+    const r = await supertest(server.server).get("/api/professionals/search?city=palho%C3%A7a").set(auth("aluno"));
     const plus = r.body.professionals.find((p: any) => p.email === "conn_pro_plus@thunderafit.test");
     expect(plus.planoAssinatura).toBe("PLUS");
   });
