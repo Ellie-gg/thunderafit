@@ -48,7 +48,7 @@ test("aluno sem Personal e sem treino aplicado vê os blocos vazios com convite 
   await page.getByRole("button", { name: "Copiar convite para compartilhar" }).click();
   await expect(page.getByRole("button", { name: "Convite copiado!" })).toBeVisible();
 
-  await expect(page.getByText("Meus treinos", { exact: true })).toBeVisible();
+  await expect(page.getByText("Meus Treinos Pessoais", { exact: true })).toBeVisible();
   await expect(page.getByRole("link", { name: "Ver treinos disponíveis" })).toBeVisible();
 });
 
@@ -120,7 +120,7 @@ test("aluno com Personal e treino pessoal aplicado vê os dois blocos preenchido
 
   await expect(page.getByRole("heading", { name: "Ainda sem um Personal?" })).toHaveCount(0);
   await expect(page.getByText("Prescrito pelo seu Personal")).toBeVisible();
-  await expect(page.getByText("Meus treinos", { exact: true })).toBeVisible();
+  await expect(page.getByText("Meus Treinos Pessoais", { exact: true })).toBeVisible();
   await expect(page.getByText("Treino Bloco Personal").first()).toBeVisible();
   await expect(page.getByText(templateName).first()).toBeVisible();
   await expect(page.getByRole("link", { name: "Começar treino" })).toHaveCount(2);
