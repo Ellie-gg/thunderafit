@@ -3,16 +3,26 @@ import { PrismaClient } from "@prisma/client";
 const prisma = new PrismaClient();
 
 // Fase 70: aplica retroativamente a tag de nível (INICIANTE/INTERMEDIARIO/
-// AVANCADO) aos 5 templates EXPRESS (Fase 69) — o nível de cada um já era
-// conhecido pelo documento original que os descreveu, só não existia a tag
-// ainda no schema. Demais templates PREMIUM pré-existentes não têm nível
-// documentado nesta sessão e ficam de fora — ver aviso final.
+// AVANCADO) aos templates PREMIUM cujo nível foi confirmado pelo fundador.
 const LEVELS: Record<string, "INICIANTE" | "INTERMEDIARIO" | "AVANCADO"> = {
   "Hipertrofia Express 3X": "INICIANTE",
   "Metabolic Burn 40": "INTERMEDIARIO",
   "Esculpimento Express": "INTERMEDIARIO",
   "Força & Volume 40": "AVANCADO",
   "Pico de Hipertrofia 5X": "AVANCADO",
+  "Bumbum na Nuca Extreme": "AVANCADO",
+  "Corpo Esculpido Pro": "AVANCADO",
+  "Corpo Trincado Extreme": "AVANCADO",
+  "Definição Total": "INTERMEDIARIO",
+  "Força & Volume Titã": "INTERMEDIARIO",
+  "Hipertrofia Extrema Pro": "AVANCADO",
+  "Metabolic Shred Pro": "AVANCADO",
+  "Monster Mass": "INTERMEDIARIO",
+  "Pernas Magníficas": "INTERMEDIARIO",
+  "Queima Fatal 360": "INTERMEDIARIO",
+  "Shape Inabalável": "INTERMEDIARIO",
+  "Silhueta Ampulheta": "AVANCADO",
+  "V-Taper Master": "INTERMEDIARIO",
 };
 
 async function main() {
