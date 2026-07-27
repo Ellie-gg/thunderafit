@@ -128,7 +128,14 @@ export type SelfTemplateCategory = "GERAL" | "HOME" | "PREMIUM" | "PRONTOS";
 
 // Fase 63: tags de filtro rápido (chips) do carrossel "Treinos Premium" —
 // só editáveis em templates origin: SELF (qualquer categoria).
-export type WorkoutTag = "FEMININO" | "HIPERTROFIA" | "DEFINICAO" | "EXPRESS";
+export type WorkoutTag =
+  | "FEMININO"
+  | "HIPERTROFIA"
+  | "DEFINICAO"
+  | "EXPRESS"
+  | "INICIANTE"
+  | "INTERMEDIARIO"
+  | "AVANCADO";
 
 export interface WorkoutProgram {
   id: string;
