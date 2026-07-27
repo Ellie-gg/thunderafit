@@ -376,16 +376,26 @@
     "statusRejected": "Recusada",
     "discover": "Descobrir",
     "title": "Encontrar Personal",
-    "subtitle": "Busque por cidade/estado e solicite vínculo. O profissional aprova manualmente.",
+    "subtitle": "Busque por cidade/estado e mande uma mensagem. Vocês trocam contato por aqui antes do profissional aceitar.",
     "searchButton": "Buscar",
     "searching": "Buscando...",
     "noResultsFound": "Nenhum profissional disponível{location}. Tente outra localização ou deixe o campo vazio para ver todos.",
     "inLocationSuffix": " em \"{location}\"",
     "sending": "Enviando...",
-    "requestConnection": "Solicitar vínculo",
-    "sendRequestError": "Não foi possível enviar a solicitação.",
-    "myRequests": "Minhas solicitações",
-    "noRequestsSent": "Você ainda não enviou nenhuma solicitação."
+    "sendMessage": "Enviar mensagem",
+    "messagePlaceholder": "Ex: Oi! Gostaria de treinar com você, quais são seus horários?",
+    "cancel": "Cancelar",
+    "sendRequestError": "Não foi possível enviar a mensagem.",
+    "myRequests": "Minhas conversas",
+    "noRequestsSent": "Você ainda não enviou nenhuma mensagem."
+  },
+  "conversationThread": {
+    "loading": "Carregando mensagens...",
+    "placeholder": "Escreva uma mensagem...",
+    "send": "Enviar",
+    "sending": "Enviando...",
+    "sendError": "Não foi possível enviar a mensagem.",
+    "closed": "Esta conversa foi encerrada."
   },
   "exerciseExecutionCard": {
     "markAsDoneAriaLabel": "Marcar {name} como concluído",

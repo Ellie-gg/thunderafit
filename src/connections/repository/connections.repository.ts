@@ -138,4 +138,18 @@ export const connectionsRepository = {
       select: { id: true, email: true, city: true, state: true, bio: true, avatarUrl: true },
     });
   },
+
+  /** Fase 76: mensagens de uma conversa (aluno↔profissional) presa a uma ConnectionRequest. */
+  createMessage(connectionRequestId: string, senderId: string, body: string) {
+    return prisma.connectionMessage.create({
+      data: { connectionRequestId, senderId, body },
+    });
+  },
+
+  listMessages(connectionRequestId: string) {
+    return prisma.connectionMessage.findMany({
+      where: { connectionRequestId },
+      orderBy: { createdAt: "asc" },
+    });
+  },
 };
