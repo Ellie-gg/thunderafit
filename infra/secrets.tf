@@ -37,3 +37,17 @@ resource "google_secret_manager_secret" "database_url" {
 
   depends_on = [google_project_service.apis]
 }
+
+# Fase 78 — "Fale Conosco": senha de app do Gmail (App Password), NÃO a
+# senha real da conta. Valor real adicionado à mão via `gcloud secrets
+# versions add contact-gmail-app-password`, mesmo padrão dos secrets acima.
+resource "google_secret_manager_secret" "contact_gmail_app_password" {
+  project   = var.project_id
+  secret_id = "contact-gmail-app-password"
+
+  replication {
+    auto {}
+  }
+
+  depends_on = [google_project_service.apis]
+}

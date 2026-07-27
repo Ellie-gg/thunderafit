@@ -834,3 +834,23 @@ model AdminAuditLog {
   // recentAuditLogs é ORDER BY createdAt DESC LIMIT N sem índice de apoio.
   @@index([createdAt])
 }
+
+// ============================================================
+// --- domain: contact --- (Fase 78)
+// "Fale Conosco" — qualquer papel autenticado manda uma mensagem pro
+// fundador. Gravada aqui SEMPRE (trilha durável), independente do e-mail
+// (best-effort, via Gmail SMTP) ter saído ou não — ver contact.service.ts.
+// ============================================================
+model ContactMessage {
+  id          String    @id @default(uuid())
+  userId      String
+  role        Role
+  title       String
+  message     String
+  // null = e-mail não foi tentado ou falhou — a linha em si já é a garantia
+  // de que a mensagem não se perdeu, mesmo se o e-mail falhar.
+  emailSentAt DateTime?
+  createdAt   DateTime  @default(now())
+
+  @@index([createdAt])
+}

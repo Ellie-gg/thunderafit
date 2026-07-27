@@ -12,6 +12,12 @@ process.env.DATABASE_URL =
 // google-sso.test.ts) — o valor real só importa em produção.
 process.env.GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID ?? "test-google-client-id.apps.googleusercontent.com";
 
+// Fase 78 (Fale Conosco): sendMail é mockado nos testes (ver
+// contact.test.ts) — só precisa que CONTACT_EMAIL_TO exista pra o service
+// decidir TENTAR enviar (a chamada em si é interceptada pelo mock).
+process.env.CONTACT_GMAIL_USER = process.env.CONTACT_GMAIL_USER ?? "test-contact@thunderafit.test";
+process.env.CONTACT_EMAIL_TO = process.env.CONTACT_EMAIL_TO ?? "test-founder@thunderafit.test";
+
 // Fase 20 (billing): valores dummy de teste. A verificação de assinatura do
 // webhook é cripto local (HMAC) e funciona com qualquer segredo; chamadas à
 // API do Stripe (checkout/portal) são mockadas nos testes.

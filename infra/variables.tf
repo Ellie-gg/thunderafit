@@ -25,6 +25,24 @@ variable "allowed_origin" {
   type        = string
 }
 
+variable "contact_gmail_user" {
+  description = <<-EOT
+    Fase 78 — "Fale Conosco": conta Gmail usada pra ENVIAR o e-mail via SMTP
+    (nodemailer). Precisa de uma App Password gerada nessa mesma conta
+    (myaccount.google.com/apppasswords, exige 2FA) — o valor da App Password
+    em si NÃO vai aqui, vai em `gcloud secrets versions add
+    contact-gmail-app-password` (ver infra/README.md).
+  EOT
+  type        = string
+  default     = ""
+}
+
+variable "contact_email_to" {
+  description = "Fase 78 — destinatário das mensagens de \"Fale Conosco\". Se vazio, usa contact_gmail_user."
+  type        = string
+  default     = ""
+}
+
 variable "google_client_id" {
   description = <<-EOT
     Fase 77 — Client ID OAuth 2.0 ("Web application") do SSO Google, criado

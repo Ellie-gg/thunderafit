@@ -40,6 +40,7 @@ const NAV_LINKS_BY_ROLE: Record<Role, NavLink[]> = {
     { href: "/duvidas", key: "questions" },
     { href: "/profissionais", key: "findPersonal" },
     { href: "/perfil", key: "profile" },
+    { href: "/fale-conosco", key: "contact" },
     { href: "/configuracoes", key: "settings" },
   ],
   PERSONAL: [
@@ -48,10 +49,12 @@ const NAV_LINKS_BY_ROLE: Record<Role, NavLink[]> = {
     { href: "/personal/duvidas", key: "questions" },
     { href: "/personal/upgrade", key: "plans" },
     { href: "/personal/perfil", key: "profile" },
+    { href: "/fale-conosco", key: "contact" },
     { href: "/configuracoes", key: "settings" },
   ],
   NUTRICIONISTA: [
     { href: "/nutricionista/duvidas", key: "questions" },
+    { href: "/fale-conosco", key: "contact" },
     { href: "/configuracoes", key: "settings" },
   ],
   ADMIN: [

@@ -42,3 +42,10 @@ resource "google_secret_manager_secret_iam_member" "backend_database_url" {
   role      = "roles/secretmanager.secretAccessor"
   member    = "serviceAccount:${google_service_account.backend.email}"
 }
+
+resource "google_secret_manager_secret_iam_member" "backend_contact_gmail_app_password" {
+  project   = var.project_id
+  secret_id = google_secret_manager_secret.contact_gmail_app_password.secret_id
+  role      = "roles/secretmanager.secretAccessor"
+  member    = "serviceAccount:${google_service_account.backend.email}"
+}

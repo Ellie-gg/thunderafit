@@ -16,6 +16,7 @@
     "findPersonal": "Find a Trainer",
     "profile": "Profile",
     "requests": "Requests",
+    "contact": "Contact Us",
     "plans": "Plans",
     "users": "Users",
     "exercises": "Exercises",
@@ -587,6 +588,20 @@
     "nenhumaDuvida": "No questions in this category.",
     "respondido": "Answered",
     "aberto": "Open"
+  },
+  "faleConosco": {
+    "eyebrow": "Support",
+    "title": "Contact Us",
+    "subtitle": "Send a message straight to the founder — questions, suggestions, issues, anything.",
+    "titleLabel": "Title",
+    "titlePlaceholder": "E.g.: Feature suggestion",
+    "messageLabel": "Message",
+    "messagePlaceholder": "Write your message here...",
+    "charsRemaining": "{count} characters left",
+    "send": "Send message",
+    "sending": "Sending...",
+    "sendError": "Couldn't send your message. Please try again.",
+    "sendSuccess": "Message sent! Thanks for reaching out."
   },
   "personalSolicitacoes": {
     "solicitacoes": "Requests",

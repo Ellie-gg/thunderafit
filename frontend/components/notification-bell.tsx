@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import { Bell } from "lucide-react";
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import {
@@ -11,6 +12,43 @@ import {
 } from "@/lib/api/notifications";
 import { useActiveIntlLocale } from "@/i18n/use-active-locale";
 import { useTranslations } from "next-intl";
+import { useAuthStore } from "@/lib/store/auth-store";
+import type { Role } from "@/lib/types";
+
+/**
+ * Fase 79: clicar numa notificação precisa levar pra onde ela aconteceu, não
+ * só marcar como lida (bug relatado: clique não abria nada). O destino
+ * depende do TIPO da notificação (`type`, string livre setada por quem
+ * chama `notificationsService.notify()` no backend) E do papel de quem está
+ * vendo — o mesmo tipo "new_message" leva o aluno pra uma tela e o
+ * profissional pra outra. Resolvido 100% no client (sem precisar de coluna
+ * nova no backend) porque o papel de quem está logado já é conhecido aqui.
+ * Tipos sem destino conhecido (fallback) não navegam — só marcam como lida,
+ * mesmo comportamento de antes.
+ */
+function resolveNotificationPath(type: string, role: Role | undefined): string | null {
+  switch (type) {
+    case "connection_request":
+      return role === "PERSONAL" ? "/personal/solicitacoes" : null;
+    case "new_message":
+      if (role === "ALUNO") return "/profissionais";
+      if (role === "PERSONAL") return "/personal/solicitacoes";
+      return null;
+    case "connection_accepted":
+    case "connection_rejected":
+      return role === "ALUNO" ? "/profissionais" : null;
+    case "support_new_thread":
+      if (role === "PERSONAL") return "/personal/duvidas";
+      if (role === "NUTRICIONISTA") return "/nutricionista/duvidas";
+      return null;
+    case "support_reply":
+      return role === "ALUNO" ? "/duvidas" : null;
+    case "payment_reminder":
+      return role === "ALUNO" ? "/dashboard" : null;
+    default:
+      return null;
+  }
+}
 
 /**
  * In-app apenas (sino + lista) — sem push real (APNs/FCM) nesta fase, ver
@@ -22,6 +60,8 @@ export function NotificationBell() {
   const intlLocale = useActiveIntlLocale();
   const t = useTranslations("notificationBell");
   const tCommon = useTranslations("common");
+  const router = useRouter();
+  const role = useAuthStore((s) => s.user?.role);
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const queryClient = useQueryClient();
@@ -110,7 +150,14 @@ export function NotificationBell() {
               <button
                 key={n.id}
                 type="button"
-                onClick={() => !n.read && markReadMutation.mutate(n.id)}
+                onClick={() => {
+                  if (!n.read) markReadMutation.mutate(n.id);
+                  const path = resolveNotificationPath(n.type, role);
+                  if (path) {
+                    setOpen(false);
+                    router.push(path);
+                  }
+                }}
                 className={`flex flex-col gap-0.5 rounded-md px-2 py-2 text-left text-sm hover:bg-surface-raised ${
                   n.read ? "text-muted" : "text-foreground"
                 }`}

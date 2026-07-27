@@ -16,6 +16,7 @@
     "findPersonal": "Encontrar Personal",
     "profile": "Perfil",
     "requests": "Solicitações",
+    "contact": "Fale Conosco",
     "plans": "Planos",
     "users": "Usuários",
     "exercises": "Exercícios",
@@ -587,6 +588,20 @@
     "nenhumaDuvida": "Nenhuma dúvida nesta categoria.",
     "respondido": "Respondido",
     "aberto": "Aberto"
+  },
+  "faleConosco": {
+    "eyebrow": "Suporte",
+    "title": "Fale Conosco",
+    "subtitle": "Mande uma mensagem direto pro fundador — dúvidas, sugestões, problemas, o que for.",
+    "titleLabel": "Título",
+    "titlePlaceholder": "Ex: Sugestão de melhoria",
+    "messageLabel": "Mensagem",
+    "messagePlaceholder": "Escreva sua mensagem aqui...",
+    "charsRemaining": "{count} caracteres restantes",
+    "send": "Enviar mensagem",
+    "sending": "Enviando...",
+    "sendError": "Não foi possível enviar sua mensagem. Tente novamente.",
+    "sendSuccess": "Mensagem enviada! Obrigado pelo contato."
   },
   "personalSolicitacoes": {
     "solicitacoes": "Solicitações",
