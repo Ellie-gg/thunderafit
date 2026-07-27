@@ -31,6 +31,19 @@ export function loginRequest(email: string, password: string) {
   });
 }
 
+type GoogleAuthResponse = { needsRole: true; email: string } | ({ needsRole: false } & AuthResponse);
+
+// Fase 77 — SSO Google. Sem `role`: login se a conta já existir, ou
+// `{ needsRole: true }` se for a 1ª vez desse e-mail (ainda não cria nada).
+// Com `role`: finaliza a criação da conta nova.
+export function googleAuthRequest(idToken: string, role?: Role) {
+  return apiFetch<GoogleAuthResponse>("/api/auth/google", {
+    method: "POST",
+    body: { idToken, role },
+    auth: false,
+  });
+}
+
 export function logoutRequest() {
   return apiFetch<{ message: string }>("/api/auth/logout", { method: "POST" });
 }

@@ -120,6 +120,10 @@ resource "google_cloudbuild_trigger" "frontend" {
       args = [
         "build", "-t",
         "${var.region}-docker.pkg.dev/${var.project_id}/${google_artifact_registry_repository.thunderafit.repository_id}/frontend:$COMMIT_SHA",
+        # Fase 77: NEXT_PUBLIC_* precisa existir NO BUILD (Next embute no
+        # bundle do cliente) — não dá pra só setar env no Cloud Run runtime
+        # como o resto das vars do frontend.
+        "--build-arg", "NEXT_PUBLIC_GOOGLE_CLIENT_ID=$_NEXT_PUBLIC_GOOGLE_CLIENT_ID",
         "-f", "Dockerfile", ".",
       ]
     }
@@ -149,6 +153,9 @@ resource "google_cloudbuild_trigger" "frontend" {
     options {
       logging             = "CLOUD_LOGGING_ONLY"
       substitution_option = "ALLOW_LOOSE"
+    }
+    substitutions = {
+      _NEXT_PUBLIC_GOOGLE_CLIENT_ID = var.google_client_id
     }
   }
 

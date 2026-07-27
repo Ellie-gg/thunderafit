@@ -3,9 +3,11 @@ import { Role, PlanoAssinatura, Locale } from "@prisma/client";
 
 export interface CreateUserInput {
   email: string;
-  passwordHash: string;
+  // Fase 77: nullable — conta criada via Google SSO nunca recebe senha própria.
+  passwordHash: string | null;
   role: Role;
   name?: string | null;
+  googleId?: string | null;
 }
 
 export const authRepository = {
@@ -29,10 +31,21 @@ export const authRepository = {
         passwordHash: data.passwordHash,
         role: data.role,
         name: data.name ?? null,
+        googleId: data.googleId ?? null,
         planoAssinatura: PlanoAssinatura.FREE,
         limiteAlunos: 3,
       },
     });
+  },
+
+  /** Fase 77 (SSO Google): busca por sub do Google (estável mesmo se o e-mail mudar). */
+  async findByGoogleId(googleId: string) {
+    return prisma.user.findUnique({ where: { googleId } });
+  },
+
+  /** Vincula uma conta tradicional já existente ao Google (1ª vez que entra via Google). */
+  async linkGoogleId(userId: string, googleId: string) {
+    return prisma.user.update({ where: { id: userId }, data: { googleId } });
   },
 
   /**

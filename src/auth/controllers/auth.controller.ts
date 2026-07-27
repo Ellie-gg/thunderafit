@@ -138,6 +138,33 @@ export async function checkEmailHandler(
   return reply.status(200).send({ exists });
 }
 
+/**
+ * Fase 77 — SSO Google. `role` só é enviado na 2ª chamada, quando o
+ * frontend já mostrou a tela de escolha de papel pra uma conta nova
+ * (`needsRole: true` na 1ª resposta, sem role).
+ */
+export async function googleAuthHandler(
+  request: FastifyRequest<{ Body: { idToken?: string; role?: Role } }>,
+  reply: FastifyReply
+) {
+  const { idToken, role } = request.body ?? {};
+  if (!idToken) {
+    return reply.status(400).send({ error: "idToken é obrigatório." });
+  }
+
+  try {
+    const result = await authService.loginOrRegisterWithGoogle(idToken, role);
+    if (result.needsRole) {
+      return reply.status(200).send({ needsRole: true, email: result.email });
+    }
+    setAuthCookies(reply, result.accessToken, result.refreshToken);
+    return reply.status(200).send(result);
+  } catch (err) {
+    const error = err as Error & { statusCode?: number };
+    return reply.status(error.statusCode ?? 500).send({ error: error.message });
+  }
+}
+
 export async function refreshHandler(
   request: FastifyRequest<{ Body: { refreshToken?: string } }>,
   reply: FastifyReply
