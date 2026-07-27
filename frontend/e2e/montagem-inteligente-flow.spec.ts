@@ -2,12 +2,12 @@ import { test, expect } from "@playwright/test";
 import { loginViaUI } from "./auth-helpers";
 
 /**
- * "Montagem Inteligente" (gerador de treino determinístico, sem IA externa) +
- * CTA de destaque no dashboard do Personal. Gera o PROGRAMA inteiro (não uma
- * sessão avulsa): setup (nome + esquema + objetivo) → wizard por sessão
- * (grupos musculares → gerar/revisar → "Próximo treino →" ou "Salvar
- * programa de treinamento"). Ponta a ponta pela UI real, backend + Postgres
- * reais.
+ * "Montagem Inteligente" (gerador de treino determinístico, sem IA externa) —
+ * Fase 66: mora em /personal/programas agora (antes era o CTA de destaque do
+ * dashboard do Personal). Gera o PROGRAMA inteiro (não uma sessão avulsa):
+ * setup (nome + esquema + objetivo) → wizard por sessão (grupos musculares →
+ * gerar/revisar → "Próximo treino →" ou "Salvar programa de treinamento").
+ * Ponta a ponta pela UI real, backend + Postgres reais.
  */
 
 const BACKEND_URL = process.env.E2E_BACKEND_URL ?? "http://localhost:3000";
@@ -37,8 +37,11 @@ test("Personal gera um PROGRAMA com 2 sessões (A e B) pela Montagem Inteligente
   await loginViaUI(page, personalEmail, password);
   await expect(page).toHaveURL(/\/personal\/dashboard$/);
 
-  // O novo CTA principal do dashboard — resolve a queixa de descoberta de templates.
-  const generateButton = page.getByRole("button", { name: "⚡ Gerar Treino Rápido" });
+  // Fase 66: "Montagem Inteligente" saiu do dashboard e mora em
+  // /personal/programas agora, junto do formulário manual de criar template.
+  await page.getByRole("link", { name: "⚡ Explorar Templates" }).click();
+  await expect(page).toHaveURL(/\/personal\/programas$/);
+  const generateButton = page.getByRole("button", { name: "⚡ Montagem Inteligente" });
   await expect(generateButton).toBeVisible();
   await generateButton.click();
 
@@ -84,7 +87,9 @@ test("Pular uma sessão gera 0 exercícios nela, sem travar o fluxo", async ({ p
   await loginViaUI(page, personalEmail, password);
   await expect(page).toHaveURL(/\/personal\/dashboard$/);
 
-  await page.getByRole("button", { name: "⚡ Gerar Treino Rápido" }).click();
+  await page.getByRole("link", { name: "⚡ Explorar Templates" }).click();
+  await expect(page).toHaveURL(/\/personal\/programas$/);
+  await page.getByRole("button", { name: "⚡ Montagem Inteligente" }).click();
   await page.locator("#generate-program-name").fill(programName);
   await page.getByRole("button", { name: "Avançar" }).click();
 
@@ -109,5 +114,8 @@ test("Fluxo manual continua disponível: link 'ou monte um programa do zero' lev
   await loginViaUI(page, personalEmail, password);
   await expect(page).toHaveURL(/\/personal\/dashboard$/);
   await page.getByRole("link", { name: "ou monte um programa do zero →" }).click();
-  await expect(page).toHaveURL(/\/personal\/programas$/);
+  // Fase 66: o link agora chega com `?criar=1`, que abre o formulário manual
+  // direto (antes ele já vinha sempre aberto no topo da tela).
+  await expect(page).toHaveURL(/\/personal\/programas\?criar=1$/);
+  await expect(page.locator("#name")).toBeVisible();
 });

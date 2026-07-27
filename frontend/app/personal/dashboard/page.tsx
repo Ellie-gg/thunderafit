@@ -1,10 +1,10 @@
 "use client";
 
-import { useState } from "react";
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import { listRelations } from "@/lib/api/relations";
 import { getBillingStatus } from "@/lib/api/billing";
+import { listThreads } from "@/lib/api/support";
 import { useAuthStore } from "@/lib/store/auth-store";
 import { AuthGuard } from "@/components/auth-guard";
 import { AppHeader } from "@/components/app-header";
@@ -12,14 +12,19 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { VoltageBar } from "@/components/voltage-bar";
 import { QueryError } from "@/components/query-error";
-import { GenerateWorkoutModal } from "@/components/generate-workout-modal";
 import { useTranslations } from "next-intl";
 
+/**
+ * Fase 66 — dashboard redesenhado a partir de um mockup do fundador: fica
+ * mais enxuto, 2 cards de ação clara em vez do misto de "alunos + criar
+ * treino" espalhado. "Montagem Inteligente" saiu daqui (mudou pra dentro de
+ * /personal/programas, junto do formulário manual de criar template) — o
+ * dashboard não é mais o único lugar pra criar um treino do zero.
+ */
 function PersonalDashboardContent() {
   const t = useTranslations("personalDashboard");
   const tc = useTranslations("common");
   const user = useAuthStore((s) => s.user);
-  const [generatorOpen, setGeneratorOpen] = useState(false);
 
   const relationsQuery = useQuery({
     queryKey: ["relations"],
@@ -30,6 +35,12 @@ function PersonalDashboardContent() {
   // — que fica desatualizado após um upgrade (o plano muda via webhook do
   // Stripe, não por um novo login). Fallback ao store enquanto carrega.
   const billingQuery = useQuery({ queryKey: ["billing-status"], queryFn: getBillingStatus });
+
+  // Fase 66: "Dúvidas de alunos (N pendentes)" — reaproveita a MESMA listagem
+  // que /personal/duvidas já usa (sem endpoint novo), contando client-side
+  // as threads com status ABERTO (= aguardando resposta do Personal).
+  const threadsQuery = useQuery({ queryKey: ["support-threads"], queryFn: listThreads });
+  const pendingThreads = (threadsQuery.data?.threads ?? []).filter((th) => th.status === "ABERTO").length;
 
   const alunos = relationsQuery.data?.relations ?? [];
   const limite = billingQuery.data?.limiteAlunos ?? user?.limiteAlunos ?? 0;
@@ -45,29 +56,55 @@ function PersonalDashboardContent() {
     <>
       <AppHeader />
       <main className="flex flex-1 flex-col gap-6 px-6 py-8">
-        <div>
+        <div className="flex flex-col gap-2">
           <h1 className="font-display text-2xl font-bold tracking-tight">
             {t("greeting", { nome: user?.email.split("@")[0] ?? "" })}
           </h1>
-          <p className="text-sm text-muted">{t("subtitle")}</p>
+          {/* Fase 66: selo de plano ativo logo abaixo da saudação (antes só
+              aparecia como um link de texto dentro do card de alunos). */}
+          {billingQuery.data && (
+            <Link
+              href="/personal/upgrade"
+              className="inline-flex w-fit items-center gap-1.5 rounded-full border border-accent/40 bg-accent/10 px-3 py-1 text-xs font-semibold text-accent hover:border-accent"
+            >
+              {isPago ? (
+                <>⚡ {t("planoAtivoBadge", { plano: isPlus ? "Plus" : "Base" })}</>
+              ) : (
+                t("verPlanos")
+              )}
+            </Link>
+          )}
         </div>
 
+        {/* Card 1: Biblioteca de Templates */}
         <Card className="flex flex-col gap-3">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold uppercase tracking-wide text-accent-secondary">
-              {t("alunosVinculados")}
-            </span>
-            {!isPlus && (
-              <span className="font-mono-nums text-xs text-muted">
-                {alunos.length}/{limite}
-              </span>
-            )}
+          <div>
+            <h2 className="font-display text-lg font-bold">📋 {t("templateLibraryTitle")}</h2>
+            <p className="text-sm text-muted">{t("templateLibraryDescription")}</p>
           </div>
-          {isPlus ? (
-            <p className="text-sm text-muted">{t("alunosIlimitados")}</p>
-          ) : (
-            <VoltageBar total={limite} filled={alunos.length} role="PERSONAL" />
-          )}
+          <Button asChild>
+            <Link href="/personal/programas">⚡ {t("exploreTemplates")}</Link>
+          </Button>
+          <Link
+            href="/personal/programas?criar=1"
+            className="self-start text-sm font-semibold text-accent-secondary hover:underline"
+          >
+            {t("montarDoZero")}
+          </Link>
+        </Card>
+
+        {/* Card 2: Meus Alunos */}
+        <Card className="flex flex-col gap-3">
+          <div>
+            <h2 className="font-display text-lg font-bold">👥 {t("myStudentsTitle")}</h2>
+            <p className="text-sm text-muted">{t("myStudentsDescription")}</p>
+          </div>
+
+          <Button asChild variant="secondary" disabled={noLimite}>
+            <Link href={noLimite ? "#" : "/personal/alunos/novo"}>
+              {noLimite ? t("limiteAtingidoBotao") : t("vincularNovoAluno")}
+            </Link>
+          </Button>
 
           {noLimite && (
             <Link
@@ -78,95 +115,52 @@ function PersonalDashboardContent() {
             </Link>
           )}
 
-          {/* Link de upgrade sempre disponível para quem está no plano gratuito
-              (mesmo antes de bater o limite). */}
-          {!isPago && !noLimite && (
-            <Link
-              href="/personal/upgrade"
-              className="text-sm font-semibold text-accent-secondary hover:underline"
-            >
-              {t("verPlanos")}
-            </Link>
-          )}
-          {isPago && (
-            <Link
-              href="/personal/upgrade"
-              className="text-sm font-semibold text-accent-secondary hover:underline"
-            >
-              {t("planoAtivo", {
-                plano: billingQuery.data!.planoAssinatura === "PLUS" ? "Plus" : "Base",
-              })}
-            </Link>
-          )}
+          <div className="flex flex-col gap-2 border-t border-border pt-3">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-semibold uppercase tracking-wide text-accent-secondary">
+                {t("alunosVinculados")}
+              </span>
+              {!isPlus && (
+                <span className="font-mono-nums text-xs text-muted">
+                  {alunos.length}/{limite}
+                </span>
+              )}
+            </div>
+            {isPlus ? (
+              <p className="text-sm text-muted">{t("alunosIlimitados")}</p>
+            ) : (
+              <VoltageBar total={limite} filled={alunos.length} role="PERSONAL" />
+            )}
 
-          {relationsQuery.isLoading && <p className="text-sm text-muted">{tc("loading")}</p>}
-
-          {relationsQuery.isError && (
-            <QueryError error={relationsQuery.error} onRetry={() => relationsQuery.refetch()} />
-          )}
-
-          {/* Fase 62: a lista completa de alunos (email a email) saiu daqui —
-              agora vive só na tela "Gerenciar alunos", que também mostra o
-              status de treino de cada um. Aqui fica só a contagem/limite. */}
-          {relationsQuery.isSuccess && alunos.length === 0 && (
-            <p className="text-sm text-muted">{t("nenhumAlunoVinculado")}</p>
-          )}
-          {relationsQuery.isSuccess && alunos.length > 0 && (
-            <Link
-              href="/personal/alunos"
-              className="text-sm font-semibold text-accent-secondary hover:underline"
-            >
-              {t("gerenciarAlunos")}
-            </Link>
-          )}
-
-          <Button asChild variant={noLimite ? "secondary" : "default"} disabled={noLimite}>
-            <Link href={noLimite ? "#" : "/personal/alunos/novo"}>
-              {noLimite ? t("limiteAtingidoBotao") : t("vincularNovoAluno")}
-            </Link>
-          </Button>
-        </Card>
-
-        <Card className="flex flex-col gap-3">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold uppercase tracking-wide text-accent-secondary">
-              {t("templatesDeTreino")}
-            </span>
+            {relationsQuery.isLoading && <p className="text-sm text-muted">{tc("loading")}</p>}
+            {relationsQuery.isError && (
+              <QueryError error={relationsQuery.error} onRetry={() => relationsQuery.refetch()} />
+            )}
+            {relationsQuery.isSuccess && alunos.length === 0 && (
+              <p className="text-sm text-muted">{t("nenhumAlunoVinculado")}</p>
+            )}
+            {relationsQuery.isSuccess && alunos.length > 0 && (
+              <Link
+                href="/personal/alunos"
+                className="text-sm font-semibold text-accent-secondary hover:underline"
+              >
+                {t("gerenciarAlunos")}
+              </Link>
+            )}
           </div>
 
-          {/* Fase 62: a lista de instâncias (treinos já prescritos a cada
-              aluno) saiu daqui — cada uma só se vê dentro do hub do próprio
-              aluno agora. O link "montar do zero" abaixo já leva pra
-              /personal/programas, agora a biblioteca completa de templates
-              (Meus/Básico/Premium) — sem precisar de um 2º link repetido
-              pro mesmo destino. */}
-
-          {/* "Montagem Inteligente": CTA principal do dashboard (antes só um
-              botão secundário "Criar novo programa", pouco descoberto — o
-              Personal não tinha nenhum caminho de destaque pra criar/editar
-              templates a partir daqui). O motor de regras determinístico
-              monta um rascunho revisável em segundos; quem prefere montar
-              tudo à mão continua indo direto pra /personal/programas, sem
-              nenhuma sugestão automática. */}
-          <Button onClick={() => setGeneratorOpen(true)}>{t("gerarTreinoRapido")}</Button>
+          {/* Fase 66: acesso rápido embutido no card — antes era só um link
+              escondido no header/atalho mobile. */}
           <Link
-            href="/personal/programas"
-            className="self-start text-sm font-semibold text-accent-secondary hover:underline"
+            href="/personal/duvidas"
+            className="rounded-md border border-border px-3 py-2 text-sm hover:border-accent"
           >
-            {t("montarDoZero")}
+            💬{" "}
+            {pendingThreads > 0
+              ? t("duvidasAlunosPendentes", { count: pendingThreads })
+              : t("duvidasAlunos")}
           </Link>
         </Card>
-
-        {generatorOpen && <GenerateWorkoutModal onClose={() => setGeneratorOpen(false)} />}
-
-        {/* Atalho visível também aqui — no celular, o link de texto do
-            header fica escondido por falta de espaço. */}
-        <Link
-          href="/personal/duvidas"
-          className="text-sm font-semibold text-accent-secondary hover:underline sm:hidden"
-        >
-          {t("verDuvidas")}
-        </Link>
       </main>
     </>
   );
