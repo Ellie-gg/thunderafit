@@ -626,6 +626,17 @@
     "premiumTitle": "Premium Templates",
     "premiumSubtitle": "Exclusive to the Plus plan — the same catalog as Aluno Premium.",
     "catalogEmpty": "No templates available yet.",
+    "tagFilter": {
+      "TODOS": "All",
+      "FEMININO": "Women's",
+      "HIPERTROFIA": "Hypertrophy",
+      "DEFINICAO": "Toning",
+      "EXPRESS": "Express",
+      "INICIANTE": "Beginner",
+      "INTERMEDIARIO": "Intermediate",
+      "AVANCADO": "Advanced"
+    },
+    "tagFilterEmpty": "No template with that tag yet.",
     "premiumUpgradePitch": "Subscribe to the Plus plan to prescribe these templates to your students.",
     "premiumUpgradeButton": "Subscribe to Plus",
     "catalogApplyError": "Error applying the template."
