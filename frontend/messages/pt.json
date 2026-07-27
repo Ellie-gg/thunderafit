@@ -279,9 +279,12 @@
       "FEMININO": "Feminino",
       "HIPERTROFIA": "Hipertrofia",
       "DEFINICAO": "Definição",
-      "EXPRESS": "Express"
+      "EXPRESS": "Express",
+      "INICIANTE": "Iniciante",
+      "INTERMEDIARIO": "Intermediário",
+      "AVANCADO": "Avançado"
     },
-    "premiumTagFilterEmpty": "Nenhum treino Premium com essa tag ainda.",
+    "premiumTagFilterEmpty": "Nenhum treino Premium com esse filtro ainda.",
     "premiumComingSoon": "Assinatura Premium em breve — seu teste grátis já foi usado.",
     "premiumTrialPitch": "Desbloqueie os treinos Premium com 7 dias grátis, sem compromisso.",
     "premiumStartTrial": "Iniciar teste grátis de 7 dias",

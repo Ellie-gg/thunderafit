@@ -22,12 +22,20 @@ import { TemplatePreviewDialog } from "@/components/template-preview-dialog";
 // muitos banners, o que prejudica a navegação (rolar tudo pra achar um
 // treino do interesse). "TODOS" não é uma tag de verdade, é o estado "sem
 // filtro".
+// Fase 73: 2 grupos de chip independentes — foco (tag) e nível — o aluno
+// pode combinar os dois, usar só um, ou nenhum.
 const PREMIUM_TAG_FILTERS: Array<WorkoutTag | "TODOS"> = [
   "TODOS",
   "FEMININO",
   "HIPERTROFIA",
   "DEFINICAO",
   "EXPRESS",
+];
+const PREMIUM_LEVEL_FILTERS: Array<WorkoutTag | "TODOS"> = [
+  "TODOS",
+  "INICIANTE",
+  "INTERMEDIARIO",
+  "AVANCADO",
 ];
 
 /**
@@ -166,16 +174,16 @@ function MeuTreinoPessoalContent() {
   });
 
   const [premiumTagFilter, setPremiumTagFilter] = React.useState<WorkoutTag | "TODOS">("TODOS");
+  const [premiumLevelFilter, setPremiumLevelFilter] = React.useState<WorkoutTag | "TODOS">("TODOS");
 
   const templates = templatesQuery.data?.programs ?? [];
   const geralTemplates = templates.filter((tpl) => tpl.category === "GERAL");
   const prontosTemplates = templates.filter((tpl) => tpl.category === "PRONTOS");
   const homeTemplates = templates.filter((tpl) => tpl.category === "HOME");
   const premiumTemplates = templates.filter((tpl) => tpl.category === "PREMIUM");
-  const premiumTemplatesFiltered =
-    premiumTagFilter === "TODOS"
-      ? premiumTemplates
-      : premiumTemplates.filter((tpl) => tpl.tags?.includes(premiumTagFilter));
+  const premiumTemplatesFiltered = premiumTemplates
+    .filter((tpl) => premiumTagFilter === "TODOS" || tpl.tags?.includes(premiumTagFilter))
+    .filter((tpl) => premiumLevelFilter === "TODOS" || tpl.tags?.includes(premiumLevelFilter));
 
   function handleSelectProntos(template: WorkoutProgram) {
     setPremiumNotice(false);
@@ -258,24 +266,44 @@ function MeuTreinoPessoalContent() {
           {/* Fase 63: chips de filtro rápido — só aparecem quando há
               templates Premium pra filtrar (some por completo se a lista
               estiver vazia, mesmo espírito de "sem caso especial vazio" já
-              usado no resto da tela). */}
+              usado no resto da tela). Fase 73: 2 grupos independentes (foco e
+              nível) — o aluno pode combinar os dois, usar só um, ou nenhum. */}
           {premiumTemplates.length > 0 && (
-            <div className="flex flex-wrap gap-2">
-              {PREMIUM_TAG_FILTERS.map((tag) => (
-                <button
-                  key={tag}
-                  type="button"
-                  aria-pressed={premiumTagFilter === tag}
-                  onClick={() => setPremiumTagFilter(tag)}
-                  className={
-                    premiumTagFilter === tag
-                      ? "rounded-full border border-accent bg-accent/10 px-3 py-1.5 text-xs font-semibold text-accent"
-                      : "rounded-full border border-border px-3 py-1.5 text-xs text-muted hover:border-accent"
-                  }
-                >
-                  {t(`premiumTagFilter.${tag}`)}
-                </button>
-              ))}
+            <div className="flex flex-col gap-2">
+              <div className="flex flex-wrap gap-2">
+                {PREMIUM_TAG_FILTERS.map((tag) => (
+                  <button
+                    key={tag}
+                    type="button"
+                    aria-pressed={premiumTagFilter === tag}
+                    onClick={() => setPremiumTagFilter(tag)}
+                    className={
+                      premiumTagFilter === tag
+                        ? "rounded-full border border-accent bg-accent/10 px-3 py-1.5 text-xs font-semibold text-accent"
+                        : "rounded-full border border-border px-3 py-1.5 text-xs text-muted hover:border-accent"
+                    }
+                  >
+                    {t(`premiumTagFilter.${tag}`)}
+                  </button>
+                ))}
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {PREMIUM_LEVEL_FILTERS.map((level) => (
+                  <button
+                    key={level}
+                    type="button"
+                    aria-pressed={premiumLevelFilter === level}
+                    onClick={() => setPremiumLevelFilter(level)}
+                    className={
+                      premiumLevelFilter === level
+                        ? "rounded-full border border-accent-secondary bg-accent-secondary/10 px-3 py-1.5 text-xs font-semibold text-accent-secondary"
+                        : "rounded-full border border-border px-3 py-1.5 text-xs text-muted hover:border-accent-secondary"
+                    }
+                  >
+                    {t(`premiumTagFilter.${level}`)}
+                  </button>
+                ))}
+              </div>
             </div>
           )}
           {templatesQuery.isSuccess && premiumTemplates.length === 0 && (
