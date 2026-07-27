@@ -276,3 +276,80 @@ describe("POST /api/workouts/:id/complete (Fase 35 — resumo pós-treino)", () 
     expect(r.status).toBe(403);
   });
 });
+
+describe("DELETE /api/workouts/:id/exercises/:exerciseId (Fase 65)", () => {
+  // Treino próprio, isolado do `workoutId` compartilhado do resto do
+  // arquivo — evita quebrar as asserções de contagem fixa (ex: "toHaveLength(3)")
+  // dos blocos acima.
+  let deletableWorkoutId: string;
+  let exerciseAId: string;
+  let exerciseBId: string;
+
+  beforeAll(async () => {
+    const w = await supertest(server.server)
+      .post("/api/workouts")
+      .set("Authorization", `Bearer ${accessToken}`)
+      .send({ alunoId: vinculadoAlunoId, name: "Treino Deletável", letter: "Z" });
+    deletableWorkoutId = w.body.workout.id;
+
+    const addA = await supertest(server.server)
+      .post(`/api/workouts/${deletableWorkoutId}/exercises`)
+      .set("Authorization", `Bearer ${accessToken}`)
+      .send({ exerciseId: exerciseIds[0], sets: 3, repsRange: "8-12", restSeconds: 60, order: 1 });
+    exerciseAId = addA.body.workoutExercise.id;
+
+    const addB = await supertest(server.server)
+      .post(`/api/workouts/${deletableWorkoutId}/exercises`)
+      .set("Authorization", `Bearer ${accessToken}`)
+      .send({ exerciseId: exerciseIds[1], sets: 3, repsRange: "8-12", restSeconds: 60, order: 2 });
+    exerciseBId = addB.body.workoutExercise.id;
+
+    await supertest(server.server)
+      .post(`/api/workouts/${deletableWorkoutId}/exercises/${exerciseAId}/logs`)
+      .set("Authorization", `Bearer ${alunoAccessToken}`)
+      .send({ setNumber: 1, repsDone: 10, weightKg: 40 });
+  });
+
+  it("aluno (não dono) não pode excluir — 404 (mesma semântica de posse do move/add)", async () => {
+    const r = await supertest(server.server)
+      .delete(`/api/workouts/${deletableWorkoutId}/exercises/${exerciseAId}`)
+      .set("Authorization", `Bearer ${alunoAccessToken}`);
+    expect(r.status).toBe(404);
+  });
+
+  it("exclui um exercício com séries já registradas — some da lista e as séries somem junto", async () => {
+    const r = await supertest(server.server)
+      .delete(`/api/workouts/${deletableWorkoutId}/exercises/${exerciseAId}`)
+      .set("Authorization", `Bearer ${accessToken}`);
+    expect(r.status).toBe(200);
+    expect(r.body.exercises.some((e: any) => e.id === exerciseAId)).toBe(false);
+    expect(r.body.exercises.some((e: any) => e.id === exerciseBId)).toBe(true);
+
+    const setLogs = await prisma.setLog.findMany({ where: { workoutExerciseId: exerciseAId } });
+    expect(setLogs).toHaveLength(0);
+  });
+
+  it("excluir de novo o mesmo exercício (já apagado) retorna 404", async () => {
+    const r = await supertest(server.server)
+      .delete(`/api/workouts/${deletableWorkoutId}/exercises/${exerciseAId}`)
+      .set("Authorization", `Bearer ${accessToken}`);
+    expect(r.status).toBe(404);
+  });
+
+  it("excluir um exerciseId de outro treino (não pertence a este workoutId) retorna 404", async () => {
+    const r = await supertest(server.server)
+      .delete(`/api/workouts/${workoutId}/exercises/${exerciseBId}`)
+      .set("Authorization", `Bearer ${accessToken}`);
+    expect(r.status).toBe(404);
+  });
+
+  afterAll(async () => {
+    // O afterAll global do arquivo só limpa o `workoutId` compartilhado —
+    // este describe cria seu PRÓPRIO treino (deletableWorkoutId), então
+    // limpa o que sobrou dele aqui mesmo (senão o `workout.deleteMany` global
+    // por personalId falharia por FK: WorkoutExercise de exerciseB ainda
+    // existe e referencia este workout).
+    await prisma.setLog.deleteMany({ where: { workoutExerciseId: exerciseBId } });
+    await prisma.workoutExercise.deleteMany({ where: { workoutId: deletableWorkoutId } });
+  });
+});

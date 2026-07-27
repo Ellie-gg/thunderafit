@@ -5,6 +5,7 @@ import {
   generateWorkoutHandler,
   addExerciseHandler,
   moveExerciseHandler,
+  deleteExerciseHandler,
   getWorkoutHandler,
   completeWorkoutHandler,
 } from "../controllers/workouts.controller";
@@ -51,6 +52,14 @@ export async function workoutsRoutes(fastify: FastifyInstance) {
       preHandler: [(fastify as any).authenticate],
     },
     moveExerciseHandler
+  );
+
+  fastify.delete(
+    "/api/workouts/:id/exercises/:exerciseId",
+    {
+      preHandler: [(fastify as any).authenticate],
+    },
+    deleteExerciseHandler
   );
 
   fastify.get(

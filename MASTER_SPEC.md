@@ -950,6 +950,35 @@ decisão/priorização futura):
     em lugar nenhum.
     *Modelo: Sonnet 5. Sem migration — puro frontend.*
 
+### Grupo T — Excluir exercício, preview "ver como o aluno vê", bug de perf do plano Plus, empty-state de primeiro acesso. ✅ CONCLUÍDA (2026-07-27, registrada como Fase 65 no STATUS.md)
+83. Personal ganha um botão de excluir (✕, com confirmação inline) em cada
+    exercício já prescrito — antes só dava pra adicionar ou reordenar
+    (↑/↓), nunca remover. Novo `DELETE /api/workouts/:id/exercises/:exerciseId`
+    (mesma checagem de posse de `moveExercise`), disponível na tela de sessão
+    do programa e no treino avulso do Personal.
+84. Novo botão "Ver como o aluno vê" na tela de sessão do Personal — abre um
+    preview somente-leitura (`.../visualizar`), no mesmo layout visual da
+    execução do aluno (nome, mídia de demonstração, descrição, prescrição,
+    observação), mas deliberadamente sem nada que grave dado do aluno (sem
+    checkbox de concluído, sem barra de progresso de séries, sem formulário
+    de registrar série) — decisão confirmada com o fundador ("modo leitura,
+    só visual").
+85. **Bug de perf corrigido**: `VoltageBar` renderizava 1 `<div>` por unidade
+    de `total`, sem teto — o plano Plus usa `limiteAlunos = 1_000_000` como
+    sentinel de "ilimitado" no backend, então o dashboard do Personal tentava
+    montar 1 milhão de elementos e travava. Componente ganhou um teto de 100
+    segmentos (proporção preservada); além disso, por pedido do fundador, o
+    plano Plus não mostra mais contagem/barra nenhuma — só "Alunos
+    ilimitados".
+86. Dashboard do aluno ganha um empty-state único de primeiro acesso
+    ("Começar agora" — ver treinos disponíveis, sem precisar de Personal —
+    OU "Tem seu próprio Personal?" — convite) — substitui 3 mensagens soltas
+    e sobrepostas que só apareciam quando o aluno não tinha nada ainda
+    (nenhum programa e nenhum Personal vinculado); com Personal vinculado ou
+    plano de dieta já ativo, o resto da tela continua como sempre (decisão
+    confirmada com o fundador).
+    *Modelo: Sonnet 5. Sem migration.*
+
 ### Backlog operacional herdado
 Ver Seção 7 acima (Neon, billing, Android, webhook).
 

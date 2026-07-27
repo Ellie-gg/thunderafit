@@ -192,8 +192,12 @@
   "alunoDashboard": {
     "greeting": "Olá, {name}",
     "subtitle": "Pronto para descarregar o treino de hoje?",
+    "firstTimeSubtitle": "Pronto para o seu primeiro treino?",
+    "firstTimeStartTitle": "Começar agora",
+    "firstTimeStartDescription": "Escolha um treino pronto da nossa biblioteca e comece hoje mesmo.",
+    "firstTimeStartButton": "Ver treinos disponíveis",
+    "or": "ou",
     "loadingWorkouts": "Carregando treinos...",
-    "noProgramsYet": "Você ainda não tem nenhum treino ou plano de dieta. Convide seu Personal Trainer logo abaixo, ou escolha um treino pronto em \"Meus treinos\".",
     "personalPrescribedLabel": "Prescrito pelo seu Personal",
     "noPersonalPrescription": "Seu Personal ainda não te prescreveu nenhum treino.",
     "myWorkoutsLabel": "Meus Treinos Pessoais",
@@ -378,6 +382,13 @@
     "moveDownAriaLabel": "Mover exercício para baixo",
     "moveError": "Erro ao mover."
   },
+  "exerciseDeleteButton": {
+    "deleteAriaLabel": "Remover exercício",
+    "confirmDelete": "Remover este exercício do treino?",
+    "confirmDeleteButton": "Sim, remover",
+    "deleting": "Removendo...",
+    "deleteError": "Erro ao remover."
+  },
   "duvidasList": {
     "title": "Dúvidas",
     "subtitle": "Converse com seu Personal Trainer.",
@@ -460,6 +471,7 @@
     "greeting": "Olá, {nome}",
     "subtitle": "Seus alunos e treinos prescritos.",
     "alunosVinculados": "Alunos vinculados",
+    "alunosIlimitados": "Alunos ilimitados — sem limite pra vincular.",
     "limiteAtingido": "Limite de alunos atingido.",
     "fazerUpgrade": "Faça upgrade do plano →",
     "verPlanos": "Precisa de mais alunos? Ver planos →",
@@ -643,7 +655,13 @@
     "notes": "Obs: {notes}",
     "nextSession": "Próximo: {label} →",
     "creating": "Criando...",
-    "nextSessionError": "Erro ao criar a próxima sessão."
+    "nextSessionError": "Erro ao criar a próxima sessão.",
+    "viewAsStudent": "Ver como o aluno vê →"
+  },
+  "personalSessaoVisualizar": {
+    "backToEdit": "← Voltar à edição",
+    "previewLabel": "Pré-visualização (somente leitura)",
+    "noExercises": "Nenhum exercício prescrito nesta sessão ainda."
   },
   "personalTreinoDetail": {
     "loadingWorkout": "Carregando treino...",

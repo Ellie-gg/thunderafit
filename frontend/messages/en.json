@@ -192,8 +192,12 @@
   "alunoDashboard": {
     "greeting": "Hi, {name}",
     "subtitle": "Ready to crush today's workout?",
+    "firstTimeSubtitle": "Ready for your first workout?",
+    "firstTimeStartTitle": "Get started",
+    "firstTimeStartDescription": "Pick a ready-made workout from our library and start today.",
+    "firstTimeStartButton": "See available workouts",
+    "or": "or",
     "loadingWorkouts": "Loading workouts...",
-    "noProgramsYet": "You don't have any workouts or diet plans yet. Invite your Personal Trainer below, or pick a ready-made workout in \"My Workouts\".",
     "personalPrescribedLabel": "Prescribed by your Personal Trainer",
     "noPersonalPrescription": "Your Personal Trainer hasn't prescribed a workout yet.",
     "myWorkoutsLabel": "My Personal Workouts",
@@ -378,6 +382,13 @@
     "moveDownAriaLabel": "Move exercise down",
     "moveError": "Error moving it."
   },
+  "exerciseDeleteButton": {
+    "deleteAriaLabel": "Remove exercise",
+    "confirmDelete": "Remove this exercise from the workout?",
+    "confirmDeleteButton": "Yes, remove",
+    "deleting": "Removing...",
+    "deleteError": "Error removing it."
+  },
   "duvidasList": {
     "title": "Questions",
     "subtitle": "Chat with your Personal Trainer.",
@@ -460,6 +471,7 @@
     "greeting": "Hi, {nome}",
     "subtitle": "Your students and prescribed workouts.",
     "alunosVinculados": "Linked students",
+    "alunosIlimitados": "Unlimited students — no cap on how many you can link.",
     "limiteAtingido": "Student limit reached.",
     "fazerUpgrade": "Upgrade your plan →",
     "verPlanos": "Need more students? See plans →",
@@ -643,7 +655,13 @@
     "notes": "Note: {notes}",
     "nextSession": "Next: {label} →",
     "creating": "Creating...",
-    "nextSessionError": "Error creating the next session."
+    "nextSessionError": "Error creating the next session.",
+    "viewAsStudent": "View as the student sees it →"
+  },
+  "personalSessaoVisualizar": {
+    "backToEdit": "← Back to editing",
+    "previewLabel": "Preview (read-only)",
+    "noExercises": "No exercises prescribed in this session yet."
   },
   "personalTreinoDetail": {
     "loadingWorkout": "Loading workout...",

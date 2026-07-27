@@ -10,6 +10,11 @@ import { loginViaUI } from "./auth-helpers";
  * vinculado. Antes desta fase, um único card de "próxima sessão" misturava
  * os dois origins (PERSONAL e SELF) sem distinção, e "ter Personal" era
  * (erradamente, pós Fase 34.5) inferido de "ter algum programa".
+ *
+ * Fase 65: quando o aluno não tem NADA ainda (sem programa nenhum, sem
+ * Personal vinculado), os 2 blocos acima nem aparecem — dão lugar a um
+ * empty-state único de primeiro acesso ("Começar agora" + "Tem seu próprio
+ * Personal?"), substituindo as 3 mensagens soltas que existiam antes.
  */
 
 const BACKEND_URL = process.env.E2E_BACKEND_URL ?? "http://localhost:3000";
@@ -27,7 +32,7 @@ async function backendJson(p: string, body: unknown, token?: string, method = "P
   return res.json();
 }
 
-test("aluno sem Personal e sem treino aplicado vê os blocos vazios com convite copiável", async ({
+test("aluno sem Personal e sem treino aplicado vê o empty-state de primeiro acesso", async ({
   page,
 }) => {
   const stamp = Date.now();
@@ -39,17 +44,18 @@ test("aluno sem Personal e sem treino aplicado vê os blocos vazios com convite 
   await loginViaUI(page, alunoEmail, password);
   await expect(page).toHaveURL(/\/dashboard$/);
 
-  await expect(
-    page.getByText("Você ainda não tem nenhum treino ou plano de dieta")
-  ).toBeVisible();
+  // Fase 65: um único empty-state — "Começar agora" (sem precisar de
+  // Personal) OU "Tem seu próprio Personal?" (convite) — substitui os 2
+  // blocos "Prescrito pelo seu Personal"/"Meus Treinos Pessoais", que nem
+  // aparecem mais neste estado.
+  await expect(page.getByRole("heading", { name: "Começar agora" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Ver treinos disponíveis" })).toBeVisible();
+  await expect(page.getByText("Prescrito pelo seu Personal")).toHaveCount(0);
+  await expect(page.getByText("Meus Treinos Pessoais", { exact: true })).toHaveCount(0);
 
-  await expect(page.getByText("Prescrito pelo seu Personal")).toBeVisible();
   await expect(page.getByRole("heading", { name: "Ainda sem um Personal?" })).toBeVisible();
   await page.getByRole("button", { name: "Copiar convite para compartilhar" }).click();
   await expect(page.getByRole("button", { name: "Convite copiado!" })).toBeVisible();
-
-  await expect(page.getByText("Meus Treinos Pessoais", { exact: true })).toBeVisible();
-  await expect(page.getByRole("link", { name: "Ver treinos disponíveis" })).toBeVisible();
 });
 
 test("aluno com Personal e treino pessoal aplicado vê os dois blocos preenchidos, sem o convite", async ({

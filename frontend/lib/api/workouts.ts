@@ -63,6 +63,14 @@ export function moveWorkoutExercise(
   );
 }
 
+// Fase 65: remover um exercício prescrito — antes só dava pra adicionar/reordenar.
+export function deleteWorkoutExercise(workoutId: string, workoutExerciseId: string) {
+  return apiFetch<{ exercises: unknown[] }>(
+    `/api/workouts/${workoutId}/exercises/${workoutExerciseId}`,
+    { method: "DELETE" }
+  );
+}
+
 // Fase 16 — Programas de Treino
 // Fase 35: a resposta agora também traz o resumo pós-treino (volume,
 // comparação com a sessão anterior, PRs).
