@@ -5,15 +5,9 @@ veja se ja podemos incluir essa tarefa junto com login do google, avalie a compl
 
 
 --------------------------------------------------------
-no dashboard do personal em alunos vinculados, ao inves de mostrar cada aluno abaixo crie um link para  abrir uma nova tela Gerenciar alunos e nela deixe os alunos cadastrados com a opção de ele gerenciar cada um deles. 
-também remova treinos prescritos, ao inves disso, deixe templates de treinos, a partir de agora, ou o personal tem um template ou um treino especifico do usuario que pode ser editavel, mas para ele aplicar aquele treino para outro precisa salvar como template.  
-Na tela de edição do aluno o personal pode abrir o treino do aluno e editar ele, e ter um botão de salvar aquel treino como um template. 
-alem disso na tela de templates de treinos crie uma parte
-- Meus Templates (para os templates salvos do personal)
-- Templates de treino básico - templates que todo personal vai ter acesso, que eu vou disponibilizar free
-- Templates Premium - somente para personal pagantes
+na edição de treino o personal deverá poder excluir os exercícios do treino, hoje ele só consegue adicionar 
 
-
+bug: quando o personal tem acesso ilimitado a tela demora a carregar ele deve renderizar varios quadrados com a quantidade de alunos disponível, remova a contagem de alunos quando o personal for do plano plus.
 
 
 --------
