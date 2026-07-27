@@ -29,10 +29,11 @@ import { GenerateWorkoutModal } from "@/components/generate-workout-modal";
 
 // Fase 72: filtro rápido por chip nos catálogos Premium/Básico — mesmo
 // padrão do carrossel "Treinos Premium" do aluno (Fase 63), agora com os 3
-// níveis (Fase 70) além das tags de foco. "TODOS" não é uma tag de verdade,
-// é o estado "sem filtro".
-const TAG_FILTERS: Array<WorkoutTag | "TODOS"> = [
-  "TODOS",
+// níveis (Fase 70) além das tags de foco.
+// Fase 74: multi-seleção — o Personal pode marcar 2+ tags ao mesmo tempo
+// (um template aparece se tiver QUALQUER uma das tags marcadas, "OU" entre
+// elas); "TODOS" é só o atalho pra limpar a seleção, não é uma tag real.
+const TAG_FILTERS: WorkoutTag[] = [
   "FEMININO",
   "HIPERTROFIA",
   "DEFINICAO",
@@ -41,35 +42,66 @@ const TAG_FILTERS: Array<WorkoutTag | "TODOS"> = [
   "INTERMEDIARIO",
   "AVANCADO",
 ];
+// Tom levemente diferente pras 3 tags de nível — mesma lista de chips, mas
+// dá pra distinguir "foco" de "nível" só olhando a cor.
+const LEVEL_TAGS = new Set<WorkoutTag>(["INICIANTE", "INTERMEDIARIO", "AVANCADO"]);
 
 function TagFilterChips({
-  value,
-  onChange,
+  selected,
+  onToggle,
+  onClear,
   t,
 }: {
-  value: WorkoutTag | "TODOS";
-  onChange: (tag: WorkoutTag | "TODOS") => void;
+  selected: Set<WorkoutTag>;
+  onToggle: (tag: WorkoutTag) => void;
+  onClear: () => void;
   t: (key: string) => string;
 }) {
   return (
     <div className="flex flex-wrap gap-2">
-      {TAG_FILTERS.map((tag) => (
-        <button
-          key={tag}
-          type="button"
-          aria-pressed={value === tag}
-          onClick={() => onChange(tag)}
-          className={
-            value === tag
-              ? "rounded-full border border-accent bg-accent/10 px-3 py-1.5 text-xs font-semibold text-accent"
-              : "rounded-full border border-border px-3 py-1.5 text-xs text-muted hover:border-accent"
-          }
-        >
-          {t(`tagFilter.${tag}`)}
-        </button>
-      ))}
+      <button
+        type="button"
+        aria-pressed={selected.size === 0}
+        onClick={onClear}
+        className={
+          selected.size === 0
+            ? "rounded-full border border-accent bg-accent/10 px-3 py-1.5 text-xs font-semibold text-accent"
+            : "rounded-full border border-border px-3 py-1.5 text-xs text-muted hover:border-accent"
+        }
+      >
+        {t("tagFilter.TODOS")}
+      </button>
+      {TAG_FILTERS.map((tag) => {
+        const isLevel = LEVEL_TAGS.has(tag);
+        const isSelected = selected.has(tag);
+        const className = isSelected
+          ? isLevel
+            ? "rounded-full border border-accent-secondary bg-accent-secondary/10 px-3 py-1.5 text-xs font-semibold text-accent-secondary"
+            : "rounded-full border border-accent bg-accent/10 px-3 py-1.5 text-xs font-semibold text-accent"
+          : isLevel
+            ? "rounded-full border border-border px-3 py-1.5 text-xs text-muted hover:border-accent-secondary"
+            : "rounded-full border border-border px-3 py-1.5 text-xs text-muted hover:border-accent";
+        return (
+          <button
+            key={tag}
+            type="button"
+            aria-pressed={isSelected}
+            onClick={() => onToggle(tag)}
+            className={className}
+          >
+            {t(`tagFilter.${tag}`)}
+          </button>
+        );
+      })}
     </div>
   );
+}
+
+function toggleTagInSet(set: Set<WorkoutTag>, tag: WorkoutTag): Set<WorkoutTag> {
+  const next = new Set(set);
+  if (next.has(tag)) next.delete(tag);
+  else next.add(tag);
+  return next;
 }
 
 function ProgramasPersonalContent() {
@@ -106,8 +138,8 @@ function ProgramasPersonalContent() {
   const billingQuery = useQuery({ queryKey: ["billing-status"], queryFn: getBillingStatus });
   const isPlus = billingQuery.data?.planoAssinatura === "PLUS";
   const [previewTemplate, setPreviewTemplate] = useState<WorkoutProgram | null>(null);
-  const [premiumTagFilter, setPremiumTagFilter] = useState<WorkoutTag | "TODOS">("TODOS");
-  const [basicoTagFilter, setBasicoTagFilter] = useState<WorkoutTag | "TODOS">("TODOS");
+  const [premiumTagFilter, setPremiumTagFilter] = useState<Set<WorkoutTag>>(new Set());
+  const [basicoTagFilter, setBasicoTagFilter] = useState<Set<WorkoutTag>>(new Set());
 
   const applyCatalogMutation = useMutation({
     mutationFn: (vars: { programId: string; alunoId: string }) =>
@@ -133,13 +165,13 @@ function ProgramasPersonalContent() {
   const basicoTemplates = catalogPrograms.filter((p) => p.tier === "BASICO");
   const premiumTemplates = catalogPrograms.filter((p) => p.tier === "PREMIUM");
   const basicoTemplatesFiltered =
-    basicoTagFilter === "TODOS"
+    basicoTagFilter.size === 0
       ? basicoTemplates
-      : basicoTemplates.filter((tpl) => tpl.tags?.includes(basicoTagFilter));
+      : basicoTemplates.filter((tpl) => tpl.tags?.some((tag) => basicoTagFilter.has(tag)));
   const premiumTemplatesFiltered =
-    premiumTagFilter === "TODOS"
+    premiumTagFilter.size === 0
       ? premiumTemplates
-      : premiumTemplates.filter((tpl) => tpl.tags?.includes(premiumTagFilter));
+      : premiumTemplates.filter((tpl) => tpl.tags?.some((tag) => premiumTagFilter.has(tag)));
 
   return (
     <>
@@ -168,7 +200,12 @@ function ProgramasPersonalContent() {
             <p className="text-sm text-muted">{t("catalogEmpty")}</p>
           )}
           {premiumTemplates.length > 0 && (
-            <TagFilterChips value={premiumTagFilter} onChange={setPremiumTagFilter} t={t} />
+            <TagFilterChips
+              selected={premiumTagFilter}
+              onToggle={(tag) => setPremiumTagFilter((prev) => toggleTagInSet(prev, tag))}
+              onClear={() => setPremiumTagFilter(new Set())}
+              t={t}
+            />
           )}
           {premiumTemplates.length > 0 && premiumTemplatesFiltered.length === 0 && (
             <p className="text-sm text-muted">{t("tagFilterEmpty")}</p>
@@ -211,7 +248,12 @@ function ProgramasPersonalContent() {
             <p className="text-sm text-muted">{t("catalogEmpty")}</p>
           )}
           {basicoTemplates.length > 0 && (
-            <TagFilterChips value={basicoTagFilter} onChange={setBasicoTagFilter} t={t} />
+            <TagFilterChips
+              selected={basicoTagFilter}
+              onToggle={(tag) => setBasicoTagFilter((prev) => toggleTagInSet(prev, tag))}
+              onClear={() => setBasicoTagFilter(new Set())}
+              t={t}
+            />
           )}
           {basicoTemplates.length > 0 && basicoTemplatesFiltered.length === 0 && (
             <p className="text-sm text-muted">{t("tagFilterEmpty")}</p>
