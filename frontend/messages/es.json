@@ -16,6 +16,7 @@
     "findPersonal": "Buscar Entrenador",
     "profile": "Perfil",
     "requests": "Solicitudes",
+    "contact": "Contáctanos",
     "plans": "Planes",
     "users": "Usuarios",
     "exercises": "Ejercicios",
@@ -587,6 +588,20 @@
     "nenhumaDuvida": "No hay preguntas en esta categoría.",
     "respondido": "Respondida",
     "aberto": "Abierta"
+  },
+  "faleConosco": {
+    "eyebrow": "Soporte",
+    "title": "Contáctanos",
+    "subtitle": "Envía un mensaje directo al fundador — dudas, sugerencias, problemas, lo que sea.",
+    "titleLabel": "Título",
+    "titlePlaceholder": "Ej: Sugerencia de mejora",
+    "messageLabel": "Mensaje",
+    "messagePlaceholder": "Escribe tu mensaje aquí...",
+    "charsRemaining": "{count} caracteres restantes",
+    "send": "Enviar mensaje",
+    "sending": "Enviando...",
+    "sendError": "No se pudo enviar tu mensaje. Inténtalo de nuevo.",
+    "sendSuccess": "¡Mensaje enviado! Gracias por contactarnos."
   },
   "personalSolicitacoes": {
     "solicitacoes": "Solicitudes",
