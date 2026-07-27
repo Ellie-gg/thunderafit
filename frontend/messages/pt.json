@@ -626,6 +626,17 @@
     "premiumTitle": "Templates Premium",
     "premiumSubtitle": "Templates exclusivos do plano Plus — o mesmo catálogo do Aluno Premium.",
     "catalogEmpty": "Nenhum template disponível ainda.",
+    "tagFilter": {
+      "TODOS": "Todos",
+      "FEMININO": "Feminino",
+      "HIPERTROFIA": "Hipertrofia",
+      "DEFINICAO": "Definição",
+      "EXPRESS": "Express",
+      "INICIANTE": "Iniciante",
+      "INTERMEDIARIO": "Intermediário",
+      "AVANCADO": "Avançado"
+    },
+    "tagFilterEmpty": "Nenhum template com essa tag ainda.",
     "premiumUpgradePitch": "Assine o plano Plus para prescrever estes templates aos seus alunos.",
     "premiumUpgradeButton": "Assinar Plus",
     "catalogApplyError": "Erro ao aplicar o template."

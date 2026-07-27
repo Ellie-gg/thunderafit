@@ -14,7 +14,7 @@ import {
 import { listRelations } from "@/lib/api/relations";
 import { getBillingStatus } from "@/lib/api/billing";
 import { ApiError } from "@/lib/api/client";
-import type { SessionScheme, WorkoutProgram } from "@/lib/types";
+import type { SessionScheme, WorkoutProgram, WorkoutTag } from "@/lib/types";
 import { AuthGuard } from "@/components/auth-guard";
 import { AppHeader } from "@/components/app-header";
 import { Card } from "@/components/ui/card";
@@ -26,6 +26,51 @@ import { DeleteProgramButton } from "@/components/delete-program-button";
 import { SelfTemplateCarousel } from "@/components/self-template-carousel";
 import { TemplatePreviewDialog } from "@/components/template-preview-dialog";
 import { GenerateWorkoutModal } from "@/components/generate-workout-modal";
+
+// Fase 72: filtro rápido por chip nos catálogos Premium/Básico — mesmo
+// padrão do carrossel "Treinos Premium" do aluno (Fase 63), agora com os 3
+// níveis (Fase 70) além das tags de foco. "TODOS" não é uma tag de verdade,
+// é o estado "sem filtro".
+const TAG_FILTERS: Array<WorkoutTag | "TODOS"> = [
+  "TODOS",
+  "FEMININO",
+  "HIPERTROFIA",
+  "DEFINICAO",
+  "EXPRESS",
+  "INICIANTE",
+  "INTERMEDIARIO",
+  "AVANCADO",
+];
+
+function TagFilterChips({
+  value,
+  onChange,
+  t,
+}: {
+  value: WorkoutTag | "TODOS";
+  onChange: (tag: WorkoutTag | "TODOS") => void;
+  t: (key: string) => string;
+}) {
+  return (
+    <div className="flex flex-wrap gap-2">
+      {TAG_FILTERS.map((tag) => (
+        <button
+          key={tag}
+          type="button"
+          aria-pressed={value === tag}
+          onClick={() => onChange(tag)}
+          className={
+            value === tag
+              ? "rounded-full border border-accent bg-accent/10 px-3 py-1.5 text-xs font-semibold text-accent"
+              : "rounded-full border border-border px-3 py-1.5 text-xs text-muted hover:border-accent"
+          }
+        >
+          {t(`tagFilter.${tag}`)}
+        </button>
+      ))}
+    </div>
+  );
+}
 
 function ProgramasPersonalContent() {
   const t = useTranslations("personalProgramasList");
@@ -61,6 +106,8 @@ function ProgramasPersonalContent() {
   const billingQuery = useQuery({ queryKey: ["billing-status"], queryFn: getBillingStatus });
   const isPlus = billingQuery.data?.planoAssinatura === "PLUS";
   const [previewTemplate, setPreviewTemplate] = useState<WorkoutProgram | null>(null);
+  const [premiumTagFilter, setPremiumTagFilter] = useState<WorkoutTag | "TODOS">("TODOS");
+  const [basicoTagFilter, setBasicoTagFilter] = useState<WorkoutTag | "TODOS">("TODOS");
 
   const applyCatalogMutation = useMutation({
     mutationFn: (vars: { programId: string; alunoId: string }) =>
@@ -85,6 +132,14 @@ function ProgramasPersonalContent() {
   const catalogPrograms = catalogQuery.data?.programs ?? [];
   const basicoTemplates = catalogPrograms.filter((p) => p.tier === "BASICO");
   const premiumTemplates = catalogPrograms.filter((p) => p.tier === "PREMIUM");
+  const basicoTemplatesFiltered =
+    basicoTagFilter === "TODOS"
+      ? basicoTemplates
+      : basicoTemplates.filter((tpl) => tpl.tags?.includes(basicoTagFilter));
+  const premiumTemplatesFiltered =
+    premiumTagFilter === "TODOS"
+      ? premiumTemplates
+      : premiumTemplates.filter((tpl) => tpl.tags?.includes(premiumTagFilter));
 
   return (
     <>
@@ -112,8 +167,14 @@ function ProgramasPersonalContent() {
           {catalogQuery.isSuccess && premiumTemplates.length === 0 && (
             <p className="text-sm text-muted">{t("catalogEmpty")}</p>
           )}
+          {premiumTemplates.length > 0 && (
+            <TagFilterChips value={premiumTagFilter} onChange={setPremiumTagFilter} t={t} />
+          )}
+          {premiumTemplates.length > 0 && premiumTemplatesFiltered.length === 0 && (
+            <p className="text-sm text-muted">{t("tagFilterEmpty")}</p>
+          )}
           <SelfTemplateCarousel
-            templates={premiumTemplates}
+            templates={premiumTemplatesFiltered}
             locked={!isPlus}
             onSelect={(tpl) => {
               // Sem plano Plus, nem abre o preview — vai direto pra tela de
@@ -149,7 +210,13 @@ function ProgramasPersonalContent() {
           {catalogQuery.isSuccess && basicoTemplates.length === 0 && (
             <p className="text-sm text-muted">{t("catalogEmpty")}</p>
           )}
-          <SelfTemplateCarousel templates={basicoTemplates} onSelect={setPreviewTemplate} />
+          {basicoTemplates.length > 0 && (
+            <TagFilterChips value={basicoTagFilter} onChange={setBasicoTagFilter} t={t} />
+          )}
+          {basicoTemplates.length > 0 && basicoTemplatesFiltered.length === 0 && (
+            <p className="text-sm text-muted">{t("tagFilterEmpty")}</p>
+          )}
+          <SelfTemplateCarousel templates={basicoTemplatesFiltered} onSelect={setPreviewTemplate} />
         </section>
 
         {/* Fase 66: "Montagem Inteligente" saiu do dashboard (que ficou
