@@ -60,15 +60,19 @@ export async function updateMyProfileHandler(
 }
 
 export async function createRequestHandler(
-  request: FastifyRequest<{ Body: { professionalId?: string } }>,
+  request: FastifyRequest<{ Body: { professionalId?: string; message?: string } }>,
   reply: FastifyReply
 ) {
   const { sub, role } = (request as any).user;
   if (role !== "ALUNO") {
-    return reply.status(403).send({ error: "Apenas alunos podem solicitar vínculo." });
+    return reply.status(403).send({ error: "Apenas alunos podem iniciar uma conversa." });
   }
   try {
-    const created = await connectionsService.createRequest(sub, request.body?.professionalId ?? "");
+    const created = await connectionsService.createRequest(
+      sub,
+      request.body?.professionalId ?? "",
+      request.body?.message ?? ""
+    );
     return reply.status(201).send({ request: created });
   } catch (err) {
     return handleError(err, reply);
@@ -112,6 +116,32 @@ export async function rejectRequestHandler(
   try {
     const updated = await connectionsService.rejectRequest(request.params.id, sub);
     return reply.status(200).send({ request: updated });
+  } catch (err) {
+    return handleError(err, reply);
+  }
+}
+
+export async function listMessagesHandler(
+  request: FastifyRequest<{ Params: { id: string } }>,
+  reply: FastifyReply
+) {
+  try {
+    const { sub } = (request as any).user;
+    const messages = await connectionsService.listMessages(request.params.id, sub);
+    return reply.status(200).send({ messages });
+  } catch (err) {
+    return handleError(err, reply);
+  }
+}
+
+export async function sendMessageHandler(
+  request: FastifyRequest<{ Params: { id: string }; Body: { body?: string } }>,
+  reply: FastifyReply
+) {
+  try {
+    const { sub } = (request as any).user;
+    const created = await connectionsService.sendMessage(request.params.id, sub, request.body?.body ?? "");
+    return reply.status(201).send({ message: created });
   } catch (err) {
     return handleError(err, reply);
   }

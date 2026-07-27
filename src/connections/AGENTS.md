@@ -28,6 +28,15 @@ approval request flow that gates the creation of the real `ClientRelation`
   (`@@unique([alunoId, professionalId])`). `status`: `PENDENTE` → `ACEITA` |
   `RECUSADA`. Re-requesting after a rejection reuses the same row (upsert),
   flipping it back to `PENDENTE` instead of creating a new one.
+- **Fase 76 — `ConnectionMessage`**: "Solicitar vínculo" (a blind one-click
+  button) became "Enviar mensagem" — the aluno's first message IS what
+  creates the `ConnectionRequest` (`createRequest` now requires a non-empty
+  `message` and writes the first `ConnectionMessage` in the same call). Both
+  sides can keep exchanging messages (`sendMessage`/`listMessages`) while the
+  request is `PENDENTE` or `ACEITA`; `RECUSADA` closes the thread (409 on
+  further sends) until a new request reopens the same row. Accepting still
+  works exactly as before — creates the real `ClientRelation` via
+  `relationsService.createRelation`, nothing about that path changed.
 
 ## Key rules / authorization
 
@@ -57,7 +66,12 @@ approval request flow that gates the creation of the real `ClientRelation`
 - Both accept and reject require the request to currently be `PENDENTE`
   (409 if already answered).
 - Accept/reject/create all fire a notification via `notificationsService`
-  (`connection_request`, `connection_accepted`, `connection_rejected`).
+  (`connection_request`, `connection_accepted`, `connection_rejected`); Fase
+  76 adds `new_message` on every `sendMessage` call (recipient is whichever
+  side didn't send it).
+- `sendMessage`/`listMessages` authorize by checking the caller is either
+  `request.alunoId` or `request.professionalId` — not by role. Either side
+  can read/write the same thread; there's no third-party access.
 
 ## Handle with care
 
@@ -71,7 +85,13 @@ approval request flow that gates the creation of the real `ClientRelation`
 - The `@@unique([alunoId, professionalId])` upsert means there is no request
   history — rejecting then re-requesting overwrites the same row, so
   `createdAt`/id are stable across cycles but any audit trail of prior
-  rejections is not retained.
+  rejections is not retained. `ConnectionMessage` rows from a rejected-then-
+  reopened thread are NOT cleared — old messages from before a rejection
+  stay visible once the thread reopens (by design: it's the same
+  conversation, just picked back up).
+- Deleting a `ConnectionRequest` requires deleting its `ConnectionMessage`
+  rows first (FK is `ON DELETE RESTRICT`, not CASCADE) — see the cleanup
+  order in `connections.test.ts`'s `afterAll`.
 - Plan-gate logic lives in this domain's service, not in `billing` — keep it
   in sync if the plan model or its downgrade behavior changes elsewhere
   (e.g. `applyFreePlan`, referenced in service comments, must keep clearing
@@ -107,3 +127,12 @@ approval request flow that gates the creation of the real `ClientRelation`
   luxury — their fields render immediately, so both guard against the
   prefill effect clobbering fast-typed input with a `userEditedRef`; don't
   remove that guard when touching either page.
+- Fase 76: messaging is in-app only (bell icon, same as every other
+  notification type) — no push notification (APNs/FCM) infrastructure
+  exists or was added. `notificationsService.notify()` is already a plain
+  REST-backed call (create a row, list, mark read) with nothing web-specific
+  in it, so a future mobile client (Capacitor, per the roadmap) can consume
+  the exact same `/api/notifications*` and `/api/connection-requests/:id/
+  messages` endpoints without any backend change — "reusable for Android/iOS"
+  was satisfied by NOT coupling this feature to anything browser-only, not by
+  building push infra ahead of a real mobile client existing.

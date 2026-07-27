@@ -73,8 +73,10 @@ test("Personal fica disponível, aluno busca e solicita, Personal aceita, aluno 
 
   const proCard = page.locator("div", { hasText: personalEmail.split("@")[0] });
   await expect(page.getByText("Treino de teste E2E")).toBeVisible();
-  await page.getByRole("button", { name: "Solicitar vínculo" }).first().click();
-  // Após solicitar, o resultado mostra o status Pendente.
+  await page.getByRole("button", { name: "Enviar mensagem" }).first().click();
+  await page.getByPlaceholder(/Gostaria de treinar/).fill("Oi! Gostaria de treinar com você.");
+  await page.getByRole("button", { name: "Enviar mensagem" }).click();
+  // Após mandar a mensagem, o resultado mostra o status Pendente.
   await expect(page.getByText("Pendente").first()).toBeVisible();
 
   // --- 3. Personal recebe e aceita pela UI ---
