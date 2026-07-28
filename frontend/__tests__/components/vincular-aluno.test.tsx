@@ -63,7 +63,7 @@ describe("Tela de vincular novo aluno", () => {
     await waitFor(() => expect(push).toHaveBeenCalledWith("/personal/dashboard"));
   });
 
-  it("404: mostra mensagem acionável com botão de copiar convite (Fase 12)", async () => {
+  it("404: mostra mensagem acionável com link pro WhatsApp (Fase 86)", async () => {
     mockedLookup.mockRejectedValue(new ApiError(404, "Aluno não encontrado com este e-mail."));
 
     renderPage();
@@ -76,21 +76,10 @@ describe("Tela de vincular novo aluno", () => {
     ).toBeInTheDocument();
     expect(push).not.toHaveBeenCalled();
 
-    const user = userEvent.setup();
-
-    // userEvent.setup() instala seu próprio stub de clipboard — por isso o
-    // mock só pode ser definido DEPOIS da última chamada a setup(), ou ele é
-    // sobrescrito antes do clique acontecer.
-    const writeText = jest.fn().mockResolvedValue(undefined);
-    Object.defineProperty(navigator, "clipboard", {
-      value: { writeText },
-      configurable: true,
-    });
-
-    await user.click(screen.getByRole("button", { name: "Copiar convite para compartilhar" }));
-
-    expect(writeText).toHaveBeenCalledWith(expect.stringContaining("/login"));
-    expect(await screen.findByText("Convite copiado!")).toBeInTheDocument();
+    const link = await screen.findByRole("link", { name: "Enviar convite no WhatsApp" });
+    expect(link).toHaveAttribute("href", expect.stringContaining("https://wa.me/?text="));
+    expect(decodeURIComponent(link.getAttribute("href")!.split("?text=")[1])).toContain("/login");
+    expect(link).toHaveAttribute("target", "_blank");
   });
 
   it("409: mostra mensagem específica de vínculo já existente", async () => {

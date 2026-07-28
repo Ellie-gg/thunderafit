@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { useQuery } from "@tanstack/react-query";
@@ -11,6 +11,7 @@ import { listMyPersonals } from "@/lib/api/support";
 import { useAuthStore } from "@/lib/store/auth-store";
 import { labelFor } from "@/lib/session-scheme";
 import { firstNameOrEmailPrefix } from "@/lib/utils";
+import { buildWhatsAppShareUrl } from "@/lib/whatsapp";
 import type { WorkoutProgram } from "@/lib/types";
 import { AuthGuard } from "@/components/auth-guard";
 import { AppHeader } from "@/components/app-header";
@@ -118,14 +119,14 @@ function buildPersonalInviteText(t: ReturnType<typeof useTranslations>) {
   return t("inviteText", { loginUrl });
 }
 
-// Fase 36: convite copiável quando o aluno ainda não tem nenhum Personal
-// vinculado — mesmo padrão de "copiar texto pronto + feedback de copiado"
-// já usado em VincularAlunoForm (Fase 12). Fase 65: ganhou um ícone no
-// título pra bater com o card irmão "Começar agora" do novo empty-state de
-// primeiro acesso — mesmo tratamento visual nos dois lugares onde aparece.
+// Fase 36: convite quando o aluno ainda não tem nenhum Personal vinculado —
+// Fase 65: ganhou um ícone no título pra bater com o card irmão "Começar
+// agora" do novo empty-state de primeiro acesso — mesmo tratamento visual
+// nos dois lugares onde aparece. Fase 86: trocou "copiar convite" por um
+// link direto pro WhatsApp (`wa.me`, mensagem pré-preenchida) — a pessoa não
+// precisa mais copiar e colar em lugar nenhum, só escolhe o contato.
 function InvitePersonalCard() {
   const t = useTranslations("alunoDashboard");
-  const [copied, setCopied] = useState(false);
 
   return (
     <Card className="flex flex-col gap-3">
@@ -136,16 +137,10 @@ function InvitePersonalCard() {
         <h2 className="font-display text-lg font-bold">{t("noPersonalTitle")}</h2>
       </div>
       <p className="text-sm text-muted">{t("noPersonalDescription")}</p>
-      <Button
-        type="button"
-        variant="secondary"
-        onClick={async () => {
-          await navigator.clipboard.writeText(buildPersonalInviteText(t));
-          setCopied(true);
-          setTimeout(() => setCopied(false), 2000);
-        }}
-      >
-        {copied ? t("inviteCopied") : t("copyInvite")}
+      <Button type="button" variant="secondary" asChild>
+        <a href={buildWhatsAppShareUrl(buildPersonalInviteText(t))} target="_blank" rel="noopener noreferrer">
+          {t("sendWhatsAppInvite")}
+        </a>
       </Button>
     </Card>
   );
