@@ -52,3 +52,29 @@ resource "google_secret_manager_secret" "resend_api_key" {
 
   depends_on = [google_project_service.apis]
 }
+
+# Fase 87 — Stripe (ativação da monetização). Valores reais (test mode por
+# enquanto) adicionados à mão via `gcloud secrets versions add
+# stripe-secret-key` / `stripe-webhook-secret`, mesmo padrão dos secrets
+# acima — nunca passam pelo plan/state do Terraform.
+resource "google_secret_manager_secret" "stripe_secret_key" {
+  project   = var.project_id
+  secret_id = "stripe-secret-key"
+
+  replication {
+    auto {}
+  }
+
+  depends_on = [google_project_service.apis]
+}
+
+resource "google_secret_manager_secret" "stripe_webhook_secret" {
+  project   = var.project_id
+  secret_id = "stripe-webhook-secret"
+
+  replication {
+    auto {}
+  }
+
+  depends_on = [google_project_service.apis]
+}

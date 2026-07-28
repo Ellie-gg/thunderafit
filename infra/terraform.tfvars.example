@@ -12,6 +12,14 @@ github_repo  = "thunderafit"
 # domínio customizado se houver um).
 allowed_origin = "https://thunderafit-frontend-xxxxx.a.run.app"
 
+# Fase 87 — Stripe: Price IDs (não são secretos). Chave secreta e webhook
+# secret vão via `gcloud secrets versions add stripe-secret-key` /
+# `stripe-webhook-secret` — nunca em .tfvars.
+stripe_price_id_base_monthly   = "price_..."
+stripe_price_id_base_quarterly = "price_..."
+stripe_price_id_plus_monthly   = "price_..."
+stripe_price_id_plus_quarterly = "price_..."
+
 # Opcional — deixe billing_account_id em branco para pular o alerta de
 # orçamento. budget_currency_code PRECISA bater com a moeda real da conta
 # (`gcloud billing accounts describe <ID>` mostra currencyCode) — usar a
