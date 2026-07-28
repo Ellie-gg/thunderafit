@@ -15,8 +15,12 @@ process.env.GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID ?? "test-google-clie
 // Fase 78 (Fale Conosco): sendMail é mockado nos testes (ver
 // contact.test.ts) — só precisa que CONTACT_EMAIL_TO exista pra o service
 // decidir TENTAR enviar (a chamada em si é interceptada pelo mock).
-process.env.CONTACT_GMAIL_USER = process.env.CONTACT_GMAIL_USER ?? "test-contact@thunderafit.test";
 process.env.CONTACT_EMAIL_TO = process.env.CONTACT_EMAIL_TO ?? "test-founder@thunderafit.test";
+
+// Fase 83 (troca Gmail SMTP -> Resend): RESEND_API_KEY é lida por
+// src/lib/mailer.ts — sendMail é mockado nos testes que enviam e-mail, então
+// o valor real nunca importa aqui, só precisa existir.
+process.env.RESEND_API_KEY = process.env.RESEND_API_KEY ?? "test-resend-api-key";
 
 // Fase 81 (confirmação de e-mail / esqueci minha senha): usado pra montar o
 // link do e-mail (getEnv("ALLOWED_ORIGIN") lança se ausente, o que
