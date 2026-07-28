@@ -249,6 +249,121 @@ export const workoutProgramsService = {
     return copy;
   },
 
+  // --- Fase 85: Aluno Premium monta/edita o próprio treino do zero ---
+
+  /**
+   * Mesma trava de "1 treino pessoal ativo por vez" já usada em
+   * `applySelfTemplate` (Fase 52) — aqui reaproveitada tal e qual, já que
+   * `findAppliedSelfProgramForAluno` não distingue template aplicado de
+   * treino montado do zero (as duas origens viram o MESMO tipo de registro:
+   * origin SELF, isTemplate false, alunoId preenchido).
+   */
+  async createSelfProgram(alunoId: string, name: string, sessionScheme?: SessionScheme, replace = false) {
+    if (!name?.trim()) throw httpError("Nome do treino é obrigatório.", 400);
+    const scheme = sessionScheme ?? "LETTER";
+    if (!VALID_SCHEMES.includes(scheme)) {
+      throw httpError("sessionScheme deve ser LETTER ou WEEKDAY.", 400);
+    }
+
+    const entitlement = await alunoPremiumService.getEntitlement(alunoId);
+    if (!entitlement.hasAccess) {
+      const err = httpError(
+        "Montar seu próprio treino é um recurso do Aluno Premium. Assine ou inicie o teste grátis de 7 dias.",
+        402
+      ) as any;
+      err.code = "PREMIUM_REQUIRED";
+      throw err;
+    }
+
+    const existing = await workoutProgramsRepository.findAppliedSelfProgramForAluno(alunoId);
+    if (existing) {
+      if (!replace) {
+        const err = httpError(
+          `Você já tem o treino pessoal "${existing.name}" ativo. Substituir pelo novo?`,
+          409
+        ) as any;
+        err.code = "SELF_PROGRAM_EXISTS";
+        err.existingProgramId = existing.id;
+        err.existingProgramName = existing.name;
+        throw err;
+      }
+      await workoutProgramsRepository.deleteProgram(existing.id);
+    }
+
+    return workoutProgramsRepository.createSelfProgram(alunoId, name.trim(), scheme);
+  },
+
+  /**
+   * Adiciona uma sessão a um treino origin: SELF do PRÓPRIO aluno — mesma
+   * checagem de posse explícita (origin + alunoId juntos, nunca só um dos
+   * dois) do `addSession` do Personal acima, só que invertida pro lado do
+   * aluno. Exige Premium vigente: diferente de `deleteSelfProgram` (remover
+   * conteúdo nunca é bloqueado), ADICIONAR é a própria feature paga.
+   */
+  async addSelfSession(programId: string, alunoId: string, name: string, letter: string) {
+    const program = await workoutProgramsRepository.findProgramById(programId);
+    if (!program) throw httpError("Treino não encontrado.", 404);
+    if (program.origin !== "SELF" || program.alunoId !== alunoId) {
+      throw httpError("Você não tem permissão para editar este treino.", 403);
+    }
+
+    const entitlement = await alunoPremiumService.getEntitlement(alunoId);
+    if (!entitlement.hasAccess) {
+      const err = httpError(
+        "Editar seu treino pessoal é um recurso do Aluno Premium. Assine ou inicie o teste grátis de 7 dias.",
+        402
+      ) as any;
+      err.code = "PREMIUM_REQUIRED";
+      throw err;
+    }
+
+    const validKeys = orderFor(program.sessionScheme);
+    if (!validKeys.includes(letter)) {
+      throw httpError(
+        program.sessionScheme === "WEEKDAY"
+          ? "Sessão deve ser um dia da semana válido (SEGUNDA a DOMINGO)."
+          : "Sessão deve ser uma letra de A a E.",
+        400
+      );
+    }
+
+    const program2 = await workoutProgramsRepository.findProgramWithSessions(programId);
+    const sessions = program2?.workouts ?? [];
+    if (sessions.length >= validKeys.length) {
+      throw httpError(
+        `Um treino pode ter no máximo ${validKeys.length} sessões (${program.sessionScheme === "WEEKDAY" ? "Segunda a Domingo" : "A-E"}).`,
+        400
+      );
+    }
+    if (sessions.some((s) => s.letter === letter)) {
+      throw httpError(`A sessão ${letter} já existe neste treino.`, 409);
+    }
+
+    return workoutProgramsRepository.addSession(
+      programId,
+      null,
+      alunoId,
+      name?.trim() || `${program.name} — ${letter}`,
+      letter
+    );
+  },
+
+  /**
+   * Excluir o próprio treino pessoal (montado do zero OU template aplicado)
+   * NÃO exige Premium vigente — remover conteúdo nunca deveria ficar preso
+   * atrás de um paywall (se travasse aqui, um teste expirado deixaria o
+   * aluno sem conseguir nem começar de novo). Só a criação/edição (acima) é
+   * o recurso pago de verdade.
+   */
+  async deleteSelfProgram(programId: string, alunoId: string) {
+    const program = await workoutProgramsRepository.findProgramById(programId);
+    if (!program) throw httpError("Treino não encontrado.", 404);
+    if (program.origin !== "SELF" || program.alunoId !== alunoId) {
+      throw httpError("Você não tem permissão para excluir este treino.", 403);
+    }
+    await workoutProgramsRepository.deleteProgram(programId);
+  },
+
   // --- Fase 34.5: "Meu treino pessoal" ---
 
   /**

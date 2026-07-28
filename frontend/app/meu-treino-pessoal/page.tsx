@@ -17,6 +17,7 @@ import { QueryError } from "@/components/query-error";
 import { SelfTemplateCarousel } from "@/components/self-template-carousel";
 import { ReplaceSelfTemplateDialog } from "@/components/replace-self-template-dialog";
 import { TemplatePreviewDialog } from "@/components/template-preview-dialog";
+import { PremiumUpsellCard } from "@/components/premium-upsell-card";
 
 // Fase 63: filtro rápido por chip do carrossel "Treinos Premium" — hoje com
 // muitos banners, o que prejudica a navegação (rolar tudo pra achar um
@@ -216,6 +217,24 @@ function MeuTreinoPessoalContent() {
         {templatesQuery.isError && (
           <QueryError error={templatesQuery.error} onRetry={() => templatesQuery.refetch()} />
         )}
+
+        {/* Fase 85 — "montar meu treino do zero": entrada nova, antes dos
+            carrosséis de templates curados. Com acesso Premium, vai direto
+            pro fluxo de criação; sem acesso, mostra o mesmo card de upsell
+            usado no dashboard (auto-contido, cuida do teste grátis sozinho). */}
+        <div className="flex flex-col gap-3">
+          <div>
+            <h2 className="font-display text-lg font-bold">{t("buildOwnSectionTitle")}</h2>
+            <p className="text-sm text-muted">{t("buildOwnSectionSubtitle")}</p>
+          </div>
+          {premiumStatusQuery.data?.hasAccess ? (
+            <Button asChild className="self-start">
+              <Link href="/meu-treino-pessoal/criar">{t("buildOwnButton")}</Link>
+            </Button>
+          ) : (
+            premiumStatusQuery.isSuccess && <PremiumUpsellCard />
+          )}
+        </div>
 
         {/* GERAL é a listagem plana original (pré-carrossel, Fase 34.5) — hoje
             sem nenhum template curado de verdade (todo conteúdo atual vive em

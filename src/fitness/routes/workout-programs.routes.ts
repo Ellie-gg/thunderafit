@@ -11,6 +11,8 @@ import {
   saveInstanceAsTemplateHandler,
   listPersonalCatalogHandler,
   applyCatalogTemplateHandler,
+  createSelfProgramHandler,
+  addSelfSessionHandler,
 } from "../controllers/workout-programs.controller";
 
 export async function workoutProgramsRoutes(fastify: FastifyInstance) {
@@ -28,8 +30,11 @@ export async function workoutProgramsRoutes(fastify: FastifyInstance) {
     auth,
     applyCatalogTemplateHandler
   );
+  // Fase 85 — mesmo motivo acima: "self" precisa vir ANTES de "/:id".
+  fastify.post("/api/workout-programs/self", auth, createSelfProgramHandler);
   fastify.get("/api/workout-programs/:id", auth, getProgramHandler);
   fastify.post("/api/workout-programs/:id/sessions", auth, addSessionHandler);
+  fastify.post("/api/workout-programs/:id/self-sessions", auth, addSelfSessionHandler);
   fastify.post("/api/workout-programs/:id/apply", auth, applyProgramHandler);
   fastify.post("/api/workout-programs/:id/apply-self-template", auth, applySelfTemplateHandler);
   fastify.post("/api/workout-programs/:id/save-as-template", auth, saveInstanceAsTemplateHandler);

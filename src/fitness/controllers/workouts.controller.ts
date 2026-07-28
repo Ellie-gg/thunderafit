@@ -87,6 +87,15 @@ export async function generateWorkoutHandler(
   }
 }
 
+// Fase 85: os 3 handlers abaixo agora ramificam por role — ALUNO chama os
+// métodos NOVOS (`addSelfExercise`/`moveSelfExercise`/`deleteSelfExercise`,
+// que checam origin SELF + Premium); qualquer outro role continua chamando
+// exatamente os mesmos métodos de sempre, sem nenhuma mudança de
+// comportamento (o treino PRESCRITO pelo Personal não muda em nada).
+function errStatus(err: any): number {
+  return err.statusCode ?? 500;
+}
+
 export async function addExerciseHandler(
   request: FastifyRequest<{
     Params: { id: string };
@@ -101,25 +110,22 @@ export async function addExerciseHandler(
   }>,
   reply: FastifyReply
 ) {
-  const personalId = (request as any).user.sub;
+  const userId = (request as any).user.sub;
+  const role = (request as any).user.role;
   const { id } = request.params;
   const { exerciseId, sets, repsRange, restSeconds, order, notes } = request.body;
 
   try {
-    const workoutExercise = await workoutsService.addExercise(
-      id,
-      personalId,
-      exerciseId,
-      sets,
-      repsRange,
-      restSeconds,
-      order,
-      notes
-    );
+    const workoutExercise =
+      role === "ALUNO"
+        ? await workoutsService.addSelfExercise(id, userId, exerciseId, sets, repsRange, restSeconds, order, notes)
+        : await workoutsService.addExercise(id, userId, exerciseId, sets, repsRange, restSeconds, order, notes);
     return reply.status(201).send({ workoutExercise });
   } catch (err: any) {
-    const status = (err as any).statusCode ?? 500;
-    return reply.status(status).send({ error: err.message });
+    if (err.code === "PREMIUM_REQUIRED") {
+      return reply.status(402).send({ error: err.message, code: err.code });
+    }
+    return reply.status(errStatus(err)).send({ error: err.message });
   }
 }
 
@@ -130,7 +136,8 @@ export async function moveExerciseHandler(
   }>,
   reply: FastifyReply
 ) {
-  const personalId = (request as any).user.sub;
+  const userId = (request as any).user.sub;
+  const role = (request as any).user.role;
   const { id, exerciseId } = request.params;
   const { direction } = request.body;
 
@@ -139,11 +146,16 @@ export async function moveExerciseHandler(
   }
 
   try {
-    const exercises = await workoutsService.moveExercise(id, personalId, exerciseId, direction);
+    const exercises =
+      role === "ALUNO"
+        ? await workoutsService.moveSelfExercise(id, userId, exerciseId, direction)
+        : await workoutsService.moveExercise(id, userId, exerciseId, direction);
     return reply.status(200).send({ exercises });
   } catch (err: any) {
-    const status = (err as any).statusCode ?? 500;
-    return reply.status(status).send({ error: err.message });
+    if (err.code === "PREMIUM_REQUIRED") {
+      return reply.status(402).send({ error: err.message, code: err.code });
+    }
+    return reply.status(errStatus(err)).send({ error: err.message });
   }
 }
 
@@ -151,15 +163,21 @@ export async function deleteExerciseHandler(
   request: FastifyRequest<{ Params: { id: string; exerciseId: string } }>,
   reply: FastifyReply
 ) {
-  const personalId = (request as any).user.sub;
+  const userId = (request as any).user.sub;
+  const role = (request as any).user.role;
   const { id, exerciseId } = request.params;
 
   try {
-    const exercises = await workoutsService.deleteExercise(id, personalId, exerciseId);
+    const exercises =
+      role === "ALUNO"
+        ? await workoutsService.deleteSelfExercise(id, userId, exerciseId)
+        : await workoutsService.deleteExercise(id, userId, exerciseId);
     return reply.status(200).send({ exercises });
   } catch (err: any) {
-    const status = (err as any).statusCode ?? 500;
-    return reply.status(status).send({ error: err.message });
+    if (err.code === "PREMIUM_REQUIRED") {
+      return reply.status(402).send({ error: err.message, code: err.code });
+    }
+    return reply.status(errStatus(err)).send({ error: err.message });
   }
 }
 
