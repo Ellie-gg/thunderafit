@@ -108,6 +108,43 @@ resource "google_cloud_run_v2_service" "backend" {
           }
         }
       }
+      # Fase 87 — Stripe (ativação da monetização).
+      env {
+        name = "STRIPE_SECRET_KEY"
+        value_source {
+          secret_key_ref {
+            secret  = google_secret_manager_secret.stripe_secret_key.secret_id
+            version = "latest"
+          }
+        }
+      }
+      env {
+        name = "STRIPE_WEBHOOK_SECRET"
+        value_source {
+          secret_key_ref {
+            secret  = google_secret_manager_secret.stripe_webhook_secret.secret_id
+            version = "latest"
+          }
+        }
+      }
+      # Price IDs não são secretos — só identificam qual preço/produto no
+      # Stripe, sem valor financeiro embutido.
+      env {
+        name  = "STRIPE_PRICE_ID_BASE_MONTHLY"
+        value = var.stripe_price_id_base_monthly
+      }
+      env {
+        name  = "STRIPE_PRICE_ID_BASE_QUARTERLY"
+        value = var.stripe_price_id_base_quarterly
+      }
+      env {
+        name  = "STRIPE_PRICE_ID_PLUS_MONTHLY"
+        value = var.stripe_price_id_plus_monthly
+      }
+      env {
+        name  = "STRIPE_PRICE_ID_PLUS_QUARTERLY"
+        value = var.stripe_price_id_plus_quarterly
+      }
     }
   }
 

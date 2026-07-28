@@ -49,3 +49,17 @@ resource "google_secret_manager_secret_iam_member" "backend_resend_api_key" {
   role      = "roles/secretmanager.secretAccessor"
   member    = "serviceAccount:${google_service_account.backend.email}"
 }
+
+resource "google_secret_manager_secret_iam_member" "backend_stripe_secret_key" {
+  project   = var.project_id
+  secret_id = google_secret_manager_secret.stripe_secret_key.secret_id
+  role      = "roles/secretmanager.secretAccessor"
+  member    = "serviceAccount:${google_service_account.backend.email}"
+}
+
+resource "google_secret_manager_secret_iam_member" "backend_stripe_webhook_secret" {
+  project   = var.project_id
+  secret_id = google_secret_manager_secret.stripe_webhook_secret.secret_id
+  role      = "roles/secretmanager.secretAccessor"
+  member    = "serviceAccount:${google_service_account.backend.email}"
+}

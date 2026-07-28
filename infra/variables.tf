@@ -43,6 +43,30 @@ variable "google_client_id" {
   default     = ""
 }
 
+variable "stripe_price_id_base_monthly" {
+  description = "Fase 87 — Price ID (Stripe) do plano Personal Base mensal. Não é secreto."
+  type        = string
+  default     = ""
+}
+
+variable "stripe_price_id_base_quarterly" {
+  description = "Fase 87 — Price ID (Stripe) do plano Personal Base trimestral. Não é secreto."
+  type        = string
+  default     = ""
+}
+
+variable "stripe_price_id_plus_monthly" {
+  description = "Fase 87 — Price ID (Stripe) do plano Personal Plus mensal. Não é secreto."
+  type        = string
+  default     = ""
+}
+
+variable "stripe_price_id_plus_quarterly" {
+  description = "Fase 87 — Price ID (Stripe) do plano Personal Plus trimestral. Não é secreto."
+  type        = string
+  default     = ""
+}
+
 variable "billing_account_id" {
   description = "ID da conta de billing, só necessário para o alerta de orçamento (budget.tf). Deixe em branco para pular."
   type        = string
