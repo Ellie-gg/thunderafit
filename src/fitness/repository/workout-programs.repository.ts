@@ -46,6 +46,21 @@ export const workoutProgramsRepository = {
     });
   },
 
+  /**
+   * Fase 85 — Aluno Premium monta o próprio treino do zero. Mesma forma de
+   * um programa aplicado a partir de um template SELF (isTemplate: false,
+   * personalId null), só que criado direto pelo aluno em vez de copiado de
+   * um template curado pelo admin — `findAppliedSelfProgramForAluno` (usada
+   * pela trava de "1 treino pessoal ativo por vez") não distingue as duas
+   * origens, então a mesma trava/fluxo de substituição já vale aqui sem
+   * nenhuma mudança.
+   */
+  async createSelfProgram(alunoId: string, name: string, sessionScheme: SessionScheme = "LETTER") {
+    return prisma.workoutProgram.create({
+      data: { alunoId, origin: "SELF", name, isTemplate: false, sessionScheme },
+    });
+  },
+
   async findProgramById(id: string) {
     return prisma.workoutProgram.findUnique({ where: { id } });
   },
@@ -87,7 +102,9 @@ export const workoutProgramsRepository = {
 
   async addSession(
     programId: string,
-    personalId: string,
+    // Fase 85: nullable agora — sessão de um programa origin: SELF (seja
+    // template de admin ou montado pelo próprio aluno) nunca tem Personal.
+    personalId: string | null,
     alunoId: string | null,
     name: string,
     letter: string

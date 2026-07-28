@@ -226,6 +226,28 @@
       "inviteText": "¡Hola! Te invité a usar ThunderaFit conmigo como tu {professionalLabel}. Crea tu cuenta de alumno aquí: {loginUrl}"
     }
   },
+  "criarMeuTreino": {
+    "backLink": "← volver",
+    "title": "Armar rutina desde cero",
+    "subtitle": "Dale un nombre a tu rutina — agregas los ejercicios en el próximo paso.",
+    "nameLabel": "Nombre de la rutina",
+    "namePlaceholder": "Ej: Entrenamiento de Fuerza",
+    "createButton": "Crear y agregar ejercicios",
+    "creating": "Creando...",
+    "createError": "No fue posible crear la rutina."
+  },
+  "premiumUpsellCard": {
+    "eyebrow": "Premium",
+    "headline": "Desbloquea la creación de tu rutina",
+    "benefitsIntro": "Con Aluno Premium puedes:",
+    "benefit1": "Armar tu propia rutina desde cero",
+    "benefit2": "Editarla y ajustarla cuando quieras",
+    "benefit3": "Seguir métricas de carga y progreso",
+    "startTrialButton": "⚡ Probar 7 días gratis",
+    "startingTrial": "Iniciando prueba...",
+    "comingSoon": "Suscripción próximamente — tu prueba gratis ya fue usada.",
+    "trialError": "No fue posible iniciar la prueba gratis."
+  },
   "alunoDashboard": {
     "greeting": "Hola, {name}",
     "subtitle": "¿Listo para el entrenamiento de hoy?",
@@ -273,7 +295,11 @@
     "sessionCountSubtitle": "{count} sesión(es) · elige cualquiera para entrenar",
     "lastCompleted": "Última finalización: {date}",
     "suggested": "Sugerida",
-    "open": "Abrir →"
+    "open": "Abrir →",
+    "editSessionAriaLabel": "Editar rutina {label}",
+    "addingSession": "Agregando...",
+    "addSessionButton": "+ Agregar rutina {label}",
+    "addSessionError": "No fue posible agregar la rutina."
   },
   "treinosList": {
     "title": "Mis Entrenamientos",
@@ -296,6 +322,9 @@
   "meuTreinoPessoal": {
     "title": "Mi Rutina Personal",
     "subtitle": "Plantillas listas, sin necesidad de un Entrenador Personal. Elige una y empieza a entrenar hoy mismo.",
+    "buildOwnSectionTitle": "Arma tu propia rutina",
+    "buildOwnSectionSubtitle": "Recurso Premium: elige los ejercicios, define tus propias series y repeticiones.",
+    "buildOwnButton": "Crear mi rutina",
     "sessionCountScheme": "{count} sesión(es) · {scheme}",
     "schemeWeekday": "días de la semana",
     "schemeLetter": "letras",

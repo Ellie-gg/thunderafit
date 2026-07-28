@@ -189,9 +189,29 @@ export function applyCatalogTemplate(programId: string, alunoId: string) {
 
 // Fase 31: apaga um programa (template ou instância aplicada) — sem volta,
 // por isso todo lugar que usa isto exige confirmação antes de chamar
-// (ver DeleteProgramButton).
+// (ver DeleteProgramButton). Fase 85: o mesmo endpoint agora também aceita
+// um ALUNO excluindo o próprio treino SELF (backend ramifica por role) —
+// nenhuma mudança necessária aqui, a função já era genérica.
 export function deleteWorkoutProgram(programId: string) {
   return apiFetch<Record<string, never>>(`/api/workout-programs/${programId}`, {
     method: "DELETE",
+  });
+}
+
+// Fase 85 — Aluno Premium monta o próprio treino do zero. Mesmo formato de
+// erro 409 SELF_PROGRAM_EXISTS (com existingProgramId/existingProgramName)
+// já usado em applySelfTemplate — o mesmo diálogo de confirmação de troca
+// (ReplaceSelfTemplateDialog) é reutilizável aqui sem mudança.
+export function createSelfWorkoutProgram(name: string, replace?: boolean) {
+  return apiFetch<{ program: WorkoutProgram }>("/api/workout-programs/self", {
+    method: "POST",
+    body: replace ? { name, replace: true } : { name },
+  });
+}
+
+export function addSelfProgramSession(programId: string, input: { letter: string; name?: string }) {
+  return apiFetch<{ session: Workout }>(`/api/workout-programs/${programId}/self-sessions`, {
+    method: "POST",
+    body: input,
   });
 }
