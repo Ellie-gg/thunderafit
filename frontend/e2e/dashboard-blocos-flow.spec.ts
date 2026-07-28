@@ -15,6 +15,13 @@ import { loginViaUI } from "./auth-helpers";
  * Personal vinculado), os 2 blocos acima nem aparecem — dão lugar a um
  * empty-state único de primeiro acesso ("Começar agora" + "Tem seu próprio
  * Personal?"), substituindo as 3 mensagens soltas que existiam antes.
+ *
+ * Fase 88: corrigida uma inconsistência — quando o aluno JÁ tem um treino
+ * pessoal (origin SELF) mas nenhum Personal vinculado, o Bloco 1 ("Prescrito
+ * pelo seu Personal") não aparece mais (antes aparecia só pra abrigar o
+ * convite, prometendo uma seção de prescrição que não existia). O convite
+ * agora entra como card secundário, depois do Bloco 2, sem essa moldura
+ * enganosa.
  */
 
 const BACKEND_URL = process.env.E2E_BACKEND_URL ?? "http://localhost:3000";
@@ -54,8 +61,64 @@ test("aluno sem Personal e sem treino aplicado vê o empty-state de primeiro ace
   await expect(page.getByText("Meus Treinos Pessoais", { exact: true })).toHaveCount(0);
 
   await expect(page.getByRole("heading", { name: "Ainda sem um Personal?" })).toBeVisible();
-  await page.getByRole("button", { name: "Copiar convite para compartilhar" }).click();
-  await expect(page.getByRole("button", { name: "Convite copiado!" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Enviar convite no WhatsApp" })).toBeVisible();
+});
+
+test("aluno com treino pessoal mas sem Personal vinculado não vê o Bloco 1, só o convite depois do treino", async ({
+  page,
+}) => {
+  const stamp = Date.now();
+  const adminEmail = `e2e_blocos_semp_admin_${stamp}@thunderafit.test`;
+  const alunoEmail = `e2e_blocos_semp_aluno_${stamp}@thunderafit.test`;
+  const password = "SenhaSegura@123";
+  const templateName = `Template Sem Personal E2E ${stamp}`;
+
+  // --- Setup via backend direto (não é o que está sob teste aqui) ---
+  await backendJson("/api/auth/register", { email: alunoEmail, password, role: "ALUNO" });
+  const alunoLogin = await backendJson("/api/auth/login", { email: alunoEmail, password });
+
+  execFileSync("npm", ["run", "db:seed:admin"], {
+    cwd: ROOT_DIR,
+    shell: true,
+    env: { ...process.env, ADMIN_EMAIL: adminEmail, ADMIN_PASSWORD: password },
+  });
+  const adminLogin = await backendJson("/api/auth/login", { email: adminEmail, password });
+
+  const template = (
+    await backendJson("/api/admin/self-templates", { name: templateName }, adminLogin.accessToken)
+  ).program;
+  await backendJson(
+    `/api/admin/self-templates/${template.id}/sessions`,
+    { letter: "A" },
+    adminLogin.accessToken
+  );
+  const detail = await backendJson(
+    `/api/admin/self-templates/${template.id}`,
+    null,
+    adminLogin.accessToken,
+    "GET"
+  );
+  const exercises = await backendJson("/api/exercises", null, adminLogin.accessToken, "GET");
+  await backendJson(
+    `/api/admin/self-templates/${template.id}/sessions/${detail.program.workouts[0].id}/exercises`,
+    { exerciseId: exercises.exercises[0].id, sets: 1, repsRange: "8-12", restSeconds: 60, order: 1 },
+    adminLogin.accessToken
+  );
+  await backendJson(
+    `/api/workout-programs/${template.id}/apply-self-template`,
+    {},
+    alunoLogin.accessToken
+  );
+
+  // --- Aluno: sem vínculo com nenhum Personal, mas com treino pessoal aplicado ---
+  await loginViaUI(page, alunoEmail, password);
+  await expect(page).toHaveURL(/\/dashboard$/);
+
+  await expect(page.getByText("Prescrito pelo seu Personal")).toHaveCount(0);
+  await expect(page.getByText("Meus Treinos Pessoais", { exact: true })).toBeVisible();
+  await expect(page.getByText(templateName).first()).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Ainda sem um Personal?" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Enviar convite no WhatsApp" })).toBeVisible();
 });
 
 test("aluno com Personal e treino pessoal aplicado vê os dois blocos preenchidos, sem o convite", async ({
