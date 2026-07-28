@@ -290,20 +290,25 @@ function DashboardContent() {
           <FirstTimeEmptyState />
         ) : (
           <>
-            {/* Bloco 1 (Fase 36): treinos prescritos por um Personal de verdade. */}
-            {programsQuery.isSuccess && (
+            {/* Bloco 1 (Fase 36): treinos prescritos por um Personal de verdade.
+                Fase 88: só renderiza quando o aluno REALMENTE tem um Personal
+                vinculado — antes, sem vínculo nenhum, o cabeçalho "Prescrito
+                pelo seu Personal" aparecia mesmo assim só pra abrigar o
+                convite (InvitePersonalCard), prometendo uma seção de
+                prescrição que não existia. Sem vínculo, o convite agora entra
+                como card secundário depois do Bloco 2 (ver abaixo), sem essa
+                moldura enganosa. */}
+            {programsQuery.isSuccess && hasPersonalRelation && (
               <div className="flex flex-col gap-3">
                 <span className="text-xs font-semibold uppercase tracking-wide text-muted">
                   {t("personalPrescribedLabel")}
                 </span>
                 {personalDetailPending ? null : personalProgramQuery.data?.program ? (
                   <NextSessionCard program={personalProgramQuery.data.program} />
-                ) : hasPersonalRelation ? (
+                ) : (
                   <Card>
                     <p className="text-sm text-muted">{t("noPersonalPrescription")}</p>
                   </Card>
-                ) : (
-                  myPersonalsQuery.isSuccess && <InvitePersonalCard />
                 )}
               </div>
             )}
@@ -330,6 +335,11 @@ function DashboardContent() {
                 )}
               </div>
             )}
+
+            {/* Fase 88: convite pro Personal como card secundário, fora de
+                qualquer bloco rotulado "prescrito" — só quando não há
+                vínculo nenhum ainda. */}
+            {!hasPersonalRelation && myPersonalsQuery.isSuccess && <InvitePersonalCard />}
           </>
         )}
 
