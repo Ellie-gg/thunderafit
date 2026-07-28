@@ -79,7 +79,7 @@ export async function accessLogsHandler(request: FastifyRequest, reply: FastifyR
 export async function updateExerciseMediaHandler(
   request: FastifyRequest<{
     Params: { id: string };
-    Body: { mediaType?: string; mediaDataUrl?: string; youtubeUrl?: string };
+    Body: { mediaType?: string; mediaDataUrl?: string; youtubeUrl?: string; youtubeSupplementUrl?: string };
   }>,
   reply: FastifyReply
 ) {

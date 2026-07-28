@@ -35,6 +35,10 @@ export interface Exercise {
   equipment: string;
   mediaUrl: string | null;
   mediaType: ExerciseMediaType;
+  // Fase 84: link do YouTube com a execução completa, exibido como um
+  // botãozinho por cima do vídeo/GIF próprio — só relevante quando
+  // mediaType é VIDEO ou GIF (quando é YOUTUBE, mediaUrl já é esse link).
+  youtubeSupplementUrl: string | null;
   description: string;
   difficultyLevel: DifficultyLevel;
   // Fase 34: os ~5 exercícios mais feitos de cada grupo muscular (curadoria

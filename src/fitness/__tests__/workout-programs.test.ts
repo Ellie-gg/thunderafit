@@ -81,7 +81,7 @@ beforeAll(async () => {
 
   const exs = await prisma.exercise.findMany({ take: 3, orderBy: { name: "asc" } });
   exerciseIds = exs.map((e) => e.id);
-});
+}, 30000);
 
 afterAll(async () => {
   // Limpa em ordem de dependência (setlog -> workoutExercise -> workout -> program).

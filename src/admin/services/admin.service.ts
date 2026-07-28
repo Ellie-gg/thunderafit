@@ -246,9 +246,22 @@ export const adminService = {
    *   roda ANTES do `indexOf(",")`, então uma string malformada já é
    *   barrada antes de tentar separar header/payload.
    */
+  /**
+   * Fase 84: `youtubeSupplementUrl` — link do YouTube com a execução
+   * completa, exibido como botão por cima do vídeo/GIF próprio. Só faz
+   * sentido quando `mediaType` é VIDEO/GIF (quando é YOUTUBE, o `mediaUrl`
+   * JÁ é esse link). Tri-state pra distinguir "não mandou" de "mandou vazio
+   * de propósito":
+   * - `undefined` (campo ausente do body): não mexe — e se o exercício
+   *   ainda tiver o `mediaUrl` ANTERIOR (de quando era YOUTUBE), reaproveita
+   *   automaticamente como suplemento, pra não fazer o admin procurar/colar
+   *   de novo um link que já existia.
+   * - string vazia: limpa o campo de propósito.
+   * - string não-vazia: valida como link do YouTube e salva.
+   */
   async updateExerciseMedia(
     exerciseId: string,
-    input: { mediaType?: string; mediaDataUrl?: string; youtubeUrl?: string }
+    input: { mediaType?: string; mediaDataUrl?: string; youtubeUrl?: string; youtubeSupplementUrl?: string }
   ) {
     const exercise = await adminRepository.findExerciseById(exerciseId);
     if (!exercise) {
@@ -263,7 +276,12 @@ export const adminService = {
         (err as any).statusCode = 400;
         throw err;
       }
-      const updated = await adminRepository.updateExerciseMedia(exerciseId, input.youtubeUrl, "YOUTUBE");
+      // O suplemento não faz sentido quando a mídia principal JÁ é YouTube.
+      const updated = await adminRepository.updateExerciseMedia(exerciseId, {
+        mediaUrl: input.youtubeUrl,
+        mediaType: "YOUTUBE",
+        youtubeSupplementUrl: null,
+      });
       exercisesRepository.invalidateCache();
       exerciseTranslationsRepository.invalidateCache();
       return updated;
@@ -271,35 +289,61 @@ export const adminService = {
 
     if (input.mediaType === "VIDEO" || input.mediaType === "GIF") {
       const dataUrl = input.mediaDataUrl;
-      if (!dataUrl) {
+      let mediaUrl: string | undefined;
+
+      if (dataUrl) {
+        if (dataUrl.length > MAX_EXERCISE_MEDIA_DATA_URL_LENGTH) {
+          const err = new Error("Arquivo muito grande. Envie um vídeo/GIF de até ~4MB.");
+          (err as any).statusCode = 400;
+          throw err;
+        }
+        const isVideo = input.mediaType === "VIDEO";
+        const regex = isVideo ? VIDEO_DATA_URL_REGEX : GIF_DATA_URL_REGEX;
+        if (!regex.test(dataUrl)) {
+          const err = new Error(
+            isVideo ? "Formato inválido. Envie um vídeo MP4 ou WebM." : "Formato inválido. Envie um GIF."
+          );
+          (err as any).statusCode = 400;
+          throw err;
+        }
+
+        const commaIndex = dataUrl.indexOf(",");
+        const header = dataUrl.slice(0, commaIndex);
+        const base64Data = dataUrl.slice(commaIndex + 1);
+        const contentType = header.slice(5, header.indexOf(";"));
+        const extension = isVideo ? (contentType.includes("webm") ? "webm" : "mp4") : "gif";
+        const buffer = Buffer.from(base64Data, "base64");
+
+        mediaUrl = await uploadExerciseMedia(buffer, contentType, extension);
+      } else if (exercise.mediaType !== input.mediaType || !exercise.mediaUrl) {
+        // Só dispensa o arquivo quando o exercício JÁ é este mesmo tipo de
+        // mídia própria (ex: admin só quer atualizar o link suplementar de
+        // um VIDEO já existente) — 1ª vez virando VIDEO/GIF exige upload.
         const err = new Error("Arquivo de mídia ausente.");
         (err as any).statusCode = 400;
         throw err;
       }
-      if (dataUrl.length > MAX_EXERCISE_MEDIA_DATA_URL_LENGTH) {
-        const err = new Error("Arquivo muito grande. Envie um vídeo/GIF de até ~4MB.");
-        (err as any).statusCode = 400;
-        throw err;
-      }
-      const isVideo = input.mediaType === "VIDEO";
-      const regex = isVideo ? VIDEO_DATA_URL_REGEX : GIF_DATA_URL_REGEX;
-      if (!regex.test(dataUrl)) {
-        const err = new Error(
-          isVideo ? "Formato inválido. Envie um vídeo MP4 ou WebM." : "Formato inválido. Envie um GIF."
-        );
-        (err as any).statusCode = 400;
-        throw err;
+
+      let youtubeSupplementUrl: string | null | undefined;
+      if (input.youtubeSupplementUrl === undefined) {
+        youtubeSupplementUrl =
+          exercise.mediaType === "YOUTUBE" && exercise.mediaUrl ? exercise.mediaUrl : undefined;
+      } else if (input.youtubeSupplementUrl.trim() === "") {
+        youtubeSupplementUrl = null;
+      } else {
+        if (!YOUTUBE_URL_REGEX.test(input.youtubeSupplementUrl)) {
+          const err = new Error("Link suplementar do YouTube inválido.");
+          (err as any).statusCode = 400;
+          throw err;
+        }
+        youtubeSupplementUrl = input.youtubeSupplementUrl.trim();
       }
 
-      const commaIndex = dataUrl.indexOf(",");
-      const header = dataUrl.slice(0, commaIndex);
-      const base64Data = dataUrl.slice(commaIndex + 1);
-      const contentType = header.slice(5, header.indexOf(";"));
-      const extension = isVideo ? (contentType.includes("webm") ? "webm" : "mp4") : "gif";
-      const buffer = Buffer.from(base64Data, "base64");
-
-      const url = await uploadExerciseMedia(buffer, contentType, extension);
-      const updated = await adminRepository.updateExerciseMedia(exerciseId, url, input.mediaType as "VIDEO" | "GIF");
+      const updated = await adminRepository.updateExerciseMedia(exerciseId, {
+        mediaUrl,
+        mediaType: input.mediaType as "VIDEO" | "GIF",
+        youtubeSupplementUrl,
+      });
       exercisesRepository.invalidateCache();
       exerciseTranslationsRepository.invalidateCache();
       return updated;

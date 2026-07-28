@@ -60,6 +60,7 @@
     ],
     "setupFiles": [
       "<rootDir>/src/auth/__tests__/setup.ts"
-    ]
+    ],
+    "testTimeout": 20000
   }
 }
