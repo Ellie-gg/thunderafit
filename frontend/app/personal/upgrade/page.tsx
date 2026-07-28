@@ -17,13 +17,17 @@ import { Button } from "@/components/ui/button";
 import { QueryError } from "@/components/query-error";
 import { useTranslations } from "next-intl";
 
-type Interval = "monthly" | "annual";
+// Fase 87: "annual" trocado por "quarterly" — o fundador decidiu não
+// oferecer mais compromisso anual, só mensal/trimestral (mesmo intervalo já
+// usado pelo Aluno Premium).
+type Interval = "monthly" | "quarterly";
 
-// Billing 3 degraus: valores em R$ são PLACEHOLDER (o que importa nesta fase
-// é a estrutura de degraus e o filtro do diretório, não o preço final).
-// Fase i18n: nome dos degraus ("Base"/"Plus") é tratado como nome de marca —
-// não é traduzido entre locales (igual PLUS/BASE do backend). O resto vem de
-// useTranslations() dentro de cada componente.
+// Fase 87: preços definidos pelo fundador (não mais placeholder de 3
+// degraus da Fase 20 — Base R$14,99, Plus R$29,90, ambos com 20% off no
+// trimestral, sem opção anual). Fase i18n: nome dos degraus ("Base"/"Plus")
+// é tratado como nome de marca — não é traduzido entre locales (igual
+// PLUS/BASE do backend). O resto vem de useTranslations() dentro de cada
+// componente.
 
 function TierCard({
   tier,
@@ -51,12 +55,12 @@ function TierCard({
 
   const PRICES: Record<PlanTier, Record<Interval, { preco: string; sufixo: string; nota: string }>> = {
     BASE: {
-      monthly: { preco: "R$ 19,90", sufixo: t("sufixoMes"), nota: t("notaMensal") },
-      annual: { preco: "R$ 190,80", sufixo: t("sufixoAno"), nota: t("notaAnualBase") },
+      monthly: { preco: "R$ 14,99", sufixo: t("sufixoMes"), nota: t("notaMensal") },
+      quarterly: { preco: "R$ 35,98", sufixo: t("sufixoTrimestre"), nota: t("notaTrimestralBase") },
     },
     PLUS: {
-      monthly: { preco: "R$ 39,90", sufixo: t("sufixoMes"), nota: t("notaMensal") },
-      annual: { preco: "R$ 382,80", sufixo: t("sufixoAno"), nota: t("notaAnualPlus") },
+      monthly: { preco: "R$ 29,90", sufixo: t("sufixoMes"), nota: t("notaMensal") },
+      quarterly: { preco: "R$ 71,76", sufixo: t("sufixoTrimestre"), nota: t("notaTrimestralPlus") },
     },
   };
 
@@ -95,12 +99,12 @@ function TierCard({
         </button>
         <button
           type="button"
-          onClick={() => setInterval("annual")}
+          onClick={() => setInterval("quarterly")}
           className={`flex-1 rounded px-2 py-1 text-xs font-semibold transition-colors ${
-            interval === "annual" ? "bg-accent text-ink-950" : "text-muted"
+            interval === "quarterly" ? "bg-accent text-ink-950" : "text-muted"
           }`}
         >
-          {t("anual")}
+          {t("trimestral")}
         </button>
       </div>
 

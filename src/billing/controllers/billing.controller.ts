@@ -54,7 +54,7 @@ export async function billingWebhookHandler(request: FastifyRequest, reply: Fast
 }
 
 export async function checkoutSessionHandler(
-  request: FastifyRequest<{ Body: { tier?: "BASE" | "PLUS"; interval?: "monthly" | "annual" } }>,
+  request: FastifyRequest<{ Body: { tier?: "BASE" | "PLUS"; interval?: "monthly" | "quarterly" } }>,
   reply: FastifyReply
 ) {
   const { sub, role } = (request as any).user;
@@ -67,7 +67,9 @@ export async function checkoutSessionHandler(
   if (request.body?.tier !== "BASE" && request.body?.tier !== "PLUS") {
     return reply.status(400).send({ error: "tier deve ser BASE ou PLUS." });
   }
-  const interval = request.body?.interval === "annual" ? "annual" : "monthly";
+  // Fase 87: "annual" trocado por "quarterly" — plano do Personal não
+  // oferece mais compromisso anual, só mensal/trimestral.
+  const interval = request.body?.interval === "quarterly" ? "quarterly" : "monthly";
   try {
     const url = await billingService.createCheckoutSession(sub, request.body.tier, interval);
     return reply.status(200).send({ url });

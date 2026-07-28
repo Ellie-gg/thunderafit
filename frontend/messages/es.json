@@ -740,7 +740,7 @@
     "erroIniciarCheckout": "No se pudo iniciar la compra.",
     "maisPopular": "Más popular",
     "mensal": "Mensual",
-    "anual": "Anual",
+    "trimestral": "Trimestral",
     "redirecionando": "Redirigiendo...",
     "assinar": "Suscribirme a {nome}",
     "tierBaseBeneficio1": "Hasta 20 alumnos vinculados",
@@ -750,10 +750,10 @@
     "tierPlusBeneficio3": "Acceso a los Templates Premium de entrenamiento",
     "avisoTemplatesPremium": "Los Templates Premium son exclusivos del plan Plus — suscríbete para prescribir estos entrenamientos a tus alumnos.",
     "sufixoMes": "/mes",
-    "sufixoAno": "/año",
+    "sufixoTrimestre": "/trimestre",
     "notaMensal": "Cobro mensual, cancela cuando quieras.",
-    "notaAnualBase": "Equivale a R$ 15,90/mes — 20% de descuento.",
-    "notaAnualPlus": "Equivale a R$ 31,90/mes — 20% de descuento."
+    "notaTrimestralBase": "Equivale a R$ 11,99/mes — 20% de descuento.",
+    "notaTrimestralPlus": "Equivale a R$ 23,92/mes — 20% de descuento."
   },
   "personalProgramasList": {
     "title": "Programas de Entrenamiento",

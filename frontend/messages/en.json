@@ -740,7 +740,7 @@
     "erroIniciarCheckout": "Couldn't start checkout.",
     "maisPopular": "Most popular",
     "mensal": "Monthly",
-    "anual": "Annual",
+    "trimestral": "Quarterly",
     "redirecionando": "Redirecting...",
     "assinar": "Subscribe to {nome}",
     "tierBaseBeneficio1": "Up to 20 linked students",
@@ -750,10 +750,10 @@
     "tierPlusBeneficio3": "Access to Premium workout templates",
     "avisoTemplatesPremium": "Premium templates are exclusive to the Plus plan — subscribe to prescribe these workouts to your students.",
     "sufixoMes": "/mo",
-    "sufixoAno": "/yr",
+    "sufixoTrimestre": "/quarter",
     "notaMensal": "Billed monthly, cancel anytime.",
-    "notaAnualBase": "Equivalent to R$ 15.90/mo — 20% off.",
-    "notaAnualPlus": "Equivalent to R$ 31.90/mo — 20% off."
+    "notaTrimestralBase": "Equivalent to R$ 11.99/mo — 20% off.",
+    "notaTrimestralPlus": "Equivalent to R$ 23.92/mo — 20% off."
   },
   "personalProgramasList": {
     "title": "Training Programs",

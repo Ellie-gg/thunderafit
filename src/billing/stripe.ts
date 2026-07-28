@@ -38,28 +38,33 @@ export const BASE_LIMITE_ALUNOS = 20;
 export const PLUS_LIMITE_ALUNOS = 1_000_000;
 
 export type PlanTier = "BASE" | "PLUS";
-export type BillingInterval = "monthly" | "annual";
+// Fase 87: "annual" trocado por "quarterly" — o fundador decidiu não
+// oferecer mais o compromisso anual pros planos do Personal, só
+// mensal/trimestral (mesmo intervalo já usado pelo Aluno Premium).
+export type BillingInterval = "monthly" | "quarterly";
 
 /**
  * Price ID do Stripe para um degrau + intervalo. 4 preços no total (2 degraus
- * pagos × mensal/anual) — evolução dos 2 preços únicos da Fase 20 (só
+ * pagos × mensal/trimestral) — evolução dos 2 preços únicos da Fase 20 (só
  * intervalo, um único degrau "PAGO"). Lançado tarde de propósito: cada
  * `requireEnv` só falha quando o preço específico é realmente necessário, não
  * no boot do servidor (mesmo padrão já usado por STRIPE_SECRET_KEY).
  */
 export function stripePriceEnvVar(tier: PlanTier, interval: BillingInterval): string {
-  return `STRIPE_PRICE_ID_${tier}_${interval === "annual" ? "ANNUAL" : "MONTHLY"}`;
+  return `STRIPE_PRICE_ID_${tier}_${interval === "quarterly" ? "QUARTERLY" : "MONTHLY"}`;
 }
 
-// Fase 56 (Aluno Premium — guardrails): preço em centavos e desconto do
-// compromisso trimestral (30%, "vamos refinar isso quando colocarmos o
-// pagamento em produção" — por ora são só constantes documentadas, sem
-// nenhum STRIPE_PRICE_ID_ALUNO_PREMIUM_* real ainda; nenhum checkout as usa
-// hoje). `Math.round` porque centavos são inteiros — nunca fração de centavo.
+// Fase 56 (Aluno Premium — guardrails), preços atualizados na Fase 87
+// (fundador definiu direto, sem checkout Stripe real ainda — "vamos refinar
+// isso quando colocarmos o pagamento em produção"; só constantes
+// documentadas, sem nenhum STRIPE_PRICE_ID_ALUNO_PREMIUM_* real ainda).
+// `Math.round` porque centavos são inteiros — nunca fração de centavo.
 export const ALUNO_PREMIUM_TRIAL_DAYS = 7;
-export const ALUNO_PREMIUM_MONTHLY_PRICE_CENTS = 990;
+export const ALUNO_PREMIUM_MONTHLY_PRICE_CENTS = 999;
 export const ALUNO_PREMIUM_QUARTERLY_MONTHS = 3;
-export const ALUNO_PREMIUM_QUARTERLY_DISCOUNT_PCT = 30;
+// Fase 87: unificado com o desconto trimestral dos planos do Personal
+// (antes era 30%, só pro Aluno Premium).
+export const ALUNO_PREMIUM_QUARTERLY_DISCOUNT_PCT = 20;
 export const ALUNO_PREMIUM_QUARTERLY_PRICE_CENTS = Math.round(
   ALUNO_PREMIUM_MONTHLY_PRICE_CENTS *
     ALUNO_PREMIUM_QUARTERLY_MONTHS *
