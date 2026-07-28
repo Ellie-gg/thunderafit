@@ -128,6 +128,7 @@
       "badge": "Welcome back",
       "title": "Log in",
       "passwordLabel": "Password",
+      "forgotPassword": "Forgot my password",
       "submitting": "Logging in...",
       "submit": "Log in"
     },
@@ -599,6 +600,63 @@
     "saveSuccess": "Password updated successfully.",
     "saving": "Saving...",
     "saveButton": "Save new password"
+  },
+  "forgotPassword": {
+    "title": "Forgot my password",
+    "subtitle": "Enter your email. If an account exists, you'll get a link to reset your password.",
+    "emailLabel": "Email",
+    "emailPlaceholder": "you@example.com",
+    "submitting": "Sending...",
+    "submit": "Send reset link",
+    "connectionError": "Couldn't connect to the server.",
+    "backToLogin": "← back to login"
+  },
+  "resetPassword": {
+    "title": "Reset password",
+    "subtitle": "Choose a new password for your account.",
+    "newPasswordLabel": "New password (min. 8 characters)",
+    "submitting": "Resetting...",
+    "submit": "Reset password",
+    "success": "Password reset successfully. All active sessions were logged out for security.",
+    "goToLogin": "Go to login",
+    "invalidLink": "Invalid link. Request a new password reset link.",
+    "connectionError": "Couldn't connect to the server.",
+    "backToLogin": "← back to login"
+  },
+  "verifyEmail": {
+    "title": "Email confirmation",
+    "verifying": "Confirming your email...",
+    "success": "Email confirmed successfully!",
+    "invalidLink": "Invalid link. Request a new confirmation email from your profile.",
+    "connectionError": "Couldn't confirm your email. The link may have expired — request a new one from your profile.",
+    "goToDashboard": "Go to dashboard",
+    "goToLogin": "Go to login",
+    "backToLogin": "← back to login"
+  },
+  "emailVerificationBanner": {
+    "message": "Confirm your email ({email}) to ensure full access to your account.",
+    "resendButton": "Resend confirmation email",
+    "resending": "Sending...",
+    "resent": "Email resent!",
+    "resendError": "Couldn't resend the email."
+  },
+  "deleteAccount": {
+    "title": "Delete my account",
+    "description": "Permanent action. All your data will be erased.",
+    "openButton": "Delete my account",
+    "confirmTitle": "Are you sure? This can't be undone.",
+    "warnings": {
+      "workouts": "Your workouts, programs, and execution history will be erased.",
+      "progress": "Your progress history (photos, measurements, weight) will be erased.",
+      "relations": "Your relationships with Personal Trainers/Nutritionists and conversations will end.",
+      "irreversible": "The account can't be recovered after deletion."
+    },
+    "passwordLabel": "Confirm your password",
+    "passwordHint": "Leave blank if your account only uses Google login.",
+    "genericError": "Couldn't delete the account.",
+    "cancel": "Cancel",
+    "confirmButton": "Yes, permanently delete my account",
+    "deleting": "Deleting..."
   },
   "faleConosco": {
     "eyebrow": "Support",

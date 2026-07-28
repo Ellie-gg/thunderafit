@@ -9,6 +9,11 @@ import {
   checkEmailHandler,
   updateAvatarHandler,
   changePasswordHandler,
+  resendVerificationEmailHandler,
+  verifyEmailHandler,
+  forgotPasswordHandler,
+  resetPasswordHandler,
+  deleteMyAccountHandler,
   updateLocaleHandler,
 } from "../controllers/auth.controller";
 
@@ -63,6 +68,25 @@ export async function authRoutes(fastify: FastifyInstance) {
       preHandler: [(fastify as any).authenticate],
     },
     changePasswordHandler
+  );
+
+  // Fase 81 — confirmação de e-mail.
+  fastify.post(
+    "/api/auth/resend-verification",
+    { preHandler: [(fastify as any).authenticate] },
+    resendVerificationEmailHandler
+  );
+  fastify.post("/api/auth/verify-email", verifyEmailHandler);
+
+  // Fase 81 — "esqueci minha senha".
+  fastify.post("/api/auth/forgot-password", forgotPasswordHandler);
+  fastify.post("/api/auth/reset-password", resetPasswordHandler);
+
+  // Fase 81 — excluir a própria conta (autenticado).
+  fastify.delete(
+    "/api/auth/me",
+    { preHandler: [(fastify as any).authenticate] },
+    deleteMyAccountHandler
   );
 
   // i18n: escolha explícita de idioma (qualquer role autenticada)

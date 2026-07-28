@@ -18,6 +18,12 @@ process.env.GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID ?? "test-google-clie
 process.env.CONTACT_GMAIL_USER = process.env.CONTACT_GMAIL_USER ?? "test-contact@thunderafit.test";
 process.env.CONTACT_EMAIL_TO = process.env.CONTACT_EMAIL_TO ?? "test-founder@thunderafit.test";
 
+// Fase 81 (confirmação de e-mail / esqueci minha senha): usado pra montar o
+// link do e-mail (getEnv("ALLOWED_ORIGIN") lança se ausente, o que
+// silenciosamente engoliria o envio de e-mail no register/forgot-password
+// sem essa var setada em teste).
+process.env.ALLOWED_ORIGIN = process.env.ALLOWED_ORIGIN ?? "http://localhost:3001";
+
 // Fase 20 (billing): valores dummy de teste. A verificação de assinatura do
 // webhook é cripto local (HMAC) e funciona com qualquer segredo; chamadas à
 // API do Stripe (checkout/portal) são mockadas nos testes.

@@ -250,6 +250,139 @@ export async function changePasswordHandler(
 }
 
 /**
+ * Fase 81 — reenvia o e-mail de confirmação. Autenticado (o banner de
+ * "confirme seu e-mail" só aparece pra quem já está logado).
+ */
+export async function resendVerificationEmailHandler(request: FastifyRequest, reply: FastifyReply) {
+  const user = (request as FastifyRequest & { user?: { sub: string } }).user;
+  if (!user) {
+    return reply.status(401).send({ error: "Não autenticado." });
+  }
+  try {
+    await authService.resendVerificationEmail(user.sub);
+    return reply.status(200).send({ message: "E-mail de confirmação reenviado." });
+  } catch (err) {
+    const error = err as Error & { statusCode?: number };
+    return reply.status(error.statusCode ?? 500).send({ error: error.message });
+  }
+}
+
+/**
+ * Fase 81 — confirma o e-mail a partir do link (`uid` + `token` na URL,
+ * ambos no body do POST). Pública — quem clica no link ainda não está
+ * logado nesse dispositivo necessariamente.
+ */
+export async function verifyEmailHandler(
+  request: FastifyRequest<{ Body: { uid?: string; token?: string } }>,
+  reply: FastifyReply
+) {
+  if (!request.body?.uid || !request.body?.token) {
+    return reply.status(400).send({ error: "uid e token são obrigatórios." });
+  }
+  try {
+    const user = await authService.verifyEmail(request.body.uid, request.body.token);
+    return reply.status(200).send({ user });
+  } catch (err) {
+    const error = err as Error & { statusCode?: number };
+    return reply.status(error.statusCode ?? 500).send({ error: error.message });
+  }
+}
+
+/**
+ * Fase 81 — "esqueci minha senha". SEMPRE responde a mesma mensagem
+ * genérica (exista ou não o e-mail) — defesa OWASP contra enumeração de
+ * contas. Rate-limitado com o MESMO limiter de login (por IP+e-mail), só
+ * como um freio de chamadas (não há "sucesso"/"falha" real pra distinguir
+ * aqui, já que a resposta é sempre igual).
+ */
+export async function forgotPasswordHandler(
+  request: FastifyRequest<{ Body: { email?: string } }>,
+  reply: FastifyReply
+) {
+  const email = request.body?.email;
+  if (!email || !EMAIL_FORMAT_REGEX.test(email)) {
+    return reply.status(400).send({ error: "email é obrigatório e deve ter um formato válido." });
+  }
+
+  const ip = request.ip;
+  const blockStatus = loginRateLimiter.isBlocked(ip, email);
+  if (blockStatus.blocked) {
+    return reply.status(429).send({
+      error: `Muitas tentativas. Tente novamente em ${blockStatus.retryAfterSeconds}s.`,
+    });
+  }
+  loginRateLimiter.recordFailedAttempt(ip, email);
+
+  try {
+    await authService.requestPasswordReset(email);
+  } catch (err) {
+    // requestPasswordReset não deveria lançar (é best-effort por dentro),
+    // mas se lançar mesmo assim, não vazamos detalhe nenhum pro cliente.
+    console.error("Erro inesperado em requestPasswordReset:", err);
+  }
+  return reply.status(200).send({
+    message: "Se esse e-mail tiver uma conta, você vai receber um link para redefinir sua senha.",
+  });
+}
+
+/**
+ * Fase 81 — confirma o link de "esqueci minha senha" (uid + token do link)
+ * e troca a senha. Pública — quem clica no link ainda não tem sessão.
+ */
+export async function resetPasswordHandler(
+  request: FastifyRequest<{ Body: { uid?: string; token?: string; newPassword?: string } }>,
+  reply: FastifyReply
+) {
+  const { uid, token, newPassword } = request.body ?? {};
+  if (!uid || !token || !newPassword) {
+    return reply.status(400).send({ error: "uid, token e newPassword são obrigatórios." });
+  }
+
+  const ip = request.ip;
+  const blockStatus = loginRateLimiter.isBlocked(ip, uid);
+  if (blockStatus.blocked) {
+    return reply.status(429).send({
+      error: `Muitas tentativas. Tente novamente em ${blockStatus.retryAfterSeconds}s.`,
+    });
+  }
+
+  try {
+    await authService.resetPassword(uid, token, newPassword);
+    loginRateLimiter.recordSuccessfulAttempt(ip, uid);
+    return reply.status(200).send({ message: "Senha redefinida com sucesso." });
+  } catch (err) {
+    loginRateLimiter.recordFailedAttempt(ip, uid);
+    const error = err as Error & { statusCode?: number };
+    return reply.status(error.statusCode ?? 500).send({ error: error.message });
+  }
+}
+
+/**
+ * Fase 81 — "Excluir minha conta". Limpa os cookies de sessão igual ao
+ * logout — depois de apagada, não há mais nenhum token válido pra essa
+ * conta mesmo (o refresh não encontraria mais o usuário), mas limpar os
+ * cookies evita qualquer chamada subsequente do próprio browser bater
+ * numa conta que não existe mais.
+ */
+export async function deleteMyAccountHandler(
+  request: FastifyRequest<{ Body: { password?: string } }>,
+  reply: FastifyReply
+) {
+  const user = (request as FastifyRequest & { user?: { sub: string } }).user;
+  if (!user) {
+    return reply.status(401).send({ error: "Não autenticado." });
+  }
+  try {
+    await authService.deleteMyAccount(user.sub, request.body?.password ?? null);
+    clearAuthCookies(reply);
+    return reply.status(200).send({ ok: true });
+  } catch (err) {
+    const error = err as Error & { statusCode?: number };
+    return reply.status(error.statusCode ?? 500).send({ error: error.message });
+  }
+}
+
+/**
  * i18n: escolha explícita de idioma (tela de Configurações) — sincroniza
  * entre dispositivos. Qualquer role autenticada. `locale: null` volta a
  * detectar automaticamente.

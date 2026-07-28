@@ -45,6 +45,24 @@ model User {
   googleId         String?         @unique
   role             Role
   refreshTokenHash String?
+  // Fase 81 — confirmação de e-mail. `null` = ainda não confirmado. Contas
+  // criadas via Google (Fase 77) recebem isso preenchido NA CRIAÇÃO (o
+  // próprio Google já verificou `email_verified` antes de emitir o
+  // idToken) — só cadastro tradicional nasce com `null` e precisa do fluxo
+  // de e-mail de verificação pra preencher.
+  emailVerifiedAt  DateTime?
+  // Hash (nunca o token cru) + expiração do link de verificação de e-mail
+  // vigente — um único token ativo por vez (mesmo padrão de
+  // `refreshTokenHash`: gerar um novo invalida qualquer link antigo ainda
+  // não usado). `null`/expirado = sem link pendente.
+  emailVerificationTokenHash      String?
+  emailVerificationTokenExpiresAt DateTime?
+  // Fase 81 — "esqueci minha senha". Mesmo padrão de par hash+expiração
+  // acima, mas para o fluxo de reset (conceitualmente diferente: prova
+  // posse do e-mail pra TROCAR a credencial, não pra confirmar o e-mail em
+  // si) — por isso campos separados, nunca reaproveitando os de verificação.
+  passwordResetTokenHash      String?
+  passwordResetTokenExpiresAt DateTime?
   // Fase 39 — cadastro mínimo de nome: capturado no cadastro a partir de
   // agora (obrigatório pra conta NOVA), mas nullable porque contas já
   // existentes não têm esse dado e não há backfill — todo lugar que exibe
