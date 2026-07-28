@@ -6,6 +6,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { lookupAlunoByEmail, createRelation } from "@/lib/api/relations";
 import { ApiError } from "@/lib/api/client";
+import { buildWhatsAppShareUrl } from "@/lib/whatsapp";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -19,24 +20,22 @@ function buildInviteText(t: ReturnType<typeof useTranslations>, professionalLabe
   return t("notFound.inviteText", { professionalLabel, loginUrl });
 }
 
+// Fase 86: trocou "copiar convite" por um link direto pro WhatsApp (mesmo
+// padrão do dashboard do aluno) — sem copiar/colar, só escolher o contato.
 function AlunoNaoEncontrado({ professionalLabel }: { professionalLabel: string }) {
   const t = useTranslations("vincularAlunoForm");
-  const [copied, setCopied] = useState(false);
 
   return (
     <div className="flex flex-col gap-2 rounded-md border border-danger/40 bg-danger/10 px-3 py-2.5">
       <p className="text-sm text-danger">{t("notFound.message")}</p>
-      <Button
-        type="button"
-        variant="secondary"
-        size="sm"
-        onClick={async () => {
-          await navigator.clipboard.writeText(buildInviteText(t, professionalLabel));
-          setCopied(true);
-          setTimeout(() => setCopied(false), 2000);
-        }}
-      >
-        {copied ? t("notFound.copied") : t("notFound.copyButton")}
+      <Button type="button" variant="secondary" size="sm" asChild>
+        <a
+          href={buildWhatsAppShareUrl(buildInviteText(t, professionalLabel))}
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          {t("notFound.sendWhatsAppInvite")}
+        </a>
       </Button>
     </div>
   );
