@@ -325,6 +325,13 @@ model Exercise {
   // exercícios já cadastrados (só tinham link do YouTube, sem essa
   // distinção existir ainda).
   mediaType       ExerciseMediaType @default(YOUTUBE)
+  // Fase 84: link do YouTube com a execução completa, exibido como um
+  // botãozinho por cima do vídeo/GIF próprio (mediaType VIDEO/GIF) — só faz
+  // sentido nesse caso, já que quando mediaType é YOUTUBE o próprio mediaUrl
+  // JÁ é o link do YouTube. Nulo até o admin preencher; a tela de admin
+  // reaproveita automaticamente o mediaUrl anterior quando o exercício
+  // trocava de YOUTUBE pra VIDEO/GIF pela 1ª vez (ver admin.service.ts).
+  youtubeSupplementUrl String?
   description     String
   // Fase 15: nível informativo (não usado em filtro nesta fase). Default
   // INTERMEDIARIO para os 29 exercícios pré-existentes que não declaravam
