@@ -221,8 +221,7 @@
     },
     "notFound": {
       "message": "This email doesn't have a ThunderaFit account yet. Ask your student to sign up first.",
-      "copied": "Invite copied!",
-      "copyButton": "Copy invite to share",
+      "sendWhatsAppInvite": "Send invite on WhatsApp",
       "inviteText": "Hi! I invited you to use ThunderaFit with me as your {professionalLabel}. Create your student account here: {loginUrl}"
     }
   },
@@ -279,8 +278,7 @@
     "startWorkout": "Start workout",
     "noPersonalTitle": "No Personal Trainer yet?",
     "noPersonalDescription": "Invite your Personal Trainer to follow your training closely on ThunderaFit.",
-    "inviteCopied": "Invite copied!",
-    "copyInvite": "Copy invite to share",
+    "sendWhatsAppInvite": "Send invite on WhatsApp",
     "inviteText": "Hey! I want to train with you on ThunderaFit. Create your Personal Trainer account here: {loginUrl}"
   },
   "alunoProgramsList": {
