@@ -333,7 +333,7 @@ describe("Fase 20 — checkout-session e portal (API do Stripe mockada)", () => 
     sessionsCreate.mockRestore();
   });
 
-  it("checkout-session com tier=PLUS e interval=annual usa o price PLUS anual", async () => {
+  it("checkout-session com tier=PLUS e interval=quarterly usa o price PLUS trimestral", async () => {
     const stripe = getStripe();
     const sessionsCreate = jest
       .spyOn(stripe.checkout.sessions, "create")
@@ -342,12 +342,12 @@ describe("Fase 20 — checkout-session e portal (API do Stripe mockada)", () => 
     const r = await supertest(server.server)
       .post("/api/billing/checkout-session")
       .set("Authorization", `Bearer ${personalToken}`)
-      .send({ tier: "PLUS", interval: "annual" });
+      .send({ tier: "PLUS", interval: "quarterly" });
 
     expect(r.status).toBe(200);
     const arg = sessionsCreate.mock.calls[0][0] as any;
     expect(arg.metadata.tier).toBe("PLUS");
-    expect(arg.line_items[0].price).toBe(process.env.STRIPE_PRICE_ID_PLUS_ANNUAL);
+    expect(arg.line_items[0].price).toBe(process.env.STRIPE_PRICE_ID_PLUS_QUARTERLY);
     sessionsCreate.mockRestore();
   });
 

@@ -740,7 +740,7 @@
     "erroIniciarCheckout": "Não foi possível iniciar o checkout.",
     "maisPopular": "Mais popular",
     "mensal": "Mensal",
-    "anual": "Anual",
+    "trimestral": "Trimestral",
     "redirecionando": "Redirecionando...",
     "assinar": "Assinar {nome}",
     "tierBaseBeneficio1": "Até 20 alunos vinculados",
@@ -750,10 +750,10 @@
     "tierPlusBeneficio3": "Acesso aos Templates Premium de treino",
     "avisoTemplatesPremium": "Templates Premium são exclusivos do plano Plus — assine para prescrever esses treinos aos seus alunos.",
     "sufixoMes": "/mês",
-    "sufixoAno": "/ano",
+    "sufixoTrimestre": "/trimestre",
     "notaMensal": "Cobrança mensal, cancele quando quiser.",
-    "notaAnualBase": "Equivale a R$ 15,90/mês — 20% de desconto.",
-    "notaAnualPlus": "Equivale a R$ 31,90/mês — 20% de desconto."
+    "notaTrimestralBase": "Equivale a R$ 11,99/mês — 20% de desconto.",
+    "notaTrimestralPlus": "Equivale a R$ 23,92/mês — 20% de desconto."
   },
   "personalProgramasList": {
     "title": "Programas de Treino",
