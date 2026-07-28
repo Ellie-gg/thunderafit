@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMutation } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
@@ -282,7 +283,12 @@ export default function LoginPage() {
             }}
           >
             <div className="flex flex-col gap-1.5">
-              <Label htmlFor="password">{t("loginStep.passwordLabel")}</Label>
+              <div className="flex items-center justify-between">
+                <Label htmlFor="password">{t("loginStep.passwordLabel")}</Label>
+                <Link href="/esqueci-senha" className="text-xs font-semibold text-muted hover:text-foreground">
+                  {t("loginStep.forgotPassword")}
+                </Link>
+              </div>
               <PasswordField id="password" value={password} onChange={setPassword} />
             </div>
 

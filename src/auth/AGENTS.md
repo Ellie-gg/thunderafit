@@ -5,8 +5,11 @@
 Owns account creation, credential verification, JWT issuance/rotation, and the
 authenticate middleware used by every other domain. Also owns a few
 self-service "my account" endpoints that don't belong to any other domain:
-avatar upload and explicit locale choice. Does NOT own role changes/promotion,
-admin bootstrap, or password reset — those live in `src/admin`.
+avatar upload, explicit locale choice, change/reset password, e-mail
+verification, and self-service account deletion (Fase 81). Does NOT own role
+changes/promotion or admin-initiated user deletion — those live in
+`src/admin` (which reuses `src/lib/user-deletion.ts#deleteUserCascade`, the
+same cascade this domain's self-delete calls).
 
 ## Main entities (Prisma)
 
@@ -34,6 +37,19 @@ admin bootstrap, or password reset — those live in `src/admin`.
   - `lastLoginAt` — updated on every successful login.
   - `planoAssinatura`/`limiteAlunos` — set to `FREE`/`3` defaults at
     registration; this domain never changes them afterward (billing does).
+  - `emailVerifiedAt` — nullable `DateTime`, Fase 81. `null` until the
+    confirmation link is clicked (or, for Google SSO, set immediately at
+    account creation — Google already verified `email_verified` before
+    issuing the idToken, see the Fase 77 note below).
+  - `emailVerificationTokenHash`/`emailVerificationTokenExpiresAt` — sha256
+    hash (not bcrypt — the raw token already has 256 bits of entropy, so
+    bcrypt's cost factor buys nothing) + a 24h expiry. Only ONE active token
+    per user at a time (a new call overwrites the previous one, same
+    "single active token" pattern as `refreshTokenHash`). **Never** returned
+    from any service function — see `toSafeUser()` below.
+  - `passwordResetTokenHash`/`passwordResetTokenExpiresAt` — same hashing
+    scheme, 1h expiry (OWASP Forgot Password Cheat Sheet recommends
+    15–60min). Also never returned from any service function.
 - `LoginLog` — append-only row per *successful* login (`userId`,
   `ipAddress`, `createdAt`). Failed attempts never reach the DB, only the
   in-memory rate limiter.
@@ -90,9 +106,18 @@ admin bootstrap, or password reset — those live in `src/admin`.
 - Refresh tokens are rotated on every `/api/auth/refresh` call (new
   access+refresh pair, new stored hash) — callers must swap both tokens on
   refresh, the old refresh token stops working immediately.
-- Never return `passwordHash` or `refreshTokenHash` from any service
-  function — every mutator manually strips both before returning `safeUser`.
-  Follow the same pattern if you add a new field-update function.
+- Never return `passwordHash`, `refreshTokenHash`, or (Fase 81)
+  `emailVerificationTokenHash`/`emailVerificationTokenExpiresAt`/
+  `passwordResetTokenHash`/`passwordResetTokenExpiresAt` from any service
+  function — use the shared `toSafeUser(user)` helper at the top of
+  `auth.service.ts`, which strips all 6 fields at once. A real bug this
+  exact fase: the first version of this code only stripped the original 2
+  fields via an inline destructure repeated ~8 times, so the 4 new token
+  fields leaked into every `/register`/`/login`/etc JSON response
+  (hashed, so not directly exploitable, but still a needless secret-shaped
+  leak) until caught in a manual smoke test — this is why the helper exists
+  now instead of another inline destructure. If you add a new sensitive
+  field to `User`, add it to `toSafeUser()`, not to a one-off destructure.
 - Avatar validation (size cap + `data:image/(png|jpeg|jpg|webp);base64,...`
   regex) happens server-side deliberately, not just client-side — the
   comment in `auth.service.ts` explains why (client-side resize can't be
@@ -126,6 +151,30 @@ admin bootstrap, or password reset — those live in `src/admin`.
   (and its "ou"/divider on the login page) renders nothing — never throws —
   so a local dev environment without Google credentials configured still
   has a fully working traditional login/signup flow.
+- **Fase 81 — "esqueci minha senha" is anti-enumeration by design.**
+  `requestPasswordReset(email)` NEVER throws and the controller ALWAYS
+  responds with the same generic message/200, whether or not the account
+  exists — don't add a distinct response path for "email not found" here,
+  that's the exact leak OWASP's cheat sheet warns against.
+- **Fase 81 — password reset invalidates all sessions.** `resetPassword()`
+  calls `authRepository.updateRefreshTokenHash(userId, null)` after
+  changing the password — if an attacker had a stolen session, changing the
+  password (even by the legitimate owner) kicks it out immediately. Don't
+  remove this call to "preserve the current session" without reconsidering
+  this tradeoff.
+- **Fase 81 — email verification is idempotent.** Clicking an already-used
+  (or already-verified-by-other-means, e.g. later linking Google) link
+  returns 200 with the current user, not an error — `verifyEmail()` checks
+  `user.emailVerifiedAt` first and short-circuits before even looking at the
+  token. Don't turn the "already verified" case into a 400; a stale
+  double-click (e.g. browser prefetch, email client re-fetching the link
+  for preview) shouldn't look like a failure to the user.
+- **Fase 81 — self-delete-account reuses the admin's last-ADMIN guard.**
+  `deleteMyAccount()` calls `authRepository.countAdmins()` and blocks with
+  400 if the caller is `role: "ADMIN"` and is the only one left — otherwise
+  the last admin could delete their own account and lock everyone out of
+  `/nimbus`. Mirror `admin.service.ts`'s equivalent guard if you touch
+  either one.
 - `NEXT_PUBLIC_GOOGLE_CLIENT_ID` must be present at **Next.js build time**
   (baked into the client bundle), not just at Cloud Run runtime — wired as
   a Docker `--build-arg` in `infra/cloudbuild.tf`'s frontend trigger, sourced
@@ -155,6 +204,18 @@ Live endpoints (all under `/api/auth`):
   clears cookies.
 - `PUT /me/avatar` — authenticated, any role, set/clear avatar.
 - `PUT /me/locale` — authenticated, any role, set/clear explicit locale.
+- `POST /resend-verification` — authenticated, Fase 81, re-sends the
+  confirmation e-mail; 400 if the account is already verified.
+- `POST /verify-email` — public, Fase 81, body `{ uid, token }`, confirms
+  the e-mail. Idempotent (see above).
+- `POST /forgot-password` — public, Fase 81, rate-limited by `(IP, email)`
+  via the same `loginRateLimiter`, always 200 with a generic message.
+- `POST /reset-password` — public, Fase 81, rate-limited by `(IP, uid)`,
+  body `{ uid, token, newPassword }`, invalidates all sessions on success.
+- `DELETE /me` — authenticated, any role, Fase 81 self-service account
+  deletion, body `{ password? }` (required only if the account has a
+  password set). Clears auth cookies on success, same helper `logoutHandler`
+  uses.
 - `GET /protected` — authenticated smoke-test route for the middleware.
 
 On successful `ALUNO` login, this domain triggers

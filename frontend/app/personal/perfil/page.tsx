@@ -18,6 +18,7 @@ import { CityStateInput } from "@/components/city-state-input";
 import { SpecialtyChips } from "@/components/specialty-chips";
 import { ProfessionalCard } from "@/components/professional-card";
 import { ChangePasswordCard } from "@/components/change-password-card";
+import { DeleteAccountCard } from "@/components/delete-account-card";
 import type { Specialty } from "@/lib/constants/professional-directory";
 import { useAuthStore } from "@/lib/store/auth-store";
 
@@ -183,6 +184,8 @@ function PerfilContent() {
             </Button>
           </Card>
         )}
+
+        <DeleteAccountCard />
       </main>
     </>
   );

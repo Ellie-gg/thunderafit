@@ -128,6 +128,7 @@
       "badge": "Bem-vindo de volta",
       "title": "Entrar",
       "passwordLabel": "Senha",
+      "forgotPassword": "Esqueci minha senha",
       "submitting": "Entrando...",
       "submit": "Entrar"
     },
@@ -599,6 +600,63 @@
     "saveSuccess": "Senha atualizada com sucesso.",
     "saving": "Salvando...",
     "saveButton": "Salvar nova senha"
+  },
+  "forgotPassword": {
+    "title": "Esqueci minha senha",
+    "subtitle": "Digite seu e-mail. Se existir uma conta, você recebe um link para redefinir a senha.",
+    "emailLabel": "E-mail",
+    "emailPlaceholder": "voce@exemplo.com",
+    "submitting": "Enviando...",
+    "submit": "Enviar link de redefinição",
+    "connectionError": "Não foi possível conectar ao servidor.",
+    "backToLogin": "← voltar para o login"
+  },
+  "resetPassword": {
+    "title": "Redefinir senha",
+    "subtitle": "Escolha uma nova senha para sua conta.",
+    "newPasswordLabel": "Nova senha (mín. 8 caracteres)",
+    "submitting": "Redefinindo...",
+    "submit": "Redefinir senha",
+    "success": "Senha redefinida com sucesso. Todas as sessões ativas foram encerradas por segurança.",
+    "goToLogin": "Ir para o login",
+    "invalidLink": "Link inválido. Solicite um novo link de redefinição de senha.",
+    "connectionError": "Não foi possível conectar ao servidor.",
+    "backToLogin": "← voltar para o login"
+  },
+  "verifyEmail": {
+    "title": "Confirmação de e-mail",
+    "verifying": "Confirmando seu e-mail...",
+    "success": "E-mail confirmado com sucesso!",
+    "invalidLink": "Link inválido. Peça um novo e-mail de confirmação no seu perfil.",
+    "connectionError": "Não foi possível confirmar o e-mail. O link pode ter expirado — peça um novo no seu perfil.",
+    "goToDashboard": "Ir para o painel",
+    "goToLogin": "Ir para o login",
+    "backToLogin": "← voltar para o login"
+  },
+  "emailVerificationBanner": {
+    "message": "Confirme seu e-mail ({email}) para garantir o acesso total à sua conta.",
+    "resendButton": "Reenviar e-mail de confirmação",
+    "resending": "Enviando...",
+    "resent": "E-mail reenviado!",
+    "resendError": "Não foi possível reenviar o e-mail."
+  },
+  "deleteAccount": {
+    "title": "Excluir minha conta",
+    "description": "Ação permanente. Todos os seus dados serão apagados.",
+    "openButton": "Excluir minha conta",
+    "confirmTitle": "Tem certeza? Isso não pode ser desfeito.",
+    "warnings": {
+      "workouts": "Seus treinos, programas e histórico de execução serão apagados.",
+      "progress": "Seu histórico de evolução (fotos, medidas, peso) será apagado.",
+      "relations": "Seus vínculos com Personal/Nutricionista e conversas serão encerrados.",
+      "irreversible": "Não é possível recuperar a conta depois de excluída."
+    },
+    "passwordLabel": "Confirme sua senha",
+    "passwordHint": "Deixe em branco se sua conta só usa login com o Google.",
+    "genericError": "Não foi possível excluir a conta.",
+    "cancel": "Cancelar",
+    "confirmButton": "Sim, excluir minha conta definitivamente",
+    "deleting": "Excluindo..."
   },
   "faleConosco": {
     "eyebrow": "Suporte",

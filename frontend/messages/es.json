@@ -128,6 +128,7 @@
       "badge": "Bienvenido de nuevo",
       "title": "Iniciar sesión",
       "passwordLabel": "Contraseña",
+      "forgotPassword": "Olvidé mi contraseña",
       "submitting": "Iniciando sesión...",
       "submit": "Iniciar sesión"
     },
@@ -599,6 +600,63 @@
     "saveSuccess": "Contraseña actualizada con éxito.",
     "saving": "Guardando...",
     "saveButton": "Guardar nueva contraseña"
+  },
+  "forgotPassword": {
+    "title": "Olvidé mi contraseña",
+    "subtitle": "Escribe tu correo. Si existe una cuenta, recibirás un enlace para redefinir tu contraseña.",
+    "emailLabel": "Correo electrónico",
+    "emailPlaceholder": "tu@ejemplo.com",
+    "submitting": "Enviando...",
+    "submit": "Enviar enlace de redefinición",
+    "connectionError": "No fue posible conectar con el servidor.",
+    "backToLogin": "← volver al inicio de sesión"
+  },
+  "resetPassword": {
+    "title": "Redefinir contraseña",
+    "subtitle": "Elige una nueva contraseña para tu cuenta.",
+    "newPasswordLabel": "Nueva contraseña (mín. 8 caracteres)",
+    "submitting": "Redefiniendo...",
+    "submit": "Redefinir contraseña",
+    "success": "Contraseña redefinida con éxito. Todas las sesiones activas fueron cerradas por seguridad.",
+    "goToLogin": "Ir al inicio de sesión",
+    "invalidLink": "Enlace inválido. Solicita un nuevo enlace de redefinición de contraseña.",
+    "connectionError": "No fue posible conectar con el servidor.",
+    "backToLogin": "← volver al inicio de sesión"
+  },
+  "verifyEmail": {
+    "title": "Confirmación de correo",
+    "verifying": "Confirmando tu correo...",
+    "success": "¡Correo confirmado con éxito!",
+    "invalidLink": "Enlace inválido. Solicita un nuevo correo de confirmación en tu perfil.",
+    "connectionError": "No fue posible confirmar el correo. El enlace puede haber expirado — solicita uno nuevo en tu perfil.",
+    "goToDashboard": "Ir al panel",
+    "goToLogin": "Ir al inicio de sesión",
+    "backToLogin": "← volver al inicio de sesión"
+  },
+  "emailVerificationBanner": {
+    "message": "Confirma tu correo ({email}) para garantizar acceso total a tu cuenta.",
+    "resendButton": "Reenviar correo de confirmación",
+    "resending": "Enviando...",
+    "resent": "¡Correo reenviado!",
+    "resendError": "No fue posible reenviar el correo."
+  },
+  "deleteAccount": {
+    "title": "Eliminar mi cuenta",
+    "description": "Acción permanente. Todos tus datos serán borrados.",
+    "openButton": "Eliminar mi cuenta",
+    "confirmTitle": "¿Estás seguro? Esto no se puede deshacer.",
+    "warnings": {
+      "workouts": "Tus entrenamientos, programas e historial de ejecución serán borrados.",
+      "progress": "Tu historial de progreso (fotos, medidas, peso) será borrado.",
+      "relations": "Tus vínculos con Personal Trainer/Nutricionista y conversaciones serán finalizados.",
+      "irreversible": "No es posible recuperar la cuenta después de eliminarla."
+    },
+    "passwordLabel": "Confirma tu contraseña",
+    "passwordHint": "Déjalo en blanco si tu cuenta solo usa inicio de sesión con Google.",
+    "genericError": "No fue posible eliminar la cuenta.",
+    "cancel": "Cancelar",
+    "confirmButton": "Sí, eliminar mi cuenta definitivamente",
+    "deleting": "Eliminando..."
   },
   "faleConosco": {
     "eyebrow": "Soporte",

@@ -73,3 +73,43 @@ export function changePasswordRequest(currentPassword: string | undefined, newPa
     body: { currentPassword, newPassword },
   });
 }
+
+// Fase 81 — confirmação de e-mail.
+export function resendVerificationEmailRequest() {
+  return apiFetch<{ message: string }>("/api/auth/resend-verification", { method: "POST" });
+}
+
+export function verifyEmailRequest(uid: string, token: string) {
+  return apiFetch<{ user: User }>("/api/auth/verify-email", {
+    method: "POST",
+    body: { uid, token },
+    auth: false,
+  });
+}
+
+// Fase 81 — "esqueci minha senha". Resposta sempre genérica (mesma mensagem
+// exista ou não o e-mail) — não há distinção de sucesso/falha aqui de propósito.
+export function forgotPasswordRequest(email: string) {
+  return apiFetch<{ message: string }>("/api/auth/forgot-password", {
+    method: "POST",
+    body: { email },
+    auth: false,
+  });
+}
+
+export function resetPasswordRequest(uid: string, token: string, newPassword: string) {
+  return apiFetch<{ message: string }>("/api/auth/reset-password", {
+    method: "POST",
+    body: { uid, token, newPassword },
+    auth: false,
+  });
+}
+
+// Fase 81 — "Excluir minha conta". `password` omitido só é válido pra conta
+// só-Google (sem senha própria) — o backend exige se `passwordHash` existir.
+export function deleteMyAccountRequest(password?: string) {
+  return apiFetch<{ ok: boolean }>("/api/auth/me", {
+    method: "DELETE",
+    body: { password },
+  });
+}
