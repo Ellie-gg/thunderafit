@@ -76,7 +76,20 @@ function PasswordField({
   );
 }
 
-function RoleChip({
+const ROLE_ICON: Record<SignupRole, string> = {
+  PERSONAL: "🏋️",
+  ALUNO: "⚡",
+};
+
+/**
+ * Card interativo de seleção de papel (cadastro). Antes eram 2 botões de
+ * mesmo peso visual (texto puro, sem ícone) — difícil bater o olho e saber
+ * qual estava selecionado. Agora cada card tem ícone + título + descrição
+ * própria, e acende com a cor do papel (dourado=Personal, ciano=Aluno —
+ * mesma convenção já usada no resto do produto, ex: barra do AppHeader) só
+ * quando selecionado.
+ */
+function RoleCard({
   signupRole,
   active,
   onClick,
@@ -86,20 +99,39 @@ function RoleChip({
   onClick: () => void;
 }) {
   const t = useTranslations("login");
+  const roleKey = roleTranslationKey(signupRole);
   const activeClasses =
     signupRole === "PERSONAL"
-      ? "border-accent bg-accent/10 text-accent"
-      : "border-accent-secondary bg-accent-secondary/10 text-accent-secondary";
+      ? "border-accent bg-accent/10"
+      : "border-accent-secondary bg-accent-secondary/10";
+  const iconActiveClasses =
+    signupRole === "PERSONAL"
+      ? "bg-accent text-ink-950"
+      : "bg-accent-secondary text-ink-950";
 
   return (
     <button
       type="button"
       onClick={onClick}
-      className={`flex-1 rounded-xl border py-3 font-display text-sm font-semibold transition-colors ${
-        active ? activeClasses : "border-border text-muted hover:border-foreground/30"
+      aria-pressed={active}
+      className={`flex w-full items-start gap-3 rounded-xl border p-4 text-left transition-colors ${
+        active ? activeClasses : "border-border hover:border-foreground/40"
       }`}
     >
-      {t(`roles.${roleTranslationKey(signupRole)}.chip`)}
+      <span
+        aria-hidden
+        className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-lg transition-colors ${
+          active ? iconActiveClasses : "bg-surface-raised text-foreground"
+        }`}
+      >
+        {ROLE_ICON[signupRole]}
+      </span>
+      <span className="flex flex-col gap-0.5 pt-0.5">
+        <span className="font-display text-sm font-bold text-foreground">
+          {t(`roles.${roleKey}.cardTitle`)}
+        </span>
+        <span className="text-xs text-muted">{t(`roles.${roleKey}.cardDescription`)}</span>
+      </span>
     </button>
   );
 }
@@ -175,7 +207,7 @@ export default function LoginPage() {
 
   return (
     <main className="flex flex-1 flex-col items-center justify-center px-6 py-12">
-      <div className="mb-10 flex flex-col items-center gap-3">
+      <div className="mb-6 flex flex-col items-center gap-3">
         <span className="text-3xl" aria-hidden>
           ⚡
         </span>
@@ -184,16 +216,23 @@ export default function LoginPage() {
         </h1>
       </div>
 
+      {/* Hero: só na tela de entrada — as demais etapas (login/cadastro) já
+          têm seu próprio título contextual dentro do Card, uma tagline de
+          marketing ali só repetiria informação. */}
+      {step === "email" && (
+        <div className="mb-8 max-w-md text-center">
+          <h2 className="mb-3 font-display text-2xl font-bold leading-snug tracking-tight text-foreground sm:text-3xl">
+            {t("hero.headline")}
+          </h2>
+          <p className="text-sm text-muted sm:text-base">{t("hero.subtitle")}</p>
+        </div>
+      )}
+
       {step === "email" && (
         <Card
           className="w-full max-w-sm"
           style={{ borderTopWidth: "4px", borderTopColor: "var(--accent)" }}
         >
-          <h2 className="mb-1 font-display text-xl font-bold text-foreground">
-            {t("emailStep.title")}
-          </h2>
-          <p className="mb-5 text-sm text-muted">{t("emailStep.subtitle")}</p>
-
           <form
             className="flex flex-col gap-4"
             onSubmit={(e) => {
@@ -251,6 +290,17 @@ export default function LoginPage() {
             </>
           )}
         </Card>
+      )}
+
+      {/* Fase 82: rodapé de disponibilidade — texto honesto sobre o estado
+          real do app (Fase 19 confirmou a viabilidade técnica via Capacitor,
+          mas o Android ainda não foi publicado na Play Store) em vez de
+          prometer uma loja que ainda não existe. */}
+      {step === "email" && (
+        <p className="mt-6 flex items-center gap-2 text-xs text-muted">
+          <span aria-hidden>🌐</span>
+          {t("hero.availability")}
+        </p>
       )}
 
       {step === "login" && (
@@ -328,21 +378,18 @@ export default function LoginPage() {
           <p className="mb-1 text-sm text-muted">{email}</p>
           <p className="mb-5 text-sm text-muted">{t("signupRoleStep.question")}</p>
 
-          <div className="mb-2 flex gap-3">
-            <RoleChip
-              signupRole="ALUNO"
-              active={signupRole === "ALUNO"}
-              onClick={() => setSignupRole("ALUNO")}
-            />
-            <RoleChip
+          <div className="mb-5 flex flex-col gap-3">
+            <RoleCard
               signupRole="PERSONAL"
               active={signupRole === "PERSONAL"}
               onClick={() => setSignupRole("PERSONAL")}
             />
+            <RoleCard
+              signupRole="ALUNO"
+              active={signupRole === "ALUNO"}
+              onClick={() => setSignupRole("ALUNO")}
+            />
           </div>
-          <p className="mb-5 min-h-10 text-xs text-muted">
-            {signupRole ? t(`roles.${roleTranslationKey(signupRole)}.description`) : " "}
-          </p>
 
           {googleAuthMutation.isError && (
             <p className="mb-3 text-sm text-danger">

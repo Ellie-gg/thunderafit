@@ -107,19 +107,26 @@
       "showAria": "Show password",
       "hideAria": "Hide password"
     },
+    "hero": {
+      "headline": "The complete platform for your progress in the gym.",
+      "subtitle": "Prescribe workouts in seconds, or grab a ready-made program and start training.",
+      "availability": "Available on the Web — Android and iOS apps coming soon"
+    },
     "roles": {
       "aluno": {
         "chip": "Train",
-        "description": "Build your own workouts or follow the ones your Personal trainer gives you."
+        "description": "Build your own workouts or follow the ones your Personal trainer gives you.",
+        "cardTitle": "I Want to Train",
+        "cardDescription": "Access programs and track your workouts"
       },
       "personal": {
         "chip": "Personal",
-        "description": "Sign in to manage your clients, prescribe and track workouts."
+        "description": "Sign in to manage your clients, prescribe and track workouts.",
+        "cardTitle": "I'm a Personal Trainer",
+        "cardDescription": "Manage clients and prescribe workouts"
       }
     },
     "emailStep": {
-      "title": "Log in or create an account",
-      "subtitle": "Enter your email to get started. We'll take it from there.",
       "emailLabel": "Email",
       "emailPlaceholder": "you@example.com",
       "submitting": "Checking..."
