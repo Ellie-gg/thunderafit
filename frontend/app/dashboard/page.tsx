@@ -20,6 +20,7 @@ import { VoltageBar } from "@/components/voltage-bar";
 import { WeeklyVoltageBar } from "@/components/weekly-voltage-bar";
 import { WeeklyStats } from "@/components/weekly-stats";
 import { QueryError } from "@/components/query-error";
+import { PremiumUpsellCard } from "@/components/premium-upsell-card";
 
 // Fase 33.4: tempo estimado da sessão — heurística client-side (sem schema
 // novo), ~40s de execução por série + o descanso prescrito entre elas. É uma
@@ -336,6 +337,13 @@ function DashboardContent() {
             )}
           </>
         )}
+
+        {/* Fase 85: upsell do Aluno Premium — FORA do ternário acima de
+            propósito: aparece tanto no primeiro acesso (FirstTimeEmptyState)
+            quanto no dashboard normal, já que "montar meu treino" é uma
+            opção relevante em qualquer estado. Some sozinho quando o aluno
+            já tem acesso (a própria PremiumUpsellCard decide). */}
+        <PremiumUpsellCard />
 
         {weeklySummary && (
           <div className="flex flex-col gap-2">

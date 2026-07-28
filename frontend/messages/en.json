@@ -226,6 +226,28 @@
       "inviteText": "Hi! I invited you to use ThunderaFit with me as your {professionalLabel}. Create your student account here: {loginUrl}"
     }
   },
+  "criarMeuTreino": {
+    "backLink": "← back",
+    "title": "Build a workout from scratch",
+    "subtitle": "Give your workout a name — you'll add exercises in the next step.",
+    "nameLabel": "Workout name",
+    "namePlaceholder": "e.g. Strength Training",
+    "createButton": "Create and add exercises",
+    "creating": "Creating...",
+    "createError": "Couldn't create the workout."
+  },
+  "premiumUpsellCard": {
+    "eyebrow": "Premium",
+    "headline": "Unlock creating your own workout",
+    "benefitsIntro": "With Aluno Premium you can:",
+    "benefit1": "Build your own workout from scratch",
+    "benefit2": "Edit and tweak it anytime",
+    "benefit3": "Track load and progress metrics",
+    "startTrialButton": "⚡ Try 7 days free",
+    "startingTrial": "Starting trial...",
+    "comingSoon": "Subscription coming soon — your free trial was already used.",
+    "trialError": "Couldn't start the free trial."
+  },
   "alunoDashboard": {
     "greeting": "Hi, {name}",
     "subtitle": "Ready to crush today's workout?",
@@ -273,7 +295,11 @@
     "sessionCountSubtitle": "{count} session(s) · pick any one to train",
     "lastCompleted": "Last completed: {date}",
     "suggested": "Suggested",
-    "open": "Open →"
+    "open": "Open →",
+    "editSessionAriaLabel": "Edit workout {label}",
+    "addingSession": "Adding...",
+    "addSessionButton": "+ Add workout {label}",
+    "addSessionError": "Couldn't add the workout."
   },
   "treinosList": {
     "title": "My Workouts",
@@ -296,6 +322,9 @@
   "meuTreinoPessoal": {
     "title": "My Own Workout",
     "subtitle": "Ready-made templates, no Personal Trainer needed. Pick one and start training today.",
+    "buildOwnSectionTitle": "Build your own workout",
+    "buildOwnSectionSubtitle": "Premium feature: pick the exercises, set your own sets and reps.",
+    "buildOwnButton": "Create my workout",
     "sessionCountScheme": "{count} session(s) · {scheme}",
     "schemeWeekday": "days of the week",
     "schemeLetter": "letters",

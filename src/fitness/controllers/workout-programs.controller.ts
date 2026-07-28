@@ -94,9 +94,18 @@ export async function deleteProgramHandler(
   reply: FastifyReply
 ) {
   try {
+    const { sub, role } = (request as any).user;
+    // Fase 85: aluno excluindo o PRÓPRIO treino (origin: SELF) é um caminho
+    // novo — ramifica aqui em vez de duplicar a rota, mesmo padrão já usado
+    // em listProgramsHandler acima (um endpoint, comportamento por role).
+    // O caminho do Personal abaixo (assertProfessional + deleteProgram)
+    // continua 100% inalterado.
+    if (role === "ALUNO") {
+      await workoutProgramsService.deleteSelfProgram(request.params.id, sub);
+      return reply.status(204).send();
+    }
     assertProfessional(request);
-    const personalId = (request as any).user.sub;
-    await workoutProgramsService.deleteProgram(request.params.id, personalId);
+    await workoutProgramsService.deleteProgram(request.params.id, sub);
     return reply.status(204).send();
   } catch (err) {
     return handleError(err, reply);
@@ -198,6 +207,67 @@ export async function applySelfTemplateHandler(
     // Fase 56: gate de Aluno Premium — code carrega pro frontend distinguir
     // "sem acesso Premium" de qualquer outro erro genérico (mesmo motivo do
     // SELF_PROGRAM_EXISTS acima).
+    if (err.code === "PREMIUM_REQUIRED") {
+      return reply.status(402).send({ error: err.message, code: err.code });
+    }
+    return handleError(err, reply);
+  }
+}
+
+// Fase 85 — Aluno Premium monta o próprio treino do zero (schema/regras
+// idênticas ao já usado por applySelfTemplateHandler abaixo: mesmos códigos
+// de erro SELF_PROGRAM_EXISTS/PREMIUM_REQUIRED, mesmo formato de resposta).
+export async function createSelfProgramHandler(
+  request: FastifyRequest<{
+    Body: { name: string; sessionScheme?: SessionScheme; replace?: boolean };
+  }>,
+  reply: FastifyReply
+) {
+  try {
+    const { sub, role } = (request as any).user;
+    if (role !== "ALUNO") {
+      const err = new Error("Apenas alunos podem montar o próprio treino.") as any;
+      err.statusCode = 403;
+      throw err;
+    }
+    const program = await workoutProgramsService.createSelfProgram(
+      sub,
+      request.body.name,
+      request.body.sessionScheme,
+      request.body.replace === true
+    );
+    return reply.status(201).send({ program });
+  } catch (err: any) {
+    if (err.code === "SELF_PROGRAM_EXISTS") {
+      return reply.status(409).send({
+        error: err.message,
+        code: err.code,
+        existingProgramId: err.existingProgramId,
+        existingProgramName: err.existingProgramName,
+      });
+    }
+    if (err.code === "PREMIUM_REQUIRED") {
+      return reply.status(402).send({ error: err.message, code: err.code });
+    }
+    return handleError(err, reply);
+  }
+}
+
+export async function addSelfSessionHandler(
+  request: FastifyRequest<{ Params: { id: string }; Body: { name?: string; letter: string } }>,
+  reply: FastifyReply
+) {
+  try {
+    const { sub, role } = (request as any).user;
+    if (role !== "ALUNO") {
+      const err = new Error("Apenas alunos podem editar o próprio treino.") as any;
+      err.statusCode = 403;
+      throw err;
+    }
+    const { letter, name } = request.body;
+    const session = await workoutProgramsService.addSelfSession(request.params.id, sub, name ?? "", letter);
+    return reply.status(201).send({ session });
+  } catch (err: any) {
     if (err.code === "PREMIUM_REQUIRED") {
       return reply.status(402).send({ error: err.message, code: err.code });
     }

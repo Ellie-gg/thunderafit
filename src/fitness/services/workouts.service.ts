@@ -4,9 +4,41 @@ import { relationsRepository } from "../repository/relations.repository";
 import { exercisesRepository } from "../repository/exercises.repository";
 import { workoutSummaryService } from "./workout-summary.service";
 import { exerciseTranslationService } from "./exercise-translation.service";
+import { alunoPremiumService } from "../../billing/services/aluno-premium.service";
 
 // Fase 27: observação do Personal sobre a prescrição de um exercício.
 const MAX_NOTES_LENGTH = 500;
+
+function httpError(message: string, statusCode: number) {
+  const err = new Error(message) as Error & { statusCode: number };
+  err.statusCode = statusCode;
+  return err;
+}
+
+/**
+ * Fase 85 — Aluno Premium edita o PRÓPRIO treino (origin: SELF). Sessão de
+ * um programa SELF nunca tem personalId (nulo em lockstep, ver comentário no
+ * schema) — checar os dois juntos (não só alunoId) é a mesma defesa
+ * explícita já usada em workout-programs.service.ts (origin + dono, nunca só
+ * um dos dois).
+ */
+function assertOwnSelfWorkout(workout: { personalId: string | null; alunoId: string | null } | null, alunoId: string) {
+  if (!workout || workout.personalId !== null || workout.alunoId !== alunoId) {
+    throw httpError("Treino não encontrado.", 404);
+  }
+}
+
+async function assertAlunoPremiumAccess(alunoId: string) {
+  const entitlement = await alunoPremiumService.getEntitlement(alunoId);
+  if (!entitlement.hasAccess) {
+    const err = httpError(
+      "Editar seu treino pessoal é um recurso do Aluno Premium. Assine ou inicie o teste grátis de 7 dias.",
+      402
+    ) as any;
+    err.code = "PREMIUM_REQUIRED";
+    throw err;
+  }
+}
 
 export const workoutsService = {
   async listWorkoutsForUser(
@@ -132,6 +164,68 @@ export const workoutsService = {
       (err as any).statusCode = 404;
       throw err;
     }
+
+    return workoutsRepository.findExercisesOrdered(workoutId);
+  },
+
+  // --- Fase 85: Aluno Premium edita o próprio treino (origin: SELF) ---
+  // Mesmas regras de `addExercise`/`moveExercise`/`deleteExercise` acima
+  // (nunca duplicadas — chamam os MESMOS métodos do repository), só trocando
+  // a checagem de posse (SELF + alunoId, não personalId) e acrescentando o
+  // gate de Aluno Premium (a própria feature paga).
+
+  async addSelfExercise(
+    workoutId: string,
+    alunoId: string,
+    exerciseId: string,
+    sets: number,
+    repsRange: string,
+    restSeconds: number,
+    order: number,
+    notes?: string | null
+  ) {
+    const workout = await workoutsRepository.findById(workoutId);
+    assertOwnSelfWorkout(workout, alunoId);
+    await assertAlunoPremiumAccess(alunoId);
+
+    const exercise = await exercisesRepository.findById(exerciseId);
+    if (!exercise) throw httpError("Exercício não encontrado.", 404);
+    if (notes && notes.length > MAX_NOTES_LENGTH) {
+      throw httpError(`Observações devem ter no máximo ${MAX_NOTES_LENGTH} caracteres.`, 400);
+    }
+
+    return workoutsRepository.addExercise(
+      workoutId,
+      exerciseId,
+      sets,
+      repsRange,
+      restSeconds,
+      order,
+      notes?.trim() || null
+    );
+  },
+
+  async moveSelfExercise(workoutId: string, alunoId: string, workoutExerciseId: string, direction: "up" | "down") {
+    const workout = await workoutsRepository.findById(workoutId);
+    assertOwnSelfWorkout(workout, alunoId);
+    await assertAlunoPremiumAccess(alunoId);
+
+    const result = await workoutsRepository.moveExercise(workoutId, workoutExerciseId, direction);
+    if (result === "not_found") throw httpError("Exercício não encontrado neste treino.", 404);
+    if (result === "first" || result === "last") {
+      throw httpError(result === "first" ? "Já é o primeiro exercício." : "Já é o último exercício.", 400);
+    }
+
+    return workoutsRepository.findExercisesOrdered(workoutId);
+  },
+
+  async deleteSelfExercise(workoutId: string, alunoId: string, workoutExerciseId: string) {
+    const workout = await workoutsRepository.findById(workoutId);
+    assertOwnSelfWorkout(workout, alunoId);
+    await assertAlunoPremiumAccess(alunoId);
+
+    const result = await workoutsRepository.deleteExercise(workoutId, workoutExerciseId);
+    if (result === "not_found") throw httpError("Exercício não encontrado neste treino.", 404);
 
     return workoutsRepository.findExercisesOrdered(workoutId);
   },
