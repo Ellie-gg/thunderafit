@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { AvatarUpload } from "@/components/avatar-upload";
 import { CityStateInput } from "@/components/city-state-input";
 import { ChangePasswordCard } from "@/components/change-password-card";
+import { DeleteAccountCard } from "@/components/delete-account-card";
 
 /**
  * Fase 30: tela mínima de perfil do aluno — só a foto por enquanto (o
@@ -112,6 +113,8 @@ function PerfilContent() {
             </>
           )}
         </Card>
+
+        <DeleteAccountCard />
       </main>
     </>
   );

@@ -14,6 +14,9 @@ export interface User {
   // i18n: escolha explícita de idioma (tela de Configurações) — null quando o
   // usuário nunca escolheu (o frontend detecta automaticamente nesse caso).
   locale: "PT" | "EN" | "ES" | null;
+  // Fase 81: null enquanto o e-mail não foi confirmado (link de verificação
+  // ou, pra contas Google, já nasce preenchido no momento da criação).
+  emailVerifiedAt: string | null;
   createdAt: string;
   updatedAt: string;
 }

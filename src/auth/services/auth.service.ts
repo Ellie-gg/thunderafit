@@ -1,13 +1,57 @@
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
+import crypto from "crypto";
 import { OAuth2Client } from "google-auth-library";
-import { Role, Locale } from "@prisma/client";
+import { Role, Locale, User } from "@prisma/client";
 import { authRepository } from "../repository/auth.repository";
 import { relationsService } from "../../fitness/services/relations.service";
+import { deleteUserCascade } from "../../lib/user-deletion";
+import { sendMail } from "../../lib/mailer";
 
 const BCRYPT_SALT_ROUNDS = 12;
 const ACCESS_TOKEN_EXPIRY = "15m";
 const REFRESH_TOKEN_EXPIRY = "7d";
+
+// Fase 81 — confirmação de e-mail + "esqueci minha senha". Token de 256 bits
+// (bem acima dos 128 bits mínimos recomendados pelo OWASP Forgot Password
+// Cheat Sheet), nunca guardado em texto puro — só o hash sha256 (rápido de
+// propósito: ao contrário de senha, o token já nasce com entropia alta, não
+// precisa do custo computacional do bcrypt pra se proteger de força bruta).
+const EMAIL_VERIFICATION_TOKEN_BYTES = 32;
+const EMAIL_VERIFICATION_EXPIRY_MS = 24 * 60 * 60 * 1000; // 24h
+const PASSWORD_RESET_TOKEN_BYTES = 32;
+const PASSWORD_RESET_EXPIRY_MS = 60 * 60 * 1000; // 1h — janela curta, recomendação OWASP (15-60min)
+
+function generateRawToken(bytes: number): string {
+  return crypto.randomBytes(bytes).toString("base64url");
+}
+
+function hashToken(token: string): string {
+  return crypto.createHash("sha256").update(token).digest("hex");
+}
+
+const MIN_PASSWORD_LENGTH = 8;
+
+/**
+ * Fase 81: além de `passwordHash`/`refreshTokenHash` (já removidos antes
+ * desta fase), os 4 campos novos de token (verificação de e-mail + reset de
+ * senha) também nunca podem vazar pro cliente — mesmo hasheados, são
+ * segredos de posse (quem tiver o hash + souber o algoritmo poderia, em
+ * teoria, testar candidatos offline). Um helper único evita repetir (e
+ * esquecer um campo) nos ~8 lugares que devolvem o usuário.
+ */
+function toSafeUser(user: User) {
+  const {
+    passwordHash: _ph,
+    refreshTokenHash: _rth,
+    emailVerificationTokenHash: _evth,
+    emailVerificationTokenExpiresAt: _evte,
+    passwordResetTokenHash: _prth,
+    passwordResetTokenExpiresAt: _prte,
+    ...safeUser
+  } = user;
+  return safeUser;
+}
 
 function getEnv(key: string): string {
   const value = process.env[key];
@@ -80,9 +124,199 @@ export async function register(input: RegisterInput) {
     name: input.name,
   });
 
+  // Fase 81: dispara o e-mail de confirmação — best-effort, nunca derruba o
+  // cadastro se o envio falhar (mesmo espírito do Fale Conosco: a conta já
+  // foi criada de verdade, o resto é best-effort por cima).
+  try {
+    await sendVerificationEmail(user.id, user.email);
+  } catch (err) {
+    console.error("Falha ao enviar e-mail de verificação:", err);
+  }
+
   // Nunca retornar passwordHash nem refreshTokenHash
-  const { passwordHash: _ph, refreshTokenHash: _rth, ...safeUser } = user;
+  const safeUser = toSafeUser(user);
   return safeUser;
+}
+
+/**
+ * Fase 81 — gera um novo token de verificação (invalida qualquer link
+ * anterior ainda não usado, mesmo padrão de "1 token ativo por vez" do
+ * refreshTokenHash) e manda o e-mail. Reaproveitada tanto no cadastro
+ * quanto no botão "reenviar e-mail de verificação".
+ */
+export async function sendVerificationEmail(userId: string, email: string) {
+  const rawToken = generateRawToken(EMAIL_VERIFICATION_TOKEN_BYTES);
+  const expiresAt = new Date(Date.now() + EMAIL_VERIFICATION_EXPIRY_MS);
+  await authRepository.setEmailVerificationToken(userId, hashToken(rawToken), expiresAt);
+
+  const appUrl = getEnv("ALLOWED_ORIGIN");
+  const link = `${appUrl}/verificar-email?uid=${userId}&token=${rawToken}`;
+  await sendMail({
+    to: email,
+    subject: "Confirme seu e-mail — ThunderaFit",
+    text: `Confirme seu e-mail clicando no link abaixo (válido por 24 horas):\n\n${link}\n\nSe você não criou uma conta no ThunderaFit, ignore este e-mail.`,
+  });
+}
+
+export async function resendVerificationEmail(userId: string) {
+  const user = await authRepository.findById(userId);
+  if (!user) {
+    const err = new Error("Usuário não encontrado.");
+    (err as Error & { statusCode: number }).statusCode = 404;
+    throw err;
+  }
+  if (user.emailVerifiedAt) {
+    const err = new Error("Este e-mail já foi confirmado.");
+    (err as Error & { statusCode: number }).statusCode = 400;
+    throw err;
+  }
+  await sendVerificationEmail(user.id, user.email);
+}
+
+/**
+ * Fase 81 — confirma o e-mail a partir do link. Idempotente: clicar de novo
+ * num link já usado (ou numa conta já verificada por outro meio) não é
+ * erro, só não faz nada de novo.
+ */
+export async function verifyEmail(userId: string, token: string) {
+  const user = await authRepository.findById(userId);
+  if (!user) {
+    const err = new Error("Link de verificação inválido.");
+    (err as Error & { statusCode: number }).statusCode = 400;
+    throw err;
+  }
+  if (user.emailVerifiedAt) {
+    const safeUser = toSafeUser(user);
+    return safeUser;
+  }
+  if (!user.emailVerificationTokenHash || !user.emailVerificationTokenExpiresAt) {
+    const err = new Error("Link de verificação inválido ou já usado.");
+    (err as Error & { statusCode: number }).statusCode = 400;
+    throw err;
+  }
+  if (user.emailVerificationTokenExpiresAt.getTime() < Date.now()) {
+    const err = new Error("Link de verificação expirado. Peça um novo.");
+    (err as Error & { statusCode: number }).statusCode = 400;
+    throw err;
+  }
+  if (hashToken(token) !== user.emailVerificationTokenHash) {
+    const err = new Error("Link de verificação inválido.");
+    (err as Error & { statusCode: number }).statusCode = 400;
+    throw err;
+  }
+
+  const updated = await authRepository.markEmailVerified(userId);
+  const safeUser = toSafeUser(updated);
+  return safeUser;
+}
+
+/**
+ * Fase 81 — "esqueci minha senha". SEMPRE resolve sem lançar erro,
+ * independente de o e-mail existir ou não (defesa OWASP contra
+ * enumeração de contas — a resposta do controller é idêntica nos dois
+ * casos, então não há nada aqui pra vazar).
+ */
+export async function requestPasswordReset(email: string) {
+  const user = await authRepository.findByEmail(email);
+  if (!user) return;
+
+  const rawToken = generateRawToken(PASSWORD_RESET_TOKEN_BYTES);
+  const expiresAt = new Date(Date.now() + PASSWORD_RESET_EXPIRY_MS);
+  await authRepository.setPasswordResetToken(user.id, hashToken(rawToken), expiresAt);
+
+  const appUrl = getEnv("ALLOWED_ORIGIN");
+  const link = `${appUrl}/redefinir-senha?uid=${user.id}&token=${rawToken}`;
+  try {
+    await sendMail({
+      to: user.email,
+      subject: "Redefinir sua senha — ThunderaFit",
+      text: `Alguém (esperamos que você) pediu pra redefinir a senha da sua conta ThunderaFit. Clique no link abaixo (válido por 1 hora):\n\n${link}\n\nSe não foi você, ignore este e-mail — sua senha continua a mesma.`,
+    });
+  } catch (err) {
+    console.error("Falha ao enviar e-mail de redefinição de senha:", err);
+  }
+}
+
+/**
+ * Fase 81 — confirma o link de "esqueci minha senha" e troca a senha.
+ * Best practice OWASP: invalida TODAS as sessões existentes depois de um
+ * reset (limpa `refreshTokenHash`) — se alguém tinha acesso via sessão
+ * roubada, é derrubado assim que a senha muda.
+ */
+export async function resetPassword(userId: string, token: string, newPassword: string) {
+  if (!newPassword || newPassword.length < MIN_PASSWORD_LENGTH) {
+    const err = new Error(`A nova senha deve ter pelo menos ${MIN_PASSWORD_LENGTH} caracteres.`);
+    (err as Error & { statusCode: number }).statusCode = 400;
+    throw err;
+  }
+
+  const user = await authRepository.findById(userId);
+  if (!user || !user.passwordResetTokenHash || !user.passwordResetTokenExpiresAt) {
+    const err = new Error("Link inválido ou expirado.");
+    (err as Error & { statusCode: number }).statusCode = 400;
+    throw err;
+  }
+  if (user.passwordResetTokenExpiresAt.getTime() < Date.now()) {
+    const err = new Error("Link expirado. Solicite um novo.");
+    (err as Error & { statusCode: number }).statusCode = 400;
+    throw err;
+  }
+  if (hashToken(token) !== user.passwordResetTokenHash) {
+    const err = new Error("Link inválido.");
+    (err as Error & { statusCode: number }).statusCode = 400;
+    throw err;
+  }
+
+  const newHash = await bcrypt.hash(newPassword, BCRYPT_SALT_ROUNDS);
+  await authRepository.updatePasswordHash(userId, newHash);
+  await authRepository.clearPasswordResetToken(userId);
+  await authRepository.updateRefreshTokenHash(userId, null);
+}
+
+/**
+ * Fase 81 — "Excluir minha conta". Conta tradicional precisa confirmar com
+ * a senha atual (evita que uma sessão esquecida aberta num computador
+ * compartilhado apague a conta com um clique); conta só-Google não tem
+ * senha pra pedir — a confirmação forte fica a cargo do frontend (diálogo
+ * exigindo digitar algo, mesmo padrão do botão de remoção do admin).
+ * Mesmo guard de "último ADMIN" do admin.service — a pessoa consegue votar
+ * a se auto-remover mesmo sendo o único ADMIN, o que travaria o /nimbus
+ * inteiro sem ninguém pra reverter.
+ */
+export async function deleteMyAccount(userId: string, password: string | null) {
+  const user = await authRepository.findById(userId);
+  if (!user) {
+    const err = new Error("Usuário não encontrado.");
+    (err as Error & { statusCode: number }).statusCode = 404;
+    throw err;
+  }
+
+  if (user.passwordHash) {
+    if (!password) {
+      const err = new Error("Senha é obrigatória para confirmar a remoção da conta.");
+      (err as Error & { statusCode: number }).statusCode = 400;
+      throw err;
+    }
+    const matches = await bcrypt.compare(password, user.passwordHash);
+    if (!matches) {
+      const err = new Error("Senha incorreta.");
+      (err as Error & { statusCode: number }).statusCode = 401;
+      throw err;
+    }
+  }
+
+  if (user.role === "ADMIN") {
+    const adminCount = await authRepository.countAdmins();
+    if (adminCount <= 1) {
+      const err = new Error(
+        "Você é o último administrador do sistema — não é possível remover esta conta."
+      );
+      (err as Error & { statusCode: number }).statusCode = 400;
+      throw err;
+    }
+  }
+
+  await deleteUserCascade(userId);
 }
 
 /**
@@ -132,7 +366,7 @@ export async function login(input: LoginInput, ipAddress: string | null = null) 
     await relationsService.checkAndFireDueReminders(user.id);
   }
 
-  const { passwordHash: _ph, refreshTokenHash: _rth, ...safeUser } = user;
+  const safeUser = toSafeUser(user);
   return { accessToken, refreshToken, user: safeUser };
 }
 
@@ -198,6 +432,10 @@ export async function loginOrRegisterWithGoogle(idToken: string, role?: Role) {
       name: name?.trim() || null,
       googleId,
     });
+    // Fase 81: o Google já verificou `email_verified` antes de emitir o
+    // idToken (checado acima) — não faz sentido pedir pra essa conta
+    // confirmar de novo um e-mail que o próprio provedor já garantiu.
+    user = await authRepository.markEmailVerifiedAt(user.id, new Date());
   } else if (!user.googleId) {
     user = await authRepository.linkGoogleId(user.id, googleId);
   }
@@ -213,7 +451,7 @@ export async function loginOrRegisterWithGoogle(idToken: string, role?: Role) {
     await relationsService.checkAndFireDueReminders(user.id);
   }
 
-  const { passwordHash: _ph, refreshTokenHash: _rth, ...safeUser } = user;
+  const safeUser = toSafeUser(user);
   return { needsRole: false as const, accessToken, refreshToken, user: safeUser };
 }
 
@@ -322,11 +560,9 @@ export async function updateAvatar(userId: string, avatarDataUrl: string | null)
   }
 
   const user = await authRepository.updateAvatar(userId, avatarDataUrl);
-  const { passwordHash: _ph, refreshTokenHash: _rth, ...safeUser } = user;
+  const safeUser = toSafeUser(user);
   return safeUser;
 }
-
-const MIN_PASSWORD_LENGTH = 8;
 
 /**
  * Fase 80 — botão "Trocar senha" no perfil. Dois casos:
@@ -373,7 +609,7 @@ export async function changePassword(
 
   const newHash = await bcrypt.hash(newPassword, BCRYPT_SALT_ROUNDS);
   const updated = await authRepository.updatePasswordHash(userId, newHash);
-  const { passwordHash: _ph, refreshTokenHash: _rth, ...safeUser } = updated;
+  const safeUser = toSafeUser(updated);
   return safeUser;
 }
 
@@ -392,7 +628,7 @@ export async function updateLocale(userId: string, locale: Locale | null) {
     throw err;
   }
   const user = await authRepository.updateLocale(userId, locale);
-  const { passwordHash: _ph, refreshTokenHash: _rth, ...safeUser } = user;
+  const safeUser = toSafeUser(user);
   return safeUser;
 }
 

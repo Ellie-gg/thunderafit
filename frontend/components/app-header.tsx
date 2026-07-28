@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { NotificationBell } from "@/components/notification-bell";
 import { UserAvatar } from "@/components/user-avatar";
 import { AvatarUpload } from "@/components/avatar-upload";
+import { EmailVerificationBanner } from "@/components/email-verification-banner";
 import type { Role } from "@/lib/types";
 
 const ROLE_ACCENT_VAR: Record<Role, string> = {
@@ -86,6 +87,7 @@ export function AppHeader() {
   const navLinks = user ? NAV_LINKS_BY_ROLE[user.role] : [];
 
   return (
+    <>
     <header
       className="flex items-center justify-between gap-2 border-b-2 px-4 py-4 sm:px-6"
       style={{ borderBottomColor: user ? ROLE_ACCENT_VAR[user.role] : "var(--border)" }}
@@ -212,5 +214,7 @@ export function AppHeader() {
         </Button>
       </div>
     </header>
+    <EmailVerificationBanner />
+    </>
   );
 }

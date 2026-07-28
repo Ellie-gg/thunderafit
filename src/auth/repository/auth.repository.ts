@@ -94,6 +94,53 @@ export const authRepository = {
     });
   },
 
+  // --- Fase 81: confirmação de e-mail ---
+
+  async setEmailVerificationToken(userId: string, tokenHash: string, expiresAt: Date) {
+    return prisma.user.update({
+      where: { id: userId },
+      data: { emailVerificationTokenHash: tokenHash, emailVerificationTokenExpiresAt: expiresAt },
+    });
+  },
+
+  /** Marca como verificado E limpa o token (não fica reutilizável depois de usado). */
+  async markEmailVerified(userId: string) {
+    return prisma.user.update({
+      where: { id: userId },
+      data: {
+        emailVerifiedAt: new Date(),
+        emailVerificationTokenHash: null,
+        emailVerificationTokenExpiresAt: null,
+      },
+    });
+  },
+
+  /** Fase 77: conta Google já nasce com o e-mail verificado (o próprio Google já confirmou). */
+  async markEmailVerifiedAt(userId: string, date: Date) {
+    return prisma.user.update({ where: { id: userId }, data: { emailVerifiedAt: date } });
+  },
+
+  // --- Fase 81: "esqueci minha senha" ---
+
+  async setPasswordResetToken(userId: string, tokenHash: string, expiresAt: Date) {
+    return prisma.user.update({
+      where: { id: userId },
+      data: { passwordResetTokenHash: tokenHash, passwordResetTokenExpiresAt: expiresAt },
+    });
+  },
+
+  async clearPasswordResetToken(userId: string) {
+    return prisma.user.update({
+      where: { id: userId },
+      data: { passwordResetTokenHash: null, passwordResetTokenExpiresAt: null },
+    });
+  },
+
+  /** Fase 81: guarda contra auto-remoção do último ADMIN (mesmo padrão do admin domain). */
+  async countAdmins() {
+    return prisma.user.count({ where: { role: "ADMIN" } });
+  },
+
   /**
    * Registra um login bem-sucedido: atualiza `lastLoginAt` (consulta rápida
    * para a listagem de usuários do admin) e grava uma linha em `LoginLog`
