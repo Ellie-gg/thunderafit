@@ -152,3 +152,99 @@ describe("Fase 32 — PUT /api/admin/exercises/:id/media", () => {
     expect(res.status).toBe(400);
   });
 });
+
+describe("Fase 84 — youtubeSupplementUrl (link do YouTube por cima do vídeo/GIF próprio)", () => {
+  let supplementExerciseId: string;
+
+  beforeAll(async () => {
+    const exercise = await prisma.exercise.create({
+      data: {
+        name: "Exercício Teste Suplemento YouTube Fase 84",
+        muscleGroup: "Costas",
+        equipment: "Máquina",
+        description: "Exercício criado só para testar o link suplementar do YouTube.",
+      },
+    });
+    supplementExerciseId = exercise.id;
+  });
+
+  afterAll(async () => {
+    await prisma.exercise.deleteMany({ where: { id: supplementExerciseId } });
+  });
+
+  it("trocar de YOUTUBE pra VIDEO sem mandar o campo reaproveita o mediaUrl anterior como suplemento", async () => {
+    await supertest(server.server)
+      .put(`/api/admin/exercises/${supplementExerciseId}/media`)
+      .set("Authorization", `Bearer ${adminToken}`)
+      .send({ mediaType: "YOUTUBE", youtubeUrl: "https://www.youtube.com/watch?v=aaaaaaaaaaa" });
+
+    const res = await supertest(server.server)
+      .put(`/api/admin/exercises/${supplementExerciseId}/media`)
+      .set("Authorization", `Bearer ${adminToken}`)
+      .send({ mediaType: "VIDEO", mediaDataUrl: `data:video/mp4;base64,${TINY_BASE64}` });
+
+    expect(res.status).toBe(200);
+    expect(res.body.exercise.mediaType).toBe("VIDEO");
+    expect(res.body.exercise.youtubeSupplementUrl).toBe("https://www.youtube.com/watch?v=aaaaaaaaaaa");
+  });
+
+  it("atualiza só o link suplementar (sem mandar arquivo novo), mantendo o mediaUrl do vídeo", async () => {
+    const before = await prisma.exercise.findUnique({ where: { id: supplementExerciseId } });
+
+    const res = await supertest(server.server)
+      .put(`/api/admin/exercises/${supplementExerciseId}/media`)
+      .set("Authorization", `Bearer ${adminToken}`)
+      .send({ mediaType: "VIDEO", youtubeSupplementUrl: "https://www.youtube.com/watch?v=bbbbbbbbbbb" });
+
+    expect(res.status).toBe(200);
+    expect(res.body.exercise.mediaUrl).toBe(before?.mediaUrl);
+    expect(res.body.exercise.youtubeSupplementUrl).toBe("https://www.youtube.com/watch?v=bbbbbbbbbbb");
+  });
+
+  it("string vazia limpa o link suplementar de propósito", async () => {
+    const res = await supertest(server.server)
+      .put(`/api/admin/exercises/${supplementExerciseId}/media`)
+      .set("Authorization", `Bearer ${adminToken}`)
+      .send({ mediaType: "VIDEO", youtubeSupplementUrl: "" });
+
+    expect(res.status).toBe(200);
+    expect(res.body.exercise.youtubeSupplementUrl).toBeNull();
+  });
+
+  it("link suplementar inválido recebe 400", async () => {
+    const res = await supertest(server.server)
+      .put(`/api/admin/exercises/${supplementExerciseId}/media`)
+      .set("Authorization", `Bearer ${adminToken}`)
+      .send({ mediaType: "VIDEO", youtubeSupplementUrl: "https://exemplo.com/nao-e-youtube" });
+
+    expect(res.status).toBe(400);
+  });
+
+  it("trocar pra YOUTUBE sempre limpa o suplemento (não faz sentido nesse caso)", async () => {
+    const res = await supertest(server.server)
+      .put(`/api/admin/exercises/${supplementExerciseId}/media`)
+      .set("Authorization", `Bearer ${adminToken}`)
+      .send({ mediaType: "YOUTUBE", youtubeUrl: "https://www.youtube.com/watch?v=ccccccccccc" });
+
+    expect(res.status).toBe(200);
+    expect(res.body.exercise.youtubeSupplementUrl).toBeNull();
+  });
+
+  it("virar VIDEO pela 1ª vez sem mandar nenhum arquivo recebe 400", async () => {
+    const fresh = await prisma.exercise.create({
+      data: {
+        name: "Exercício Teste Suplemento Sem Arquivo Fase 84",
+        muscleGroup: "Ombro",
+        equipment: "Halteres",
+        description: "Exercício criado só para testar a exigência de arquivo na 1ª troca pra mídia própria.",
+      },
+    });
+    const res = await supertest(server.server)
+      .put(`/api/admin/exercises/${fresh.id}/media`)
+      .set("Authorization", `Bearer ${adminToken}`)
+      .send({ mediaType: "VIDEO", youtubeSupplementUrl: "https://www.youtube.com/watch?v=ddddddddddd" });
+
+    expect(res.status).toBe(400);
+    await prisma.exercise.deleteMany({ where: { id: fresh.id } });
+  });
+});

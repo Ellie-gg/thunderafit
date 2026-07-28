@@ -30,6 +30,7 @@ const baseWorkoutExercise: WorkoutExercise = {
     equipment: "Barra",
     mediaUrl: null,
     mediaType: "YOUTUBE",
+    youtubeSupplementUrl: null,
     description: "Deite-se no banco...",
     difficultyLevel: "INTERMEDIARIO",
     isFeatured: false,
@@ -225,5 +226,51 @@ describe("ExerciseExecutionCard — mídia do exercício (Fase 32)", () => {
     };
     renderCard(withSearchUrl);
     expect(screen.getByText("▶ Ver vídeo de demonstração no YouTube")).toBeInTheDocument();
+  });
+});
+
+describe("ExerciseExecutionCard — link suplementar do YouTube (Fase 84)", () => {
+  it("mostra o botão de link suplementar quando mediaType é VIDEO e youtubeSupplementUrl existe", () => {
+    const withSupplement: WorkoutExercise = {
+      ...baseWorkoutExercise,
+      exercise: {
+        ...baseWorkoutExercise.exercise!,
+        mediaType: "VIDEO",
+        mediaUrl: "https://storage.googleapis.com/bucket/exercises/supino.mp4",
+        youtubeSupplementUrl: "https://www.youtube.com/watch?v=aaaaaaaaaaa",
+      },
+    };
+    renderCard(withSupplement);
+    const link = screen.getByRole("link", { name: "Ver execução completa de Supino Reto no YouTube" });
+    expect(link).toHaveAttribute("href", "https://www.youtube.com/watch?v=aaaaaaaaaaa");
+    expect(link).toHaveAttribute("target", "_blank");
+  });
+
+  it("não mostra o botão quando mediaType é VIDEO mas não há youtubeSupplementUrl", () => {
+    const withoutSupplement: WorkoutExercise = {
+      ...baseWorkoutExercise,
+      exercise: {
+        ...baseWorkoutExercise.exercise!,
+        mediaType: "VIDEO",
+        mediaUrl: "https://storage.googleapis.com/bucket/exercises/supino.mp4",
+        youtubeSupplementUrl: null,
+      },
+    };
+    renderCard(withoutSupplement);
+    expect(screen.queryByRole("link")).not.toBeInTheDocument();
+  });
+
+  it("não mostra o botão quando mediaType é YOUTUBE, mesmo que youtubeSupplementUrl venha preenchido por engano", () => {
+    const youtubeWithStaleSupplement: WorkoutExercise = {
+      ...baseWorkoutExercise,
+      exercise: {
+        ...baseWorkoutExercise.exercise!,
+        mediaType: "YOUTUBE",
+        mediaUrl: "https://www.youtube.com/watch?v=bbbbbbbbbbb",
+        youtubeSupplementUrl: "https://www.youtube.com/watch?v=ccccccccccc",
+      },
+    };
+    renderCard(youtubeWithStaleSupplement);
+    expect(screen.queryByRole("link", { name: /execução completa/ })).not.toBeInTheDocument();
   });
 });

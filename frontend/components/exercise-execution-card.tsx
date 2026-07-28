@@ -5,13 +5,13 @@ import { useTranslations } from "next-intl";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { createSetLog } from "@/lib/api/workouts";
 import { ApiError } from "@/lib/api/client";
-import { toYoutubeEmbedUrl, toYoutubeThumbnail } from "@/lib/youtube";
 import { splitSetLogsBySessionBoundary } from "@/lib/utils";
 import type { WorkoutExercise } from "@/lib/types";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { VoltageBar } from "@/components/voltage-bar";
+import { ExerciseMedia } from "@/components/exercise-media";
 
 export function ExerciseExecutionCard({
   workoutId,
@@ -39,7 +39,6 @@ export function ExerciseExecutionCard({
   const [repsDone, setRepsDone] = useState("");
   const [weightKg, setWeightKg] = useState("");
   const weightInputRef = useRef<HTMLInputElement>(null);
-  const [playing, setPlaying] = useState(false);
   // Fase 33.1: marca manual do aluno, independente de isComplete — é o aluno
   // quem decide que terminou o exercício, mesmo sem ter registrado todas as
   // séries. Só um assistente de navegação (esmaece + avisa o pai pra rolar
@@ -70,11 +69,6 @@ export function ExerciseExecutionCard({
       queryClient.invalidateQueries({ queryKey: ["workout", workoutId] });
     },
   });
-
-  const mediaUrl = workoutExercise.exercise?.mediaUrl ?? null;
-  const mediaType = workoutExercise.exercise?.mediaType ?? "YOUTUBE";
-  const embedUrl = mediaType === "YOUTUBE" && mediaUrl ? toYoutubeEmbedUrl(mediaUrl) : null;
-  const thumbnailUrl = mediaType === "YOUTUBE" && mediaUrl ? toYoutubeThumbnail(mediaUrl) : null;
 
   return (
     <Card
@@ -110,83 +104,10 @@ export function ExerciseExecutionCard({
           iframe ao clicar. Quando a mídia não é um vídeo embedável (ex: URLs
           de BUSCA do YouTube dos exercícios da Fase 15), cai num link.
           Fase 32: VIDEO/GIF são arquivos nativos do bucket — sem necessidade
-          de thumbnail-com-play, tocam/exibem direto. */}
-      {mediaType === "VIDEO" && mediaUrl ? (
-        <div className="w-full max-w-sm overflow-hidden rounded-lg border border-border">
-          {/* Replica a UX de GIF (autoplay em loop, sem som) num container
-              de aspect-ratio fixo, não fullscreen — decisão da Fase 32:
-              GIF de verdade infla um clipe H.264 de ~900KB pra 5-12MB. */}
-          <video
-            src={mediaUrl}
-            autoPlay
-            loop
-            muted
-            playsInline
-            className="aspect-video w-full object-cover"
-          />
-        </div>
-      ) : mediaType === "GIF" && mediaUrl ? (
-        <div className="w-full max-w-sm overflow-hidden rounded-lg border border-border">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={mediaUrl}
-            alt={t("demoAlt", { name: workoutExercise.exercise?.name ?? t("genericExercise") })}
-            loading="lazy"
-            className="w-full"
-          />
-        </div>
-      ) : embedUrl ? (
-        <div className="w-full max-w-sm overflow-hidden rounded-lg border border-border">
-          <div className="relative aspect-video">
-            {playing ? (
-              <iframe
-                src={`${embedUrl}?autoplay=1`}
-                title={workoutExercise.exercise?.name}
-                className="absolute inset-0 h-full w-full"
-                allow="autoplay; fullscreen"
-                allowFullScreen
-                loading="lazy"
-              />
-            ) : (
-              <button
-                type="button"
-                onClick={() => setPlaying(true)}
-                aria-label={t("playVideoAriaLabel", {
-                  name: workoutExercise.exercise?.name ?? t("genericExercise"),
-                })}
-                className="group absolute inset-0 h-full w-full"
-              >
-                {thumbnailUrl && (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={thumbnailUrl}
-                    alt=""
-                    loading="lazy"
-                    decoding="async"
-                    className="h-full w-full object-cover"
-                  />
-                )}
-                <span className="absolute inset-0 flex items-center justify-center bg-black/30 transition-colors group-hover:bg-black/40">
-                  <span className="flex h-12 w-12 items-center justify-center rounded-full bg-accent text-xl text-ink-950">
-                    ▶
-                  </span>
-                </span>
-              </button>
-            )}
-          </div>
-        </div>
-      ) : (
-        mediaUrl && (
-          <a
-            href={mediaUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-sm font-semibold text-accent-secondary hover:underline"
-          >
-            {t("viewDemoOnYoutube")}
-          </a>
-        )
-      )}
+          de thumbnail-com-play, tocam/exibem direto. Fase 84: extraído pra
+          `ExerciseMedia` (compartilhado com `ExercisePreviewCard`), que
+          também cuida do botãozinho de link suplementar do YouTube. */}
+      <ExerciseMedia exercise={workoutExercise.exercise} />
 
       <p className="text-sm text-muted">{workoutExercise.exercise?.description}</p>
 

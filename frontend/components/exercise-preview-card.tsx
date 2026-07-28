@@ -1,10 +1,9 @@
 "use client";
 
-import { useState } from "react";
 import { useTranslations } from "next-intl";
-import { toYoutubeEmbedUrl, toYoutubeThumbnail } from "@/lib/youtube";
 import type { WorkoutExercise } from "@/lib/types";
 import { Card } from "@/components/ui/card";
+import { ExerciseMedia } from "@/components/exercise-media";
 
 /**
  * Fase 65 — "Ver como o aluno vê": o Personal só tinha a lista de edição
@@ -18,83 +17,12 @@ import { Card } from "@/components/ui/card";
  */
 export function ExercisePreviewCard({ workoutExercise }: { workoutExercise: WorkoutExercise }) {
   const t = useTranslations("exerciseExecutionCard");
-  const [playing, setPlaying] = useState(false);
-
-  const mediaUrl = workoutExercise.exercise?.mediaUrl ?? null;
-  const mediaType = workoutExercise.exercise?.mediaType ?? "YOUTUBE";
-  const embedUrl = mediaType === "YOUTUBE" && mediaUrl ? toYoutubeEmbedUrl(mediaUrl) : null;
-  const thumbnailUrl = mediaType === "YOUTUBE" && mediaUrl ? toYoutubeThumbnail(mediaUrl) : null;
 
   return (
     <Card className="flex flex-col gap-4">
       <h3 className="font-display text-lg font-bold">{workoutExercise.exercise?.name}</h3>
 
-      {mediaType === "VIDEO" && mediaUrl ? (
-        <div className="w-full max-w-sm overflow-hidden rounded-lg border border-border">
-          <video src={mediaUrl} autoPlay loop muted playsInline className="aspect-video w-full object-cover" />
-        </div>
-      ) : mediaType === "GIF" && mediaUrl ? (
-        <div className="w-full max-w-sm overflow-hidden rounded-lg border border-border">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={mediaUrl}
-            alt={t("demoAlt", { name: workoutExercise.exercise?.name ?? t("genericExercise") })}
-            loading="lazy"
-            className="w-full"
-          />
-        </div>
-      ) : embedUrl ? (
-        <div className="w-full max-w-sm overflow-hidden rounded-lg border border-border">
-          <div className="relative aspect-video">
-            {playing ? (
-              <iframe
-                src={`${embedUrl}?autoplay=1`}
-                title={workoutExercise.exercise?.name}
-                className="absolute inset-0 h-full w-full"
-                allow="autoplay; fullscreen"
-                allowFullScreen
-                loading="lazy"
-              />
-            ) : (
-              <button
-                type="button"
-                onClick={() => setPlaying(true)}
-                aria-label={t("playVideoAriaLabel", {
-                  name: workoutExercise.exercise?.name ?? t("genericExercise"),
-                })}
-                className="group absolute inset-0 h-full w-full"
-              >
-                {thumbnailUrl && (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={thumbnailUrl}
-                    alt=""
-                    loading="lazy"
-                    decoding="async"
-                    className="h-full w-full object-cover"
-                  />
-                )}
-                <span className="absolute inset-0 flex items-center justify-center bg-black/30 transition-colors group-hover:bg-black/40">
-                  <span className="flex h-12 w-12 items-center justify-center rounded-full bg-accent text-xl text-ink-950">
-                    ▶
-                  </span>
-                </span>
-              </button>
-            )}
-          </div>
-        </div>
-      ) : (
-        mediaUrl && (
-          <a
-            href={mediaUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-sm font-semibold text-accent-secondary hover:underline"
-          >
-            {t("viewDemoOnYoutube")}
-          </a>
-        )
-      )}
+      <ExerciseMedia exercise={workoutExercise.exercise} />
 
       <p className="text-sm text-muted">{workoutExercise.exercise?.description}</p>
 

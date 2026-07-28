@@ -69,6 +69,14 @@ export function AdminExerciseForm({
     exercise?.mediaType === "YOUTUBE" ? exercise?.mediaUrl ?? "" : ""
   );
   const [mediaFile, setMediaFile] = useState<File | null>(null);
+  // Fase 84 — link do YouTube com a execução completa, exibido como botão
+  // por cima do vídeo/GIF próprio. Pré-preenchido com o mediaUrl ANTERIOR
+  // quando o exercício ainda for YOUTUBE (nunca trocado pra mídia própria
+  // ainda) — assim que o admin trocar pra VIDEO/GIF, o link que já existia
+  // já vem pronto pra reaproveitar, sem precisar copiar/colar de novo.
+  const [youtubeSupplementUrl, setYoutubeSupplementUrl] = useState(
+    exercise?.youtubeSupplementUrl ?? (exercise?.mediaType === "YOUTUBE" ? exercise?.mediaUrl ?? "" : "")
+  );
   const [isFeatured, setIsFeatured] = useState(exercise?.isFeatured ?? false);
   const [similarNames, setSimilarNames] = useState<string[] | null>(null);
   const [localError, setLocalError] = useState<string | null>(null);
@@ -96,14 +104,23 @@ export function AdminExerciseForm({
 
       const savedExercise = result.exercise!;
 
+      // Fase 84: o link suplementar pode mudar mesmo sem trocar o
+      // vídeo/GIF em si (ex: admin só quer adicionar/editar o link depois).
+      const supplementChanged =
+        youtubeSupplementUrl.trim() !== (exercise?.youtubeSupplementUrl ?? "");
+
       // Só mexe em mídia se o admin de fato preencheu algo nesta sessão do
       // formulário — evita sobrescrever a mídia existente com um campo
       // vazio sem querer.
       if (mediaType === "YOUTUBE" && youtubeUrl.trim()) {
         await updateAdminExerciseMedia(savedExercise.id, { mediaType, youtubeUrl: youtubeUrl.trim() });
-      } else if ((mediaType === "VIDEO" || mediaType === "GIF") && mediaFile) {
-        const mediaDataUrl = await fileToDataUrl(mediaFile);
-        await updateAdminExerciseMedia(savedExercise.id, { mediaType, mediaDataUrl });
+      } else if ((mediaType === "VIDEO" || mediaType === "GIF") && (mediaFile || supplementChanged)) {
+        const mediaDataUrl = mediaFile ? await fileToDataUrl(mediaFile) : undefined;
+        await updateAdminExerciseMedia(savedExercise.id, {
+          mediaType,
+          mediaDataUrl,
+          youtubeSupplementUrl: youtubeSupplementUrl.trim(),
+        });
       }
 
       return result;
@@ -243,12 +260,28 @@ export function AdminExerciseForm({
             placeholder="https://www.youtube.com/watch?v=..."
           />
         ) : (
-          <input
-            type="file"
-            accept={mediaType === "VIDEO" ? "video/mp4,video/webm" : "image/gif"}
-            onChange={(e) => setMediaFile(e.target.files?.[0] ?? null)}
-            className="text-sm text-muted"
-          />
+          <>
+            <input
+              type="file"
+              accept={mediaType === "VIDEO" ? "video/mp4,video/webm" : "image/gif"}
+              onChange={(e) => setMediaFile(e.target.files?.[0] ?? null)}
+              className="text-sm text-muted"
+            />
+            {/* Fase 84 — link suplementar do YouTube, exibido como um
+                botãozinho por cima do vídeo/GIF na tela de execução. Se o
+                exercício já tinha um link do YouTube antes (mediaType
+                YOUTUBE), já vem pré-preenchido aqui — só confirma ou edita. */}
+            <div className="mt-2 flex flex-col gap-1.5">
+              <Label htmlFor="ex-youtube-supplement">{t("youtubeSupplementLabel")}</Label>
+              <Input
+                id="ex-youtube-supplement"
+                value={youtubeSupplementUrl}
+                onChange={(e) => setYoutubeSupplementUrl(e.target.value)}
+                placeholder="https://www.youtube.com/watch?v=..."
+              />
+              <p className="text-xs text-muted">{t("youtubeSupplementHint")}</p>
+            </div>
+          </>
         )}
       </div>
 

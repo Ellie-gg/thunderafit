@@ -74,7 +74,15 @@ export function deleteAdminExercise(id: string) {
 
 export function updateAdminExerciseMedia(
   id: string,
-  input: { mediaType: ExerciseMediaType; mediaDataUrl?: string; youtubeUrl?: string }
+  input: {
+    mediaType: ExerciseMediaType;
+    mediaDataUrl?: string;
+    youtubeUrl?: string;
+    // Fase 84 — só relevante quando mediaType é VIDEO/GIF. String vazia
+    // limpa de propósito; omitir o campo deixa o backend reaproveitar
+    // automaticamente o link antigo, se o exercício já tinha um.
+    youtubeSupplementUrl?: string;
+  }
 ) {
   return apiFetch<{ exercise: Exercise }>(`/api/admin/exercises/${id}/media`, {
     method: "PUT",

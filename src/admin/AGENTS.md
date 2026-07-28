@@ -74,6 +74,26 @@ into an admin-owned table.
   branch (`YOUTUBE`/`VIDEO`/`GIF`) re-validates the actual payload format
   (regex on the data URL) before accepting it, and checks the exercise exists
   before spending time/bandwidth uploading to the bucket.
+- **Fase 84 — `youtubeSupplementUrl`**: a supplementary YouTube link shown as
+  a small badge over an exercise's own VIDEO/GIF media (never shown when
+  `mediaType` is YOUTUBE — that case's `mediaUrl` already IS the YouTube
+  link). `updateExerciseMedia` supports 2 things it didn't before:
+  - **Updating VIDEO/GIF without a new file** — `mediaDataUrl` is now
+    optional when the exercise already IS that same media type (e.g. admin
+    only wants to add/edit the supplement link on an existing video). Still
+    required the FIRST time an exercise switches to VIDEO/GIF (`mediaUrl`
+    can't stay null). `adminRepository.updateExerciseMedia` takes a partial
+    `data` object now (was 2 positional args) — `undefined` fields are
+    left untouched by Prisma, `null` clears explicitly.
+  - **Auto-carrying the old YouTube link forward**: if `youtubeSupplementUrl`
+    is absent from the request body (not sent, vs. sent as `""`) AND the
+    exercise's PREVIOUS `mediaType` was YOUTUBE, the old `mediaUrl` is
+    reused as the new supplement automatically — the admin frontend also
+    pre-fills this same value into the form field the moment YOUTUBE gets
+    switched to VIDEO/GIF, so in practice this backend fallback is a safety
+    net for non-UI callers, not load-bearing for the real form. Switching
+    TO YOUTUBE always clears `youtubeSupplementUrl` (never valid in that
+    state) regardless of what the client sends.
 - SELF templates (`origin: "SELF"`) are the only workout programs a student
   can apply without a Personal relationship; the aluno only *copies*, never
   edits — enforced by other domains, not this one, but this is where they are

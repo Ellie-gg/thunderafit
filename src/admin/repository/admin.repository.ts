@@ -121,10 +121,25 @@ export const adminRepository = {
     return prisma.exercise.findUnique({ where: { id } });
   },
 
-  async updateExerciseMedia(id: string, mediaUrl: string, mediaType: "YOUTUBE" | "VIDEO" | "GIF") {
+  /**
+   * Fase 84: `mediaUrl`/`mediaType` ficam `undefined` (não `mediaUrl: ""`)
+   * quando o admin só está atualizando o `youtubeSupplementUrl` de um
+   * exercício VIDEO/GIF já existente, sem subir um arquivo novo — o Prisma
+   * ignora chaves `undefined` no `data`, então o campo simplesmente não é
+   * tocado. `youtubeSupplementUrl: null` (explícito) limpa o campo;
+   * `undefined` deixa como estava.
+   */
+  async updateExerciseMedia(
+    id: string,
+    data: {
+      mediaUrl?: string;
+      mediaType?: "YOUTUBE" | "VIDEO" | "GIF";
+      youtubeSupplementUrl?: string | null;
+    }
+  ) {
     return prisma.exercise.update({
       where: { id },
-      data: { mediaUrl, mediaType },
+      data,
     });
   },
 
