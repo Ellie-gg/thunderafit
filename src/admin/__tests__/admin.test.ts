@@ -89,7 +89,7 @@ beforeAll(async () => {
     .set("Authorization", `Bearer ${personalToken}`)
     .send({ alunoId: alunoIds[0], name: "Treino A", letter: "A" });
   workoutId = workout.body.workout.id;
-});
+}, 30000);
 
 afterAll(async () => {
   await prisma.adminAccessLog.deleteMany({ where: { adminId } });

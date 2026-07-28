@@ -91,22 +91,19 @@ resource "google_cloud_run_v2_service" "backend" {
         name  = "GOOGLE_CLIENT_ID"
         value = var.google_client_id
       }
-      # Fase 78 — "Fale Conosco" (Gmail SMTP, sem custo). CONTACT_GMAIL_USER/
-      # CONTACT_EMAIL_TO não são secretos (são só o e-mail remetente/
-      # destinatário); a App Password em si é a única parte sensível.
-      env {
-        name  = "CONTACT_GMAIL_USER"
-        value = var.contact_gmail_user
-      }
+      # Fase 78 — "Fale Conosco": destinatário das mensagens. Não é secreto.
       env {
         name  = "CONTACT_EMAIL_TO"
         value = var.contact_email_to
       }
+      # Fase 83 — Resend (troca do Gmail SMTP). O remetente
+      # (no-reply@thunderafit.com.br) é hardcoded em src/lib/mailer.ts, não
+      # precisa de env var — só a API key é sensível.
       env {
-        name = "CONTACT_GMAIL_APP_PASSWORD"
+        name = "RESEND_API_KEY"
         value_source {
           secret_key_ref {
-            secret  = google_secret_manager_secret.contact_gmail_app_password.secret_id
+            secret  = google_secret_manager_secret.resend_api_key.secret_id
             version = "latest"
           }
         }

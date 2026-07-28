@@ -2,6 +2,7 @@ import supertest from "supertest";
 import crypto from "crypto";
 import { buildApp } from "../../app";
 import prisma from "../../lib/prisma";
+import * as loginRateLimiter from "../services/login-rate-limiter";
 
 const sendMailMock = jest.fn();
 jest.mock("../../lib/mailer", () => ({
@@ -33,6 +34,8 @@ const TEST_EMAILS = [
   "email_verif_invalid_test@thunderafit.test",
   "email_verif_expired_test@thunderafit.test",
   "email_verif_resend_test@thunderafit.test",
+  "email_verif_ratelimit_resend_test@thunderafit.test",
+  "email_verif_ratelimit_verify_test@thunderafit.test",
   "email_verif_google_test@thunderafit.test",
 ];
 
@@ -45,6 +48,7 @@ beforeAll(async () => {
 
 afterEach(() => {
   sendMailMock.mockReset();
+  loginRateLimiter._resetForTests();
 });
 
 afterAll(async () => {
@@ -173,6 +177,44 @@ describe("Fase 81 — confirmação de e-mail", () => {
   it("resend-verification sem autenticação → 401", async () => {
     const res = await supertest(server.server).post("/api/auth/resend-verification");
     expect(res.status).toBe(401);
+  });
+
+  it("resend-verification é rate-limitado após tentativas repetidas", async () => {
+    sendMailMock.mockResolvedValue(true);
+    await supertest(server.server)
+      .post("/api/auth/register")
+      .send({ email: "email_verif_ratelimit_resend_test@thunderafit.test", password: pw, role: "ALUNO" });
+    const login = await supertest(server.server)
+      .post("/api/auth/login")
+      .send({ email: "email_verif_ratelimit_resend_test@thunderafit.test", password: pw });
+    const token = login.body.accessToken;
+
+    let lastRes;
+    for (let i = 0; i < 6; i++) {
+      lastRes = await supertest(server.server)
+        .post("/api/auth/resend-verification")
+        .set("Authorization", `Bearer ${token}`);
+    }
+    expect(lastRes!.status).toBe(429);
+
+    await prisma.user.deleteMany({ where: { email: "email_verif_ratelimit_resend_test@thunderafit.test" } });
+  });
+
+  it("verify-email é rate-limitado após tentativas repetidas com token errado", async () => {
+    sendMailMock.mockResolvedValue(true);
+    const reg = await supertest(server.server)
+      .post("/api/auth/register")
+      .send({ email: "email_verif_ratelimit_verify_test@thunderafit.test", password: pw, role: "ALUNO" });
+
+    let lastRes;
+    for (let i = 0; i < 6; i++) {
+      lastRes = await supertest(server.server)
+        .post("/api/auth/verify-email")
+        .send({ uid: reg.body.user.id, token: "TOKEN_ERRADO" });
+    }
+    expect(lastRes!.status).toBe(429);
+
+    await prisma.user.deleteMany({ where: { email: "email_verif_ratelimit_verify_test@thunderafit.test" } });
   });
 });
 
