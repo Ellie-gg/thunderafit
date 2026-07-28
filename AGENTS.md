@@ -27,6 +27,21 @@ Don't duplicate either here.
 frontend code, read `frontend/AGENTS.md` (already exists, short) and the relevant
 guide under `frontend/node_modules/next/dist/docs/`.
 
+## Ambiente local (Windows) — `gcloud` só existe no WSL
+
+O terminal padrão do agente (Git Bash/MSYS, `MINGW64`) **não tem `gcloud` instalado**,
+e não é o mesmo ambiente do WSL Ubuntu que o fundador usa manualmente. Rodar `gcloud`
+direto no Git Bash ou via PowerShell falha com "command not found" — não é um bug de
+PATH corrigível, o binário simplesmente não está lá.
+
+Pra rodar `gcloud` a partir de uma sessão de agente neste projeto, invoque via WSL com
+shell de login (senão o `PATH` do WSL não carrega o SDK):
+```
+wsl -d Ubuntu -- bash -lic "gcloud <comando>"
+```
+Confirmado funcional nesta máquina (Fase 87) — sem `-lic` (login+interactive), o
+`gcloud` não é encontrado mesmo dentro do WSL.
+
 ## Commands
 
 Backend (repo root):
