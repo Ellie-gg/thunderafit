@@ -32,25 +32,28 @@
   `emailSent: false`. The message is never lost even if email is
   completely broken — don't restructure this so email failure blocks or
   rolls back the DB write.
-- **Email delivery is Gmail SMTP via nodemailer** (`src/lib/mailer.ts`), not
-  a transactional email service (no SendGrid/Mailgun/Postmark/etc — zero
-  cost, zero new third-party signup). Requires `CONTACT_GMAIL_USER` +
-  `CONTACT_GMAIL_APP_PASSWORD` (a Google **App Password**, not the account's
-  real password — requires 2FA enabled on that Gmail account, generated at
-  myaccount.google.com/apppasswords). `CONTACT_EMAIL_TO` is optional
-  (defaults to `CONTACT_GMAIL_USER` itself — sends to the same account that
-  sends). **Without these env vars, `sendMail()` returns `false` without
-  throwing** — the feature degrades gracefully (message still saved,
-  `emailSent: false`) rather than breaking in environments that haven't
-  configured SMTP yet (e.g. local dev).
+- **Email delivery is Resend** (`src/lib/mailer.ts`), not Gmail SMTP anymore
+  — Fase 78 used `nodemailer` + a personal Gmail account (zero cost, zero
+  new signup); Fase 83 switched to Resend once `thunderafit.com.br` was
+  DNS-verified there (SPF/DKIM/DMARC), for a professional sender address
+  (`no-reply@thunderafit.com.br`) and better deliverability. Still free at
+  this app's volume (3,000 emails/month on Resend's free tier). Requires
+  only `RESEND_API_KEY` (no separate "app password" — one secret). Sender
+  is hardcoded (`MAIL_FROM` in `mailer.ts`), not an env var — it's tied to
+  the verified domain, not a per-environment setting. `CONTACT_EMAIL_TO` is
+  **required** (no fallback since Fase 83 — there's no more sender-email env
+  var to default to). **Without `RESEND_API_KEY` configured, `sendMail()`
+  returns `false` without throwing** — the feature degrades gracefully
+  (message still saved, `emailSent: false`) rather than breaking in
+  environments that haven't configured it yet (e.g. local dev).
 - There is **no admin UI to browse `ContactMessage` rows** — if email
   delivery is broken/unconfigured, the only way to see a message is a
   direct DB query. This was accepted as an explicit scope cut for Fase 78,
   not an oversight — add one if repeated silent email failures become a
   real problem.
-- `src/lib/mailer.ts`'s transporter is a module-level singleton created
-  lazily on first use (not at import time) — cheap to import even when SMTP
-  isn't configured, and avoids reconnecting on every call.
+- `src/lib/mailer.ts`'s Resend client is a module-level singleton created
+  lazily on first use (not at import time) — cheap to import even when
+  `RESEND_API_KEY` isn't configured.
 
 ## Current state
 

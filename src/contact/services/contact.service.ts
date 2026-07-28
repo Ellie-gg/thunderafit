@@ -42,7 +42,7 @@ export const contactService = {
       message: trimmedMessage,
     });
 
-    const to = process.env.CONTACT_EMAIL_TO || process.env.CONTACT_GMAIL_USER;
+    const to = process.env.CONTACT_EMAIL_TO;
     let emailSent = false;
     if (to) {
       try {

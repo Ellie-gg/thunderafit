@@ -252,14 +252,32 @@ export async function changePasswordHandler(
 /**
  * Fase 81 — reenvia o e-mail de confirmação. Autenticado (o banner de
  * "confirme seu e-mail" só aparece pra quem já está logado).
+ *
+ * Fase 83: ganhou rate limit (faltava — era o único dos 4 endpoints que
+ * disparam e-mail sem nenhum freio; um clique em loop no botão "reenviar"
+ * gerava um e-mail de verdade a cada chamada). Mesmo `loginRateLimiter` já
+ * usado em login/check-email/forgot-password/reset-password, reaproveitado
+ * como puro freio de chamadas (mesmo padrão do `checkEmailHandler`: registra
+ * "tentativa" a cada chamada bem-sucedida, não só em falha) — chave
+ * (IP, userId) já que este endpoint é autenticado, sem e-mail no body.
  */
 export async function resendVerificationEmailHandler(request: FastifyRequest, reply: FastifyReply) {
   const user = (request as FastifyRequest & { user?: { sub: string } }).user;
   if (!user) {
     return reply.status(401).send({ error: "Não autenticado." });
   }
+
+  const ip = request.ip;
+  const blockStatus = loginRateLimiter.isBlocked(ip, user.sub);
+  if (blockStatus.blocked) {
+    return reply.status(429).send({
+      error: `Muitas tentativas de reenvio. Tente novamente em ${blockStatus.retryAfterSeconds}s.`,
+    });
+  }
+
   try {
     await authService.resendVerificationEmail(user.sub);
+    loginRateLimiter.recordFailedAttempt(ip, user.sub);
     return reply.status(200).send({ message: "E-mail de confirmação reenviado." });
   } catch (err) {
     const error = err as Error & { statusCode?: number };
@@ -271,6 +289,11 @@ export async function resendVerificationEmailHandler(request: FastifyRequest, re
  * Fase 81 — confirma o e-mail a partir do link (`uid` + `token` na URL,
  * ambos no body do POST). Pública — quem clica no link ainda não está
  * logado nesse dispositivo necessariamente.
+ *
+ * Fase 83: rate limit por (IP, uid) — o token em si tem 256 bits de entropia
+ * (força bruta já é inviável de qualquer forma), mas o freio de chamadas
+ * evita abuso simples do endpoint (script batendo em loop), mesmo padrão
+ * dos demais endpoints públicos deste arquivo.
  */
 export async function verifyEmailHandler(
   request: FastifyRequest<{ Body: { uid?: string; token?: string } }>,
@@ -279,10 +302,21 @@ export async function verifyEmailHandler(
   if (!request.body?.uid || !request.body?.token) {
     return reply.status(400).send({ error: "uid e token são obrigatórios." });
   }
+
+  const ip = request.ip;
+  const blockStatus = loginRateLimiter.isBlocked(ip, request.body.uid);
+  if (blockStatus.blocked) {
+    return reply.status(429).send({
+      error: `Muitas tentativas. Tente novamente em ${blockStatus.retryAfterSeconds}s.`,
+    });
+  }
+
   try {
     const user = await authService.verifyEmail(request.body.uid, request.body.token);
+    loginRateLimiter.recordSuccessfulAttempt(ip, request.body.uid);
     return reply.status(200).send({ user });
   } catch (err) {
+    loginRateLimiter.recordFailedAttempt(ip, request.body.uid);
     const error = err as Error & { statusCode?: number };
     return reply.status(error.statusCode ?? 500).send({ error: error.message });
   }
