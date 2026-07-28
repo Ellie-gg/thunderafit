@@ -107,19 +107,26 @@
       "showAria": "Mostrar senha",
       "hideAria": "Ocultar senha"
     },
+    "hero": {
+      "headline": "A plataforma completa para a sua evolução na musculação.",
+      "subtitle": "Prescreva treinos em segundos ou acesse programas prontos para treinar.",
+      "availability": "Disponível na Web — apps Android e iOS em breve"
+    },
     "roles": {
       "aluno": {
         "chip": "Treinar",
-        "description": "Monte seus próprios treinos ou acompanhe o que seu Personal te passou."
+        "description": "Monte seus próprios treinos ou acompanhe o que seu Personal te passou.",
+        "cardTitle": "Quero Treinar",
+        "cardDescription": "Acessar programas e acompanhar treinos"
       },
       "personal": {
         "chip": "Personal",
-        "description": "Entre para gerenciar seus alunos, prescrever e acompanhar treinos."
+        "description": "Entre para gerenciar seus alunos, prescrever e acompanhar treinos.",
+        "cardTitle": "Sou Personal",
+        "cardDescription": "Gerenciar alunos e prescrever treinos"
       }
     },
     "emailStep": {
-      "title": "Entrar ou criar conta",
-      "subtitle": "Digite seu e-mail pra começar. A gente identifica o resto.",
       "emailLabel": "E-mail",
       "emailPlaceholder": "voce@exemplo.com",
       "submitting": "Verificando..."
