@@ -12,16 +12,25 @@ teste**.
 - **Base**: 20 alunos + pode ativar disponibilidade no diretório de profissionais.
 - **Plus**: alunos ilimitados + aparece com destaque/prioridade no diretório.
 
-Os valores em R$ abaixo são **placeholder** — ajuste livremente no Dashboard, o
-código não hardcoda preço nenhum (só os 4 Price IDs via env).
+Os valores em R$ abaixo são os definidos pelo fundador na Fase 87 — o código não
+hardcoda preço nenhum (só os 4 Price IDs via env), então ajustes futuros de preço só
+exigem criar um novo Price no Stripe e trocar a env var, sem deploy de código.
 
 ## 1. Criar os produtos/preços (modo teste)
 No Dashboard do Stripe (test mode) ou via API, criar 2 produtos ("ThunderaFit Base" e
-"ThunderaFit Plus"), cada um com 2 preços recorrentes (BRL) — 4 preços no total:
-- Base mensal: **R$ 19,90/mês** → `price_...` → `STRIPE_PRICE_ID_BASE_MONTHLY`
-- Base anual: **R$ 190,80/ano** (20% off) → `price_...` → `STRIPE_PRICE_ID_BASE_ANNUAL`
-- Plus mensal: **R$ 39,90/mês** → `price_...` → `STRIPE_PRICE_ID_PLUS_MONTHLY`
-- Plus anual: **R$ 382,80/ano** (20% off) → `price_...` → `STRIPE_PRICE_ID_PLUS_ANNUAL`
+"ThunderaFit Plus"), cada um com 2 preços recorrentes (BRL) — 4 preços no total. Fase
+87: **sem opção anual** — só mensal e trimestral (20% off em ambos os degraus):
+- Base mensal: **R$ 14,99/mês** → `price_...` → `STRIPE_PRICE_ID_BASE_MONTHLY`
+- Base trimestral: **R$ 35,98/trimestre** (20% off, equivale a R$ 11,99/mês) →
+  `price_...` → `STRIPE_PRICE_ID_BASE_QUARTERLY`
+- Plus mensal: **R$ 29,90/mês** → `price_...` → `STRIPE_PRICE_ID_PLUS_MONTHLY`
+- Plus trimestral: **R$ 71,76/trimestre** (20% off, equivale a R$ 23,92/mês) →
+  `price_...` → `STRIPE_PRICE_ID_PLUS_QUARTERLY`
+
+Aluno Premium (entitlement separado de `planoAssinatura`, ver `src/billing/stripe.ts`)
+também mudou na Fase 87: 7 dias grátis, depois **R$ 9,99/mês**, trimestral com 20% off
+(antes era R$ 9,90/mês e 30% off) — o checkout do Aluno Premium ainda não está
+conectado ao Stripe (fora de escopo desta fase).
 
 ## 2. Variáveis de ambiente (nunca commitar valores reais)
 No `.env` local e, quando ativar, no Secret Manager de produção:
@@ -29,9 +38,9 @@ No `.env` local e, quando ativar, no Secret Manager de produção:
 STRIPE_SECRET_KEY=sk_test_...
 STRIPE_WEBHOOK_SECRET=whsec_...        # do `stripe listen` ou do endpoint no Dashboard
 STRIPE_PRICE_ID_BASE_MONTHLY=price_...
-STRIPE_PRICE_ID_BASE_ANNUAL=price_...
+STRIPE_PRICE_ID_BASE_QUARTERLY=price_...
 STRIPE_PRICE_ID_PLUS_MONTHLY=price_...
-STRIPE_PRICE_ID_PLUS_ANNUAL=price_...
+STRIPE_PRICE_ID_PLUS_QUARTERLY=price_...
 ```
 
 ## 2.1 Como o webhook sabe qual DEGRAU foi comprado

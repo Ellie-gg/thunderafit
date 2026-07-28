@@ -35,7 +35,7 @@ function priceIdFor(tier: PlanTier, interval: Interval): string {
  */
 function tierForPriceId(priceId: string): PlanTier {
   const tiers: PlanTier[] = ["BASE", "PLUS"];
-  const intervals: Interval[] = ["monthly", "annual"];
+  const intervals: Interval[] = ["monthly", "quarterly"];
   for (const tier of tiers) {
     for (const interval of intervals) {
       const envVar = stripePriceEnvVar(tier, interval);

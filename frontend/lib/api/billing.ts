@@ -12,7 +12,8 @@ export function getBillingStatus() {
   return apiFetch<BillingStatus>("/api/billing/status");
 }
 
-export function createCheckoutSession(tier: PlanTier, interval: "monthly" | "annual") {
+// Fase 87: "annual" trocado por "quarterly" — sem compromisso anual.
+export function createCheckoutSession(tier: PlanTier, interval: "monthly" | "quarterly") {
   return apiFetch<{ url: string }>("/api/billing/checkout-session", {
     method: "POST",
     body: { tier, interval },
