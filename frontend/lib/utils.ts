@@ -27,6 +27,18 @@ export function firstNameOrEmailPrefix(user: Pick<User, "name" | "email"> | null
  * primeiríssima vez) — tudo logado ATÉ esse instante (inclusive) é de um
  * ciclo anterior; depois dele é desta sessão.
  */
+// Fase 39: formato Horas:Min:Segundos — sempre com a hora (mesmo "0:12:34"),
+// não só MM:SS, pra treinos que passam de 1h também ficarem corretos sem
+// mudar de formato no meio. Fase 89: extraído de post-workout-summary-card
+// pra ser reaproveitado também no cronômetro ao vivo da tela de execução.
+export function formatDuration(totalSeconds: number): string {
+  const clamped = Math.max(0, Math.round(totalSeconds));
+  const h = Math.floor(clamped / 3600);
+  const m = Math.floor((clamped % 3600) / 60);
+  const s = clamped % 60;
+  return `${h}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+}
+
 export function splitSetLogsBySessionBoundary<T extends { loggedAt: string }>(
   setLogs: T[],
   boundary: string | null
