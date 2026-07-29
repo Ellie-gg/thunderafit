@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { getOwnAnamnesis, createAnamnesis, updateAnamnesis } from "@/lib/api/anamnesis";
@@ -55,6 +56,10 @@ function AnamneseForm({ initial, exists }: { initial: Anamnesis | null; exists: 
   const t = useTranslations("anamneseAluno");
   const queryClient = useQueryClient();
   const [form, setForm] = useState<AnamnesisInput>(() => buildFormFromData(initial));
+  // Fase 91: consentimento LGPD específico pra dado de saúde (art. 11) — só
+  // exigido na PRIMEIRA vez (criação); quem já tinha anamnese salva já deu
+  // esse consentimento antes, não precisa reconfirmar a cada edição.
+  const [healthConsent, setHealthConsent] = useState(exists);
 
   const saveMutation = useMutation({
     mutationFn: () => {
@@ -142,7 +147,31 @@ function AnamneseForm({ initial, exists }: { initial: Anamnesis | null; exists: 
       )}
       {saveMutation.isSuccess && <p className="text-sm text-success">{t("saveSuccess")}</p>}
 
-      <Button type="submit" disabled={saveMutation.isPending} className="self-start">
+      {!exists && (
+        <label className="flex items-start gap-2 text-sm text-muted">
+          <input
+            type="checkbox"
+            checked={healthConsent}
+            onChange={(e) => setHealthConsent(e.target.checked)}
+            className="mt-0.5 h-4 w-4 shrink-0"
+          />
+          <span>
+            {t.rich("healthDataConsent", {
+              privacy: (chunks) => (
+                <Link href="/politica-de-privacidade" target="_blank" className="font-semibold underline">
+                  {chunks}
+                </Link>
+              ),
+            })}
+          </span>
+        </label>
+      )}
+
+      <Button
+        type="submit"
+        disabled={saveMutation.isPending || (!exists && !healthConsent)}
+        className="self-start"
+      >
         {saveMutation.isPending ? t("saving") : t("saveAnamnesis")}
       </Button>
     </form>
