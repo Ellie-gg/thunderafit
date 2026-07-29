@@ -14,10 +14,26 @@ import { Button } from "@/components/ui/button";
 
 const MAX_MESSAGE_LENGTH = 500;
 
+// Fase 94: glifo padrão do Instagram — lucide-react (já usado no resto do
+// app pra ícones, ex: notification-bell.tsx) não inclui ícones de marca
+// (removidos por questão de licenciamento em versões passadas), então o
+// glifo vem como SVG inline, sem dependência nova só por causa disso.
+function InstagramIcon({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" className={className} aria-hidden>
+      <rect x="2" y="2" width="20" height="20" rx="5" stroke="currentColor" strokeWidth="2" />
+      <circle cx="12" cy="12" r="4.5" stroke="currentColor" strokeWidth="2" />
+      <circle cx="17.2" cy="6.8" r="1.2" fill="currentColor" />
+    </svg>
+  );
+}
+
 /**
  * Fase 78 — "Fale Conosco": qualquer papel autenticado (Aluno, Personal,
  * Nutricionista) manda uma mensagem pro fundador. Sem seleção de role — o
  * backend já sabe quem está mandando (token) e grava junto com a mensagem.
+ * Fase 94: ganhou um segundo parágrafo de copy + um card de atalho pro
+ * Instagram (@thunderafit) — link direto, sem SDK nem embed.
  */
 function FaleConoscoContent() {
   const t = useTranslations("faleConosco");
@@ -44,7 +60,21 @@ function FaleConoscoContent() {
           </span>
           <h1 className="font-display text-2xl font-bold tracking-tight">{t("title")}</h1>
           <p className="text-sm text-muted">{t("subtitle")}</p>
+          <p className="text-sm text-muted">{t("subtitleSuffix")}</p>
         </div>
+
+        <Card className="flex w-full max-w-lg flex-row items-center gap-3">
+          <InstagramIcon className="h-9 w-9 shrink-0 text-accent-secondary" />
+          <div className="flex flex-1 flex-col">
+            <span className="text-sm font-semibold">{t("instagramTitle")}</span>
+            <span className="text-xs text-muted">{t("instagramHandle")}</span>
+          </div>
+          <Button asChild variant="secondary" size="sm">
+            <a href="https://www.instagram.com/thunderafit" target="_blank" rel="noopener noreferrer">
+              {t("instagramButton")}
+            </a>
+          </Button>
+        </Card>
 
         <Card className="w-full max-w-lg">
           <form
