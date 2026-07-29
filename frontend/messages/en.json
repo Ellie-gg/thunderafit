@@ -33,6 +33,18 @@
   "settings": {
     "title": "Settings",
     "subtitle": "App preferences.",
+    "subscription": {
+      "title": "Subscription",
+      "personalPlano": "You're on the {plano} plan.",
+      "personalGratuito": "You're on the Free plan (up to 3 students).",
+      "expiraEm": "Valid until {date}.",
+      "gerenciarLink": "View plans and manage subscription",
+      "alunoPremiumAtivo": "Aluno Premium active.",
+      "alunoTrialAtivo": "Aluno Premium free trial active.",
+      "alunoCanceladoAtivo": "Aluno Premium canceled — still active until the end of the paid period.",
+      "alunoSemPremium": "You don't have Aluno Premium active.",
+      "conhecerLink": "Learn about Aluno Premium"
+    },
     "language": {
       "title": "Language",
       "description": "Choose the app's language. Your choice is saved and synced across your devices.",
@@ -736,6 +748,7 @@
     "suaAssinatura": "Your subscription",
     "fazerUpgradeTitulo": "Upgrade",
     "assinaturaAtivaComLimite": "You're on the {plano} plan — {limite}.",
+    "planoExpiraEm": "Valid until {date}.",
     "limiteIlimitado": "unlimited students",
     "limiteAte20": "up to 20 linked students",
     "planoGratuito": "Free plan: up to 3 students. Upgrade to link more and appear in the trainer directory.",

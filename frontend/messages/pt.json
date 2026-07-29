@@ -33,6 +33,18 @@
   "settings": {
     "title": "Configurações",
     "subtitle": "Preferências do aplicativo.",
+    "subscription": {
+      "title": "Assinatura",
+      "personalPlano": "Você está no plano {plano}.",
+      "personalGratuito": "Você está no plano Free (até 3 alunos).",
+      "expiraEm": "Válido até {date}.",
+      "gerenciarLink": "Ver planos e gerenciar assinatura",
+      "alunoPremiumAtivo": "Aluno Premium ativo.",
+      "alunoTrialAtivo": "Teste grátis do Aluno Premium ativo.",
+      "alunoCanceladoAtivo": "Aluno Premium cancelado — ainda ativo até o fim do período pago.",
+      "alunoSemPremium": "Você não tem o Aluno Premium ativo.",
+      "conhecerLink": "Conhecer o Aluno Premium"
+    },
     "language": {
       "title": "Idioma",
       "description": "Escolha o idioma do aplicativo. Sua escolha é salva e sincronizada entre seus dispositivos.",
@@ -736,6 +748,7 @@
     "suaAssinatura": "Sua assinatura",
     "fazerUpgradeTitulo": "Fazer upgrade",
     "assinaturaAtivaComLimite": "Você está no plano {plano} — {limite}.",
+    "planoExpiraEm": "Válido até {date}.",
     "limiteIlimitado": "alunos ilimitados",
     "limiteAte20": "até 20 alunos vinculados",
     "planoGratuito": "Plano gratuito: até 3 alunos. Faça upgrade para vincular mais e aparecer no diretório de profissionais.",

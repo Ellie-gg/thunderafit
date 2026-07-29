@@ -6,6 +6,10 @@ export interface BillingStatus {
   planoAssinatura: "FREE" | PlanTier;
   limiteAlunos: number;
   hasSubscription: boolean;
+  // Fase 93: só preenchido numa concessão manual do admin com prazo (Fase
+  // 90) — assinatura real via Stripe nunca tem data-limite fixa aqui (é
+  // recorrente até cancelar, ver "Gerenciar assinatura").
+  planoAssinaturaExpiresAt: string | null;
 }
 
 export function getBillingStatus() {
