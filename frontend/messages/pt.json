@@ -101,6 +101,7 @@
     "orDivider": "ou",
     "backToEmail": "← trocar e-mail",
     "backToRole": "← trocar perfil",
+    "termsAcceptance": "Ao criar uma conta, você concorda com nossos <terms>Termos de Uso</terms> e <privacy>Política de Privacidade</privacy>.",
     "passwordField": {
       "show": "Mostrar",
       "hide": "Ocultar",
@@ -386,6 +387,7 @@
     "workoutsInPeriod": "{count} treino(s) no período"
   },
   "anamneseAluno": {
+    "healthDataConsent": "Concordo com o tratamento destes dados de saúde conforme nossa <privacy>Política de Privacidade</privacy>.",
     "personalDataHeading": "Dados Pessoais",
     "fullNameLabel": "Nome completo",
     "birthDateLabel": "Nascimento",

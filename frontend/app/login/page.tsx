@@ -397,6 +397,24 @@ export default function LoginPage() {
             </p>
           )}
 
+          {/* Fase 91: aceite de Termos/Privacidade — exibido aqui porque o
+              botão logo abaixo já cria a conta de fato quando o cadastro vem
+              via Google (sem passar pelo passo "signup-details"). */}
+          <p className="mb-3 text-xs text-muted">
+            {t.rich("termsAcceptance", {
+              terms: (chunks) => (
+                <Link href="/termos-de-uso" target="_blank" className="font-semibold underline">
+                  {chunks}
+                </Link>
+              ),
+              privacy: (chunks) => (
+                <Link href="/politica-de-privacidade" target="_blank" className="font-semibold underline">
+                  {chunks}
+                </Link>
+              ),
+            })}
+          </p>
+
           <Button
             type="button"
             variant="accentSecondary"
@@ -467,6 +485,21 @@ export default function LoginPage() {
                 {errorMessage(registerMutation.error, t("connectionError"))}
               </p>
             )}
+
+            <p className="text-xs text-muted">
+              {t.rich("termsAcceptance", {
+                terms: (chunks) => (
+                  <Link href="/termos-de-uso" target="_blank" className="font-semibold underline">
+                    {chunks}
+                  </Link>
+                ),
+                privacy: (chunks) => (
+                  <Link href="/politica-de-privacidade" target="_blank" className="font-semibold underline">
+                    {chunks}
+                  </Link>
+                ),
+              })}
+            </p>
 
             <Button
               type="submit"
