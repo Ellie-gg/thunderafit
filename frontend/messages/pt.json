@@ -1172,6 +1172,19 @@
       "confirmGrant": "Conceder Premium a {email}?",
       "confirmRevoke": "Revogar o Premium de {email}?",
       "genericError": "Erro ao alterar o Premium.",
+      "saving": "Salvando...",
+      "daysPlaceholder": "Dias até expirar (opcional)",
+      "statusNone": "Sem plano pago",
+      "statusTierPermanent": "Plano {tier} (permanente)",
+      "statusTierExpiring": "Plano {tier} (expira em {days}d)",
+      "statusActivePermanent": "Premium ativo (permanente)",
+      "statusActiveExpiring": "Premium ativo (expira em {days}d)"
+    },
+    "emailVerification": {
+      "markVerified": "Marcar e-mail como verificado",
+      "verifiedAt": "E-mail verificado em {date}",
+      "confirmMessage": "Marcar o e-mail de {email} como verificado manualmente?",
+      "genericError": "Erro ao confirmar o e-mail.",
       "saving": "Salvando..."
     },
     "deleteUser": {

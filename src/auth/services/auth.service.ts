@@ -2,11 +2,12 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import crypto from "crypto";
 import { OAuth2Client } from "google-auth-library";
-import { Role, Locale, User } from "@prisma/client";
+import { Role, Locale } from "@prisma/client";
 import { authRepository } from "../repository/auth.repository";
 import { relationsService } from "../../fitness/services/relations.service";
 import { deleteUserCascade } from "../../lib/user-deletion";
 import { sendMail } from "../../lib/mailer";
+import { toSafeUser } from "../../lib/safe-user";
 
 const BCRYPT_SALT_ROUNDS = 12;
 const ACCESS_TOKEN_EXPIRY = "15m";
@@ -32,26 +33,9 @@ function hashToken(token: string): string {
 
 const MIN_PASSWORD_LENGTH = 8;
 
-/**
- * Fase 81: além de `passwordHash`/`refreshTokenHash` (já removidos antes
- * desta fase), os 4 campos novos de token (verificação de e-mail + reset de
- * senha) também nunca podem vazar pro cliente — mesmo hasheados, são
- * segredos de posse (quem tiver o hash + souber o algoritmo poderia, em
- * teoria, testar candidatos offline). Um helper único evita repetir (e
- * esquecer um campo) nos ~8 lugares que devolvem o usuário.
- */
-function toSafeUser(user: User) {
-  const {
-    passwordHash: _ph,
-    refreshTokenHash: _rth,
-    emailVerificationTokenHash: _evth,
-    emailVerificationTokenExpiresAt: _evte,
-    passwordResetTokenHash: _prth,
-    passwordResetTokenExpiresAt: _prte,
-    ...safeUser
-  } = user;
-  return safeUser;
-}
+// Fase 90: `toSafeUser` extraído pra `src/lib/safe-user.ts` (reaproveitado
+// agora também pelo domínio admin) — ver o comentário lá pro rationale
+// completo de por que cada campo é removido.
 
 function getEnv(key: string): string {
   const value = process.env[key];

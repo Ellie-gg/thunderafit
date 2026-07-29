@@ -1172,6 +1172,19 @@
       "confirmGrant": "Grant Premium to {email}?",
       "confirmRevoke": "Revoke Premium from {email}?",
       "genericError": "Error changing Premium.",
+      "saving": "Saving...",
+      "daysPlaceholder": "Days until expiry (optional)",
+      "statusNone": "No paid plan",
+      "statusTierPermanent": "{tier} plan (permanent)",
+      "statusTierExpiring": "{tier} plan (expires in {days}d)",
+      "statusActivePermanent": "Premium active (permanent)",
+      "statusActiveExpiring": "Premium active (expires in {days}d)"
+    },
+    "emailVerification": {
+      "markVerified": "Mark email as verified",
+      "verifiedAt": "Email verified on {date}",
+      "confirmMessage": "Mark {email}'s email as manually verified?",
+      "genericError": "Error confirming the email.",
       "saving": "Saving..."
     },
     "deleteUser": {

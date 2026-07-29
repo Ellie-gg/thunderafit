@@ -4,7 +4,13 @@ import { useTranslations } from "next-intl";
 import { useState } from "react";
 import Link from "next/link";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { listAdminUsers, updateUserRole, updateUserPremium, deleteAdminUser } from "@/lib/api/admin";
+import {
+  listAdminUsers,
+  updateUserRole,
+  updateUserPremium,
+  verifyUserEmail,
+  deleteAdminUser,
+} from "@/lib/api/admin";
 import { ApiError } from "@/lib/api/client";
 import { useAuthStore } from "@/lib/store/auth-store";
 import { AuthGuard } from "@/components/auth-guard";
@@ -93,40 +99,76 @@ function RoleEditor({ user, onChanged }: { user: AdminUser; onChanged: () => voi
   );
 }
 
+// Fase 90: dias restantes até uma data-limite, ou null se já venceu/não tem
+// prazo — usado tanto pro Aluno Premium quanto pro plano do Personal.
+function daysUntil(dateStr: string | null | undefined): number | null {
+  if (!dateStr) return null;
+  const diff = new Date(dateStr).getTime() - Date.now();
+  return diff > 0 ? Math.ceil(diff / (24 * 60 * 60 * 1000)) : null;
+}
+
 /**
  * Fase 58: liga/desliga Premium manualmente — mesmo padrão inline de
- * confirmação do `RoleEditor` acima, mas sem `<select>` (é um toggle
- * binário): o rótulo do botão já é a ação ("Conceder"/"Revogar"), sem passo
- * de edição separado. "Premium" atual é derivado por role (ALUNO:
- * `alunoPremiumStatus !== "NONE"`; PERSONAL/NUTRICIONISTA:
- * `planoAssinatura === "PLUS"`); ADMIN não tem esse controle (backend
+ * confirmação do `RoleEditor` acima. "Premium" atual é derivado por role
+ * (ALUNO: `alunoPremiumStatus !== "NONE"`; PERSONAL/NUTRICIONISTA:
+ * `planoAssinatura !== "FREE"`); ADMIN não tem esse controle (backend
  * rejeita com 400, então nem mostramos o botão).
+ *
+ * Fase 90: ao CONCEDER, ganha 2 campos opcionais — `tier` (só
+ * PERSONAL/NUTRICIONISTA: Base ou Plus, antes só dava Plus) e "dias até
+ * expirar" (em branco = permanente, mesmo comportamento de antes desta
+ * fase — pra brindes por tempo limitado). Ao REVOGAR continua sem campo
+ * nenhum, só confirmação (não faz sentido perguntar tier/prazo pra tirar
+ * o acesso).
  */
 function PremiumEditor({ user, onChanged }: { user: AdminUser; onChanged: () => void }) {
   const t = useTranslations("nimbusUsuarios");
   const tCommon = useTranslations("common");
   const [confirming, setConfirming] = useState(false);
+  const [pendingTier, setPendingTier] = useState<"BASE" | "PLUS">("PLUS");
+  const [pendingDays, setPendingDays] = useState("");
 
+  const isPersonalLike = user.role === "PERSONAL" || user.role === "NUTRICIONISTA";
   const isPremium =
     user.role === "ALUNO"
       ? user.alunoPremiumStatus != null && user.alunoPremiumStatus !== "NONE"
-      : user.planoAssinatura === "PLUS";
+      : user.planoAssinatura !== "FREE";
+
+  const expiresInDays = daysUntil(user.role === "ALUNO" ? user.alunoPremiumExpiresAt : user.planoAssinaturaExpiresAt);
 
   const mutation = useMutation({
-    mutationFn: (active: boolean) => updateUserPremium(user.id, active),
+    mutationFn: (active: boolean) =>
+      updateUserPremium(user.id, active, {
+        tier: isPersonalLike ? pendingTier : undefined,
+        days: active && pendingDays.trim() ? Number(pendingDays) : undefined,
+      }),
     onSuccess: () => {
       setConfirming(false);
+      setPendingDays("");
       onChanged();
     },
   });
 
   if (user.role === "ADMIN") return null;
 
+  const statusLabel = !isPremium
+    ? t("premiumEditor.statusNone")
+    : isPersonalLike
+      ? expiresInDays != null
+        ? t("premiumEditor.statusTierExpiring", { tier: user.planoAssinatura, days: expiresInDays })
+        : t("premiumEditor.statusTierPermanent", { tier: user.planoAssinatura })
+      : expiresInDays != null
+        ? t("premiumEditor.statusActiveExpiring", { days: expiresInDays })
+        : t("premiumEditor.statusActivePermanent");
+
   if (!confirming) {
     return (
-      <Button type="button" variant="ghost" size="sm" onClick={() => setConfirming(true)}>
-        {isPremium ? t("premiumEditor.revoke") : t("premiumEditor.grant")}
-      </Button>
+      <div className="flex flex-col items-end gap-0.5">
+        <span className="text-xs text-muted">{statusLabel}</span>
+        <Button type="button" variant="ghost" size="sm" onClick={() => setConfirming(true)}>
+          {isPremium ? t("premiumEditor.revoke") : t("premiumEditor.grant")}
+        </Button>
+      </div>
     );
   }
 
@@ -137,6 +179,29 @@ function PremiumEditor({ user, onChanged }: { user: AdminUser; onChanged: () => 
           ? t("premiumEditor.confirmRevoke", { email: user.email })
           : t("premiumEditor.confirmGrant", { email: user.email })}
       </p>
+      {!isPremium && (
+        <div className="flex flex-col items-end gap-1.5">
+          {isPersonalLike && (
+            <select
+              value={pendingTier}
+              onChange={(e) => setPendingTier(e.target.value as "BASE" | "PLUS")}
+              className="h-8 rounded-md border border-border bg-surface px-2 text-xs text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+            >
+              <option value="BASE">Base</option>
+              <option value="PLUS">Plus</option>
+            </select>
+          )}
+          <input
+            type="number"
+            min={1}
+            step={1}
+            value={pendingDays}
+            onChange={(e) => setPendingDays(e.target.value)}
+            placeholder={t("premiumEditor.daysPlaceholder")}
+            className="h-8 w-36 rounded-md border border-border bg-surface px-2 text-xs text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+          />
+        </div>
+      )}
       {mutation.isError && (
         <p className="text-xs text-danger">
           {mutation.error instanceof ApiError ? mutation.error.message : t("premiumEditor.genericError")}
@@ -158,6 +223,69 @@ function PremiumEditor({ user, onChanged }: { user: AdminUser; onChanged: () => 
             : isPremium
               ? t("premiumEditor.revoke")
               : t("premiumEditor.grant")}
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Fase 90 — confirmar e-mail manualmente (suporte: e-mail nunca chegou,
+ * conta antiga sem verificação). Mesmo padrão inline de confirmação —
+ * quando já verificado, nem mostra botão de ação, só a data (nada a fazer).
+ */
+function EmailVerificationEditor({ user, onChanged }: { user: AdminUser; onChanged: () => void }) {
+  const t = useTranslations("nimbusUsuarios");
+  const tCommon = useTranslations("common");
+  const intlLocale = useActiveIntlLocale();
+  const [confirming, setConfirming] = useState(false);
+
+  const mutation = useMutation({
+    mutationFn: () => verifyUserEmail(user.id),
+    onSuccess: () => {
+      setConfirming(false);
+      onChanged();
+    },
+  });
+
+  if (user.emailVerifiedAt) {
+    return (
+      <span className="text-xs text-muted">
+        {t("emailVerification.verifiedAt", { date: new Date(user.emailVerifiedAt).toLocaleDateString(intlLocale) })}
+      </span>
+    );
+  }
+
+  if (!confirming) {
+    return (
+      <Button type="button" variant="ghost" size="sm" onClick={() => setConfirming(true)}>
+        {t("emailVerification.markVerified")}
+      </Button>
+    );
+  }
+
+  return (
+    <div className="flex flex-col items-end gap-1.5 rounded-md border border-accent-secondary/40 bg-accent-secondary/10 p-2">
+      <p className="text-xs text-accent-secondary">
+        {t("emailVerification.confirmMessage", { email: user.email })}
+      </p>
+      {mutation.isError && (
+        <p className="text-xs text-danger">
+          {mutation.error instanceof ApiError ? mutation.error.message : t("emailVerification.genericError")}
+        </p>
+      )}
+      <div className="flex gap-2">
+        <Button type="button" size="sm" onClick={() => setConfirming(false)}>
+          {tCommon("cancel")}
+        </Button>
+        <Button
+          type="button"
+          variant="secondary"
+          size="sm"
+          disabled={mutation.isPending}
+          onClick={() => mutation.mutate()}
+        >
+          {mutation.isPending ? t("emailVerification.saving") : t("emailVerification.markVerified")}
         </Button>
       </div>
     </div>
@@ -314,6 +442,10 @@ function UsersContent() {
                       {t("viewAnamnesis")}
                     </Link>
                   )}
+                  <EmailVerificationEditor
+                    user={u}
+                    onChanged={() => queryClient.invalidateQueries({ queryKey: ["admin", "users"] })}
+                  />
                   <PremiumEditor
                     user={u}
                     onChanged={() => queryClient.invalidateQueries({ queryKey: ["admin", "users"] })}

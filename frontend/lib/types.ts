@@ -340,6 +340,10 @@ export interface AdminUser {
   // undefined pra PERSONAL/NUTRICIONISTA/ADMIN, que não usam este campo.
   alunoPremiumStatus?: "NONE" | "TRIAL" | "ACTIVE" | "CANCELED";
   alunoPremiumExpiresAt?: string | null;
+  // Fase 90: prazo de uma concessão manual de Base/Plus (null = permanente/FREE).
+  planoAssinaturaExpiresAt?: string | null;
+  // Fase 90: null = nunca confirmou o e-mail.
+  emailVerifiedAt?: string | null;
   lastLoginAt: string | null;
   createdAt: string;
   isOrphanAluno?: boolean;

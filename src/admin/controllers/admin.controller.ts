@@ -180,13 +180,33 @@ export async function deleteUserHandler(
 }
 
 export async function updateUserPremiumHandler(
-  request: FastifyRequest<{ Params: { id: string }; Body: { active?: boolean } }>,
+  request: FastifyRequest<{
+    Params: { id: string };
+    Body: { active?: boolean; tier?: "BASE" | "PLUS"; days?: number };
+  }>,
   reply: FastifyReply
 ) {
   try {
     assertAdmin(request);
     const adminId = (request as any).user.sub;
-    const result = await adminService.setUserPremium(adminId, request.params.id, request.body?.active === true);
+    const result = await adminService.setUserPremium(adminId, request.params.id, request.body?.active === true, {
+      tier: request.body?.tier,
+      days: request.body?.days,
+    });
+    return reply.status(200).send(result);
+  } catch (err: any) {
+    return handleError(err, reply);
+  }
+}
+
+export async function verifyUserEmailHandler(
+  request: FastifyRequest<{ Params: { id: string } }>,
+  reply: FastifyReply
+) {
+  try {
+    assertAdmin(request);
+    const adminId = (request as any).user.sub;
+    const result = await adminService.verifyUserEmail(adminId, request.params.id);
     return reply.status(200).send(result);
   } catch (err: any) {
     return handleError(err, reply);

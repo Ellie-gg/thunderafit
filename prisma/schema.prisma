@@ -71,6 +71,14 @@ model User {
   name             String?
   planoAssinatura  PlanoAssinatura @default(FREE)
   limiteAlunos     Int             @default(3)
+  // Fase 90: prazo de uma concessão MANUAL de plano pelo admin (brinde por
+  // tempo limitado — ex: "Base grátis por 30 dias"). Sempre null quando o
+  // plano atual veio de uma assinatura Stripe real (o webhook limpa este
+  // campo em toda escrita, ver billing.repository.ts#applyPaidPlan/
+  // applyFreePlan) — só sobrevive aqui após uma concessão manual, nunca
+  // reduz um plano pago de verdade. Revertido sozinho (pra FREE) na próxima
+  // leitura após vencer, sem cron/job separado (ver src/lib/plan-expiry.ts).
+  planoAssinaturaExpiresAt DateTime?
   lastLoginAt      DateTime?
   // Fase 20 (billing Stripe): vínculo do usuário com o Stripe. customerId é
   // setado no checkout.session.completed e usado para mapear eventos de
