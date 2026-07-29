@@ -16,6 +16,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { QueryError } from "@/components/query-error";
 import { useTranslations } from "next-intl";
+import { useActiveIntlLocale } from "@/i18n/use-active-locale";
 
 // Fase 87: "annual" trocado por "quarterly" — o fundador decidiu não
 // oferecer mais compromisso anual, só mensal/trimestral (mesmo intervalo já
@@ -128,6 +129,7 @@ function TierCard({
 
 function UpgradeContent() {
   const t = useTranslations("personalUpgrade");
+  const intlLocale = useActiveIntlLocale();
   const searchParams = useSearchParams();
   const status = searchParams.get("status"); // success | cancel (retorno do Stripe)
 
@@ -177,6 +179,17 @@ function UpgradeContent() {
                 })
               : t("planoGratuito")}
           </p>
+          {/* Fase 93: só aparece numa concessão manual do admin com prazo
+              (Fase 90) — assinatura Stripe real nunca tem essa data (é
+              recorrente até cancelar, controlada pelo "Gerenciar assinatura"
+              abaixo). */}
+          {statusQuery.data?.planoAssinaturaExpiresAt && (
+            <p className="text-xs text-muted">
+              {t("planoExpiraEm", {
+                date: new Date(statusQuery.data.planoAssinaturaExpiresAt).toLocaleDateString(intlLocale),
+              })}
+            </p>
+          )}
         </div>
 
         {status === "success" && (
