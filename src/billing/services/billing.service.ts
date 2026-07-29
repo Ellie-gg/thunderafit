@@ -1,6 +1,7 @@
 import type Stripe from "stripe";
 import { getStripe, stripePriceEnvVar, PlanTier, BillingInterval } from "../stripe";
 import { billingRepository } from "../repository/billing.repository";
+import { revertExpiredPersonalPlan } from "../../lib/plan-expiry";
 
 function httpError(message: string, statusCode: number) {
   const err = new Error(message) as Error & { statusCode: number };
@@ -96,8 +97,11 @@ export const billingService = {
 
   /** Estado de assinatura do usuário para a UI (plano, limite, tem assinatura). */
   async getStatus(userId: string) {
-    const user = await billingRepository.findUserById(userId);
+    let user = await billingRepository.findUserById(userId);
     if (!user) throw httpError("Usuário não encontrado.", 404);
+    // Fase 90: concessão manual de plano com prazo (admin) — reverte pra
+    // FREE sozinha se já venceu, antes de montar o status exibido na UI.
+    user = await revertExpiredPersonalPlan(user);
     return {
       planoAssinatura: user.planoAssinatura,
       limiteAlunos: user.limiteAlunos,

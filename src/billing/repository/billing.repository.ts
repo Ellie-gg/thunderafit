@@ -27,7 +27,12 @@ export const billingRepository = {
     });
   },
 
-  /** Upgrade: BASE ou PLUS + limite do degrau + guarda a subscription. Idempotente. */
+  /**
+   * Upgrade: BASE ou PLUS + limite do degrau + guarda a subscription.
+   * Idempotente. Fase 90: sempre limpa `planoAssinaturaExpiresAt` — uma
+   * assinatura Stripe REAL nunca deve carregar um prazo de concessão manual
+   * residual de uma "brinde" anterior do admin.
+   */
   applyPaidPlan(userId: string, tier: PlanTier, stripeSubscriptionId: string | null) {
     return prisma.user.update({
       where: { id: userId },
@@ -35,6 +40,7 @@ export const billingRepository = {
         planoAssinatura: tier,
         limiteAlunos: tier === "PLUS" ? PLUS_LIMITE_ALUNOS : BASE_LIMITE_ALUNOS,
         stripeSubscriptionId,
+        planoAssinaturaExpiresAt: null,
       },
     });
   },
@@ -60,6 +66,7 @@ export const billingRepository = {
         limiteAlunos: FREE_LIMITE_ALUNOS,
         stripeSubscriptionId: null,
         availableForNewStudents: false,
+        planoAssinaturaExpiresAt: null,
       },
     });
   },

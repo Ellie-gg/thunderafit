@@ -106,11 +106,25 @@ export function deleteAdminUser(id: string) {
 
 // Fase 58: concessão/revogação manual de Premium — ALUNO vira
 // alunoPremiumStatus ACTIVE/NONE; PERSONAL/NUTRICIONISTA vira
-// planoAssinatura PLUS/FREE. ADMIN não tem conceito de Premium (400).
-export function updateUserPremium(id: string, active: boolean) {
+// planoAssinatura BASE/PLUS/FREE. ADMIN não tem conceito de Premium (400).
+// Fase 90: `tier` (default PLUS, só usado com active=true e role
+// PERSONAL/NUTRICIONISTA) e `days` (prazo até expirar — omitido = permanente,
+// mesmo comportamento de antes) viabilizam "brinde por tempo limitado".
+export function updateUserPremium(
+  id: string,
+  active: boolean,
+  options?: { tier?: "BASE" | "PLUS"; days?: number }
+) {
   return apiFetch<{ user: AdminUser }>(`/api/admin/users/${id}/premium`, {
     method: "PUT",
-    body: { active },
+    body: { active, ...options },
+  });
+}
+
+// Fase 90 — confirmar e-mail manualmente (bypass do fluxo real por link).
+export function verifyUserEmail(id: string) {
+  return apiFetch<{ user: AdminUser }>(`/api/admin/users/${id}/verify-email`, {
+    method: "PUT",
   });
 }
 

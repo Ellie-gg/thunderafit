@@ -1,6 +1,7 @@
 import prisma from "../../lib/prisma";
 import { relationsRepository } from "../repository/relations.repository";
 import { notificationsService } from "../../notifications/services/notifications.service";
+import { revertExpiredPersonalPlan } from "../../lib/plan-expiry";
 
 function addOneMonth(date: Date): Date {
   const next = new Date(date);
@@ -35,12 +36,15 @@ export const relationsService = {
     // Nutricionista), então o limite Freemium já é por profissional, não
     // global sobre o aluno. Auditado na Fase 11, nenhuma mudança necessária
     // aqui além de aceitar professionalType.
-    const user = await prisma.user.findUnique({ where: { id: personalId } });
+    let user = await prisma.user.findUnique({ where: { id: personalId } });
     if (!user) {
       const err = new Error("Profissional não encontrado.");
       (err as any).statusCode = 404;
       throw err;
     }
+    // Fase 90: concessão manual de plano com prazo (admin) — reverte pra
+    // FREE sozinha se já venceu, antes de checar o limite.
+    user = await revertExpiredPersonalPlan(user);
     const count = await relationsRepository.countByPersonal(personalId);
     if (count >= user.limiteAlunos) {
       const err = new Error("Limite de alunos atingido.");
