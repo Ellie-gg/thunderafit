@@ -717,7 +717,11 @@
   "faleConosco": {
     "eyebrow": "Support",
     "title": "Contact Us",
-    "subtitle": "Send a message straight to the founder — questions, suggestions, issues, anything.",
+    "subtitle": "Your message matters — help us improve.",
+    "subtitleSuffix": "Questions, suggestions, issues — whatever it is, our team is ready to help.",
+    "instagramTitle": "Follow us on Instagram",
+    "instagramHandle": "@thunderafit",
+    "instagramButton": "Follow",
     "titleLabel": "Title",
     "titlePlaceholder": "E.g.: Feature suggestion",
     "messageLabel": "Message",
