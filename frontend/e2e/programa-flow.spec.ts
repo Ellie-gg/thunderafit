@@ -63,6 +63,8 @@ test("Personal cria programa, aplica a aluno; aluno vê sugestão e conclui sess
   // Aluno abre a sessão B (fora de ordem) e conclui.
   await page.locator(`a[href="/treinos/${sessionByLetter.B}"]`).click();
   await expect(page).toHaveURL(new RegExp(`/treinos/${sessionByLetter.B}$`));
+  // Fase 89: cronômetro com início explícito.
+  await page.getByRole("button", { name: "Iniciar Treino" }).click();
   await page.getByRole("button", { name: "Concluir sessão" }).click();
   await expect(page.getByRole("button", { name: /Sessão concluída/ })).toBeVisible();
 

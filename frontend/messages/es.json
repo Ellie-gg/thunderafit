@@ -313,6 +313,13 @@
     "sessionCompleted": "Sesión completada ✓",
     "completeSession": "Completar sesión",
     "completeError": "No se pudo completar la sesión.",
+    "startWorkout": "▶ Iniciar Entrenamiento",
+    "startWorkoutFirst": "Inicia el entrenamiento primero",
+    "sessionInProgress": "Entrenamiento en curso",
+    "idleWarningTitle": "¿Sigues entrenando?",
+    "idleWarningBody": "Notamos que estuviste inactivo un tiempo. Si no continúas, vamos a finalizar tu sesión automáticamente.",
+    "idleWarningCountdownLabel": "Finaliza automáticamente en",
+    "continueWorkout": "Continuar entrenamiento",
     "upsellQuestion": "¿Te gustó entrenar solo?",
     "upsellLinkText": "Invita a un Entrenador Personal",
     "upsellSuffix": "para que te acompañe de cerca."
