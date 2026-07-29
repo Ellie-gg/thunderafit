@@ -23,6 +23,7 @@ import {
   updateSelfTemplateTagsHandler,
   updateSelfSessionHandler,
   updateUserPremiumHandler,
+  verifyUserEmailHandler,
 } from "../controllers/admin.controller";
 
 export async function adminRoutes(fastify: FastifyInstance) {
@@ -54,7 +55,10 @@ export async function adminRoutes(fastify: FastifyInstance) {
   // Fase 80: remoção definitiva de usuário (cascade manual, ver adminRepository.deleteUser).
   fastify.delete("/api/admin/users/:id", auth, deleteUserHandler);
   // Fase 58: concessão/revogação manual de Premium (ALUNO ou PERSONAL/NUTRI).
+  // Fase 90: ganhou `tier`/`days` opcionais (grátis por N dias — "brinde").
   fastify.put("/api/admin/users/:id/premium", auth, updateUserPremiumHandler);
+  // Fase 90: confirmar e-mail manualmente (bypass do fluxo real por link).
+  fastify.put("/api/admin/users/:id/verify-email", auth, verifyUserEmailHandler);
 
   // Fase 34.5: curadoria de templates SELF ("Meu treino pessoal").
   fastify.get("/api/admin/self-templates", auth, listSelfTemplatesHandler);

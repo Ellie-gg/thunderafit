@@ -135,3 +135,46 @@ test("admin loga, navega pelo painel e vê dados reais (overview, usuários, SLA
   await expect(page.getByText("ROLE_CHANGE").first()).toBeVisible();
   await expect(page.getByText("ALUNO -> NUTRICIONISTA").first()).toBeVisible();
 });
+
+/**
+ * Fase 90 — 2 mecanismos novos na gestão de usuários: (1) confirmar e-mail
+ * manualmente (bypass do fluxo real por link); (2) conceder Base/Plus (ou
+ * Aluno Premium) com um prazo em dias — "brinde por tempo limitado" — em vez
+ * do toggle binário permanente que já existia (Fase 58).
+ */
+test("admin concede plano com prazo e confirma e-mail manualmente", async ({ page }) => {
+  const stamp = Date.now();
+  const adminEmail = `e2e_pw_admin90_${stamp}@thunderafit.test`;
+  const personalEmail = `e2e_pw_admin90_personal_${stamp}@thunderafit.test`;
+  const password = "SenhaSegura@123";
+
+  execFileSync("npm", ["run", "db:seed:admin"], {
+    cwd: ROOT_DIR,
+    shell: true,
+    env: { ...process.env, ADMIN_EMAIL: adminEmail, ADMIN_PASSWORD: password },
+  });
+
+  const personal = await backendJson("/api/auth/register", {
+    email: personalEmail,
+    password,
+    role: "PERSONAL",
+  });
+
+  await loginViaUI(page, adminEmail, password);
+  await page.getByRole("link", { name: "Usuários" }).click();
+  await expect(page).toHaveURL(/\/nimbus\/usuarios$/);
+
+  const personalRow = page.getByTestId(`user-row-${personal.user.id}`);
+  await expect(personalRow).toContainText("Sem plano pago");
+
+  await personalRow.getByRole("button", { name: "Conceder Premium" }).click();
+  await personalRow.getByRole("combobox").selectOption("BASE");
+  await personalRow.getByPlaceholder("Dias até expirar (opcional)").fill("30");
+  await personalRow.getByRole("button", { name: "Conceder Premium" }).click();
+  await expect(personalRow).toContainText("Plano BASE");
+  await expect(personalRow).toContainText("expira em");
+
+  await personalRow.getByRole("button", { name: "Marcar e-mail como verificado" }).click();
+  await personalRow.getByRole("button", { name: "Marcar e-mail como verificado" }).click();
+  await expect(personalRow).toContainText("E-mail verificado em");
+});

@@ -55,10 +55,14 @@ export const adminRepository = {
           role: true,
           planoAssinatura: true,
           limiteAlunos: true,
+          // Fase 90: prazo de uma concessão manual (null = permanente/FREE).
+          planoAssinaturaExpiresAt: true,
           // Fase 58: pra tela de admin mostrar o estado Premium vigente do
           // ALUNO (setUserPremium abaixo escreve nestes dois campos).
           alunoPremiumStatus: true,
           alunoPremiumExpiresAt: true,
+          // Fase 90: pra tela de admin mostrar/editar a confirmação de e-mail.
+          emailVerifiedAt: true,
           lastLoginAt: true,
           createdAt: true,
         },
@@ -248,10 +252,39 @@ export const adminRepository = {
     });
   },
 
-  async setPersonalPlano(userId: string, plano: "FREE" | "PLUS", limiteAlunos: number) {
+  /**
+   * Fase 90: ganhou `tier` BASE (antes só FREE/PLUS) e `expiresAt` opcional
+   * — concessão manual com prazo ("brinde"), revertida sozinha por
+   * `revertExpiredPersonalPlan` (ver src/lib/plan-expiry.ts) quando vence.
+   * `expiresAt: null` (default) continua o comportamento antigo: permanente,
+   * igual uma concessão real via Stripe.
+   */
+  async setPersonalPlano(
+    userId: string,
+    plano: "FREE" | "BASE" | "PLUS",
+    limiteAlunos: number,
+    expiresAt: Date | null = null
+  ) {
     return prisma.user.update({
       where: { id: userId },
-      data: { planoAssinatura: plano, limiteAlunos },
+      data: { planoAssinatura: plano, limiteAlunos, planoAssinaturaExpiresAt: expiresAt },
+    });
+  },
+
+  /**
+   * Fase 90 — confirmação de e-mail manual pelo admin (suporte: e-mail nunca
+   * chegou, usuário trocou de conta, etc.), mesmo bypass já documentado pra
+   * Premium/plano. Limpa também o token pendente (mesmo shape de
+   * `authRepository.markEmailVerified`, que cobre o fluxo real por link).
+   */
+  async markEmailVerified(userId: string) {
+    return prisma.user.update({
+      where: { id: userId },
+      data: {
+        emailVerifiedAt: new Date(),
+        emailVerificationTokenHash: null,
+        emailVerificationTokenExpiresAt: null,
+      },
     });
   },
 

@@ -15,7 +15,11 @@ import { exerciseTranslationsRepository } from "../../fitness/repository/exercis
 import { programTranslationsRepository } from "../../fitness/repository/program-translations.repository";
 // Fase 58: toggle manual de Premium — reaproveita os mesmos limites de
 // alunos por degrau já usados pelo billing real (PLUS = topo da escada).
-import { PLUS_LIMITE_ALUNOS, FREE_LIMITE_ALUNOS } from "../../billing/stripe";
+// Fase 90: BASE_LIMITE_ALUNOS entra pra concessão manual poder escolher
+// Base, não só Plus.
+import { PLUS_LIMITE_ALUNOS, BASE_LIMITE_ALUNOS, FREE_LIMITE_ALUNOS } from "../../billing/stripe";
+import { revertExpiredPersonalPlan } from "../../lib/plan-expiry";
+import { toSafeUser } from "../../lib/safe-user";
 
 const VALID_SESSION_SCHEMES = ["LETTER", "WEEKDAY"] as const;
 type AdminSessionScheme = (typeof VALID_SESSION_SCHEMES)[number];
@@ -184,10 +188,18 @@ export const adminService = {
     const alunoIds = users.filter((u) => u.role === "ALUNO").map((u) => u.id);
     const orphanIds = await adminRepository.findOrphanAlunoIds(alunoIds);
 
-    const usersWithStatus = users.map((u) => ({
-      ...u,
-      isOrphanAluno: u.role === "ALUNO" ? orphanIds.has(u.id) : undefined,
-    }));
+    // Fase 90: reverte sozinho qualquer concessão manual de plano já vencida
+    // ANTES de devolver a lista — sem isso, o admin veria um Base/Plus
+    // "fantasma" até algum outro caminho (login, upgrade, novo vínculo)
+    // acontecer a rodar a mesma checagem. Não-expirados (ou sem prazo
+    // nenhum) retornam a própria linha sem custo de escrita, ver
+    // src/lib/plan-expiry.ts.
+    const usersWithStatus = await Promise.all(
+      users.map(async (u) => ({
+        ...(await revertExpiredPersonalPlan(u)),
+        isOrphanAluno: u.role === "ALUNO" ? orphanIds.has(u.id) : undefined,
+      }))
+    );
 
     return { users: usersWithStatus, total, page, pageSize };
   },
@@ -537,7 +549,11 @@ export const adminService = {
       targetUserId,
       `${oldRole} -> ${newRole}`
     );
-    return { user: updated };
+    // Fase 90: `updateUserRole` no repositório devolve a linha inteira do
+    // Prisma (sem select) — passava passwordHash/token hashes pro cliente
+    // sem sanitizar (gap pré-existente, achado ao adicionar as funções desta
+    // fase; corrigido junto por tocar exatamente este arquivo).
+    return { user: toSafeUser(updated) };
   },
 
   /**
@@ -589,17 +605,24 @@ export const adminService = {
    * Fase 58: liga/desliga Premium manualmente — "Premium" significa uma
    * coisa diferente por role: pro ALUNO é o entitlement de
    * `alunoPremiumStatus`/`alunoPremiumExpiresAt` (mesmo modelo do teste
-   * grátis, Fase 56); pro PERSONAL/NUTRICIONISTA é subir pro degrau PLUS de
-   * `planoAssinatura` (o mais alto — não existe um degrau "Premium"
-   * separado pra profissional, então reaproveita o topo da escada
-   * existente). ADMIN não tem nenhum conceito de Premium — 400.
+   * grátis, Fase 56); pro PERSONAL/NUTRICIONISTA é o degrau de
+   * `planoAssinatura`. ADMIN não tem nenhum conceito de Premium — 400.
    *
-   * Concessão manual do ALUNO usa uma data-limite bem distante (100 anos)
-   * em vez de null, pra caber no mesmo contrato de
-   * `alunoPremiumService.computeEntitlement` (que sempre compara
-   * `alunoPremiumExpiresAt` contra `now()` — nunca confia só no status).
+   * Fase 90: ganhou 2 parâmetros opcionais pra "brindes por tempo limitado":
+   * - `tier` ("BASE" | "PLUS", default PLUS): só usado quando `active` e o
+   *   alvo é PERSONAL/NUTRICIONISTA — antes só dava pra conceder PLUS.
+   * - `days`: prazo em dias até expirar (default = permanente, mesmo
+   *   comportamento de antes desta fase — sentinela de 100 anos pro ALUNO,
+   *   `null` pro PERSONAL/NUTRICIONISTA). Reversão automática (sem cron) via
+   *   `alunoPremiumService.computeEntitlement` (ALUNO, já existia) ou
+   *   `revertExpiredPersonalPlan` (PERSONAL/NUTRICIONISTA, novo nesta fase).
    */
-  async setUserPremium(adminId: string, targetUserId: string, active: boolean) {
+  async setUserPremium(
+    adminId: string,
+    targetUserId: string,
+    active: boolean,
+    options?: { tier?: "BASE" | "PLUS"; days?: number }
+  ) {
     const target = await adminRepository.findUserRoleById(targetUserId);
     if (!target) {
       const err = new Error("Usuário não encontrado.");
@@ -607,13 +630,25 @@ export const adminService = {
       throw err;
     }
 
+    const days = options?.days;
+    if (days !== undefined && (!Number.isInteger(days) || days <= 0)) {
+      const err = new Error("days deve ser um número inteiro positivo.");
+      (err as any).statusCode = 400;
+      throw err;
+    }
+
     let updated;
     if (target.role === "ALUNO") {
-      const expiresAt = active ? new Date(Date.now() + 100 * 365 * 24 * 60 * 60 * 1000) : null;
+      const expiresAt = active
+        ? new Date(Date.now() + (days ?? 100 * 365) * 24 * 60 * 60 * 1000)
+        : null;
       updated = await adminRepository.setAlunoPremium(targetUserId, active, expiresAt);
     } else if (target.role === "PERSONAL" || target.role === "NUTRICIONISTA") {
+      const tier = options?.tier === "BASE" ? "BASE" : "PLUS";
+      const limiteAlunos = tier === "BASE" ? BASE_LIMITE_ALUNOS : PLUS_LIMITE_ALUNOS;
+      const expiresAt = active && days ? new Date(Date.now() + days * 24 * 60 * 60 * 1000) : null;
       updated = active
-        ? await adminRepository.setPersonalPlano(targetUserId, "PLUS", PLUS_LIMITE_ALUNOS)
+        ? await adminRepository.setPersonalPlano(targetUserId, tier, limiteAlunos, expiresAt)
         : await adminRepository.setPersonalPlano(targetUserId, "FREE", FREE_LIMITE_ALUNOS);
     } else {
       const err = new Error("Somente ALUNO ou PERSONAL/NUTRICIONISTA podem ter Premium.");
@@ -621,13 +656,35 @@ export const adminService = {
       throw err;
     }
 
+    const daysSuffix = active && days ? ` por ${days} dia(s)` : "";
     await adminRepository.createAuditLog(
       adminId,
       "PREMIUM_TOGGLE",
       targetUserId,
-      `${active ? "concedido" : "revogado"} (${target.role})`
+      `${active ? "concedido" : "revogado"} (${target.role})${daysSuffix}`
     );
-    return { user: updated };
+    return { user: toSafeUser(updated) };
+  },
+
+  /**
+   * Fase 90 — confirmar e-mail manualmente (suporte: e-mail nunca chegou,
+   * conta antiga sem verificação, etc.), mesmo espírito de bypass já
+   * documentado pro Premium/plano. Idempotente: reaplicar em quem já está
+   * verificado não sobrescreve a data original nem gera log duplicado.
+   */
+  async verifyUserEmail(adminId: string, targetUserId: string) {
+    const target = await adminRepository.findUserById(targetUserId);
+    if (!target) {
+      const err = new Error("Usuário não encontrado.");
+      (err as any).statusCode = 404;
+      throw err;
+    }
+    if (target.emailVerifiedAt) {
+      return { user: toSafeUser(target) };
+    }
+    const updated = await adminRepository.markEmailVerified(targetUserId);
+    await adminRepository.createAuditLog(adminId, "EMAIL_VERIFIED_BY_ADMIN", targetUserId, target.email);
+    return { user: toSafeUser(updated) };
   },
 
   // --- Fase 34.5: curadoria de templates SELF ("Meu treino pessoal") ---
