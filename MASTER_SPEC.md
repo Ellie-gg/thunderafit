@@ -1031,11 +1031,160 @@ decisão/priorização futura):
 ### Backlog operacional herdado
 Ver Seção 7 acima (Neon, billing, Android, webhook).
 
-### Publicação em beta fechado (sem fase — configuração de loja)
-Google Play tem **Internal testing** (até 100 emails, sem review) e Apple tem
-**TestFlight** (até 100 testers internos sem review, ou até 10.000 externos com review
-leve) — permite testar com usuários selecionados antes de qualquer publicação pública,
-em paralelo ao resto do roadmap, sem depender de nenhuma fase de código.
+### Grupo X — Publicação do app na Google Play Store (PLANEJAMENTO — pesquisa concluída 2026-07-29, nenhum código/config executado ainda)
+
+Substitui a nota curta "Publicação em beta fechado" que existia aqui antes — pesquisa
+detalhada (políticas vigentes do Google Play em 2026) + auditoria do que já existe no
+repo (`frontend/android/`, `CAPACITOR_SPIKE.md`, Fase 19). Documento vivo: políticas de
+loja mudam com frequência: revalidar as datas/números abaixo direto no Play Console
+Help antes de executar, especialmente se isso rodar bem depois de 2026-07-29.
+
+**Onde este trabalho já parte na frente:** scaffold Capacitor 8.4.2 já existe em
+`frontend/android/` (não precisa criar do zero, `npx cap add android`), `applicationId`
+já reservado (`app.thunderafit.twa`), e o app já é 100% WebView apontando pra produção
+real (`server.url`) — não tem build estático próprio pra manter em sincronia.
+
+**Onde este trabalho tem uma dívida pendente crítica:** o spike de cold start da Fase 19
+(cookie httpOnly sobrevive a kill agressivo do processo pelo Android?) **nunca foi
+validado empiricamente** — o `CAPACITOR_SPIKE.md` documenta a mitigação aplicada
+(`flush()` no lifecycle) mas o teste real nunca rodou por falta de JDK/Android
+Studio/emulador neste host (confirmado em Windows e WSL, falha em `JAVA_HOME is not
+set`). **Isso tem que ser o primeiro passo técnico**, antes de qualquer submissão pra
+loja — publicar um app cuja sessão pode não persistir é pior do que não publicar.
+
+#### 1. Precisa instalar algo local? Sim — ou usar build em nuvem
+
+Pra gerar o `.aab` assinado e rodar o spike pendente, é preciso em algum host (não
+precisa ser esta máquina especificamente):
+- **JDK 17+** (o Android Gradle Plugin 8.x, usado pelo Capacitor 8, exige JDK 17).
+- **Android Studio** (traz o Android SDK + Gradle wrapper já configurados).
+- Pelo menos 1 emulador Android **e**, se possível, 1 aparelho físico real de OEM
+  agressivo em matar processo em segundo plano (Xiaomi/MIUI ou Samsung/One UI) — o
+  emulador sozinho não repete de forma confiável o comportamento de kill agressivo que
+  o spike da Fase 19 precisa testar.
+- `ANDROID_HOME`/`JAVA_HOME` configurados no ambiente.
+- Requisito de hardware do próprio Android Studio: mínimo 8GB RAM (na prática o
+  emulador rodando junto consome mais, ~10-12GB confortável), CPU x86_64 com suporte a
+  virtualização (Intel VT-x/AMD-V — necessário pro emulador).
+
+**Alternativa real pra NÃO instalar nada local:** buildar em CI na nuvem, mesmo
+espírito zero-touch já usado pro deploy do backend/frontend (Cloud Build). GitHub
+Actions com runner `ubuntu-latest` hospedado já vem com JDK + Android SDK
+pré-instalados — dá pra rodar `./gradlew bundleRelease` num workflow sem instalar nada
+localmente, só falta um Android físico/emulador conectado ao runner pra rodar o teste
+de cold start em si (esse teste específico, por natureza, exige um dispositivo real ou
+emulador local em algum momento — não dá pra "testar kill agressivo de processo" só
+compilando na nuvem). Serviços de CI mobile dedicados (Codemagic, Bitrise, Capawesome
+Cloud) são outra opção paga, mas não trazem nada que o GitHub Actions já gratuito deste
+repo não resolva pro build em si — o Ionic Appflow (opção historicamente popular) anunciou
+desligamento pra dez/2027, evitar investir nele agora.
+
+**Recomendação:** ainda assim vale ter Android Studio local numa máquina de
+desenvolvimento (mesmo que não esta) pelo menos pra rodar o spike de cold start
+interativamente (precisa de `adb`, inspecionar `logcat`, etc. — mais fácil local que via
+CI) — depois disso, os builds de release subsequentes podem migrar pra CI.
+
+#### 2. Conta de desenvolvedor Google Play — decisão de negócio, não técnica
+
+- Taxa única de US$25 (não é assinatura). A partir de set/2026, Google endureceu a
+  verificação de identidade (documentos + cartão + perfil precisam bater exatamente).
+- **Conta pessoal** (a mais simples/rápida de abrir): apps novos publicados por contas
+  pessoais criadas depois de 13/nov/2023 são OBRIGADOS a rodar teste fechado (closed
+  testing) com no mínimo **12 testers opt-in por 14 dias corridos contínuos** antes de
+  poder solicitar acesso à produção (regra reduzida de 20 pra 12 testers em
+  11/dez/2024). "Opt-in" = aceitou o convite E instalou o app com a MESMA conta Google
+  convidada — só convidar não conta.
+- **Conta de organização**: isenta dessa regra dos 12 testers, mas exige um número
+  D-U-N-S (identificador de empresa de 9 dígitos, processo de obtenção separado e mais
+  lento) e verificação de que quem está criando a conta realmente representa a empresa.
+- Acesso à produção depois do período de teste é um formulário de 3 seções dentro do
+  Play Console; review costuma levar **até 7 dias**.
+- **Decisão pro fundador**: conta pessoal é mais rápida de abrir mas trava a
+  publicação por pelo menos 14 dias corridos de teste com pessoas reais (precisa
+  recrutar 12 testers dispostos a manter o app instalado 2 semanas); conta de
+  organização pula essa espera mas depende de conseguir o D-U-N-S primeiro (pode levar
+  dias/semanas dependendo do CNPJ).
+
+#### 3. Passos macro, em ordem
+
+1. **Rodar o spike de cold start pendente** (`CAPACITOR_SPIKE.md`) — só depois de
+   confirmado que a sessão sobrevive a kill agressivo (ou aplicado o "Ajuste #2" lá
+   documentado — `AuthGuard` sondar a sessão real em vez de confiar só no
+   `localStorage`) faz sentido investir no resto.
+2. **Decidir conta pessoal vs organização** (ver item 2 acima) e criar a conta ($25).
+3. **Gerar a keystore de release** e guardar com segurança MÁXIMA (senha do keystore +
+   o arquivo `.jks` em si) — perder isso impede publicar qualquer atualização futura do
+   mesmo app (só resta publicar um app novo, do zero, perdendo todo histórico/reviews).
+   Habilitar **Play App Signing** (Google guarda e gerencia a chave de assinatura final
+   de distribuição; o desenvolvedor só mantém a "upload key", que é recuperável se
+   perdida, ao contrário da chave de assinatura em si).
+4. **Buildar o Android App Bundle**: `cd frontend/android && ./gradlew bundleRelease`
+   → gera o `.aab` (não é mais o `.apk` de debug já usado no spike).
+5. **Metadados de loja**: ícone (todos os tamanhos), screenshots (várias densidades de
+   tela), feature graphic, descrição curta/longa, categoria (Saúde e fitness).
+6. **Compliance obrigatória, todas dentro do Play Console** (nenhuma delas tem
+   dependência de código, só de conteúdo/config):
+   - **Política de Privacidade pública**: precisa estar hospedada numa URL real, sem
+     geofence, nunca um PDF. Como o domínio próprio `thunderafit.com.br` já existe e é
+     verificado (Fase 83, DNS/Resend), a rota mais simples é publicar a política numa
+     página estática do próprio site em vez de um gerador terceiro — evita depender de
+     um serviço externo pra manter algo tão sensível no ar.
+   - **Data Safety Form**: declarar exatamente os dados reais coletados (e-mail, nome,
+     foto de perfil, cidade/UF, dados de anamnese/saúde, dados de pagamento — processado
+     pelo Stripe, nunca pelo próprio app). Precisa bater com o que a política de
+     privacidade diz — não pode divergir.
+   - **Health apps declaration form**: OBRIGATÓRIO pra **todo** app desde 31/ago/2024,
+     mesmo os que não têm nenhuma feature de saúde (esses só certificam "não ofereço
+     features de saúde"). O ThunderaFit tem de verdade (anamnese com peso/altura,
+     registro de treino) — precisa declarar corretamente as categorias certas
+     (rastreador de fitness/exercício), revisando o que `src/anamnesis` de fato coleta
+     antes de preencher.
+   - **Content rating (IARC)**: questionário dentro do Play Console, ~10-15min,
+     resultado imediato, sem custo.
+   - **App access / Sign-in details**: como o app exige login, é preciso fornecer no
+     Play Console credenciais de teste REUTILIZÁVEIS (uma conta PERSONAL, uma ALUNO —
+     talvez uma NUTRICIONISTA também) sem 2FA, em inglês nas instruções, sempre
+     válidas — o revisor do Google não consegue testar o app sem isso.
+   - **Target API level**: a partir de 31/ago/2026, apps NOVOS precisam mirar Android
+     16 (API 36); apps já existentes precisam mirar pelo menos Android 15 (API 35) pra
+     continuarem visíveis em aparelhos com Android mais novo que o alvo do app.
+     Verificar o `compileSdkVersion`/`targetSdkVersion` atual em
+     `frontend/android/variables.gradle` contra isso antes de submeter — se o Capacitor
+     8.4.2 já instalado não cobrir, pode exigir atualizar o Capacitor/Android Gradle
+     Plugin primeiro (fora de escopo desta fase de planejamento, só um risco a
+     verificar).
+7. **Billing — achado importante da pesquisa**: personal trainer é um serviço "1:1
+   online pago" classificado como serviço do mundo real, **explicitamente isento** da
+   obrigação de usar o Google Play Billing (mesma categoria de transporte, aluguel de
+   academia, delivery de comida). O Stripe Checkout hospedado que já está implementado
+   (Fase 20/87) **pode continuar sendo usado como está dentro do WebView**, sem risco
+   de rejeição por essa política — não precisa reimplementar billing nativo do Google
+   Play só por causa da publicação. Vale, mesmo assim, guardar/printar a página da
+   política que confirma essa isenção antes de submeter, caso um revisor específico
+   questione manualmente.
+8. **Testar em track fechado antes de produção**: subir primeiro em **Internal
+   testing** (até 100 e-mails, sem review nenhum — mais rápido de iterar), depois
+   promover pra **Closed testing** (que é o track que CONTA pros 12 testers/14 dias, se
+   a conta for pessoal).
+9. **Solicitar acesso à produção** (formulário de 3 seções) só depois de cumprido o
+   requisito de teste — review geralmente ≤7 dias.
+10. Só então o app fica público na Play Store de verdade.
+
+#### 4. Riscos específicos do ThunderaFit a vigiar
+
+- O maior risco é técnico, não burocrático: cold start nunca validado (item 1 acima).
+- `applicationId` (`app.thunderafit.twa`) precisa ser único globalmente na Play Store —
+  confirmar que nenhum outro app já publicado usa exatamente esse id antes de submeter
+  (raro colidir, mas travaria a submissão se acontecer).
+- App é 100% WebView de produção — qualquer bug em produção (site) aparece
+  IMEDIATAMENTE no app nativo também; não é um risco novo introduzido pela loja, só uma
+  característica já existente da arquitetura escolhida na Fase 19.
+
+*Esforço sugerido pra execução (quando decidido seguir): médio-alto, mas quase todo ele
+é configuração/burocracia, não código — o único código potencialmente necessário é o
+"Ajuste #2" do `CAPACITOR_SPIKE.md` (se o spike de cold start falhar) e uma eventual
+bump de `targetSdkVersion`. Modelo: Sonnet 5 é suficiente (nenhuma decisão arquitetural
+complexa, é execução de um checklist bem definido).*
 
 ### Adiado de propósito (decisão de produto, não bloqueio)
 Login Google · camadas anti-abuso de conta · web pública vs. só app nas lojas · programa
