@@ -52,18 +52,18 @@ function RoleEditor({ user, onChanged }: { user: AdminUser; onChanged: () => voi
 
   if (!editing) {
     return (
-      <Button type="button" variant="ghost" size="sm" onClick={() => setEditing(true)}>
+      <Button type="button" variant="ghost" size="sm" className="h-7 px-2 text-[11px]" onClick={() => setEditing(true)}>
         {t("roleEditor.edit")}
       </Button>
     );
   }
 
   return (
-    <div className="flex flex-col items-end gap-1.5 rounded-md border border-accent-secondary/40 bg-accent-secondary/10 p-2">
+    <div className="flex w-full flex-col items-stretch gap-1.5 rounded-md border border-accent-secondary/40 bg-accent-secondary/10 p-2 sm:w-auto sm:items-end">
       <select
         value={pendingRole}
         onChange={(e) => setPendingRole(e.target.value as Role)}
-        className="h-9 rounded-md border border-border bg-surface px-2 text-xs text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+        className="h-8 rounded-md border border-border bg-surface px-2 text-xs text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
       >
         {EDITABLE_ROLES.map((r) => (
           <option key={r} value={r}>
@@ -81,14 +81,15 @@ function RoleEditor({ user, onChanged }: { user: AdminUser; onChanged: () => voi
           {mutation.error instanceof ApiError ? mutation.error.message : t("roleEditor.genericError")}
         </p>
       )}
-      <div className="flex gap-2">
-        <Button type="button" size="sm" onClick={() => setEditing(false)}>
+      <div className="flex flex-wrap gap-2">
+        <Button type="button" size="sm" className="h-8 px-2.5 text-xs" onClick={() => setEditing(false)}>
           {tCommon("cancel")}
         </Button>
         <Button
           type="button"
           variant="secondary"
           size="sm"
+          className="h-8 px-2.5 text-xs"
           disabled={mutation.isPending || pendingRole === user.role}
           onClick={() => mutation.mutate(pendingRole)}
         >
@@ -165,7 +166,13 @@ function PremiumEditor({ user, onChanged }: { user: AdminUser; onChanged: () => 
     return (
       <div className="flex flex-col items-end gap-0.5">
         <span className="text-xs text-muted">{statusLabel}</span>
-        <Button type="button" variant="ghost" size="sm" onClick={() => setConfirming(true)}>
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          className="h-7 px-2 text-[11px]"
+          onClick={() => setConfirming(true)}
+        >
           {isPremium ? t("premiumEditor.revoke") : t("premiumEditor.grant")}
         </Button>
       </div>
@@ -173,14 +180,14 @@ function PremiumEditor({ user, onChanged }: { user: AdminUser; onChanged: () => 
   }
 
   return (
-    <div className="flex flex-col items-end gap-1.5 rounded-md border border-accent/40 bg-accent/10 p-2">
+    <div className="flex w-full flex-col items-stretch gap-1.5 rounded-md border border-accent/40 bg-accent/10 p-2 sm:w-auto sm:items-end">
       <p className="text-xs text-accent">
         {isPremium
           ? t("premiumEditor.confirmRevoke", { email: user.email })
           : t("premiumEditor.confirmGrant", { email: user.email })}
       </p>
       {!isPremium && (
-        <div className="flex flex-col items-end gap-1.5">
+        <div className="flex flex-wrap items-stretch gap-1.5 sm:flex-col sm:items-end">
           {isPersonalLike && (
             <select
               value={pendingTier}
@@ -207,14 +214,15 @@ function PremiumEditor({ user, onChanged }: { user: AdminUser; onChanged: () => 
           {mutation.error instanceof ApiError ? mutation.error.message : t("premiumEditor.genericError")}
         </p>
       )}
-      <div className="flex gap-2">
-        <Button type="button" size="sm" onClick={() => setConfirming(false)}>
+      <div className="flex flex-wrap gap-2">
+        <Button type="button" size="sm" className="h-8 px-2.5 text-xs" onClick={() => setConfirming(false)}>
           {tCommon("cancel")}
         </Button>
         <Button
           type="button"
           variant="secondary"
           size="sm"
+          className="h-8 px-2.5 text-xs"
           disabled={mutation.isPending}
           onClick={() => mutation.mutate(!isPremium)}
         >
@@ -258,14 +266,20 @@ function EmailVerificationEditor({ user, onChanged }: { user: AdminUser; onChang
 
   if (!confirming) {
     return (
-      <Button type="button" variant="ghost" size="sm" onClick={() => setConfirming(true)}>
+      <Button
+        type="button"
+        variant="ghost"
+        size="sm"
+        className="h-7 px-2 text-[11px]"
+        onClick={() => setConfirming(true)}
+      >
         {t("emailVerification.markVerified")}
       </Button>
     );
   }
 
   return (
-    <div className="flex flex-col items-end gap-1.5 rounded-md border border-accent-secondary/40 bg-accent-secondary/10 p-2">
+    <div className="flex w-full flex-col items-stretch gap-1.5 rounded-md border border-accent-secondary/40 bg-accent-secondary/10 p-2 sm:w-auto sm:items-end">
       <p className="text-xs text-accent-secondary">
         {t("emailVerification.confirmMessage", { email: user.email })}
       </p>
@@ -274,14 +288,15 @@ function EmailVerificationEditor({ user, onChanged }: { user: AdminUser; onChang
           {mutation.error instanceof ApiError ? mutation.error.message : t("emailVerification.genericError")}
         </p>
       )}
-      <div className="flex gap-2">
-        <Button type="button" size="sm" onClick={() => setConfirming(false)}>
+      <div className="flex flex-wrap gap-2">
+        <Button type="button" size="sm" className="h-8 px-2.5 text-xs" onClick={() => setConfirming(false)}>
           {tCommon("cancel")}
         </Button>
         <Button
           type="button"
           variant="secondary"
           size="sm"
+          className="h-8 px-2.5 text-xs"
           disabled={mutation.isPending}
           onClick={() => mutation.mutate()}
         >
@@ -317,14 +332,20 @@ function DeleteUserButton({ user, onDeleted }: { user: AdminUser; onDeleted: () 
 
   if (!confirming) {
     return (
-      <Button type="button" variant="ghost" size="sm" onClick={() => setConfirming(true)}>
+      <Button
+        type="button"
+        variant="ghost"
+        size="sm"
+        className="h-7 px-2 text-[11px]"
+        onClick={() => setConfirming(true)}
+      >
         {t("deleteUser.button")}
       </Button>
     );
   }
 
   return (
-    <div className="flex flex-col items-end gap-1.5 rounded-md border border-danger/40 bg-danger/10 p-2">
+    <div className="flex w-full flex-col items-stretch gap-1.5 rounded-md border border-danger/40 bg-danger/10 p-2 sm:w-auto sm:items-end">
       <p className="text-xs text-danger">
         {t("deleteUser.confirmMessage", { email: user.email })}
       </p>
@@ -333,16 +354,16 @@ function DeleteUserButton({ user, onDeleted }: { user: AdminUser; onDeleted: () 
           {mutation.error instanceof ApiError ? mutation.error.message : t("deleteUser.genericError")}
         </p>
       )}
-      <div className="flex gap-2">
-        <Button type="button" size="sm" onClick={() => setConfirming(false)}>
+      <div className="flex flex-wrap gap-2">
+        <Button type="button" size="sm" className="h-8 px-2.5 text-xs" onClick={() => setConfirming(false)}>
           {tCommon("cancel")}
         </Button>
         <Button
           type="button"
           variant="secondary"
           size="sm"
+          className="h-8 border-danger/60 px-2.5 text-xs text-danger hover:border-danger"
           disabled={mutation.isPending}
-          className="border-danger/60 text-danger hover:border-danger"
           onClick={() => mutation.mutate()}
         >
           {mutation.isPending ? t("deleteUser.deleting") : t("deleteUser.confirmButton")}
@@ -411,19 +432,19 @@ function UsersContent() {
               <div
                 key={u.id}
                 data-testid={`user-row-${u.id}`}
-                className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-border px-3 py-2"
+                className="flex flex-col gap-3 rounded-md border border-border px-3 py-2 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between"
               >
-                <div className="flex items-center gap-3">
+                <div className="flex min-w-0 items-center gap-3">
                   <UserAvatar email={u.email} avatarUrl={u.avatarUrl} size={36} />
-                  <div className="flex flex-col">
-                    <span className="text-sm font-semibold">{u.name?.trim() || u.email}</span>
-                    {u.name?.trim() && <span className="text-xs text-muted">{u.email}</span>}
-                    <span className="text-xs text-muted">
+                  <div className="flex min-w-0 flex-col">
+                    <span className="truncate text-sm font-semibold">{u.name?.trim() || u.email}</span>
+                    {u.name?.trim() && <span className="truncate text-xs text-muted">{u.email}</span>}
+                    <span className="truncate text-xs text-muted">
                       {u.role} · {t("linkedSince", { date: new Date(u.createdAt).toLocaleDateString(intlLocale) })}
                     </span>
                   </div>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2 sm:justify-end">
                   {u.isOrphanAluno && (
                     <span className="rounded-full border border-danger/40 bg-danger/10 px-2 py-0.5 text-xs font-semibold text-danger">
                       {t("orphanBadge")}
@@ -463,7 +484,7 @@ function UsersContent() {
             ))}
             {data.users.length === 0 && <p className="text-sm text-muted">{t("empty")}</p>}
 
-            <div className="flex items-center justify-between pt-2">
+            <div className="flex flex-col gap-2 pt-2 sm:flex-row sm:items-center sm:justify-between">
               <span className="text-xs text-muted">
                 {t("pagination", { page: data.page, totalPages, total: data.total })}
               </span>
@@ -471,6 +492,7 @@ function UsersContent() {
                 <Button
                   variant="secondary"
                   size="sm"
+                  className="h-8 px-2.5 text-xs"
                   disabled={page <= 1}
                   onClick={() => setPage((p) => p - 1)}
                 >
@@ -479,6 +501,7 @@ function UsersContent() {
                 <Button
                   variant="secondary"
                   size="sm"
+                  className="h-8 px-2.5 text-xs"
                   disabled={page >= totalPages}
                   onClick={() => setPage((p) => p + 1)}
                 >
