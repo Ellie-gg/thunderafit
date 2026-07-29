@@ -4,16 +4,7 @@ import { BoltMark } from "@/components/bolt-mark";
 import { PrBadgePill, PrOverflowPill } from "@/components/pr-badge-pill";
 import { useActiveIntlLocale } from "@/i18n/use-active-locale";
 import { useTranslations } from "next-intl";
-
-// Fase 39: formato Horas:Min:Segundos pedido explicitamente — sempre com a
-// hora (mesmo "0:12:34"), não só MM:SS, pra treinos que passam de 1h também
-// ficarem corretos sem mudar de formato no meio.
-function formatDuration(totalSeconds: number): string {
-  const h = Math.floor(totalSeconds / 3600);
-  const m = Math.floor((totalSeconds % 3600) / 60);
-  const s = totalSeconds % 60;
-  return `${h}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
-}
+import { formatDuration } from "@/lib/utils";
 
 // Fase 35/37/39: card de resumo pós-treino — uma peça só, dois usos: recapitulação
 // motivacional dentro do app E imagem exportável (proporção 9:16, Stories do

@@ -95,6 +95,9 @@ test("aluno aplica um treino pessoal curado pelo admin, executa e vê o CTA de c
   await expect(page).toHaveURL(/\/programas\/[a-f0-9-]+$/);
 
   await page.getByRole("link", { name: /Abrir/ }).first().click();
+  // Fase 89: cronômetro com início explícito — precisa iniciar antes de
+  // conseguir concluir a sessão.
+  await page.getByRole("button", { name: "Iniciar Treino" }).click();
   const repsInput = page.locator('input[type="number"]').nth(0);
   const weightInput = page.locator('input[type="number"]').nth(1);
   await repsInput.fill("10");

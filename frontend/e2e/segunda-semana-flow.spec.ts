@@ -74,6 +74,8 @@ test("segunda semana do mesmo treino: formulário volta a aparecer e mostra refe
   await expect(page).toHaveURL(new RegExp(`/treinos/${workout.workout.id}$`));
 
   // --- Semana 1: registra a série prescrita e conclui a sessão ---
+  // Fase 89: cronômetro com início explícito.
+  await page.getByRole("button", { name: "Iniciar Treino" }).click();
   const repsInput = page.locator('input[type="number"]').nth(0);
   const weightInput = page.locator('input[type="number"]').nth(1);
   await repsInput.fill("10");

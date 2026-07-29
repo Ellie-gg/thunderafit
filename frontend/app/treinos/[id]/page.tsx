@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useTranslations } from "next-intl";
@@ -8,7 +8,15 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { getWorkout, completeWorkout } from "@/lib/api/workouts";
 import { ApiError } from "@/lib/api/client";
 import { useAuthStore } from "@/lib/store/auth-store";
-import { firstNameOrEmailPrefix, splitSetLogsBySessionBoundary } from "@/lib/utils";
+import { firstNameOrEmailPrefix, formatDuration, splitSetLogsBySessionBoundary } from "@/lib/utils";
+import {
+  IDLE_AUTO_FINISH_MS,
+  clearWorkoutSession,
+  loadWorkoutSession,
+  saveWorkoutSession,
+  workoutSessionPhase,
+  type WorkoutSessionState,
+} from "@/lib/workout-session-timer";
 import { AuthGuard } from "@/components/auth-guard";
 import { AppHeader } from "@/components/app-header";
 import { Card } from "@/components/ui/card";
@@ -18,6 +26,43 @@ import { ExerciseExecutionCard } from "@/components/exercise-execution-card";
 import { PostWorkoutSummaryModal } from "@/components/post-workout-summary-modal";
 import { useActiveIntlLocale } from "@/i18n/use-active-locale";
 import type { WorkoutCompletionSummary } from "@/lib/types";
+
+function IdleWarningModal({
+  remainingMs,
+  onContinue,
+  onFinishNow,
+}: {
+  remainingMs: number;
+  onContinue: () => void;
+  onFinishNow: () => void;
+}) {
+  const t = useTranslations("execucaoTreino");
+  const remainingSeconds = Math.max(0, Math.ceil(remainingMs / 1000));
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
+      <Card className="flex w-full max-w-xs flex-col gap-4">
+        <div className="flex flex-col gap-1">
+          <h2 className="font-display text-lg font-bold">{t("idleWarningTitle")}</h2>
+          <p className="text-sm text-muted">{t("idleWarningBody")}</p>
+        </div>
+        <div className="flex flex-col items-center gap-1 rounded-md border border-border py-3">
+          <span className="text-xs font-semibold uppercase tracking-wide text-muted">
+            {t("idleWarningCountdownLabel")}
+          </span>
+          <span className="font-mono-nums text-2xl font-bold text-danger">
+            {formatDuration(remainingSeconds)}
+          </span>
+        </div>
+        <div className="flex flex-col gap-2">
+          <Button onClick={onContinue}>{t("continueWorkout")}</Button>
+          <Button onClick={onFinishNow} variant="secondary">
+            {t("completeSession")}
+          </Button>
+        </div>
+      </Card>
+    </div>
+  );
+}
 
 function ExecucaoContent() {
   const t = useTranslations("execucaoTreino");
@@ -29,15 +74,16 @@ function ExecucaoContent() {
   const queryClient = useQueryClient();
   const [summary, setSummary] = useState<WorkoutCompletionSummary | null>(null);
   const [durationSeconds, setDurationSeconds] = useState<number | null>(null);
-  // Fase 39: cronômetro real da sessão — marca o momento em que a tela de
-  // execução abriu; a duração exibida no card é (agora do clique em
-  // "Concluir" − este timestamp). Puramente client-side, sem migration:
-  // substitui a aproximação anterior (primeira a última série logada), que
-  // não contava o aquecimento antes do primeiro registro. Limitação aceita:
-  // se o aluno deixar a aba aberta em segundo plano por muito tempo antes de
-  // concluir, a duração infla (não há pausa/retomada) — trade-off razoável
-  // frente à aproximação anterior, que também não era exata.
-  const [sessionStartedAt] = useState(() => Date.now());
+
+  // Fase 89: cronômetro real com início explícito ("Iniciar Treino"),
+  // persistido em localStorage por treino (sobrevive a refresh/fechar aba) —
+  // substitui o início implícito da Fase 39 (que marcava o timestamp já na
+  // abertura da tela, mesmo que o aluno só ficasse olhando os exercícios
+  // antes de começar de verdade). Ver workout-session-timer.ts pro guard-rail
+  // de inatividade (aviso + auto-encerramento).
+  const [session, setSession] = useState<WorkoutSessionState | null>(() => loadWorkoutSession(workoutId));
+  const [now, setNow] = useState(() => Date.now());
+  const autoFinishTriggeredRef = useRef(false);
 
   const workoutQuery = useQuery({
     queryKey: ["workout", workoutId],
@@ -59,10 +105,88 @@ function ExecucaoContent() {
       queryClient.invalidateQueries({ queryKey: ["workout", workoutId] });
       // A sugestão de próxima sessão no programa depende do lastCompletedAt.
       queryClient.invalidateQueries({ queryKey: ["workout-program"] });
-      setDurationSeconds(Math.round((Date.now() - sessionStartedAt) / 1000));
       setSummary(data.summary);
     },
   });
+
+  // Relógio vivo enquanto a sessão está aberta (em andamento ou em aviso de
+  // inatividade) — reavalia "now" a cada segundo, o que recalcula a fase da
+  // sessão e o tempo decorrido exibido nos botões.
+  useEffect(() => {
+    if (!session || summary) return;
+    const interval = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(interval);
+  }, [session, summary]);
+
+  // Qualquer clique/tecla conta como atividade enquanto a sessão está aberta
+  // — não exige que o aluno marque uma série pra "provar" que ainda está ali
+  // (ex: só consultando a instrução de um exercício já conta).
+  useEffect(() => {
+    if (!session || summary) return;
+    function touch() {
+      const nowTs = Date.now();
+      setSession((prev) => {
+        if (!prev) return prev;
+        const next = { ...prev, lastActivityAt: nowTs };
+        saveWorkoutSession(workoutId, next);
+        return next;
+      });
+    }
+    window.addEventListener("pointerdown", touch);
+    window.addEventListener("keydown", touch);
+    return () => {
+      window.removeEventListener("pointerdown", touch);
+      window.removeEventListener("keydown", touch);
+    };
+  }, [session, summary, workoutId]);
+
+  const idleMs = session ? now - session.lastActivityAt : 0;
+  const phase = workoutSessionPhase(session, now);
+
+  // Auto-encerra quando o prazo de graça do aviso de inatividade esgota —
+  // conta a duração até a ÚLTIMA atividade real, não até este instante, senão
+  // o tempo parado no bolso do aluno também entraria na duração. A MESMA
+  // regra cobre uma sessão "pendurada" de uma visita anterior (ex: aluno
+  // fechou o app sem concluir e só voltou dias depois): como `now` já reflete
+  // o instante real na primeira renderização, o efeito dispara imediatamente
+  // no mount se a inatividade já for antiga o bastante — sem precisar de um
+  // caminho de código separado pra "sessão velha".
+  useEffect(() => {
+    if (!session || summary || autoFinishTriggeredRef.current) return;
+    if (idleMs < IDLE_AUTO_FINISH_MS) return;
+    autoFinishTriggeredRef.current = true;
+    setDurationSeconds(Math.round((session.lastActivityAt - session.startedAt) / 1000));
+    clearWorkoutSession(workoutId);
+    setSession(null);
+    completeMutation.mutate();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [idleMs, session, summary, workoutId]);
+
+  function handleStartWorkout() {
+    const nowTs = Date.now();
+    const next: WorkoutSessionState = { startedAt: nowTs, lastActivityAt: nowTs };
+    saveWorkoutSession(workoutId, next);
+    setSession(next);
+    setNow(nowTs);
+  }
+
+  function handleContinueAfterIdle() {
+    const nowTs = Date.now();
+    setSession((prev) => {
+      if (!prev) return prev;
+      const next = { ...prev, lastActivityAt: nowTs };
+      saveWorkoutSession(workoutId, next);
+      return next;
+    });
+    setNow(nowTs);
+  }
+
+  function handleCompleteManually() {
+    if (!session) return;
+    setDurationSeconds(Math.round((Date.now() - session.startedAt) / 1000));
+    clearWorkoutSession(workoutId);
+    completeMutation.mutate();
+  }
 
   if (workoutQuery.isLoading) {
     return (
@@ -129,6 +253,26 @@ function ExecucaoContent() {
         </div>
       </div>
 
+      {/* Fase 89: início explícito do cronômetro — antes a duração começava a
+          contar já na abertura da tela (Fase 39), mesmo que o aluno só
+          ficasse olhando os exercícios antes de treinar de verdade. */}
+      <Card className="flex flex-col items-center gap-2">
+        {phase === "not-started" ? (
+          <Button onClick={handleStartWorkout} disabled={completeMutation.isPending} className="w-full">
+            {t("startWorkout")}
+          </Button>
+        ) : (
+          <>
+            <span className="text-xs font-semibold uppercase tracking-wide text-muted">
+              {t("sessionInProgress")}
+            </span>
+            <span className="font-mono-nums text-3xl font-bold">
+              {formatDuration(Math.round((now - (session?.startedAt ?? now)) / 1000))}
+            </span>
+          </>
+        )}
+      </Card>
+
       <div className="flex flex-col gap-4">
         {sortedExercises.map((ex, index) => (
           <ExerciseExecutionCard
@@ -154,20 +298,30 @@ function ExecucaoContent() {
           </p>
         )}
         <Button
-          onClick={() => completeMutation.mutate()}
-          disabled={completeMutation.isPending}
+          onClick={handleCompleteManually}
+          disabled={completeMutation.isPending || !session}
           variant={allSetsDone ? "default" : "secondary"}
         >
           {completeMutation.isPending
             ? t("completing")
             : completeMutation.isSuccess
               ? t("sessionCompleted")
-              : t("completeSession")}
+              : session
+                ? `${t("completeSession")} (${formatDuration(Math.round((now - session.startedAt) / 1000))})`
+                : t("startWorkoutFirst")}
         </Button>
         {completeMutation.isError && (
           <p className="text-sm text-danger">{t("completeError")}</p>
         )}
       </Card>
+
+      {phase === "idle-warning" && (
+        <IdleWarningModal
+          remainingMs={IDLE_AUTO_FINISH_MS - idleMs}
+          onContinue={handleContinueAfterIdle}
+          onFinishNow={handleCompleteManually}
+        />
+      )}
 
       {summary && (
         <PostWorkoutSummaryModal
