@@ -106,6 +106,10 @@ export const billingService = {
       planoAssinatura: user.planoAssinatura,
       limiteAlunos: user.limiteAlunos,
       hasSubscription: !!user.stripeSubscriptionId,
+      // Fase 93: exposto pro frontend mostrar "quando termina" numa
+      // concessão manual do admin (Fase 90) — sempre null pra assinatura
+      // Stripe real (applyPaidPlan/applyFreePlan sempre limpam este campo).
+      planoAssinaturaExpiresAt: user.planoAssinaturaExpiresAt,
     };
   },
 
