@@ -79,6 +79,16 @@ model User {
   // reduz um plano pago de verdade. Revertido sozinho (pra FREE) na próxima
   // leitura após vencer, sem cron/job separado (ver src/lib/plan-expiry.ts).
   planoAssinaturaExpiresAt DateTime?
+  // Fase 103 — carência antes de bloquear alunos já vinculados quando o
+  // Personal fica acima do novo limiteAlunos (downgrade, cancelamento ou
+  // concessão manual vencida). Marca desde QUANDO a contagem de
+  // ClientRelation passou a exceder limiteAlunos — null enquanto estiver
+  // dentro do limite. Computado sob demanda (mesmo espírito de
+  // planoAssinaturaExpiresAt/plan-expiry.ts, sem cron): quem checa o acesso
+  // seta na primeira vez que detecta o excesso, e limpa assim que o Personal
+  // volta a ficar dentro do limite (desvinculando alunos). Ver
+  // src/lib/plan-expiry.ts#getPersonalAccessStatus.
+  overLimiteAlunosSince   DateTime?
   lastLoginAt      DateTime?
   // Fase 20 (billing Stripe): vínculo do usuário com o Stripe. customerId é
   // setado no checkout.session.completed e usado para mapear eventos de

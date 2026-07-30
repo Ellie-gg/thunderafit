@@ -24,6 +24,19 @@ export const relationsRepository = {
     return prisma.clientRelation.findMany({ where: { personalId } });
   },
 
+  // Fase 103: desvincular preserva o WorkoutProgram/histórico do aluno de
+  // propósito — só remove o ClientRelation em si (decisão do fundador:
+  // remover um aluno pra regularizar o plano nunca deveria destruir dado
+  // real). Se o Personal vincular esse aluno de novo depois, o histórico
+  // antigo continua lá (`WorkoutProgram.alunoId`/`personalId` não têm FK
+  // cascade em ClientRelation, então nada é apagado em cascata por esta
+  // operação).
+  async delete(personalId: string, alunoId: string) {
+    return prisma.clientRelation.delete({
+      where: { personalId_alunoId: { personalId, alunoId } },
+    });
+  },
+
   async updatePaymentReminder(
     personalId: string,
     alunoId: string,

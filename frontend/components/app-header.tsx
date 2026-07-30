@@ -12,6 +12,7 @@ import { NotificationBell } from "@/components/notification-bell";
 import { UserAvatar } from "@/components/user-avatar";
 import { AvatarUpload } from "@/components/avatar-upload";
 import { EmailVerificationBanner } from "@/components/email-verification-banner";
+import { PersonalOverLimitBanner } from "@/components/personal-over-limit-banner";
 import type { Role } from "@/lib/types";
 
 const ROLE_ACCENT_VAR: Record<Role, string> = {
@@ -215,6 +216,7 @@ export function AppHeader() {
       </div>
     </header>
     <EmailVerificationBanner />
+    <PersonalOverLimitBanner />
     </>
   );
 }

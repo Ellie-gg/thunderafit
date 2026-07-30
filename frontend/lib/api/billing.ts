@@ -10,6 +10,14 @@ export interface BillingStatus {
   // 90) — assinatura real via Stripe nunca tem data-limite fixa aqui (é
   // recorrente até cancelar, ver "Gerenciar assinatura").
   planoAssinaturaExpiresAt: string | null;
+  // Fase 103: excesso de alunos vinculados em relação ao limiteAlunos atual
+  // (downgrade/cancelamento/expiração) — ver src/lib/plan-expiry.ts no
+  // backend pro raciocínio completo.
+  overLimiteAlunos: boolean;
+  /** true = já passou a carência, prescrição está bloqueada. */
+  overLimiteAlunosBlocked: boolean;
+  /** Dias restantes de carência, ou null (dentro do limite, ou já bloqueado). */
+  overLimiteAlunosGraceDaysLeft: number | null;
 }
 
 export function getBillingStatus() {

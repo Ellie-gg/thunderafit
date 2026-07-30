@@ -45,6 +45,14 @@ function resolveNotificationPath(type: string, role: Role | undefined): string |
       return role === "ALUNO" ? "/duvidas" : null;
     case "payment_reminder":
       return role === "ALUNO" ? "/dashboard" : null;
+    case "payment_failed":
+      // Fase 103: aviso proativo de falha de cobrança da PRÓPRIA assinatura
+      // do Personal (billing.service.ts) — não confundir com
+      // "payment_reminder" acima, que é o Personal lembrando O ALUNO de
+      // pagar ELE. Só PERSONAL tem `/personal/upgrade` na UI hoje
+      // (Nutricionista fica de fora da interface de billing desde a Fase 18,
+      // mesmo o backend aceitando os dois).
+      return role === "PERSONAL" ? "/personal/upgrade" : null;
     default:
       return null;
   }

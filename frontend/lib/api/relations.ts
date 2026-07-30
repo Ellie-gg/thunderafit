@@ -20,6 +20,11 @@ export function createRelation(alunoId: string) {
   });
 }
 
+/** Fase 103 — desvincular um aluno. Preserva o histórico de treino dele. */
+export function removeRelation(alunoId: string) {
+  return apiFetch<void>(`/api/relations/${alunoId}`, { method: "DELETE" });
+}
+
 /** Personal configura (ou desativa, com dueDate null) o lembrete de pagamento do vínculo. */
 export function setPaymentReminder(alunoId: string, dueDate: string | null, recurring: boolean) {
   return apiFetch<{ relation: unknown }>(`/api/relations/${alunoId}/payment-reminder`, {

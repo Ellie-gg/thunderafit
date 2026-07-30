@@ -5,6 +5,7 @@ import { exercisesRepository } from "../repository/exercises.repository";
 import { workoutSummaryService } from "./workout-summary.service";
 import { exerciseTranslationService } from "./exercise-translation.service";
 import { alunoPremiumService } from "../../billing/services/aluno-premium.service";
+import { assertPersonalCanPrescribe, assertAlunoWorkoutAccessible } from "../../lib/plan-expiry";
 
 // Fase 27: observação do Personal sobre a prescrição de um exercício.
 const MAX_NOTES_LENGTH = 500;
@@ -71,6 +72,11 @@ export const workoutsService = {
       (err as any).statusCode = 403;
       throw err;
     }
+    // Fase 103: prescrever um treino novo expande o que o aluno recebe —
+    // bloqueado quando o Personal está acima do limite do plano além da
+    // carência (ver plan-expiry.ts). Checado DEPOIS da existência do
+    // vínculo (mensagem de 403 mais específica primeiro).
+    await assertPersonalCanPrescribe(personalId);
 
     return workoutsRepository.create(personalId, alunoId, name, letter);
   },
@@ -91,6 +97,11 @@ export const workoutsService = {
       (err as any).statusCode = 404;
       throw err;
     }
+    // Fase 103: adicionar exercício expande a prescrição — mesmo gate de
+    // createWorkout acima. moveExercise/deleteExercise abaixo NÃO passam por
+    // aqui (reorganizar/remover nunca é bloqueado, mesma filosofia já usada
+    // pelo Aluno Premium).
+    await assertPersonalCanPrescribe(personalId);
 
     const exercise = await exercisesRepository.findById(exerciseId);
     if (!exercise) {
@@ -244,6 +255,14 @@ export const workoutsService = {
       (err as any).statusCode = 403;
       throw err;
     }
+    // Fase 103: só bloqueia a VISÃO DO ALUNO (workout.alunoId === userId) —
+    // o próprio Personal (ou admin) continua conseguindo ver o treino que
+    // prescreveu mesmo acima do limite (precisa disso pra decidir quem
+    // desvincular). `workout.personalId` (não `userId`) é sempre o dono
+    // certo a checar, mesmo quando quem está pedindo é o aluno.
+    if (workout.alunoId === userId) {
+      await assertAlunoWorkoutAccessible(workout.personalId);
+    }
 
     // i18n: tela de execução — a de maior uso do app — mostra nome E
     // descrição do exercício; sem isso, nome/categoria traduzidos ficariam
@@ -275,6 +294,10 @@ export const workoutsService = {
       (err as any).statusCode = 403;
       throw err;
     }
+    // Fase 103: mesmo gate de getWorkout acima — aqui sempre é o aluno (a
+    // checagem de posse logo acima já garante isso), então não precisa
+    // repetir a condição `workout.alunoId === userId`.
+    await assertAlunoWorkoutAccessible(workout.personalId);
 
     const previousLastCompletedAt = workout.lastCompletedAt;
     const completedAt = new Date();

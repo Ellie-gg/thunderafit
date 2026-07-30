@@ -2,6 +2,7 @@ import { FastifyInstance } from "fastify";
 import {
   createRelationHandler,
   listRelationsHandler,
+  removeRelationHandler,
   setPaymentReminderHandler,
 } from "../controllers/relations.controller";
 
@@ -26,6 +27,17 @@ export async function relationsRoutes(fastify: FastifyInstance) {
       ],
     },
     listRelationsHandler
+  );
+
+  // DELETE /api/relations/:alunoId - Fase 103: desvincular um aluno
+  fastify.delete(
+    "/api/relations/:alunoId",
+    {
+      preHandler: [
+        (fastify as any).authenticate,
+      ],
+    },
+    removeRelationHandler
   );
 
   // PUT /api/relations/:alunoId/payment-reminder - Personal configura/desativa o lembrete
