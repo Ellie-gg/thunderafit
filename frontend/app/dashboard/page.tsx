@@ -1,11 +1,10 @@
 "use client";
 
-import { useMemo } from "react";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { useQuery } from "@tanstack/react-query";
-import { listWorkoutPrograms, getWorkoutProgram } from "@/lib/api/workouts";
-import { listMyDietPlans, getDietPlan } from "@/lib/api/nutrition";
+import { listWorkoutPrograms } from "@/lib/api/workouts";
+import { getAlunoDashboardSummary } from "@/lib/api/dashboard";
 import { getWeeklySummary } from "@/lib/api/progress";
 import { listMyPersonals } from "@/lib/api/support";
 import { useAuthStore } from "@/lib/store/auth-store";
@@ -194,64 +193,31 @@ function DashboardContent() {
   });
 
   const allPrograms = programsQuery.data?.programs ?? [];
-  // Fase 34.5: a listagem do aluno traz os dois origins misturados
-  // (prescrito pelo Personal + templates "Meu treino pessoal" aplicados) —
-  // o dashboard os separa em 2 blocos claros (Fase 36), cada um com sua
-  // própria "próxima sessão".
-  const personalPrograms = useMemo(
-    () => allPrograms.filter((p) => p.origin === "PERSONAL"),
-    [allPrograms]
-  );
-  const selfPrograms = useMemo(
-    () => allPrograms.filter((p) => p.origin === "SELF"),
-    [allPrograms]
-  );
-  const activePersonalProgramId = personalPrograms[0]?.id;
-  const activeSelfProgramId = selfPrograms[0]?.id;
 
-  const personalProgramQuery = useQuery({
-    queryKey: ["workout-program", activePersonalProgramId],
-    queryFn: () => getWorkoutProgram(activePersonalProgramId!),
-    enabled: !!activePersonalProgramId,
+  // Fase 96 (triagem de perf 2026-07-29): antes eram 3 waterfalls de rede
+  // separados (lista → detalhe do programa do Personal, lista → detalhe do
+  // programa próprio, lista → detalhe do plano de dieta ativo) — cada
+  // detalhe só disparava depois que a respectiva lista resolvia e revelava
+  // o id. Um único endpoint agregador resolve os 3 de uma vez, em paralelo
+  // com `programsQuery`/`myPersonalsQuery` (que continuam existindo à parte,
+  // pra contagem/empty-state e pro vínculo de Personal, respectivamente).
+  const summaryQuery = useQuery({
+    queryKey: ["aluno-dashboard-summary"],
+    queryFn: getAlunoDashboardSummary,
   });
-  const selfProgramQuery = useQuery({
-    queryKey: ["workout-program", activeSelfProgramId],
-    queryFn: () => getWorkoutProgram(activeSelfProgramId!),
-    enabled: !!activeSelfProgramId,
-  });
-  // Enquanto a busca do detalhe de um programa que EXISTE ainda não voltou,
-  // não mostra nenhum fallback (nem "sem treino", nem convite) — só some o
-  // card por um instante, em vez de piscar uma mensagem errada.
-  const personalDetailPending = !!activePersonalProgramId && !personalProgramQuery.data;
-  const selfDetailPending = !!activeSelfProgramId && !selfProgramQuery.data;
+  const personalProgram = summaryQuery.data?.personalProgram ?? null;
+  const selfProgram = summaryQuery.data?.selfProgram ?? null;
+  const dietPlan = summaryQuery.data?.dietPlan ?? null;
+  // "Tem Nutricionista" — `dietPlan` só é null quando a lista de planos do
+  // aluno está vazia (ver dashboard.service.ts), então é equivalente a "tem
+  // pelo menos 1 plano" sem precisar da lista inteira aqui.
+  const hasNutricionista = dietPlan !== null;
 
   const weeklySummaryQuery = useQuery({
     queryKey: ["weekly-summary"],
     queryFn: () => getWeeklySummary(),
   });
   const weeklySummary = weeklySummaryQuery.data;
-
-  // Fase 17 (Item 5): "plano alimentar de hoje" agora usa o plano ATIVO
-  // (isActive) em vez do primeiro da lista — a vigência substituiu a
-  // simplificação anterior. Fallback ao primeiro caso nenhum esteja marcado.
-  const dietPlansQuery = useQuery({
-    queryKey: ["diet-plans"],
-    queryFn: listMyDietPlans,
-  });
-
-  const activePlanId = useMemo(
-    () => (dietPlansQuery.data?.plans.find((p) => p.isActive) ?? dietPlansQuery.data?.plans[0])?.id,
-    [dietPlansQuery.data]
-  );
-
-  const dietPlanDetailQuery = useQuery({
-    queryKey: ["diet-plan", activePlanId],
-    queryFn: () => getDietPlan(activePlanId!),
-    enabled: !!activePlanId,
-  });
-
-  const dietPlan = dietPlanDetailQuery.data?.plan;
-  const hasNutricionista = dietPlansQuery.isSuccess && dietPlansQuery.data.plans.length > 0;
 
   // Fase 36: "tem Personal vinculado" não pode mais ser inferido de "tem
   // programa" (um programa origin: SELF não implica Personal nenhum, ao
@@ -263,11 +229,16 @@ function DashboardContent() {
     myPersonalsQuery.data.personals.some((p) => p.professionalType === "PERSONAL");
 
   const hasAnythingYet = allPrograms.length > 0 || hasNutricionista;
-  // Fase 65: só entra no empty-state de primeiro acesso quando as 2 queries
-  // que decidem "tem algo?" já resolveram — antes disso, nem mostra o
-  // esqueleto antigo nem o novo, só o "Carregando..." abaixo.
+  // Fase 65: só entra no empty-state de primeiro acesso quando as 3 queries
+  // que decidem "tem algo?" já resolveram (Fase 96: summaryQuery entra no
+  // lugar de dietPlansQuery) — antes disso, nem mostra o esqueleto antigo
+  // nem o novo, só o "Carregando..." abaixo.
   const isFirstTime =
-    programsQuery.isSuccess && myPersonalsQuery.isSuccess && !hasAnythingYet && !hasPersonalRelation;
+    programsQuery.isSuccess &&
+    myPersonalsQuery.isSuccess &&
+    summaryQuery.isSuccess &&
+    !hasAnythingYet &&
+    !hasPersonalRelation;
 
   return (
     <>
@@ -303,9 +274,9 @@ function DashboardContent() {
                 <span className="text-xs font-semibold uppercase tracking-wide text-muted">
                   {t("personalPrescribedLabel")}
                 </span>
-                {personalDetailPending ? null : personalProgramQuery.data?.program ? (
-                  <NextSessionCard program={personalProgramQuery.data.program} />
-                ) : (
+                {personalProgram ? (
+                  <NextSessionCard program={personalProgram} />
+                ) : summaryQuery.isLoading ? null : (
                   <Card>
                     <p className="text-sm text-muted">{t("noPersonalPrescription")}</p>
                   </Card>
@@ -319,13 +290,13 @@ function DashboardContent() {
                 <span className="text-xs font-semibold uppercase tracking-wide text-muted">
                   {t("myWorkoutsLabel")}
                 </span>
-                {selfDetailPending ? null : selfProgramQuery.data?.program ? (
-                  selfProgramQuery.data.program.bannerImageUrl ? (
-                    <SelfProgramBannerCard program={selfProgramQuery.data.program} />
+                {selfProgram ? (
+                  selfProgram.bannerImageUrl ? (
+                    <SelfProgramBannerCard program={selfProgram} />
                   ) : (
-                    <NextSessionCard program={selfProgramQuery.data.program} />
+                    <NextSessionCard program={selfProgram} />
                   )
-                ) : (
+                ) : summaryQuery.isLoading ? null : (
                   <Card className="flex flex-col gap-2">
                     <p className="text-sm text-muted">{t("selfWorkoutsEmpty")}</p>
                     <Button asChild variant="secondary">
@@ -365,8 +336,8 @@ function DashboardContent() {
           </Link>
         )}
 
-        {dietPlansQuery.isError && (
-          <QueryError error={dietPlansQuery.error} onRetry={() => dietPlansQuery.refetch()} />
+        {summaryQuery.isError && (
+          <QueryError error={summaryQuery.error} onRetry={() => summaryQuery.refetch()} />
         )}
 
         {dietPlan && (

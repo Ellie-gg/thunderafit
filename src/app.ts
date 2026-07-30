@@ -18,6 +18,7 @@ import { dietPlansRoutes } from "./nutrition/routes/diet-plans.routes";
 import { adminRoutes } from "./admin/routes/admin.routes";
 import { connectionsRoutes } from "./connections/routes/connections.routes";
 import { contactRoutes } from "./contact/routes/contact.routes";
+import { dashboardRoutes } from "./dashboard/routes/dashboard.routes";
 
 export async function buildApp(): Promise<FastifyInstance> {
   const fastify = Fastify({
@@ -93,6 +94,7 @@ export async function buildApp(): Promise<FastifyInstance> {
   await fastify.register(adminRoutes);
   await fastify.register(connectionsRoutes);
   await fastify.register(contactRoutes);
+  await fastify.register(dashboardRoutes);
 
   // Health check
   fastify.get("/health", async (_request, reply) => {

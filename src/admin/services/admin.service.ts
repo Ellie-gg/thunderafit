@@ -142,11 +142,10 @@ function validateExerciseInput<
 
 export const adminService = {
   async getOverview() {
-    const [byRoleRaw, growthRaw, professionals, relationCounts] = await Promise.all([
+    const [byRoleRaw, growthRaw, limitCounts] = await Promise.all([
       adminRepository.countUsersByRole(),
       adminRepository.newUsersLast30Days(),
-      adminRepository.findProfessionalsWithLimite(),
-      adminRepository.countRelationsGroupedByPersonal(),
+      adminRepository.countProfessionalsAtFreemiumLimit(),
     ]);
 
     const usersByRole: Record<string, number> = {};
@@ -159,20 +158,11 @@ export const adminService = {
       count: Number(row.count),
     }));
 
-    const relationCountByPersonal = new Map<string, number>();
-    for (const row of relationCounts) {
-      relationCountByPersonal.set(row.personalId, row._count._all);
-    }
-
-    const professionalsAtLimit = professionals.filter(
-      (p) => (relationCountByPersonal.get(p.id) ?? 0) >= p.limiteAlunos
-    ).length;
-
     return {
       usersByRole,
       newUsersByDay,
-      professionalsAtFreemiumLimit: professionalsAtLimit,
-      totalProfessionals: professionals.length,
+      professionalsAtFreemiumLimit: limitCounts.atLimit,
+      totalProfessionals: limitCounts.total,
     };
   },
 
