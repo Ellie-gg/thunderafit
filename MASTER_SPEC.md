@@ -1299,12 +1299,48 @@ allowlist de serialização:
     *Modelo: Sonnet 5. `tsc --noEmit` limpo, 55/55 Jest frontend, `next build` sem
     erro + verificação empírica de bundle acima. Nenhuma mudança de backend.*
 
-**📋 Documentado, NÃO implementado ainda** (itens maiores — cada um precisa de decisão
-de escopo ou cuidado extra antes de começar, não são um lote "rápido" como as Etapas 2/3/4):
+**✅ Etapa 5 implementada (2026-07-29, registrada como "Fase 100" no STATUS.md):**
 
-99. **Response schema do Fastify em `getProgram`/`getWorkout`** — maior payload restante
-    sem esse ganho de serialização; precisa do mapeamento campo-a-campo mencionado no
-    item 98 (risco real de silenciar dado se o schema ficar incompleto).
+99. ✅ **Response schema do Fastify em `getProgram`/`getWorkout`** — os 2 endpoints de
+    payload mais aninhado restantes (programa → sessões → exercícios → séries)
+    ganharam serialização compilada via `fast-json-stringify`, mesmo ganho já aplicado
+    ao catálogo de exercícios (item 98). **Mapeamento campo-a-campo feito ANTES de
+    escrever qualquer schema** (não adivinhado): investigação dedicada leu a cadeia
+    inteira controller→service→repository→Prisma de cada endpoint, incluindo toda
+    lógica de enriquecimento pós-query (traduções de nome/descrição, o campo
+    `suggestedNext` 100% computado em memória — nunca vem do Prisma, mas precisa
+    aparecer em TODA sessão) e todo campo nullable real (`description`, `personalId`/
+    `alunoId`, `bannerImageUrl`, `lastCompletedAt`, `notes`, `mediaUrl`,
+    `youtubeSupplementUrl`) — cada um teria virado `null` silenciosamente descartado
+    se o schema tivesse marcado só `"string"`. Fragmentos compartilhados
+    (`setLogSchema`/`exerciseFullSchema`/`workoutExerciseSchema` em
+    `src/fitness/routes/workout-response-schemas.ts`) reaproveitados nos dois
+    endpoints — **não** reaproveita o `exerciseItemSchema` do item 98 porque aqui o
+    exercício vem de um `include: { exercise: true }` sem `select`, trazendo 3 campos
+    a mais (`youtubeSupplementUrl`, `createdAt`, `updatedAt`) que o `select` mais
+    estreito do catálogo omite. **Rede de segurança automatizada** (não só os testes
+    de comportamento já existentes): um teste novo em cada endpoint faz uma sessão/
+    exercício/série real passar pela resposta HTTP de verdade e compara
+    `Object.keys(...)` de cada nível aninhado contra a lista exata esperada — pega
+    tanto um campo que sumiu quanto um campo novo que ninguém lembrar de adicionar ao
+    schema numa fase futura. **Achado ao escrever o teste de `getWorkout`**: o
+    `afterAll` daquele arquivo de teste apagava `WorkoutExercise` sem apagar seus
+    `SetLog` antes — nunca dava erro porque nenhum teste anterior tinha criado uma
+    série de verdade nesse `workoutId` compartilhado; corrigido (mesma ordem de
+    dependência que `workout-programs.test.ts` já usava). Confirmado também, cruzando
+    contra `frontend/lib/types.ts`, que nenhum campo opcional do frontend
+    (`translations`, `tier`, etc.) pertence a estes 2 endpoints — todos são
+    documentados como exclusivos de outras rotas (admin self-templates, catálogo do
+    Personal) que não ganharam schema nenhum e continuam intocadas.
+    *Modelo: Sonnet 5. 2 testes novos (allowlist check), 465/465 backend com
+    `--runInBand` (⚠️ `npx jest` sem `--runInBand` produz falhas espúrias por
+    paralelismo contra o mesmo Postgres de teste — usar sempre `npm test`),
+    `tsc --noEmit` limpo. Nenhuma mudança de contrato JSON (resposta idêntica, só
+    serialização compilada).*
+
+**📋 Documentado, NÃO implementado ainda** (itens maiores — cada um precisa de decisão
+de escopo ou cuidado extra antes de começar, não são um lote "rápido" como as Etapas 2-5):
+
 102. **Backend: listas de programa/treino sem paginação** (`workout-programs.
     repository.ts#listByPersonal/listByAluno`, `workouts.repository.ts#
     findAllByAluno/findAllByPersonal`) — cresce sem teto pra um Personal veterano.

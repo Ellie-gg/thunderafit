@@ -52,6 +52,11 @@ beforeAll(async () => {
 });
 
 afterAll(async () => {
+  // Ordem de dependência (setlog -> workoutExercise -> workout) — sem
+  // apagar os SetLogs primeiro, `workoutExercise.deleteMany` viola a FK
+  // sempre que algum teste registrou uma série e não limpou sozinho.
+  const wes = await prisma.workoutExercise.findMany({ where: { workoutId }, select: { id: true } });
+  await prisma.setLog.deleteMany({ where: { workoutExerciseId: { in: wes.map((w) => w.id) } } });
   await prisma.workoutExercise.deleteMany({ where: { workoutId } });
   await prisma.workout.deleteMany({ where: { personalId } });
   await prisma.clientRelation.deleteMany({ where: { personalId } });
@@ -240,6 +245,92 @@ describe("GET /api/workouts/:id", () => {
     expect(r.body.workout.exercises[0].exercise.name).toBeDefined();
     expect(r.body.workout.exercises[0].exercise.mediaUrl).toBeDefined();
     expect(r.body.workout.exercises[0].exercise.description).toBeDefined();
+  });
+
+  // Perf (Grupo Y, item 99): o response schema novo (fast-json-stringify)
+  // funciona como ALLOWLIST — um campo esquecido no schema some da resposta
+  // em silêncio, sem erro nenhum. Este teste é a rede de segurança: compara
+  // as CHAVES de cada nível aninhado contra a lista exata esperada (mapeada
+  // campo a campo em workout-response-schemas.ts), pra pegar tanto um campo
+  // que sumiu quanto um campo novo que ninguém lembrou de adicionar ao
+  // schema no futuro.
+  it("response schema não descarta nenhum campo esperado (allowlist check)", async () => {
+    const before = await supertest(server.server)
+      .get(`/api/workouts/${workoutId}`)
+      .set("Authorization", `Bearer ${accessToken}`);
+    const workoutExerciseId = before.body.workout.exercises[0].id;
+
+    // Registra e depois APAGA a série de teste — este workoutId é
+    // compartilhado com o describe seguinte (`.../complete`), que espera
+    // `setsLogged: 0` num treino ainda sem nenhuma série real.
+    const logRes = await supertest(server.server)
+      .post(`/api/workouts/${workoutId}/exercises/${workoutExerciseId}/logs`)
+      .set("Authorization", `Bearer ${alunoAccessToken}`)
+      .send({ setNumber: 1, repsDone: 10, weightKg: 20 });
+    const setLogId = logRes.body.setLog.id;
+
+    const r = await supertest(server.server)
+      .get(`/api/workouts/${workoutId}`)
+      .set("Authorization", `Bearer ${accessToken}`);
+    expect(r.status).toBe(200);
+
+    const workout = r.body.workout;
+    expect(Object.keys(workout).sort()).toEqual(
+      [
+        "id",
+        "programId",
+        "personalId",
+        "alunoId",
+        "name",
+        "letter",
+        "lastCompletedAt",
+        "createdAt",
+        "updatedAt",
+        "program",
+        "exercises",
+      ].sort()
+    );
+    expect(Object.keys(workout.program).sort()).toEqual(["origin", "sessionScheme"].sort());
+
+    const we = workout.exercises.find((e: any) => e.id === workoutExerciseId);
+    expect(Object.keys(we).sort()).toEqual(
+      [
+        "id",
+        "workoutId",
+        "exerciseId",
+        "sets",
+        "repsRange",
+        "restSeconds",
+        "order",
+        "notes",
+        "createdAt",
+        "updatedAt",
+        "exercise",
+        "setLogs",
+      ].sort()
+    );
+    expect(Object.keys(we.exercise).sort()).toEqual(
+      [
+        "id",
+        "name",
+        "muscleGroup",
+        "equipment",
+        "mediaUrl",
+        "youtubeSupplementUrl",
+        "mediaType",
+        "description",
+        "difficultyLevel",
+        "isFeatured",
+        "createdAt",
+        "updatedAt",
+      ].sort()
+    );
+    expect(we.setLogs).toHaveLength(1);
+    expect(Object.keys(we.setLogs[0]).sort()).toEqual(
+      ["id", "workoutExerciseId", "setNumber", "repsDone", "weightKg", "loggedAt"].sort()
+    );
+
+    await prisma.setLog.delete({ where: { id: setLogId } });
   });
 });
 
