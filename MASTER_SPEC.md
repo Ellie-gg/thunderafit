@@ -1253,8 +1253,30 @@ allowlist de serialização:
     `workout-programs.test.ts` sem regressão.
     *Modelo: Sonnet 5. 463/463 backend, 55/55 Jest/RTL, `tsc --noEmit` limpo.*
 
+**✅ Etapa 3 implementada (2026-07-29, registrada como "Fase 98" no STATUS.md):**
+
+106. ✅ **`placeholderData` na navegação lista→detalhe**, tanto do aluno
+    (`/programas` → `/programas/[id]`) quanto do Personal (`/personal/programas` →
+    `/personal/programas/[id]`) — cada `useQuery` do detalhe agora semeia o cache a
+    partir do item já carregado na lista (`queryClient.getQueryData` por queryKey +
+    match por id), eliminando o flash de loading na navegação comum. **Dupla checagem
+    campo-a-campo antes de implementar** (por isso não levou guard extra nenhum): a
+    tela do aluno só lê campos escalares (`name`/`description`/`sessionScheme`/
+    `origin`) já presentes na lista (sem `select` no topo da query) e, por sessão,
+    `suggestedNext` (só existe no detalhe) já atrás de um guard falsy pré-existente
+    (`s.suggestedNext && ...`); a tela do Personal só lê `s.exercises?.length ?? 0`
+    (já com fallback) e nunca lê `lastCompletedAt`. **Achado ao comparar as duas
+    queries de lista** (`listByAluno` vs. `listByPersonal` no repository): o select de
+    `listByPersonal` não inclui `lastCompletedAt` por sessão, ao contrário de
+    `listByAluno` — confirmado que é inofensivo (a tela do Personal nunca lê esse
+    campo), não uma inconsistência a corrigir; registrado aqui só pra não precisar
+    redescobrir isso numa fase futura.
+    *Modelo: Sonnet 5. `tsc --noEmit` limpo nos dois lados, 55/55 Jest frontend,
+    159/159 Jest do domínio `fitness` sem regressão (nenhuma mudança de backend nesta
+    etapa).*
+
 **📋 Documentado, NÃO implementado ainda** (itens maiores — cada um precisa de decisão
-de escopo ou cuidado extra antes de começar, não são um lote "rápido" como a Etapa 2):
+de escopo ou cuidado extra antes de começar, não são um lote "rápido" como as Etapas 2/3):
 
 99. **Response schema do Fastify em `getProgram`/`getWorkout`** — maior payload restante
     sem esse ganho de serialização; precisa do mapeamento campo-a-campo mencionado no
@@ -1272,12 +1294,6 @@ de escopo ou cuidado extra antes de começar, não são um lote "rápido" como a
     `NextIntlClientProvider` sem prop `messages` — carregamento por-locale já correto,
     falta escopar por namespace/rota. Mudança arquitetural (toca todo layout/roteamento),
     maior risco de regressão silenciosa (uma chave faltando quebra uma tela específica).
-106. **Frontend: navegação lista→detalhe não semeia o cache do detalhe**
-    (`["workout-programs",...]` → `["workout-program", id]`) — `placeholderData`
-    eliminaria o flash de loading, mas exige guardar a renderização da tela de detalhe
-    pra não quebrar quando os campos aninhados (`workouts`/`exercises`) ainda não
-    chegaram (o item da lista não tem essa profundidade) — baixo impacto real (só
-    remove um flash, não reduz chamada de rede), mais cuidado que ganho por ora.
 107. **Backend: `getFrequency`/`getWeeklySummary` (progress) ainda buscam a janela
     inteira de `SetLog` pra contar streak/bucket mensal em JS** — janela de 90 dias,
     não cresce sem teto; mover pra SQL exigiria reescrever lógica stateful de
