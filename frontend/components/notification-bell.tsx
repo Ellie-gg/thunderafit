@@ -50,11 +50,23 @@ function resolveNotificationPath(type: string, role: Role | undefined): string |
   }
 }
 
+// Perf (pedido do fundador — Neon compute hours): nenhum tipo de
+// notificação hoje (support_new_thread/reply, connection_*, payment_reminder)
+// é sensível a tempo real — payment_reminder em particular já é CRIADO no
+// login do aluno (relations.service.ts#checkAndFireDueReminders), não por um
+// job de fundo, então o poll passivo nunca é o que determina se ela aparece
+// na hora certa. 30s em toda tela autenticada nunca deixava o timer de
+// autosuspend do Neon zerar — o compute ficava "ativo" pelo tempo inteiro
+// que qualquer aba ficasse aberta em primeiro plano, o que piora
+// proporcionalmente com mais usuários simultâneos (a chance de "sempre ter
+// alguém com aba aberta" sobe rápido). 6h é só uma rede de segurança agora;
+// abrir o sino (ação que já existe) força uma checagem na hora — ver
+// `onClick` abaixo — sem precisar de nenhum elemento novo na UI.
+const PASSIVE_REFETCH_INTERVAL_MS = 6 * 60 * 60 * 1000;
+
 /**
  * In-app apenas (sino + lista) — sem push real (APNs/FCM) nesta fase, ver
- * decisão documentada em `notifications.service.ts`. Usa polling simples via
- * `refetchInterval`, coerente com a decisão da Fase 10 de não introduzir
- * WebSocket para o recurso de Dúvidas.
+ * decisão documentada em `notifications.service.ts`.
  */
 export function NotificationBell() {
   const intlLocale = useActiveIntlLocale();
@@ -69,7 +81,7 @@ export function NotificationBell() {
   const countQuery = useQuery({
     queryKey: ["notifications-unread-count"],
     queryFn: getUnreadCount,
-    refetchInterval: 30_000,
+    refetchInterval: PASSIVE_REFETCH_INTERVAL_MS,
   });
 
   const listQuery = useQuery({
@@ -111,7 +123,17 @@ export function NotificationBell() {
       <button
         type="button"
         aria-label={t("title")}
-        onClick={() => setOpen((o) => !o)}
+        onClick={() => {
+          setOpen((o) => {
+            const next = !o;
+            // Abrir o sino É a checagem manual — sem poll de 30s mais, é
+            // aqui que o usuário força uma contagem fresca (ver comentário
+            // de PASSIVE_REFETCH_INTERVAL_MS acima). `listQuery` já refaz
+            // sozinha ao reabrir (fica stale entre uma abertura e outra).
+            if (next) countQuery.refetch();
+            return next;
+          });
+        }}
         className="relative flex h-9 w-9 items-center justify-center rounded-md text-foreground hover:bg-surface-raised"
       >
         <Bell className="h-5 w-5" />
