@@ -27,16 +27,17 @@ export const workoutSummaryRepository = {
   // por SÉRIE logada), um aluno de longa data podia mover 1000+ linhas do
   // banco pra aplicação só pra descobrir um número. Agregação no Postgres
   // (`aggregate`/`MAX`) devolve só o máximo, sem transferir as linhas.
-  async findMaxHistoricalWeightForExercise(
-    alunoId: string,
-    exerciseId: string,
-    before: Date
-  ): Promise<number | null> {
+  // Sem corte por `loggedAt` de propósito: quem chama isto (setlogs.service.ts
+  // #createSetLog) sempre roda esta query ANTES de criar a nova série no
+  // banco, então ela nunca poderia se auto-incluir — um corte
+  // `loggedAt: {lt: now}` aqui só comparava um timestamp gerado no Node
+  // (`new Date()`) contra timestamps gerados no Postgres (`@default(now())`),
+  // e qualquer dessincronia de relógio entre os dois processos (por menor
+  // que fosse) podia excluir por engano a série mais recente do histórico
+  // real, tornando `previousBest` intermitentemente errado.
+  async findMaxHistoricalWeightForExercise(alunoId: string, exerciseId: string): Promise<number | null> {
     const result = await prisma.setLog.aggregate({
-      where: {
-        workoutExercise: { exerciseId, workout: { alunoId } },
-        loggedAt: { lt: before },
-      },
+      where: { workoutExercise: { exerciseId, workout: { alunoId } } },
       _max: { weightKg: true },
     });
     return result._max.weightKg;

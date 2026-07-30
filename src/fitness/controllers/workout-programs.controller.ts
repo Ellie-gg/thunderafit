@@ -2,6 +2,7 @@ import { FastifyRequest, FastifyReply } from "fastify";
 import { SessionScheme } from "@prisma/client";
 import { workoutProgramsService } from "../services/workout-programs.service";
 import { resolveRequestLocale } from "../../lib/locale";
+import { parsePaginationQuery } from "../../lib/pagination";
 
 function handleError(err: any, reply: FastifyReply) {
   const status = err?.statusCode ?? 500;
@@ -65,23 +66,27 @@ export async function applyProgramHandler(
 }
 
 export async function listProgramsHandler(
-  request: FastifyRequest<{ Querystring: { type?: "template" | "instance"; alunoId?: string } }>,
+  request: FastifyRequest<{
+    Querystring: { type?: "template" | "instance"; alunoId?: string; page?: string; pageSize?: string };
+  }>,
   reply: FastifyReply
 ) {
   try {
     const { sub, role } = (request as any).user;
+    const pagination = parsePaginationQuery(request.query);
     // O aluno lista os programas aplicados a ele; o profissional lista os seus
     // (templates + instâncias, filtráveis por type e, opcionalmente, por
     // alunoId — Fase 29, hub de administração do aluno).
     if (role === "ALUNO") {
-      const programs = await workoutProgramsService.listForAluno(sub);
+      const programs = await workoutProgramsService.listForAluno(sub, pagination);
       return reply.status(200).send({ programs });
     }
     assertProfessional(request);
     const programs = await workoutProgramsService.listPrograms(
       sub,
       request.query.type,
-      request.query.alunoId
+      request.query.alunoId,
+      pagination
     );
     return reply.status(200).send({ programs });
   } catch (err) {

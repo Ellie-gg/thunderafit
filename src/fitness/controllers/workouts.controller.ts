@@ -6,19 +6,27 @@ import {
   ExperienceLevel,
 } from "../services/workout-generator.service";
 import { resolveRequestLocale } from "../../lib/locale";
+import { parsePaginationQuery } from "../../lib/pagination";
 
 export async function listWorkoutsHandler(
-  request: FastifyRequest<{ Querystring: { alunoId?: string; personalId?: string } }>,
+  request: FastifyRequest<{
+    Querystring: { alunoId?: string; personalId?: string; page?: string; pageSize?: string };
+  }>,
   reply: FastifyReply
 ) {
   const userId = (request as any).user.sub;
   const role = (request as any).user.role;
 
   try {
-    const workouts = await workoutsService.listWorkoutsForUser(userId, role, {
-      alunoId: request.query.alunoId,
-      personalId: request.query.personalId,
-    });
+    const workouts = await workoutsService.listWorkoutsForUser(
+      userId,
+      role,
+      {
+        alunoId: request.query.alunoId,
+        personalId: request.query.personalId,
+      },
+      parsePaginationQuery(request.query)
+    );
     return reply.status(200).send({ workouts });
   } catch (err: any) {
     const status = (err as any).statusCode ?? 500;
