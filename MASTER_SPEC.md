@@ -578,8 +578,11 @@ decisão/priorização futura):
     cresce sem eviction (mitigado por instância única + restart no deploy);
     checagem de nome parecido do admin roda Levenshtein O(N) por escrita
     (só ~171 nomes, admin-only); avatar em base64 infla o payload de `/me` +
-    `localStorage`; sino de notificação faz poll de 30s em toda página
-    autenticada (pausa corretamente em aba oculta); app inteiro é `"use
+    `localStorage`; ~~sino de notificação faz poll de 30s em toda página
+    autenticada (pausa corretamente em aba oculta)~~ — **resolvido no Grupo Y,
+    item 109** (poll de 30s virou 6h + checagem manual ao abrir o sino,
+    motivado por um problema real de compute-hours no Neon, não por esta
+    triagem); app inteiro é `"use
     client"` (nenhum layout aninhado além do root, estrutural — refatoração
     grande, não uma config rápida); 3 famílias de fonte no layout raiz; sem
     bundle analyzer configurado pra medir os ganhos dos itens 34/38 no CI.
@@ -1447,13 +1450,44 @@ de escopo ou cuidado extra antes de começar, não são um lote "rápido" como a
     sequência (risco > retorno).
 108. **Baixo impacto, registrado sem ação**: rate-limiter de login sem eviction
     (mitigado por restart no deploy); Levenshtein O(N) na checagem de nome do admin
-    (~171 nomes, admin-only); avatar base64 inflando `/me` + `localStorage`; sino de
-    notificação com poll de 30s; cronômetro de treino (Fase 89) grava no
-    `localStorage` a cada clique enquanto a sessão está aberta (puro client-side, sem
-    rede); `admin.service.listUsers` (Fase 90) roda `revertExpiredPersonalPlan` por
-    linha da página dentro de um `Promise.all` — sem custo quando nada expirou, mas é
-    o tipo de padrão que só vira update de banco em volume se "conceder plano com
-    prazo" crescer; app inteiro `"use client"` (estrutural); sem bundle analyzer no CI.
+    (~171 nomes, admin-only); avatar base64 inflando `/me` + `localStorage`;
+    cronômetro de treino (Fase 89) grava no `localStorage` a cada clique enquanto a
+    sessão está aberta (puro client-side, sem rede); `admin.service.listUsers`
+    (Fase 90) roda `revertExpiredPersonalPlan` por linha da página dentro de um
+    `Promise.all` — sem custo quando nada expirou, mas é o tipo de padrão que só vira
+    update de banco em volume se "conceder plano com prazo" crescer; app inteiro
+    `"use client"` (estrutural); sem bundle analyzer no CI.
+
+109. ✅ **Poll do sino de notificação (30s) reduzido pra 6h + checagem manual ao abrir
+    o sino** — motivado por um problema real reportado pelo fundador (Neon: 11.96
+    compute-hours em 14 dias, só com ele mesmo testando) e não pela triagem original
+    (o item 43/antigo 108 tinham registrado o poll de 30s como "baixo impacto, sem
+    ação" — essa avaliação mudou quando o custo virou um problema de negócio
+    concreto, não só uma preocupação teórica de performance). **Investigação prévia**
+    confirmou que as 2 técnicas que o fundador pediu pra checar já estavam aplicadas
+    (cache em memória + ETag no catálogo de exercícios desde a Fase 49; autenticação
+    via JWT sem nenhuma consulta ao banco — `authenticate` só faz `jwt.verify`) — o
+    poll de 30s era o ÚNICO ponto do app inteiro (frontend + backend + infra) que
+    batia no banco em intervalo fixo, independente de uso real, mantendo o timer de
+    autosuspend do Neon sempre resetado enquanto qualquer aba ficasse aberta em
+    primeiro plano. Descartado como causa: Cloud Run confirmado `min_instance_count =
+    0` nos 2 serviços (não fica aquecido), `DATABASE_URL` já aponta pro endpoint
+    *pooled* do Neon (documentado em `infra/RUNBOOK.md`), `/health` não toca no
+    banco, nenhum cron/job agendado no repositório. Risco de negócio explícito: o
+    padrão piora desproporcionalmente com mais usuários simultâneos (a chance de
+    "sempre ter alguém com aba aberta" sobe rápido, aproximando o compute de "sempre
+    ativo" nas horas de uso, não porque o uso cresceu, mas porque a janela de
+    ociosidade desaparece). Nenhum tipo de notificação hoje (`support_new_thread`,
+    `support_reply`, `connection_request/accepted/rejected`, `payment_reminder`) é
+    sensível a tempo real — `payment_reminder` em particular é criado no LOGIN do
+    aluno (`relations.service.ts#checkAndFireDueReminders`), não por um job de
+    fundo, então o poll passivo nunca determinava se ela aparecia na hora certa.
+    Decidido com o fundador: 6h de intervalo passivo (rede de segurança) + abrir o
+    sino (ação que já existe) força uma contagem fresca na hora — sem elemento novo
+    na UI. `refetchOnWindowFocus` nesta query especificamente foi avaliado e
+    descartado a pedido do fundador (manter simples).
+    *Modelo: Sonnet 5. `tsc --noEmit` limpo, 55/55 Jest/RTL. Sem mudança de backend
+    (só o intervalo/gatilho no frontend).*
 
 ### Grupo Z — Revisão de caso de uso: Personal deixa de ser Premium (PLANEJAMENTO — sem código ainda)
 
