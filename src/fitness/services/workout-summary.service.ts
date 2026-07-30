@@ -120,13 +120,11 @@ export const workoutSummaryService = {
   async detectPersonalRecord(
     alunoId: string,
     exerciseId: string,
-    weightKg: number,
-    before: Date
+    weightKg: number
   ): Promise<{ isPersonalRecord: boolean; previousBest: number | null }> {
     const previousBest = await workoutSummaryRepository.findMaxHistoricalWeightForExercise(
       alunoId,
-      exerciseId,
-      before
+      exerciseId
     );
     if (previousBest === null) {
       return { isPersonalRecord: false, previousBest: null };

@@ -46,13 +46,11 @@ export const setlogsService = {
     weightKg: number
   ) {
     const workoutExercise = await assertOwnerAluno(workoutId, workoutExerciseId, alunoId);
-    const now = new Date();
 
     const { isPersonalRecord, previousBest } = await workoutSummaryService.detectPersonalRecord(
       alunoId,
       workoutExercise.exerciseId,
-      weightKg,
-      now
+      weightKg
     );
 
     const setLog = await setlogsRepository.create(workoutExerciseId, setNumber, repsDone, weightKg);

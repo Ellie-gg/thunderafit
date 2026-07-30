@@ -237,8 +237,7 @@ describe("workoutSummaryService.detectPersonalRecord", () => {
     const result = await workoutSummaryService.detectPersonalRecord(
       "aluno-1",
       "exercicio-novo",
-      50,
-      new Date("2026-07-21T12:30:00.000Z")
+      50
     );
 
     expect(result).toEqual({ isPersonalRecord: false, previousBest: null });
@@ -250,8 +249,7 @@ describe("workoutSummaryService.detectPersonalRecord", () => {
     const result = await workoutSummaryService.detectPersonalRecord(
       "aluno-1",
       "supino",
-      75,
-      new Date("2026-07-21T12:30:00.000Z")
+      75
     );
 
     expect(result).toEqual({ isPersonalRecord: true, previousBest: 70 });
@@ -263,8 +261,7 @@ describe("workoutSummaryService.detectPersonalRecord", () => {
     const result = await workoutSummaryService.detectPersonalRecord(
       "aluno-1",
       "supino",
-      70,
-      new Date("2026-07-21T12:30:00.000Z")
+      70
     );
 
     expect(result).toEqual({ isPersonalRecord: false, previousBest: 70 });
@@ -276,8 +273,7 @@ describe("workoutSummaryService.detectPersonalRecord", () => {
     const result = await workoutSummaryService.detectPersonalRecord(
       "aluno-1",
       "supino",
-      65,
-      new Date("2026-07-21T12:30:00.000Z")
+      65
     );
 
     expect(result.isPersonalRecord).toBe(true);

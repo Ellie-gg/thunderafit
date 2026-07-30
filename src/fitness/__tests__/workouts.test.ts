@@ -444,3 +444,96 @@ describe("DELETE /api/workouts/:id/exercises/:exerciseId (Fase 65)", () => {
     await prisma.workoutExercise.deleteMany({ where: { workoutId: deletableWorkoutId } });
   });
 });
+
+// Perf (Grupo Y, item 102) — mesmo cap defensivo aditivo de
+// GET /api/workout-programs (ver workout-programs.test.ts), agora em
+// GET /api/workouts. Personal dedicado com contagem exata — o `workoutId`
+// compartilhado do arquivo não serve pra testar quantidade.
+describe("Perf (Grupo Y, item 102) — page/pageSize opcionais em GET /api/workouts", () => {
+  let pagPersonalId: string;
+  let pagPersonalToken: string;
+  let pagAlunoId: string;
+  let seededIds: string[];
+
+  beforeAll(async () => {
+    const regP = await supertest(server.server)
+      .post("/api/auth/register")
+      .send({ email: "test_workout_pag_personal@thunderafit.test", password: "SenhaSegura@123", role: "PERSONAL" });
+    pagPersonalId = regP.body.user.id;
+    pagPersonalToken = (
+      await supertest(server.server)
+        .post("/api/auth/login")
+        .send({ email: "test_workout_pag_personal@thunderafit.test", password: "SenhaSegura@123" })
+    ).body.accessToken;
+
+    const regA = await supertest(server.server)
+      .post("/api/auth/register")
+      .send({ email: "test_workout_pag_aluno@thunderafit.test", password: "SenhaSegura@123", role: "ALUNO" });
+    pagAlunoId = regA.body.user.id;
+    await supertest(server.server)
+      .post("/api/relations")
+      .set("Authorization", `Bearer ${pagPersonalToken}`)
+      .send({ alunoId: pagAlunoId });
+
+    // findAllByPersonal ordena por createdAt ASC (mais antigo primeiro) —
+    // diferente de listByPersonal (programas), que ordena DESC. Timestamps
+    // espaçados manualmente pela mesma razão do teste equivalente em
+    // workout-programs.test.ts: evitar empate de milissegundo entre creates
+    // em sequência.
+    seededIds = [];
+    const base = Date.now();
+    for (let i = 0; i < 5; i++) {
+      const program = await prisma.workoutProgram.create({
+        data: { personalId: pagPersonalId, alunoId: pagAlunoId, name: `Programa Pag ${i}`, isTemplate: false },
+      });
+      const w = await prisma.workout.create({
+        data: {
+          programId: program.id,
+          personalId: pagPersonalId,
+          alunoId: pagAlunoId,
+          name: `Treino Pag ${i}`,
+          letter: "A",
+          createdAt: new Date(base + i * 1000),
+        },
+      });
+      seededIds.push(w.id);
+    }
+  });
+
+  afterAll(async () => {
+    const progs = await prisma.workoutProgram.findMany({
+      where: { personalId: pagPersonalId },
+      select: { id: true },
+    });
+    await prisma.workout.deleteMany({ where: { programId: { in: progs.map((p) => p.id) } } });
+    await prisma.workoutProgram.deleteMany({ where: { personalId: pagPersonalId } });
+    await prisma.clientRelation.deleteMany({ where: { personalId: pagPersonalId } });
+    await prisma.user.deleteMany({
+      where: { email: { in: ["test_workout_pag_personal@thunderafit.test", "test_workout_pag_aluno@thunderafit.test"] } },
+    });
+  });
+
+  it("sem page/pageSize, devolve todos os 5 (comportamento de hoje preservado)", async () => {
+    const r = await supertest(server.server)
+      .get("/api/workouts")
+      .set("Authorization", `Bearer ${pagPersonalToken}`);
+    expect(r.status).toBe(200);
+    expect(r.body.workouts).toHaveLength(5);
+  });
+
+  it("?pageSize=2 devolve só os 2 mais antigos (orderBy createdAt asc preservado)", async () => {
+    const r = await supertest(server.server)
+      .get("/api/workouts?pageSize=2")
+      .set("Authorization", `Bearer ${pagPersonalToken}`);
+    expect(r.status).toBe(200);
+    expect(r.body.workouts.map((w: any) => w.id)).toEqual([seededIds[0], seededIds[1]]);
+  });
+
+  it("?pageSize=2&page=2 devolve a próxima dupla, não repete a primeira página", async () => {
+    const r = await supertest(server.server)
+      .get("/api/workouts?pageSize=2&page=2")
+      .set("Authorization", `Bearer ${pagPersonalToken}`);
+    expect(r.status).toBe(200);
+    expect(r.body.workouts.map((w: any) => w.id)).toEqual([seededIds[2], seededIds[3]]);
+  });
+});

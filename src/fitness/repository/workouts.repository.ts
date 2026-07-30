@@ -1,4 +1,5 @@
 import prisma from "../../lib/prisma";
+import { DEFAULT_PAGE_SIZE } from "../../lib/pagination";
 
 // Mesmo teto e mesma razão de workout-programs.repository.ts::SET_LOG_HISTORY_LIMIT
 // — sem isso, `setLogs` cresce sem limite pra sempre pra um usuário de longo
@@ -31,12 +32,28 @@ export const workoutsRepository = {
     });
   },
 
-  async findAllByAluno(alunoId: string) {
-    return prisma.workout.findMany({ where: { alunoId }, orderBy: { createdAt: "asc" } });
+  async findAllByAluno(
+    alunoId: string,
+    pagination: { skip: number; take: number } = { skip: 0, take: DEFAULT_PAGE_SIZE }
+  ) {
+    return prisma.workout.findMany({
+      where: { alunoId },
+      orderBy: { createdAt: "asc" },
+      skip: pagination.skip,
+      take: pagination.take,
+    });
   },
 
-  async findAllByPersonal(personalId: string) {
-    return prisma.workout.findMany({ where: { personalId }, orderBy: { createdAt: "asc" } });
+  async findAllByPersonal(
+    personalId: string,
+    pagination: { skip: number; take: number } = { skip: 0, take: DEFAULT_PAGE_SIZE }
+  ) {
+    return prisma.workout.findMany({
+      where: { personalId },
+      orderBy: { createdAt: "asc" },
+      skip: pagination.skip,
+      take: pagination.take,
+    });
   },
 
   async findByIdWithExercises(id: string) {
