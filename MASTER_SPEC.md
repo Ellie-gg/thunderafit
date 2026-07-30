@@ -1396,10 +1396,51 @@ seguida, contra 1 falha em ~3 rodadas antes da correção.
 **📋 Documentado, NÃO implementado ainda** (itens maiores — cada um precisa de decisão
 de escopo ou cuidado extra antes de começar, não são um lote "rápido" como as Etapas 2-6):
 
-105. **Frontend: bundle i18n inteiro (~700 chaves, ~38KB) enviado em toda rota** via
-    `NextIntlClientProvider` sem prop `messages` — carregamento por-locale já correto,
-    falta escopar por namespace/rota. Mudança arquitetural (toca todo layout/roteamento),
-    maior risco de regressão silenciosa (uma chave faltando quebra uma tela específica).
+105. **Frontend: bundle i18n inteiro (~55KB por locale, 84 namespaces de topo) enviado
+    em toda rota** via `NextIntlClientProvider` sem `messages` no layout raiz —
+    **investigado a fundo em 2026-07-30, tentativa de implementação revertida após
+    verificação empírica mostrar que não entrega ganho real.** Registro completo do que
+    foi tentado e por que não funciona, pra não repetir o mesmo caminho:
+    - **Estrutura é favorável**: 77 dos 84 namespaces são usados por um único
+      arquivo/tela (mapeado via grep em todo `useTranslations(...)` do projeto); o
+      conjunto realmente compartilhado por quase toda rota (via `AppHeader`/
+      `AuthGuard`/`QueryError`) é pequeno (~1.4KB: `common`, `nav`, `appHeader`,
+      `queryError`, `notificationBell`, `avatarUpload`, `emailVerificationBanner`).
+    - **1ª tentativa (rejeitada antes de codar)**: escopar a RAIZ (`app/layout.tsx`)
+      lendo o pathname (via header setado no `proxy.ts` + `headers()` no layout).
+      Descartada porque a documentação do Next.js desta versão confirma que
+      `<Link>` **preserva layouts compartilhados entre navegações client-side** — o
+      layout raiz não reexecuta a cada clique, só num hard load/refresh/deep-link.
+      Trocar o `messages` do layout raiz por pathname quebraria traduções ao navegar
+      (client-side, sem reload) de uma rota escopada pra uma não-escopada, porque o
+      contexto já estabelecido (o pequeno) persiste pra rota nova.
+    - **2ª tentativa (implementada, testada de verdade, e revertida)**: manter a raiz
+      sempre com o objeto inteiro (seguro pras outras 50 rotas) e adicionar um
+      SEGUNDO `NextIntlClientProvider`, aninhado dentro de 4 páginas específicas
+      (`/personal/programas`, `/meu-treino-pessoal`, `/nimbus/treinos-pessoais`,
+      `/dashboard` — as de maior conteúdo próprio), cada uma dividida em um Server
+      Component fino (`page.tsx`, faz `getMessages()` + `pickMessages()`) + o
+      conteúdo client original movido pra um arquivo irmão. `tsc`/Jest passaram
+      limpos. **Só que um `next build` + `next start` + `curl` reais (mesma
+      verificação empírica das Fases 99/101) mostraram que a raiz SEMPRE serializa o
+      objeto de mensagens inteiro em todo hard load, independente de qualquer
+      provider aninhado mais abaixo** — confirmado buscando uma string exclusiva de
+      `nimbusUsuarios` (namespace fora do escopo das 4 páginas) e encontrando-a
+      presente em TODAS elas mesmo assim. O provider aninhado não elimina nada da
+      raiz, só adiciona um subconjunto redundante por cima — ganho real: **zero**,
+      no cenário exato (hard load/cold-start) que era o único benefício que sobrava
+      depois de descartar a 1ª tentativa.
+    - **Conclusão**: qualquer redução de verdade exige OU tocar as 54 páginas (raiz
+      escopada por pathname + um provider de segurança com o conjunto completo em
+      TODA página não-escopada, não só nas 4) OU reestruturar as rotas do aluno pra
+      dentro de uma pasta de agrupamento (as únicas que hoje não têm uma pasta pra
+      pendurar um layout escopado por grupo). As duas opções são exatamente o que o
+      fundador queria evitar ao pedir "só as 4 mais pesadas, sem reestruturar" — não
+      há meio-termo que atenda esse pedido E entregue ganho real. Fica documentado
+      como não-viável no escopo pedido; reabrir só se o fundador aceitar uma das duas
+      opções maiores acima.
+    *Investigação: Sonnet 5. Nenhum código shipado (tentativa revertida antes do
+    commit); nenhuma mudança líquida no repositório.*
 107. **Backend: `getFrequency`/`getWeeklySummary` (progress) ainda buscam a janela
     inteira de `SetLog` pra contar streak/bucket mensal em JS** — janela de 90 dias,
     não cresce sem teto; mover pra SQL exigiria reescrever lógica stateful de
