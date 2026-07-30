@@ -1,15 +1,26 @@
 "use client";
 
 import { useState } from "react";
+import dynamic from "next/dynamic";
 import { useTranslations } from "next-intl";
 import { useQuery } from "@tanstack/react-query";
 import { listLoggedExercises, getLoadHistory, getFrequency } from "@/lib/api/progress";
 import { AuthGuard } from "@/components/auth-guard";
 import { AppHeader } from "@/components/app-header";
 import { Card } from "@/components/ui/card";
-import { LoadHistoryChart } from "@/components/load-history-chart";
-import { FrequencyChart } from "@/components/frequency-chart";
 import { QueryError } from "@/components/query-error";
+
+// Perf (Grupo Y, item 103): `recharts` só é necessário quando o histórico
+// realmente chegou (`loadHistoryQuery.data`/`frequencyQuery.data`) — carregar
+// via `next/dynamic` tira a lib do bundle inicial desta rota.
+const LoadHistoryChart = dynamic(
+  () => import("@/components/load-history-chart").then((m) => m.LoadHistoryChart),
+  { ssr: false }
+);
+const FrequencyChart = dynamic(
+  () => import("@/components/frequency-chart").then((m) => m.FrequencyChart),
+  { ssr: false }
+);
 
 function PercentBadge({ value }: { value: number | null }) {
   const t = useTranslations("evolucao");

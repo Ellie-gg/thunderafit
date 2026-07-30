@@ -1275,8 +1275,32 @@ allowlist de serialização:
     159/159 Jest do domínio `fitness` sem regressão (nenhuma mudança de backend nesta
     etapa).*
 
+**✅ Etapa 4 implementada (2026-07-29, registrada como "Fase 99" no STATUS.md):**
+
+103. ✅ **`html-to-image` e `recharts` deixaram de ser importados eager** nas 3 telas
+    que os usam condicionalmente — `PostWorkoutSummaryModal` (execução de treino,
+    `/treinos/[id]`, só monta depois de concluir a sessão) e `LoadHistoryChart`/
+    `FrequencyChart` (`/evolucao` do aluno e `/personal/alunos/[alunoId]`, só montam
+    quando a query de histórico/frequência já respondeu) viraram `next/dynamic(...,
+    {ssr:false})`. `ssr:false` é seguro nos 3 casos porque nenhum já renderizava no
+    servidor de verdade — os dados vêm de `useQuery` client-side, então na prática só
+    parava de tentar (e falhar) um SSR inútil. **Verificação além do padrão** (não só
+    `tsc`/Jest): rodei `next build` de verdade e comparei, via `curl` num `next start`
+    local, os chunks JS referenciados no HTML inicial de `/evolucao` e `/treinos/[id]`
+    contra o conteúdo desses chunks — confirmado que nenhum chunk carregado de cara
+    contém `ResponsiveContainer` (recharts) nem `toPng` (html-to-image); as duas libs
+    só entram em chunks separados, buscados sob demanda. **Dupla checagem**: os 3
+    componentes têm uma única exportação nomeada, sem `ref` encaminhada pelo próprio
+    wrapper (o `cardRef` do `PostWorkoutSummaryModal` é interno, usado só no filho
+    `PostWorkoutSummaryCard`) e sem nenhum outro import estático deles em outra rota
+    (confirmado por grep no projeto inteiro) — nenhum dos 3 casos tinha risco de ficar
+    com prop incompatível ou referência quebrada ao trocar de import estático pra
+    `dynamic()`.
+    *Modelo: Sonnet 5. `tsc --noEmit` limpo, 55/55 Jest frontend, `next build` sem
+    erro + verificação empírica de bundle acima. Nenhuma mudança de backend.*
+
 **📋 Documentado, NÃO implementado ainda** (itens maiores — cada um precisa de decisão
-de escopo ou cuidado extra antes de começar, não são um lote "rápido" como as Etapas 2/3):
+de escopo ou cuidado extra antes de começar, não são um lote "rápido" como as Etapas 2/3/4):
 
 99. **Response schema do Fastify em `getProgram`/`getWorkout`** — maior payload restante
     sem esse ganho de serialização; precisa do mapeamento campo-a-campo mencionado no
@@ -1286,10 +1310,6 @@ de escopo ou cuidado extra antes de começar, não são um lote "rápido" como a
     findAllByAluno/findAllByPersonal`) — cresce sem teto pra um Personal veterano.
     **[CONTRATO-API]** — precisa decidir estilo de paginação (cursor vs. offset) e se é
     aditivo ou quebra contrato existente, antes de estimar.
-103. **Frontend: `html-to-image` e `recharts` embarcados eager** nas rotas mais usadas
-    (execução de treino, evolução) — `next/dynamic({ssr:false})` resolveria os dois;
-    `html-to-image` em particular bate direto no WebView do Capacitor na tela que o
-    aluno mais abre.
 105. **Frontend: bundle i18n inteiro (~700 chaves, ~38KB) enviado em toda rota** via
     `NextIntlClientProvider` sem prop `messages` — carregamento por-locale já correto,
     falta escopar por namespace/rota. Mudança arquitetural (toca todo layout/roteamento),

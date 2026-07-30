@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import { useParams } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { listRelations, setPaymentReminder, type RelationAluno } from "@/lib/api/relations";
@@ -15,12 +16,21 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { QueryError } from "@/components/query-error";
-import { LoadHistoryChart } from "@/components/load-history-chart";
-import { FrequencyChart } from "@/components/frequency-chart";
 import { DeleteProgramButton } from "@/components/delete-program-button";
 import { UserAvatar } from "@/components/user-avatar";
 import { useActiveIntlLocale } from "@/i18n/use-active-locale";
 import { useTranslations } from "next-intl";
+
+// Perf (Grupo Y, item 103): mesmo motivo do `/evolucao` do aluno — `recharts`
+// só entra quando o histórico/frequência deste aluno específico já chegou.
+const LoadHistoryChart = dynamic(
+  () => import("@/components/load-history-chart").then((m) => m.LoadHistoryChart),
+  { ssr: false }
+);
+const FrequencyChart = dynamic(
+  () => import("@/components/frequency-chart").then((m) => m.FrequencyChart),
+  { ssr: false }
+);
 
 // Fase 42 (MASTER_SPEC) — lembrete de pagamento: o Personal define uma
 // próxima data de cobrança (com recorrência mensal opcional); o aluno recebe

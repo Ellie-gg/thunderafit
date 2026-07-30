@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import { useParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -23,9 +24,17 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { VoltageBar } from "@/components/voltage-bar";
 import { ExerciseExecutionCard } from "@/components/exercise-execution-card";
-import { PostWorkoutSummaryModal } from "@/components/post-workout-summary-modal";
 import { useActiveIntlLocale } from "@/i18n/use-active-locale";
 import type { WorkoutCompletionSummary } from "@/lib/types";
+
+// Perf (Grupo Y, item 103): `html-to-image` (+ `@capacitor/filesystem`/
+// `@capacitor/share`, usados só dentro do modal) só é necessário depois de
+// concluir a sessão (`summary` truthy) — via `next/dynamic` sai do bundle
+// inicial desta rota, a mais aberta pelo aluno.
+const PostWorkoutSummaryModal = dynamic(
+  () => import("@/components/post-workout-summary-modal").then((m) => m.PostWorkoutSummaryModal),
+  { ssr: false }
+);
 
 function IdleWarningModal({
   remainingMs,
