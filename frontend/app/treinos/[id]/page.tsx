@@ -103,8 +103,19 @@ function ExecucaoContent() {
     mutationFn: () => completeWorkout(workoutId),
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["workout", workoutId] });
-      // A sugestão de próxima sessão no programa depende do lastCompletedAt.
-      queryClient.invalidateQueries({ queryKey: ["workout-program"] });
+      // Perf (Grupo Y, item 100): antes invalidava o prefixo ["workout-program"]
+      // inteiro — refetch em cascata de TODO programa em cache no app a cada
+      // treino concluído. `programId` já vem no workout carregado; a sugestão
+      // de próxima sessão (depende de `lastCompletedAt`) só precisa mesmo do
+      // programa deste workout.
+      queryClient.invalidateQueries({ queryKey: ["workout-program", workoutQuery.data?.workout.programId] });
+      // Achado ao escopar a invalidação acima (Fase 96 introduziu isto sem
+      // perceber): o resumo agregado do dashboard (`GET /api/dashboard/
+      // aluno-summary`) embute o MESMO programa em detalhe, mas sob uma
+      // chave de cache própria — nunca era tocado pela invalidação antiga do
+      // prefixo ["workout-program"], então a sugestão de "próxima sessão" no
+      // dashboard ficaria desatualizada depois de concluir um treino.
+      queryClient.invalidateQueries({ queryKey: ["aluno-dashboard-summary"] });
       setSummary(data.summary);
     },
   });
