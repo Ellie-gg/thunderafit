@@ -44,7 +44,7 @@ function SessaoContent() {
   const addSessionMutation = useMutation({
     mutationFn: (letter: string) => addSelfProgramSession(programId, { letter }),
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ["workout-program", programId] });
+      invalidateProgram();
       router.push(`/meu-treino-pessoal/${programId}/sessoes/${data.session.id}`);
     },
   });
@@ -60,8 +60,15 @@ function SessaoContent() {
     return { session, nextKey, nextSession, sessionExercises };
   }, [programQuery.data, sessionId, scheme]);
 
-  const invalidateProgram = () =>
+  const invalidateProgram = () => {
     queryClient.invalidateQueries({ queryKey: ["workout-program", programId] });
+    // Achado durante a triagem de perf (Grupo Y): o resumo agregado do
+    // dashboard (Fase 96, GET /api/dashboard/aluno-summary) embute este
+    // MESMO programa self em detalhe, sob uma chave de cache própria —
+    // editar exercício aqui não refletia lá até essa chave ser invalidada
+    // também.
+    queryClient.invalidateQueries({ queryKey: ["aluno-dashboard-summary"] });
+  };
 
   return (
     <>

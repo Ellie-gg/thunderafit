@@ -1225,40 +1225,59 @@ dormente, exceto onde a composição do dashboard do aluno já a toca de qualque
     *Modelo: Sonnet 5. 3 testes novos (`src/dashboard/__tests__/dashboard.test.ts`) +
     suíte completa sem regressão, `tsc --noEmit` limpo nos dois lados.*
 
-**📋 Documentado, NÃO implementado nesta fase** (carregado do Grupo E + achados novos,
-reconfirmado válido contra o código em 2026-07-29):
+**✅ Etapa 2 implementada (2026-07-29, registrada como "Fase 97" no STATUS.md)** — os 3
+itens de baixo risco/rápidos da lista abaixo, agrupados numa única leva por serem todos
+config/query pura ou um fetch duplicado simples, sem contrato de API nem risco de
+allowlist de serialização:
+
+100. ✅ **`completeWorkout` (`frontend/app/treinos/[id]/page.tsx`) passou a invalidar só
+    `["workout-program", programId]`** (`programId` já vem no workout carregado) em vez
+    do prefixo `["workout-program"]` inteiro. **Achado ao implementar**: o resumo
+    agregado do dashboard (`["aluno-dashboard-summary"]`, Fase 96) embute o MESMO
+    programa em detalhe sob uma chave de cache PRÓPRIA — nunca era tocado pela
+    invalidação antiga do prefixo, então a sugestão de "próxima sessão" no dashboard
+    ficaria desatualizada depois de concluir um treino (regressão real introduzida
+    silenciosamente pela Fase 96, corrigida junto: `["aluno-dashboard-summary"]` agora
+    também é invalidado ali, e no fluxo do aluno editando o próprio treino em
+    `meu-treino-pessoal/[id]/sessoes/[sessionId]/page.tsx`).
+101. ✅ **`staleTime` por família de queryKey** via `queryClient.setQueryDefaults()`
+    (`frontend/app/providers.tsx`, casamento por PREFIXO — um lugar só, em vez de
+    repetir em ~15 call sites): `Infinity` para `["billing-status"]`/`["my-profile"]`
+    (só mudam via mutação que já invalida a própria chave); 5min para
+    `["relations"]`/`["self-templates"]`; 2min para `["workout-programs"]`/
+    `["aluno-dashboard-summary"]`/`["aluno-premium-status"]`.
+104. ✅ **`workout-programs.service.ts#addSession` deixou de carregar o mesmo
+    `WorkoutProgram` 2×** — `findProgramWithSessions` já trazia todos os campos
+    escalares que o antigo `findProgramById` usava; uma chamada só, ordem de checagem
+    preservada (404 existência → 403 posse → validação de negócio). 47/47 testes de
+    `workout-programs.test.ts` sem regressão.
+    *Modelo: Sonnet 5. 463/463 backend, 55/55 Jest/RTL, `tsc --noEmit` limpo.*
+
+**📋 Documentado, NÃO implementado ainda** (itens maiores — cada um precisa de decisão
+de escopo ou cuidado extra antes de começar, não são um lote "rápido" como a Etapa 2):
 
 99. **Response schema do Fastify em `getProgram`/`getWorkout`** — maior payload restante
     sem esse ganho de serialização; precisa do mapeamento campo-a-campo mencionado no
     item 98 (risco real de silenciar dado se o schema ficar incompleto).
-100. **Frontend: `completeWorkout` invalida o prefixo `["workout-program"]` inteiro**
-    (`frontend/app/treinos/[id]/page.tsx`) em vez de só `["workout-program", programId]`
-    (`programId` já disponível no workout carregado) — refetch em cascata de todo cache
-    de programa a cada conclusão de treino. Config pura, baixo risco.
-101. **Frontend: dados quase-estáticos ainda no `staleTime` global de 30s** —
-    `["billing-status"]`, `["relations"]`, `["my-profile"]`, listas de programas,
-    `["self-templates"]`, e agora também `["aluno-dashboard-summary"]` (Fase 96) e as 2
-    queries novas de `/configuracoes` (Fase 93) — todos só mudam via ação que já
-    invalida a própria chave; minutos (ou `Infinity` pra profile/billing) cortaria a
-    maioria dos refetches de navegação.
 102. **Backend: listas de programa/treino sem paginação** (`workout-programs.
     repository.ts#listByPersonal/listByAluno`, `workouts.repository.ts#
     findAllByAluno/findAllByPersonal`) — cresce sem teto pra um Personal veterano.
-    **[CONTRATO-API]**.
+    **[CONTRATO-API]** — precisa decidir estilo de paginação (cursor vs. offset) e se é
+    aditivo ou quebra contrato existente, antes de estimar.
 103. **Frontend: `html-to-image` e `recharts` embarcados eager** nas rotas mais usadas
     (execução de treino, evolução) — `next/dynamic({ssr:false})` resolveria os dois;
     `html-to-image` em particular bate direto no WebView do Capacitor na tela que o
     aluno mais abre.
-104. **Backend: `workout-programs.service.ts#addSession` carrega o mesmo
-    `WorkoutProgram` 2× no mesmo request** (`findProgramById` seguido de
-    `findProgramWithSessions`, que já tem tudo do 1º). **[AUTHZ]** — mexe na checagem
-    de posse, preservar 404-antes-de-403.
 105. **Frontend: bundle i18n inteiro (~700 chaves, ~38KB) enviado em toda rota** via
     `NextIntlClientProvider` sem prop `messages` — carregamento por-locale já correto,
-    falta escopar por namespace/rota.
+    falta escopar por namespace/rota. Mudança arquitetural (toca todo layout/roteamento),
+    maior risco de regressão silenciosa (uma chave faltando quebra uma tela específica).
 106. **Frontend: navegação lista→detalhe não semeia o cache do detalhe**
     (`["workout-programs",...]` → `["workout-program", id]`) — `placeholderData`
-    eliminaria o flash de loading.
+    eliminaria o flash de loading, mas exige guardar a renderização da tela de detalhe
+    pra não quebrar quando os campos aninhados (`workouts`/`exercises`) ainda não
+    chegaram (o item da lista não tem essa profundidade) — baixo impacto real (só
+    remove um flash, não reduz chamada de rede), mais cuidado que ganho por ora.
 107. **Backend: `getFrequency`/`getWeeklySummary` (progress) ainda buscam a janela
     inteira de `SetLog` pra contar streak/bucket mensal em JS** — janela de 90 dias,
     não cresce sem teto; mover pra SQL exigiria reescrever lógica stateful de

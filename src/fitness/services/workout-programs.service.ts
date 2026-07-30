@@ -25,7 +25,13 @@ export const workoutProgramsService = {
   },
 
   async addSession(programId: string, personalId: string, name: string, letter: string) {
-    const program = await workoutProgramsRepository.findProgramById(programId);
+    // Perf (Grupo Y, item 104): antes buscava o MESMO WorkoutProgram 2x no
+    // mesmo request (`findProgramById` só pra existência/posse/scheme, depois
+    // `findProgramWithSessions` de novo só pra ler `.workouts`) —
+    // `findProgramWithSessions` já traz todos os campos escalares que o 1º
+    // usava, então uma chamada só basta. Ordem de checagem preservada
+    // (existência → posse → validação de negócio).
+    const program = await workoutProgramsRepository.findProgramWithSessions(programId);
     if (!program) throw httpError("Programa não encontrado.", 404);
     // Fase 34: programas origin: SELF são geridos só pelo admin (Fase 34.5),
     // nunca por esta rota do Personal — checagem explícita de origin, não só
@@ -43,8 +49,7 @@ export const workoutProgramsService = {
       );
     }
 
-    const program2 = await workoutProgramsRepository.findProgramWithSessions(programId);
-    const sessions = program2?.workouts ?? [];
+    const sessions = program.workouts ?? [];
     if (sessions.length >= validKeys.length) {
       throw httpError(
         `Um programa pode ter no máximo ${validKeys.length} sessões (${program.sessionScheme === "WEEKDAY" ? "Segunda a Domingo" : "A-E"}).`,
