@@ -40,3 +40,16 @@ export function previewClientInvite(token: string) {
     { auth: false }
   );
 }
+
+/**
+ * Fase 104 (correção pós-lançamento) — consome o convite pra quem JÁ ESTÁ
+ * LOGADO no momento em que abre o link (achado real: sem isso, essa pessoa
+ * via o formulário de login/cadastro de novo, e se não completasse aquele
+ * fluxo especificamente, o vínculo nunca acontecia — aluno "órfão").
+ */
+export function consumeClientInvite(token: string) {
+  return apiFetch<{ consumed: true }>("/api/client-invites/consume", {
+    method: "POST",
+    body: { token },
+  });
+}

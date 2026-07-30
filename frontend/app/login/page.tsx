@@ -5,8 +5,8 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
-import { checkEmailRequest, loginRequest, registerRequest, googleAuthRequest } from "@/lib/api/auth";
-import { previewClientInvite } from "@/lib/api/client-invites";
+import { checkEmailRequest, loginRequest, registerRequest, googleAuthRequest, logoutRequest } from "@/lib/api/auth";
+import { previewClientInvite, consumeClientInvite } from "@/lib/api/client-invites";
 import { ApiError } from "@/lib/api/client";
 import { useAuthStore } from "@/lib/store/auth-store";
 import { dashboardPathForRole } from "@/lib/auth/redirect";
@@ -141,6 +141,8 @@ function LoginPageContent() {
   const t = useTranslations("login");
   const router = useRouter();
   const setSession = useAuthStore((s) => s.setSession);
+  const clearSession = useAuthStore((s) => s.clearSession);
+  const currentUser = useAuthStore((s) => s.user);
   const searchParams = useSearchParams();
 
   // Fase 104 — convite por link: `?invite=` carrega um token que, se
@@ -156,6 +158,23 @@ function LoginPageContent() {
     enabled: !!inviteToken,
   });
   const inviteIsValid = !!inviteToken && inviteQuery.data?.valid === true;
+
+  // Fase 104 (correção pós-lançamento) — achado real em produção: quem já
+  // tinha uma sessão ativa (de uma visita anterior) ao abrir o link via
+  // register/login/SSO NUNCA rodava (essa pessoa só via o formulário de
+  // e-mail de novo, e se não completasse aquele fluxo especificamente
+  // pensando "já estou logado, deve funcionar sozinho", o vínculo nunca
+  // acontecia — aluno ficava "órfão", sem nenhum aviso do motivo). Detecta
+  // sessão existente e resolve com UM clique, sem pedir senha de novo.
+  const consumeInviteMutation = useMutation({
+    mutationFn: () => consumeClientInvite(inviteToken!),
+    onSuccess: () => router.push(dashboardPathForRole(currentUser!.role)),
+  });
+
+  const logoutAndRetryMutation = useMutation({
+    mutationFn: () => logoutRequest(),
+    onSettled: () => clearSession(),
+  });
 
   const [step, setStep] = useState<Step>("email");
   const [email, setEmail] = useState("");
@@ -241,6 +260,12 @@ function LoginPageContent() {
 
   const emailLooksValid = /\S+@\S+\.\S+/.test(email);
 
+  // Fase 104 (correção pós-lançamento): sessão já existente + convite válido
+  // — pula TODO o fluxo de e-mail/login/cadastro (nada ali jamais consome o
+  // convite pra quem já está autenticado) e mostra uma tela dedicada.
+  const showInviteConfirm = inviteIsValid && !!currentUser;
+  const professionalName = inviteQuery.data?.professionalName ?? "";
+
   return (
     <main className="flex flex-1 flex-col items-center justify-center px-6 py-12">
       <div className="mb-6 flex flex-col items-center gap-3">
@@ -256,15 +281,79 @@ function LoginPageContent() {
           de e-mail), pra quem veio de um link de convite nunca perder de
           vista de quem é o convite enquanto passa pelas próximas telas. */}
       {inviteIsValid && inviteQuery.data && (
-        <div className="mb-6 max-w-sm rounded-full border border-accent-secondary/50 bg-accent-secondary/10 px-4 py-2 text-center text-sm text-foreground">
-          {t("inviteContext.message", { name: inviteQuery.data.professionalName ?? "" })}
+        <div className="mb-6 w-full max-w-sm rounded-lg border border-accent-secondary/50 bg-accent-secondary/10 px-4 py-3 text-center text-sm text-foreground">
+          {t("inviteContext.message", { name: professionalName })}
         </div>
+      )}
+
+      {showInviteConfirm && currentUser && currentUser.role === "ALUNO" && (
+        <Card
+          className="w-full max-w-sm"
+          style={{ borderTopWidth: "4px", borderTopColor: "var(--accent-secondary)" }}
+        >
+          <span className="mb-4 inline-block rounded-full border border-accent-secondary/50 bg-accent-secondary/10 px-3 py-1 text-xs font-bold uppercase tracking-widest text-accent-secondary">
+            {t("inviteAlreadyLoggedIn.aluno.badge")}
+          </span>
+
+          <h2 className="mb-3 font-display text-xl font-bold text-foreground">
+            {t("inviteAlreadyLoggedIn.aluno.title")}
+          </h2>
+          <p className="mb-5 text-sm text-muted">
+            {t("inviteAlreadyLoggedIn.aluno.message", { name: professionalName })}
+          </p>
+
+          {consumeInviteMutation.isError && (
+            <p className="mb-3 text-sm text-danger">
+              {errorMessage(consumeInviteMutation.error, t("connectionError"))}
+            </p>
+          )}
+
+          <Button
+            type="button"
+            variant="accentSecondary"
+            disabled={consumeInviteMutation.isPending}
+            onClick={() => consumeInviteMutation.mutate()}
+          >
+            {consumeInviteMutation.isPending
+              ? t("inviteAlreadyLoggedIn.aluno.confirming")
+              : t("inviteAlreadyLoggedIn.aluno.confirmButton")}
+          </Button>
+        </Card>
+      )}
+
+      {showInviteConfirm && currentUser && currentUser.role !== "ALUNO" && (
+        <Card
+          className="w-full max-w-sm"
+          style={{ borderTopWidth: "4px", borderTopColor: "var(--accent-secondary)" }}
+        >
+          <span className="mb-4 inline-block rounded-full border border-accent-secondary/50 bg-accent-secondary/10 px-3 py-1 text-xs font-bold uppercase tracking-widest text-accent-secondary">
+            {t("inviteAlreadyLoggedIn.mismatch.badge")}
+          </span>
+
+          <h2 className="mb-3 font-display text-xl font-bold text-foreground">
+            {t("inviteAlreadyLoggedIn.mismatch.title")}
+          </h2>
+          <p className="mb-5 text-sm text-muted">
+            {t("inviteAlreadyLoggedIn.mismatch.message", { name: professionalName })}
+          </p>
+
+          <Button
+            type="button"
+            variant="accentSecondary"
+            disabled={logoutAndRetryMutation.isPending}
+            onClick={() => logoutAndRetryMutation.mutate()}
+          >
+            {logoutAndRetryMutation.isPending
+              ? t("inviteAlreadyLoggedIn.mismatch.loggingOut")
+              : t("inviteAlreadyLoggedIn.mismatch.logoutButton")}
+          </Button>
+        </Card>
       )}
 
       {/* Hero: só na tela de entrada — as demais etapas (login/cadastro) já
           têm seu próprio título contextual dentro do Card, uma tagline de
           marketing ali só repetiria informação. */}
-      {step === "email" && (
+      {!showInviteConfirm && step === "email" && (
         <div className="mb-8 max-w-md text-center">
           <h2 className="mb-3 font-display text-2xl font-bold leading-snug tracking-tight text-foreground sm:text-3xl">
             {t("hero.headline")}
@@ -273,7 +362,7 @@ function LoginPageContent() {
         </div>
       )}
 
-      {step === "email" && (
+      {!showInviteConfirm && step === "email" && (
         <Card
           className="w-full max-w-sm"
           style={{ borderTopWidth: "4px", borderTopColor: "var(--accent)" }}
@@ -341,14 +430,14 @@ function LoginPageContent() {
           real do app (Fase 19 confirmou a viabilidade técnica via Capacitor,
           mas o Android ainda não foi publicado na Play Store) em vez de
           prometer uma loja que ainda não existe. */}
-      {step === "email" && (
+      {!showInviteConfirm && step === "email" && (
         <p className="mt-6 flex items-center gap-2 text-xs text-muted">
           <span aria-hidden>🌐</span>
           {t("hero.availability")}
         </p>
       )}
 
-      {step === "login" && (
+      {!showInviteConfirm && step === "login" && (
         <Card
           className="w-full max-w-sm"
           style={{ borderTopWidth: "4px", borderTopColor: "var(--accent)" }}
@@ -400,7 +489,7 @@ function LoginPageContent() {
         </Card>
       )}
 
-      {step === "signup-role" && (
+      {!showInviteConfirm && step === "signup-role" && (
         <Card
           className="w-full max-w-sm"
           style={{ borderTopWidth: "4px", borderTopColor: "var(--accent-secondary)" }}
@@ -480,7 +569,7 @@ function LoginPageContent() {
         </Card>
       )}
 
-      {step === "signup-details" && signupRole && (
+      {!showInviteConfirm && step === "signup-details" && signupRole && (
         <Card
           className="w-full max-w-sm"
           style={{ borderTopWidth: "4px", borderTopColor: "var(--accent-secondary)" }}

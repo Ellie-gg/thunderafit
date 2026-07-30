@@ -1700,6 +1700,20 @@ teste de componente reescrito (3 casos, era 4 no fluxo antigo) + teste de
 `lib/api/relations` reduzido (código morto removido), 514/514 backend, 52/52 Jest/RTL,
 `tsc --noEmit` limpo nos dois lados.*
 
+**Correção pós-lançamento (Fase 105, 2026-07-30)**: teste real com um usuário ajudando
+a validar encontrou 2 bugs. (1) O banner de contexto do convite (`rounded-full` com
+mensagem de 2 frases) quebrava o layout em mobile — trocado por `rounded-lg` + `w-full`.
+(2) **Bug crítico**: quem abria o link do convite JÁ AUTENTICADO (sessão de visita
+anterior) nunca disparava o consumo — o design original só consumia dentro do SUCCESS
+de register/login/SSO, e `/login` nunca lia sessão existente, só escrevia. Resultado:
+aluno "órfão" (conta existe, vínculo nunca criado), sem nenhum aviso do motivo. Corrigido
+com endpoint dedicado autenticado (`POST /api/client-invites/consume`) e 2 telas novas em
+`/login` pra quando `?invite=` é válido e já existe sessão: ALUNO vê "Vincular agora" (1
+clique, sem repetir senha); outro papel vê explicação + "Sair e continuar". Ver
+STATUS.md, Fase 105, para os detalhes completos (inclusive a nota de transparência sobre
+`gcloud` CLI indisponível neste ambiente — a causa raiz foi confirmada por leitura de
+código, não por inspeção dos logs de produção).
+
 ### Adiado de propósito (decisão de produto, não bloqueio)
 Login Google · camadas anti-abuso de conta · web pública vs. só app nas lojas · programa
 de indicação Personal→desconto/bônus (quando a regra de negócio fechar, é migration

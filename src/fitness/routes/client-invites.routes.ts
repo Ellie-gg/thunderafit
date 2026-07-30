@@ -4,6 +4,7 @@ import {
   listInvitesHandler,
   revokeInviteHandler,
   previewInviteHandler,
+  consumeInviteHandler,
 } from "../controllers/client-invites.controller";
 
 export async function clientInvitesRoutes(fastify: FastifyInstance) {
@@ -31,4 +32,13 @@ export async function clientInvitesRoutes(fastify: FastifyInstance) {
   // GET /api/client-invites/preview?token=... — PÚBLICA, sem autenticação
   // (a tela de login/cadastro chama isso ANTES de existir sessão).
   fastify.get("/api/client-invites/preview", previewInviteHandler);
+
+  // POST /api/client-invites/consume — autenticada; consome o convite pra
+  // quem já está logado (sem precisar logar de novo). Ver comentário em
+  // client-invites.controller.ts#consumeInviteHandler.
+  fastify.post(
+    "/api/client-invites/consume",
+    { preHandler: [(fastify as any).authenticate] },
+    consumeInviteHandler
+  );
 }

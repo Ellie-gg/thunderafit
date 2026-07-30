@@ -142,6 +142,22 @@
     "inviteContext": {
       "message": "Invitación de {name} — crea tu cuenta (o inicia sesión, si ya tienes una) para vincularte automáticamente."
     },
+    "inviteAlreadyLoggedIn": {
+      "aluno": {
+        "badge": "Invitación pendiente",
+        "title": "Confirmar vínculo",
+        "message": "Ya iniciaste sesión. Confirma el vínculo con {name} para empezar a entrenar.",
+        "confirmButton": "Vincular ahora",
+        "confirming": "Vinculando..."
+      },
+      "mismatch": {
+        "badge": "Invitación pendiente",
+        "title": "Otra cuenta conectada",
+        "message": "Esta invitación es para volverte alumno de {name}, pero la cuenta conectada ahora no es de alumno. Cierra sesión para entrar (o crear una cuenta) como alumno y confirmar el vínculo.",
+        "logoutButton": "Salir y continuar",
+        "loggingOut": "Saliendo..."
+      }
+    },
     "emailStep": {
       "emailLabel": "Correo electrónico",
       "emailPlaceholder": "tu@ejemplo.com",
