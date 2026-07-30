@@ -49,11 +49,11 @@ function clearAuthCookies(reply: FastifyReply) {
 
 export async function registerHandler(
   request: FastifyRequest<{
-    Body: { email: string; password: string; role: Role; name: string };
+    Body: { email: string; password: string; role: Role; name: string; inviteToken?: string };
   }>,
   reply: FastifyReply
 ) {
-  const { email, password, role, name } = request.body;
+  const { email, password, role, name, inviteToken } = request.body;
 
   if (!email || !password || !role) {
     return reply.status(400).send({ error: "email, password e role são obrigatórios." });
@@ -71,7 +71,13 @@ export async function registerHandler(
   // O dado continua nullable no schema; quem se cadastra pela UI de verdade
   // sempre manda nome porque o campo é `required` no form.
   try {
-    const user = await authService.register({ email, password, role, name: name?.trim() || null });
+    const user = await authService.register({
+      email,
+      password,
+      role,
+      name: name?.trim() || null,
+      inviteToken,
+    });
     return reply.status(201).send({ user });
   } catch (err) {
     const error = err as Error & { statusCode?: number };
@@ -80,10 +86,10 @@ export async function registerHandler(
 }
 
 export async function loginHandler(
-  request: FastifyRequest<{ Body: { email: string; password: string } }>,
+  request: FastifyRequest<{ Body: { email: string; password: string; inviteToken?: string } }>,
   reply: FastifyReply
 ) {
-  const { email, password } = request.body;
+  const { email, password, inviteToken } = request.body;
 
   if (!email || !password) {
     return reply.status(400).send({ error: "email e password são obrigatórios." });
@@ -98,7 +104,7 @@ export async function loginHandler(
   }
 
   try {
-    const result = await authService.login({ email, password }, ip);
+    const result = await authService.login({ email, password, inviteToken }, ip);
     loginRateLimiter.recordSuccessfulAttempt(ip, email);
     setAuthCookies(reply, result.accessToken, result.refreshToken);
     return reply.status(200).send(result);
@@ -144,16 +150,16 @@ export async function checkEmailHandler(
  * (`needsRole: true` na 1ª resposta, sem role).
  */
 export async function googleAuthHandler(
-  request: FastifyRequest<{ Body: { idToken?: string; role?: Role } }>,
+  request: FastifyRequest<{ Body: { idToken?: string; role?: Role; inviteToken?: string } }>,
   reply: FastifyReply
 ) {
-  const { idToken, role } = request.body ?? {};
+  const { idToken, role, inviteToken } = request.body ?? {};
   if (!idToken) {
     return reply.status(400).send({ error: "idToken é obrigatório." });
   }
 
   try {
-    const result = await authService.loginOrRegisterWithGoogle(idToken, role);
+    const result = await authService.loginOrRegisterWithGoogle(idToken, role, inviteToken);
     if (result.needsRole) {
       return reply.status(200).send({ needsRole: true, email: result.email });
     }

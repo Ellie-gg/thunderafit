@@ -273,6 +273,30 @@ enum ProfessionalType {
   NUTRICIONISTA
 }
 
+// Fase 104 — convite por link (substitui o fluxo "digita o e-mail e espera
+// o aluno já ter conta"). O Personal só dá um apelido (pra reconhecer na
+// própria lista — nunca mostrado pro convidado); o link em si carrega o
+// token, nunca o e-mail — quem abrir aquele link específico e completar o
+// cadastro (ou logar, se já tiver conta) é quem vira o aluno vinculado.
+// Mesmo padrão de token de `auth.service.ts` (emailVerification/
+// passwordReset): só o HASH é gravado, o token cru só existe na hora de
+// gerar o link, nunca mais recuperável depois.
+model ClientInvite {
+  id               String           @id @default(uuid())
+  personalId       String
+  professionalType ProfessionalType @default(PERSONAL)
+  label            String
+  tokenHash        String           @unique
+  expiresAt        DateTime
+  createdAt        DateTime         @default(now())
+  // Preenchidos juntos, na mesma operação (consumeInvite) — um convite
+  // "meio consumido" (só um dos dois preenchido) nunca deveria acontecer.
+  consumedAt        DateTime?
+  consumedByAlunoId String?
+
+  @@index([personalId])
+}
+
 // ============================================================
 // --- domain: connections --- (Fase 21)
 // Descoberta de profissionais + solicitação de vínculo com aprovação manual.

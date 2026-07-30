@@ -139,6 +139,9 @@
         "cardDescription": "Gestionar alumnos y prescribir rutinas"
       }
     },
+    "inviteContext": {
+      "message": "Invitación de {name} — crea tu cuenta (o inicia sesión, si ya tienes una) para vincularte automáticamente."
+    },
     "emailStep": {
       "emailLabel": "Correo electrónico",
       "emailPlaceholder": "tu@ejemplo.com",
@@ -222,20 +225,23 @@
     "NUTRICAO_ESPORTIVA": "Nutrición Deportiva"
   },
   "vincularAlunoForm": {
-    "title": "Vincular nuevo alumno",
-    "emailLabel": "Correo del alumno",
-    "emailPlaceholder": "alumno@ejemplo.com",
-    "submitting": "Vinculando...",
-    "submit": "Vincular alumno",
+    "title": "Invitar nuevo alumno",
+    "subtitle": "Ponle un apodo solo para que reconozcas la invitación en tu lista — no necesitas saber el correo del alumno de antemano.",
+    "labelField": "Apodo de la invitación",
+    "labelPlaceholder": "Ej: Juan del gimnasio",
+    "labelHint": "Solo tú ves este apodo — nunca se muestra al alumno.",
+    "submitting": "Generando...",
+    "submit": "Generar invitación",
     "errors": {
-      "connection": "No se pudo conectar con el servidor.",
-      "alreadyLinked": "Este alumno ya está vinculado a ti.",
-      "planLimit": "Alcanzaste el límite de alumnos de tu plan. Mejora tu plan para vincular más."
+      "connection": "No se pudo conectar con el servidor."
     },
-    "notFound": {
-      "message": "Este correo aún no tiene una cuenta en ThunderaFit. Pídele a tu alumno que se registre primero.",
-      "sendWhatsAppInvite": "Enviar invitación por WhatsApp",
-      "inviteText": "¡Hola! Te invité a usar ThunderaFit conmigo como tu {professionalLabel}. Crea tu cuenta de alumno aquí: {loginUrl}"
+    "created": {
+      "title": "¡Invitación lista!",
+      "subtitle": "Envía el enlace de abajo a tu alumno. En cuanto cree su cuenta (o inicie sesión, si ya tiene una), el vínculo se crea automáticamente — no hace falta hacer nada más.",
+      "sendWhatsApp": "Enviar por WhatsApp",
+      "copyLink": "Copiar enlace",
+      "done": "Listo",
+      "whatsAppText": "¡Hola! Te invité a usar ThunderaFit conmigo como tu {professionalLabel}. Crea tu cuenta (o inicia sesión, si ya tienes una) aquí: {link}"
     }
   },
   "criarMeuTreino": {
@@ -583,7 +589,7 @@
     "gerenciarAlunos": "Gestionar alumnos →",
     "nenhumAlunoVinculado": "Aún no hay alumnos vinculados.",
     "limiteAtingidoBotao": "Límite alcanzado",
-    "vincularNovoAluno": "Vincular Nuevo Alumno",
+    "vincularNovoAluno": "Invitar Alumno",
     "montarDoZero": "o crea un programa desde cero →"
   },
   "personalAlunosList": {
@@ -592,7 +598,17 @@
     "desde": "desde {data}",
     "gerenciar": "Administrar →",
     "semTreino": "Sin entrenamiento aplicado",
-    "nenhumAlunoVinculado": "Aún no hay alumnos vinculados."
+    "nenhumAlunoVinculado": "Aún no hay alumnos vinculados.",
+    "convitesPendentes": "Invitaciones pendientes",
+    "convitePendente": "Pendiente",
+    "conviteExpirado": "Expirada"
+  },
+  "revokeInviteButton": {
+    "revoke": "Revocar",
+    "confirmRevoke": "¿Revocar esta invitación? El enlace deja de funcionar para quien aún no lo haya abierto.",
+    "revokeError": "Error al revocar.",
+    "revoking": "Revocando...",
+    "confirmRevokeButton": "Sí, revocar"
   },
   "paymentReminderCard": {
     "titulo": "Recordatorio de pago",
@@ -989,7 +1005,7 @@
     "desde": "desde {date}",
     "nenhumAluno": "Aún no tienes alumnos vinculados.",
     "limiteAtingidoBtn": "Límite alcanzado",
-    "vincularNovoAluno": "Vincular nuevo alumno",
+    "vincularNovoAluno": "Invitar alumno",
     "planosDietaPrescritos": "Planes de alimentación prescritos",
     "ver": "Ver →",
     "nenhumPlano": "Aún no has creado ningún plan de alimentación.",

@@ -5,6 +5,7 @@ import { OAuth2Client } from "google-auth-library";
 import { Role, Locale } from "@prisma/client";
 import { authRepository } from "../repository/auth.repository";
 import { relationsService } from "../../fitness/services/relations.service";
+import { clientInvitesService } from "../../fitness/services/client-invites.service";
 import { deleteUserCascade } from "../../lib/user-deletion";
 import { sendMail } from "../../lib/mailer";
 import { toSafeUser } from "../../lib/safe-user";
@@ -53,11 +54,18 @@ export interface RegisterInput {
   // real, mas opcional na API (ver comentário em registerHandler) e nullable
   // no schema (contas já existentes não têm esse dado, sem backfill).
   name: string | null;
+  // Fase 104 — convite por link (só consumido se role === ALUNO — ver
+  // comentário em `register()`).
+  inviteToken?: string;
 }
 
 export interface LoginInput {
   email: string;
   password: string;
+  // Fase 104 — mesma ideia de RegisterInput.inviteToken: cobre o caso de
+  // quem clica no link do convite mas JÁ tinha conta (login em vez de
+  // cadastro) — o vínculo automático acontece do mesmo jeito.
+  inviteToken?: string;
 }
 
 export interface JwtPayload {
@@ -115,6 +123,14 @@ export async function register(input: RegisterInput) {
     await sendVerificationEmail(user.id, user.email);
   } catch (err) {
     console.error("Falha ao enviar e-mail de verificação:", err);
+  }
+
+  // Fase 104 — convite por link: só ALUNO consome (o convite é "vire meu
+  // aluno" — um PERSONAL/NUTRICIONISTA se cadastrando pelo mesmo link, por
+  // engano ou não, nunca deveria virar cliente de outro profissional).
+  // `consumeInvite` já é melhor-esforço por dentro (nunca lança).
+  if (input.inviteToken && input.role === "ALUNO") {
+    await clientInvitesService.consumeInvite(input.inviteToken, user.id);
   }
 
   // Nunca retornar passwordHash nem refreshTokenHash
@@ -350,6 +366,12 @@ export async function login(input: LoginInput, ipAddress: string | null = null) 
     await relationsService.checkAndFireDueReminders(user.id);
   }
 
+  // Fase 104 — cobre quem clica no link do convite mas JÁ tinha conta
+  // (login em vez de cadastro) — mesmo raciocínio de `register()` acima.
+  if (input.inviteToken && user.role === "ALUNO") {
+    await clientInvitesService.consumeInvite(input.inviteToken, user.id);
+  }
+
   const safeUser = toSafeUser(user);
   return { accessToken, refreshToken, user: safeUser };
 }
@@ -377,7 +399,7 @@ const SELF_SERVICE_ROLES: Role[] = ["PERSONAL", "ALUNO", "NUTRICIONISTA"];
  *    (passwordHash null — só entra por Google daqui pra frente, a menos que
  *    defina uma senha depois por um fluxo futuro de "adicionar senha").
  */
-export async function loginOrRegisterWithGoogle(idToken: string, role?: Role) {
+export async function loginOrRegisterWithGoogle(idToken: string, role?: Role, inviteToken?: string) {
   const clientId = getEnv("GOOGLE_CLIENT_ID");
   const client = new OAuth2Client(clientId);
 
@@ -433,6 +455,12 @@ export async function loginOrRegisterWithGoogle(idToken: string, role?: Role) {
 
   if (user.role === "ALUNO") {
     await relationsService.checkAndFireDueReminders(user.id);
+  }
+
+  // Fase 104 — mesmo raciocínio de register()/login(): cobre tanto quem se
+  // cadastra quanto quem já tinha conta e faz login, ambos via Google.
+  if (inviteToken && user.role === "ALUNO") {
+    await clientInvitesService.consumeInvite(inviteToken, user.id);
   }
 
   const safeUser = toSafeUser(user);
