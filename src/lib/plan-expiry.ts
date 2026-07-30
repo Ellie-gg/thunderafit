@@ -40,3 +40,129 @@ export async function revertExpiredPersonalPlan<
   });
   return { ...user, ...reverted };
 }
+
+/**
+ * Fase 103 — quando um Personal (ou Nutricionista) cai pra um plano com
+ * `limiteAlunos` menor que a quantidade de `ClientRelation` já vinculada
+ * (downgrade, cancelamento no Stripe, ou concessão manual do admin vencida),
+ * os vínculos existentes continuam intactos (decisão da Fase 20, ver
+ * billing.repository.ts) — mas depois de uma carência, prescrever/editar
+ * treino pros alunos já vinculados passa a ficar bloqueado até o Personal
+ * desvincular alunos suficientes pra voltar dentro do limite.
+ *
+ * `overLimiteAlunosSince` marca desde QUANDO o excesso começou — sem cron,
+ * computado sob demanda (mesmo espírito de `revertExpiredPersonalPlan`
+ * acima): a PRIMEIRA chamada que detecta o excesso grava o timestamp; uma
+ * chamada seguinte que encontra a contagem de volta dentro do limite limpa
+ * o campo (recuperação). Chamado a partir de QUALQUER ponto que precise
+ * decidir se uma ação de prescrição (Personal) ou de acesso (aluno, pelo
+ * `personalId` do programa/treino específico) deve ser bloqueada — nunca só
+ * uma vez num único lugar central, porque o aluno acessa pelo `personalId`
+ * do PROGRAMA (pode ser diferente do usuário autenticado na requisição).
+ *
+ * `personalId` nulo (programa/treino `origin: SELF`, sem profissional dono)
+ * sempre retorna "não bloqueado" — não há Personal nenhum pra checar.
+ *
+ * Custo: 2 queries no caso comum (usuário + contagem de vínculos), mais 1
+ * write só na transição de estado (entrar ou sair do excesso). Aceitável
+ * pelo volume real já mapeado nesta sessão (ceilings de `limiteAlunos` bem
+ * pequenos); se algum dia isso pesar num caminho quente (ex: execução de
+ * treino do aluno), dá pra cachear/desnormalizar sem mudar a assinatura
+ * desta função.
+ */
+export const PERSONAL_OVER_LIMIT_GRACE_DAYS = 5;
+
+export interface PersonalAccessStatus {
+  /** true = passou da carência, ações de prescrição/acesso devem ser recusadas. */
+  blocked: boolean;
+  /** true = acima do limite agora (pode ainda estar dentro da carência). */
+  overLimit: boolean;
+  /** Dias restantes de carência, ou null quando não se aplica (dentro do limite, ou já bloqueado). */
+  graceDaysLeft: number | null;
+}
+
+export async function getPersonalAccessStatus(
+  personalId: string | null
+): Promise<PersonalAccessStatus> {
+  if (!personalId) return { blocked: false, overLimit: false, graceDaysLeft: null };
+
+  let user = await prisma.user.findUnique({
+    where: { id: personalId },
+    select: {
+      id: true,
+      limiteAlunos: true,
+      planoAssinaturaExpiresAt: true,
+      overLimiteAlunosSince: true,
+    },
+  });
+  if (!user) return { blocked: false, overLimit: false, graceDaysLeft: null };
+
+  user = await revertExpiredPersonalPlan(user);
+  const count = await prisma.clientRelation.count({ where: { personalId } });
+
+  if (count <= user.limiteAlunos) {
+    if (user.overLimiteAlunosSince) {
+      await prisma.user.update({ where: { id: personalId }, data: { overLimiteAlunosSince: null } });
+    }
+    return { blocked: false, overLimit: false, graceDaysLeft: null };
+  }
+
+  let since = user.overLimiteAlunosSince;
+  if (!since) {
+    since = new Date();
+    await prisma.user.update({ where: { id: personalId }, data: { overLimiteAlunosSince: since } });
+  }
+  const daysElapsed = (Date.now() - since.getTime()) / (24 * 60 * 60 * 1000);
+  if (daysElapsed >= PERSONAL_OVER_LIMIT_GRACE_DAYS) {
+    return { blocked: true, overLimit: true, graceDaysLeft: null };
+  }
+  return {
+    blocked: false,
+    overLimit: true,
+    graceDaysLeft: Math.max(1, Math.ceil(PERSONAL_OVER_LIMIT_GRACE_DAYS - daysElapsed)),
+  };
+}
+
+function httpError(message: string, statusCode: number, code: string) {
+  const err = new Error(message) as Error & { statusCode: number; code: string };
+  err.statusCode = statusCode;
+  err.code = code;
+  return err;
+}
+
+/**
+ * Usado nos caminhos de PRESCRIÇÃO do Personal (criar/adicionar treino,
+ * aplicar template/catálogo a um aluno) — `personalId` é sempre o autor
+ * autenticado da ação, nunca o dono de um programa de terceiro. Deletar/
+ * mover/salvar-como-template nunca passam por aqui (mesma filosofia já
+ * usada pelo Aluno Premium: remoção nunca é bloqueada, só o que EXPANDE a
+ * prescrição).
+ */
+export async function assertPersonalCanPrescribe(personalId: string): Promise<void> {
+  const status = await getPersonalAccessStatus(personalId);
+  if (status.blocked) {
+    throw httpError(
+      `Você tem mais alunos vinculados do que seu plano atual permite. Desvincule alunos até ficar dentro do limite antes de prescrever novos treinos.`,
+      403,
+      "PERSONAL_OVER_LIMIT"
+    );
+  }
+}
+
+/**
+ * Usado nos caminhos de ACESSO do aluno (ver/completar treino, registrar
+ * série) — `personalId` é sempre o dono do PROGRAMA/TREINO específico sendo
+ * acessado (`program.personalId`/`workout.personalId`), nunca o usuário
+ * autenticado da requisição (que é o aluno). Nulo (programa origin: SELF)
+ * nunca bloqueia — resolvido dentro de `getPersonalAccessStatus`.
+ */
+export async function assertAlunoWorkoutAccessible(personalId: string | null): Promise<void> {
+  const status = await getPersonalAccessStatus(personalId);
+  if (status.blocked) {
+    throw httpError(
+      "Seu Personal precisa regularizar a assinatura dele para você voltar a acessar este treino.",
+      403,
+      "PERSONAL_PLAN_RESTRICTED"
+    );
+  }
+}

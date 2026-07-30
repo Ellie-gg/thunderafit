@@ -1,6 +1,7 @@
 import { setlogsRepository } from "../repository/setlogs.repository";
 import { workoutsRepository } from "../repository/workouts.repository";
 import { workoutSummaryService } from "./workout-summary.service";
+import { assertAlunoWorkoutAccessible } from "../../lib/plan-expiry";
 
 async function assertOwnerAluno(
   workoutId: string,
@@ -19,6 +20,12 @@ async function assertOwnerAluno(
     const err = new Error("Você não tem permissão para acessar este treino.");
     (err as any).statusCode = 403;
     throw err;
+  }
+  // Fase 103: registrar/ver séries é acesso do aluno ao treino — mesmo gate
+  // de workouts.service.ts#getWorkout. Admin (papel exigido acima pra ler
+  // sem ser o próprio dono) não é bloqueado, mesma exceção já feita ali.
+  if (role !== "ADMIN") {
+    await assertAlunoWorkoutAccessible(workout.personalId);
   }
 
   const workoutExercise = await setlogsRepository.findWorkoutExerciseById(workoutExerciseId);

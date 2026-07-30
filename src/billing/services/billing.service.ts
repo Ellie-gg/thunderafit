@@ -1,7 +1,8 @@
 import type Stripe from "stripe";
 import { getStripe, stripePriceEnvVar, PlanTier, BillingInterval } from "../stripe";
 import { billingRepository } from "../repository/billing.repository";
-import { revertExpiredPersonalPlan } from "../../lib/plan-expiry";
+import { revertExpiredPersonalPlan, getPersonalAccessStatus } from "../../lib/plan-expiry";
+import { notificationsService } from "../../notifications/services/notifications.service";
 
 function httpError(message: string, statusCode: number) {
   const err = new Error(message) as Error & { statusCode: number };
@@ -102,6 +103,10 @@ export const billingService = {
     // Fase 90: concessão manual de plano com prazo (admin) — reverte pra
     // FREE sozinha se já venceu, antes de montar o status exibido na UI.
     user = await revertExpiredPersonalPlan(user);
+    // Fase 103: status de excesso de alunos/carência pro banner do Personal
+    // — inofensivo pra ALUNO (nunca é "personalId" de nenhum ClientRelation,
+    // então sempre volta overLimit: false).
+    const accessStatus = await getPersonalAccessStatus(userId);
     return {
       planoAssinatura: user.planoAssinatura,
       limiteAlunos: user.limiteAlunos,
@@ -110,6 +115,10 @@ export const billingService = {
       // concessão manual do admin (Fase 90) — sempre null pra assinatura
       // Stripe real (applyPaidPlan/applyFreePlan sempre limpam este campo).
       planoAssinaturaExpiresAt: user.planoAssinaturaExpiresAt,
+      // Fase 103: ver src/lib/plan-expiry.ts#getPersonalAccessStatus.
+      overLimiteAlunos: accessStatus.overLimit,
+      overLimiteAlunosBlocked: accessStatus.blocked,
+      overLimiteAlunosGraceDaysLeft: accessStatus.graceDaysLeft,
     };
   },
 
@@ -213,6 +222,30 @@ export const billingService = {
         // Ignora se não for a subscription corrente (reentrega/subscription antiga).
         if (user.stripeSubscriptionId !== sub.id) return;
         await billingRepository.applyFreePlan(user.id);
+        return;
+      }
+
+      case "invoice.payment_failed": {
+        // Fase 103 — achado da pesquisa de billing: antes este evento caía
+        // no default (nenhuma ação). NÃO muda o plano aqui (isso já
+        // acontece via customer.subscription.updated assim que o Stripe
+        // marca a assinatura como `past_due`, o que tipicamente já ocorre na
+        // PRIMEIRA falha, não só depois de esgotar as tentativas de
+        // cobrança) — só avisa o Personal proativamente, o mais cedo
+        // possível, pra ele poder agir antes que o downgrade de verdade
+        // aconteça (mensagem clara + 1 ação, sem esperar o Personal
+        // descobrir sozinho quando algo já parou de funcionar).
+        const invoice = event.data.object as Stripe.Invoice;
+        const customerId =
+          typeof invoice.customer === "string" ? invoice.customer : invoice.customer?.id;
+        if (!customerId) return;
+        const user = await billingRepository.findUserByStripeCustomerId(customerId);
+        if (!user) return;
+        await notificationsService.notify(
+          user.id,
+          "payment_failed",
+          "Não conseguimos processar o pagamento da sua assinatura. Atualize seu método de pagamento para continuar com o plano atual."
+        );
         return;
       }
 

@@ -153,7 +153,11 @@ function ProgramaDetalheContent() {
                   ))}
                 </div>
                 {addSessionMutation.isError && (
-                  <p className="text-sm text-danger">{t("addSessionError")}</p>
+                  <p className="text-sm text-danger">
+                    {addSessionMutation.error instanceof ApiError
+                      ? addSessionMutation.error.message
+                      : t("addSessionError")}
+                  </p>
                 )}
               </Card>
             )}

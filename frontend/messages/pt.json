@@ -914,6 +914,18 @@
     "deleting": "Excluindo...",
     "confirmDelete": "Sim, excluir"
   },
+  "removeAlunoButton": {
+    "remove": "Remover",
+    "confirmRemove": "Desvincular este aluno? O histórico de treino dele é preservado — só o vínculo é removido. Você pode vinculá-lo de novo depois.",
+    "removeError": "Erro ao desvincular.",
+    "removing": "Removendo...",
+    "confirmRemoveButton": "Sim, desvincular"
+  },
+  "personalOverLimitBanner": {
+    "graceMessage": "Você tem mais alunos vinculados do que seu plano atual permite. Em {days} dia(s), a prescrição de novos treinos será bloqueada até você regularizar.",
+    "blockedMessage": "Você tem mais alunos vinculados do que seu plano atual permite — a prescrição de novos treinos está bloqueada. Desvincule alunos ou faça upgrade para continuar.",
+    "manageStudentsCta": "Gerenciar alunos"
+  },
   "deleteExerciseButton": {
     "delete": "Excluir",
     "confirmDelete": "Excluir este exercício do catálogo? Essa ação não pode ser desfeita.",
