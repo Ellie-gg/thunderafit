@@ -142,6 +142,22 @@
     "inviteContext": {
       "message": "Convite de {name} — crie sua conta (ou entre, se já tiver uma) pra vincular automaticamente."
     },
+    "inviteAlreadyLoggedIn": {
+      "aluno": {
+        "badge": "Convite pendente",
+        "title": "Confirmar vínculo",
+        "message": "Você já está logado. Confirme o vínculo com {name} pra começar a treinar.",
+        "confirmButton": "Vincular agora",
+        "confirming": "Vinculando..."
+      },
+      "mismatch": {
+        "badge": "Convite pendente",
+        "title": "Conta diferente conectada",
+        "message": "Este convite é pra virar aluno de {name}, mas a conta logada agora não é de aluno. Saia pra entrar (ou criar uma conta) como aluno e confirmar o vínculo.",
+        "logoutButton": "Sair e continuar",
+        "loggingOut": "Saindo..."
+      }
+    },
     "emailStep": {
       "emailLabel": "E-mail",
       "emailPlaceholder": "voce@exemplo.com",

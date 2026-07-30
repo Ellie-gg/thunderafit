@@ -142,6 +142,22 @@
     "inviteContext": {
       "message": "Invite from {name} — create your account (or log in, if you already have one) to link automatically."
     },
+    "inviteAlreadyLoggedIn": {
+      "aluno": {
+        "badge": "Pending invite",
+        "title": "Confirm link",
+        "message": "You're already logged in. Confirm the link with {name} to start training.",
+        "confirmButton": "Link now",
+        "confirming": "Linking..."
+      },
+      "mismatch": {
+        "badge": "Pending invite",
+        "title": "Different account signed in",
+        "message": "This invite is to become a client of {name}, but the account signed in right now isn't a client account. Log out to sign in (or create an account) as a client and confirm the link.",
+        "logoutButton": "Log out and continue",
+        "loggingOut": "Logging out..."
+      }
+    },
     "emailStep": {
       "emailLabel": "Email",
       "emailPlaceholder": "you@example.com",

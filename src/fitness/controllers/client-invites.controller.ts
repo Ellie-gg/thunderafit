@@ -56,6 +56,38 @@ export async function revokeInviteHandler(
 }
 
 /**
+ * Fase 104 (correção pós-lançamento) — achado real em produção: quem abre
+ * o link do convite já LOGADO em outro momento (sessão existente no
+ * navegador) via register/login/SSO nunca roda de novo — a página só
+ * consumia o convite dentro daquele fluxo de autenticação. Resultado: o
+ * aluno ficava "órfão" (cadastro existe, vínculo nunca acontece), e a
+ * única pista era o link pedir login de novo mesmo já autenticado.
+ * Autenticada — consome o convite pra quem já está logado agora, sem
+ * pedir senha de novo. Só ALUNO consome (mesma regra do register/login).
+ */
+export async function consumeInviteHandler(
+  request: FastifyRequest<{ Body: { token?: string } }>,
+  reply: FastifyReply
+) {
+  const { sub, role } = (request as any).user;
+  const token = request.body?.token;
+  if (!token) {
+    return reply.status(400).send({ error: "token é obrigatório." });
+  }
+  if (role !== "ALUNO") {
+    return reply.status(403).send({
+      error: "Este convite é pra virar aluno de um profissional — sua conta atual não é uma conta de aluno.",
+    });
+  }
+
+  const result = await clientInvitesService.consumeInvite(token, sub);
+  if (!result.consumed) {
+    return reply.status(400).send({ error: result.reason ?? "Não foi possível concluir o vínculo." });
+  }
+  return reply.status(200).send({ consumed: true });
+}
+
+/**
  * Pública — quem abre o link do convite ainda não tem sessão neste
  * dispositivo. Rate-limitada por IP (mesmo padrão de verify-email/
  * reset-password em auth.controller.ts) — o token em si já tem 256 bits de
