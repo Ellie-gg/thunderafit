@@ -13,6 +13,7 @@ import {
 } from "@/lib/api/workouts";
 import { listRelations } from "@/lib/api/relations";
 import { ApiError } from "@/lib/api/client";
+import type { WorkoutProgram } from "@/lib/types";
 import { orderFor, maxSessionsFor, sortByScheme, labelFor } from "@/lib/session-scheme";
 import { AuthGuard } from "@/components/auth-guard";
 import { AppHeader } from "@/components/app-header";
@@ -34,6 +35,20 @@ function ProgramaDetalheContent() {
   const programQuery = useQuery({
     queryKey: ["workout-program", programId],
     queryFn: () => getWorkoutProgram(programId),
+    // Perf (Grupo Y, item 106): mesma ideia da lista→detalhe do aluno — a
+    // lista em /personal/programas já trouxe este programa (sem
+    // `exercises` por sessão, que aqui já é lido atrás de `?? 0`). O select
+    // de `listByPersonal` também não traz `lastCompletedAt` por sessão,
+    // mas esta tela nunca lê esse campo — não é um bug, o dado
+    // simplesmente não é usado aqui.
+    placeholderData: () => {
+      const list = queryClient.getQueryData<{ programs: WorkoutProgram[] }>([
+        "workout-programs",
+        "personal",
+      ]);
+      const match = list?.programs.find((p) => p.id === programId);
+      return match ? { program: match } : undefined;
+    },
   });
   const relationsQuery = useQuery({ queryKey: ["relations"], queryFn: listRelations });
 

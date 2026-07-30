@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { getWorkoutProgram, addSelfProgramSession } from "@/lib/api/workouts";
+import type { WorkoutProgram } from "@/lib/types";
 import { sortByScheme, labelFor, nextKeyInSequence, maxSessionsFor, orderFor } from "@/lib/session-scheme";
 import { AuthGuard } from "@/components/auth-guard";
 import { AppHeader } from "@/components/app-header";
@@ -30,6 +31,19 @@ function ProgramaContent() {
   const programQuery = useQuery({
     queryKey: ["workout-program", programId],
     queryFn: () => getWorkoutProgram(programId),
+    // Perf (Grupo Y, item 106): a lista em /programas já trouxe este mesmo
+    // programa (sem `suggestedNext` nem `exercises` por sessão — só o
+    // detalhe computa/inclui isso, e ambos já são lidos aqui atrás de
+    // guards seguros). Semeando o cache com o item da lista, a navegação
+    // lista→detalhe renderiza na hora em vez de piscar um loading.
+    placeholderData: () => {
+      const list = queryClient.getQueryData<{ programs: WorkoutProgram[] }>([
+        "workout-programs",
+        "aluno",
+      ]);
+      const match = list?.programs.find((p) => p.id === programId);
+      return match ? { program: match } : undefined;
+    },
   });
 
   const program = programQuery.data?.program;
