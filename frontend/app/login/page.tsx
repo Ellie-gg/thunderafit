@@ -1,11 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useMutation } from "@tanstack/react-query";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { checkEmailRequest, loginRequest, registerRequest, googleAuthRequest } from "@/lib/api/auth";
+import { previewClientInvite } from "@/lib/api/client-invites";
 import { ApiError } from "@/lib/api/client";
 import { useAuthStore } from "@/lib/store/auth-store";
 import { dashboardPathForRole } from "@/lib/auth/redirect";
@@ -136,10 +137,25 @@ function RoleCard({
   );
 }
 
-export default function LoginPage() {
+function LoginPageContent() {
   const t = useTranslations("login");
   const router = useRouter();
   const setSession = useAuthStore((s) => s.setSession);
+  const searchParams = useSearchParams();
+
+  // Fase 104 — convite por link: `?invite=` carrega um token que, se
+  // válido, (a) mostra pra quem chegou aqui de quem é o convite, e (b)
+  // pula a escolha de papel — o convite já implica "vire meu aluno", não
+  // faz sentido perguntar de novo. Token inválido/expirado/já usado não
+  // trava nada — só não pula a etapa nem mostra o contexto, cadastro/login
+  // seguem normais (o backend também ignora silenciosamente um token morto).
+  const inviteToken = searchParams.get("invite");
+  const inviteQuery = useQuery({
+    queryKey: ["client-invite-preview", inviteToken],
+    queryFn: () => previewClientInvite(inviteToken!),
+    enabled: !!inviteToken,
+  });
+  const inviteIsValid = !!inviteToken && inviteQuery.data?.valid === true;
 
   const [step, setStep] = useState<Step>("email");
   const [email, setEmail] = useState("");
@@ -153,11 +169,24 @@ export default function LoginPage() {
 
   const checkEmailMutation = useMutation({
     mutationFn: () => checkEmailRequest(email.trim()),
-    onSuccess: ({ exists }) => setStep(exists ? "login" : "signup-role"),
+    onSuccess: ({ exists }) => {
+      if (exists) {
+        setStep("login");
+        return;
+      }
+      // Convite válido + e-mail novo: pula a escolha de papel, já sabemos
+      // que é ALUNO.
+      if (inviteIsValid) {
+        setSignupRole("ALUNO");
+        setStep("signup-details");
+        return;
+      }
+      setStep("signup-role");
+    },
   });
 
   const loginMutation = useMutation({
-    mutationFn: () => loginRequest(email.trim(), password),
+    mutationFn: () => loginRequest(email.trim(), password, inviteToken ?? undefined),
     onSuccess: (data) => {
       setSession(data.user);
       router.push(dashboardPathForRole(data.user.role));
@@ -166,7 +195,7 @@ export default function LoginPage() {
 
   const registerMutation = useMutation({
     mutationFn: async () => {
-      await registerRequest(email.trim(), password, signupRole!, name.trim());
+      await registerRequest(email.trim(), password, signupRole!, name.trim(), inviteToken ?? undefined);
       return loginRequest(email.trim(), password); // encadeia login pra pegar cookies+user, mesmo padrão do /register antigo
     },
     onSuccess: (data) => {
@@ -180,9 +209,16 @@ export default function LoginPage() {
   // assim). Com `role`: finaliza uma conta nova (chamado a partir do passo
   // signup-role, reaproveitado do cadastro tradicional).
   const googleAuthMutation = useMutation({
-    mutationFn: (vars: { idToken: string; role?: Role }) => googleAuthRequest(vars.idToken, vars.role),
+    mutationFn: (vars: { idToken: string; role?: Role }) =>
+      googleAuthRequest(vars.idToken, vars.role, inviteToken ?? undefined),
     onSuccess: (data, vars) => {
       if (data.needsRole) {
+        // Fase 104: mesma lógica do checkEmailMutation acima — convite
+        // válido pula a escolha de papel, finaliza direto como ALUNO.
+        if (inviteIsValid) {
+          googleAuthMutation.mutate({ idToken: vars.idToken, role: "ALUNO" });
+          return;
+        }
         setEmail(data.email);
         setGoogleIdToken(vars.idToken);
         setStep("signup-role");
@@ -215,6 +251,15 @@ export default function LoginPage() {
           ThunderaFit
         </h1>
       </div>
+
+      {/* Fase 104 — contexto do convite: visível em toda etapa (não só na
+          de e-mail), pra quem veio de um link de convite nunca perder de
+          vista de quem é o convite enquanto passa pelas próximas telas. */}
+      {inviteIsValid && inviteQuery.data && (
+        <div className="mb-6 max-w-sm rounded-full border border-accent-secondary/50 bg-accent-secondary/10 px-4 py-2 text-center text-sm text-foreground">
+          {t("inviteContext.message", { name: inviteQuery.data.professionalName ?? "" })}
+        </div>
+      )}
 
       {/* Hero: só na tela de entrada — as demais etapas (login/cadastro) já
           têm seu próprio título contextual dentro do Card, uma tagline de
@@ -515,5 +560,13 @@ export default function LoginPage() {
         </Card>
       )}
     </main>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={null}>
+      <LoginPageContent />
+    </Suspense>
   );
 }

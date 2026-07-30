@@ -13,13 +13,6 @@ export function listRelations() {
   return apiFetch<{ relations: RelationAluno[] }>("/api/relations");
 }
 
-export function createRelation(alunoId: string) {
-  return apiFetch<{ relation: unknown }>("/api/relations", {
-    method: "POST",
-    body: { alunoId },
-  });
-}
-
 /** Fase 103 — desvincular um aluno. Preserva o histórico de treino dele. */
 export function removeRelation(alunoId: string) {
   return apiFetch<void>(`/api/relations/${alunoId}`, { method: "DELETE" });
@@ -31,10 +24,4 @@ export function setPaymentReminder(alunoId: string, dueDate: string | null, recu
     method: "PUT",
     body: { dueDate, recurring },
   });
-}
-
-export function lookupAlunoByEmail(email: string) {
-  return apiFetch<{ user: { id: string; email: string; role: string } }>(
-    `/api/users/lookup?email=${encodeURIComponent(email)}`
-  );
 }

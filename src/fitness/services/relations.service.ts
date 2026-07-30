@@ -9,7 +9,36 @@ function addOneMonth(date: Date): Date {
   return next;
 }
 
+/**
+ * Extraído do meio de `createRelation` (Fase 104) pra ser reaproveitado
+ * também na CRIAÇÃO de um convite (`client-invites.service.ts`) — sem
+ * isso, um Personal já no limite poderia gerar convites que nunca
+ * conseguiriam ser consumidos de verdade (o aluno completaria o cadastro e
+ * só descobriria depois, silenciosamente, que o vínculo não foi criado).
+ * Checar aqui TAMBÉM na criação do convite falha rápido, antes de gastar o
+ * convite com alguém.
+ */
+async function assertUnderAlunoLimit(personalId: string): Promise<void> {
+  let user = await prisma.user.findUnique({ where: { id: personalId } });
+  if (!user) {
+    const err = new Error("Profissional não encontrado.");
+    (err as any).statusCode = 404;
+    throw err;
+  }
+  // Fase 90: concessão manual de plano com prazo (admin) — reverte pra
+  // FREE sozinha se já venceu, antes de checar o limite.
+  user = await revertExpiredPersonalPlan(user);
+  const count = await relationsRepository.countByPersonal(personalId);
+  if (count >= user.limiteAlunos) {
+    const err = new Error("Limite de alunos atingido.");
+    (err as any).statusCode = 403;
+    throw err;
+  }
+}
+
 export const relationsService = {
+  assertUnderAlunoLimit,
+
   async createRelation(
     personalId: string,
     alunoId: string,
@@ -36,21 +65,7 @@ export const relationsService = {
     // Nutricionista), então o limite Freemium já é por profissional, não
     // global sobre o aluno. Auditado na Fase 11, nenhuma mudança necessária
     // aqui além de aceitar professionalType.
-    let user = await prisma.user.findUnique({ where: { id: personalId } });
-    if (!user) {
-      const err = new Error("Profissional não encontrado.");
-      (err as any).statusCode = 404;
-      throw err;
-    }
-    // Fase 90: concessão manual de plano com prazo (admin) — reverte pra
-    // FREE sozinha se já venceu, antes de checar o limite.
-    user = await revertExpiredPersonalPlan(user);
-    const count = await relationsRepository.countByPersonal(personalId);
-    if (count >= user.limiteAlunos) {
-      const err = new Error("Limite de alunos atingido.");
-      (err as any).statusCode = 403;
-      throw err;
-    }
+    await assertUnderAlunoLimit(personalId);
 
     // 4. Create relation
     const relation = await relationsRepository.create(personalId, alunoId, professionalType);

@@ -3,6 +3,7 @@ import cookie from "@fastify/cookie";
 import cors from "@fastify/cors";
 import authPlugin from "./auth/middlewares/authenticate";
 import { authRoutes } from "./auth/routes/auth.routes"; import { relationsRoutes } from "./fitness/routes/relations.routes";
+import { clientInvitesRoutes } from "./fitness/routes/client-invites.routes";
 import { exercisesRoutes } from "./fitness/routes/exercises.routes";
 import { workoutsRoutes } from "./fitness/routes/workouts.routes";
 import { workoutProgramsRoutes } from "./fitness/routes/workout-programs.routes";
@@ -79,6 +80,7 @@ export async function buildApp(): Promise<FastifyInstance> {
 
   // Registrar rotas de autenticação
   await fastify.register(authRoutes); await fastify.register(relationsRoutes);
+  await fastify.register(clientInvitesRoutes);
   await fastify.register(exercisesRoutes);
   await fastify.register(workoutsRoutes);
   await fastify.register(workoutProgramsRoutes);
