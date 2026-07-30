@@ -1186,6 +1186,161 @@ CI) — depois disso, os builds de release subsequentes podem migrar pra CI.
 bump de `targetSdkVersion`. Modelo: Sonnet 5 é suficiente (nenhuma decisão arquitetural
 complexa, é execução de um checklist bem definido).*
 
+### Grupo Y — Performance, rodada 3 (triagem 2026-07-29). Os 3 itens de alto impacto ✅ CONCLUÍDOS (registrados como "Fase 96" no STATUS.md); o restante fica documentado abaixo, separado por tarefa, para uma fase futura.
+
+Terceira triagem de performance (não auditoria exaustiva), reaproveitando o que já
+tinha ficado documentado-mas-não-implementado nos Grupos D/E (confirmado ainda válido
+contra o código atual) + achados novos no código das Fases 87-95 (billing/admin/
+cronômetro de treino/Termos de Uso), nunca revisado antes. Nutrição excluída por ser
+dormente, exceto onde a composição do dashboard do aluno já a toca de qualquer forma
+(item 96, abaixo).
+
+**✅ Implementado nesta fase (os 3 itens de alto impacto):**
+
+96. ✅ **`admin.service.getOverview`: `groupBy` na `ClientRelation` inteira + fetch de
+    todos os profissionais pra contar quem bateu o limite Freemium em memória, virou
+    UMA agregação SQL** (`admin.repository.ts#countProfessionalsAtFreemiumLimit`, LEFT
+    JOIN + `COUNT(*) FILTER`) — nenhuma linha de usuário/vínculo atravessa mais a rede;
+    o cálculo roda inteiro no Postgres. Nenhuma mudança de contrato HTTP.
+97. ✅ **Waterfall do dashboard do aluno eliminado com um endpoint agregador novo**,
+    `GET /api/dashboard/aluno-summary` (domínio novo `src/dashboard/`, sem repository
+    próprio — só COMPÕE, num único round trip, as mesmas chamadas de serviço que os 3
+    endpoints antigos já faziam: `workoutProgramsService.listForAluno/getProgram` +
+    `dietPlansService.listPlansForUser/getDietPlan`, preservando 100% da autorização/
+    posse de cada um). O frontend (`frontend/app/dashboard/page.tsx`) trocou 3 hooks em
+    cascata (lista→detalhe do Personal, lista→detalhe do self, lista→detalhe do plano
+    de dieta) por 1 `useQuery` só; a lista de programas (`["workout-programs","aluno"]`)
+    continua existindo à parte, pro empty-state/contagem, agora em paralelo em vez de
+    bloquear o detalhe.
+98. ✅ **`GET /api/exercises` ganhou o primeiro response schema do Fastify do backend**
+    (`fast-json-stringify` compilado em vez do `JSON.stringify` genérico) — escolhido
+    por ser o payload mais pesado/mais lido (catálogo inteiro) E o mais simples/estável
+    (array plano, sem aninhamento). **`getProgram`/`getWorkout` (o outro alvo de alto
+    payload identificado) ficaram de propósito FORA desta fase** — um response schema
+    do Fastify funciona como ALLOWLIST de serialização (campo fora do schema é
+    descartado em silêncio, não é só validação); esses 2 endpoints têm campos aninhados
+    profundos e evoluindo há dezenas de fases, e escrever o schema errado silenciaria
+    dado de verdade em vez de só otimizar — fica no item 99 abaixo, exigindo
+    mapeamento campo-a-campo cuidadoso antes de aplicar.
+    *Modelo: Sonnet 5. 3 testes novos (`src/dashboard/__tests__/dashboard.test.ts`) +
+    suíte completa sem regressão, `tsc --noEmit` limpo nos dois lados.*
+
+**📋 Documentado, NÃO implementado nesta fase** (carregado do Grupo E + achados novos,
+reconfirmado válido contra o código em 2026-07-29):
+
+99. **Response schema do Fastify em `getProgram`/`getWorkout`** — maior payload restante
+    sem esse ganho de serialização; precisa do mapeamento campo-a-campo mencionado no
+    item 98 (risco real de silenciar dado se o schema ficar incompleto).
+100. **Frontend: `completeWorkout` invalida o prefixo `["workout-program"]` inteiro**
+    (`frontend/app/treinos/[id]/page.tsx`) em vez de só `["workout-program", programId]`
+    (`programId` já disponível no workout carregado) — refetch em cascata de todo cache
+    de programa a cada conclusão de treino. Config pura, baixo risco.
+101. **Frontend: dados quase-estáticos ainda no `staleTime` global de 30s** —
+    `["billing-status"]`, `["relations"]`, `["my-profile"]`, listas de programas,
+    `["self-templates"]`, e agora também `["aluno-dashboard-summary"]` (Fase 96) e as 2
+    queries novas de `/configuracoes` (Fase 93) — todos só mudam via ação que já
+    invalida a própria chave; minutos (ou `Infinity` pra profile/billing) cortaria a
+    maioria dos refetches de navegação.
+102. **Backend: listas de programa/treino sem paginação** (`workout-programs.
+    repository.ts#listByPersonal/listByAluno`, `workouts.repository.ts#
+    findAllByAluno/findAllByPersonal`) — cresce sem teto pra um Personal veterano.
+    **[CONTRATO-API]**.
+103. **Frontend: `html-to-image` e `recharts` embarcados eager** nas rotas mais usadas
+    (execução de treino, evolução) — `next/dynamic({ssr:false})` resolveria os dois;
+    `html-to-image` em particular bate direto no WebView do Capacitor na tela que o
+    aluno mais abre.
+104. **Backend: `workout-programs.service.ts#addSession` carrega o mesmo
+    `WorkoutProgram` 2× no mesmo request** (`findProgramById` seguido de
+    `findProgramWithSessions`, que já tem tudo do 1º). **[AUTHZ]** — mexe na checagem
+    de posse, preservar 404-antes-de-403.
+105. **Frontend: bundle i18n inteiro (~700 chaves, ~38KB) enviado em toda rota** via
+    `NextIntlClientProvider` sem prop `messages` — carregamento por-locale já correto,
+    falta escopar por namespace/rota.
+106. **Frontend: navegação lista→detalhe não semeia o cache do detalhe**
+    (`["workout-programs",...]` → `["workout-program", id]`) — `placeholderData`
+    eliminaria o flash de loading.
+107. **Backend: `getFrequency`/`getWeeklySummary` (progress) ainda buscam a janela
+    inteira de `SetLog` pra contar streak/bucket mensal em JS** — janela de 90 dias,
+    não cresce sem teto; mover pra SQL exigiria reescrever lógica stateful de
+    sequência (risco > retorno).
+108. **Baixo impacto, registrado sem ação**: rate-limiter de login sem eviction
+    (mitigado por restart no deploy); Levenshtein O(N) na checagem de nome do admin
+    (~171 nomes, admin-only); avatar base64 inflando `/me` + `localStorage`; sino de
+    notificação com poll de 30s; cronômetro de treino (Fase 89) grava no
+    `localStorage` a cada clique enquanto a sessão está aberta (puro client-side, sem
+    rede); `admin.service.listUsers` (Fase 90) roda `revertExpiredPersonalPlan` por
+    linha da página dentro de um `Promise.all` — sem custo quando nada expirou, mas é
+    o tipo de padrão que só vira update de banco em volume se "conceder plano com
+    prazo" crescer; app inteiro `"use client"` (estrutural); sem bundle analyzer no CI.
+
+### Grupo Z — Revisão de caso de uso: Personal deixa de ser Premium (PLANEJAMENTO — sem código ainda)
+
+Pedido do fundador: uma auditoria dedicada de TODOS os pontos do produto que dependem
+de `planoAssinatura`/`limiteAlunos` do Personal, especificamente o que acontece quando
+ele DEIXA de ser Base/Plus (cancelamento real via Stripe, expiração de uma concessão
+manual do admin — Fase 90 — ou downgrade manual). Hoje só um pedaço disso está
+documentado com certeza (`billing.repository.ts#applyFreePlan`: volta pra FREE/limite 3,
+NÃO desfaz vínculos existentes, desliga `availableForNewStudents`) — o resto é incerto
+o bastante pra merecer uma rodada de revisão antes de decidir se precisa de código novo.
+
+Perguntas concretas que esta fase deveria responder (levantamento, não implementação):
+- Alunos vinculados ACIMA do novo limite (ex: 15 alunos com Plus, cai pra Base=20 ok,
+  mas cai pra Free=3): já confirmado que não desfaz o vínculo — mas o Personal
+  consegue continuar PRESCREVENDO/editando treino pra esses alunos "excedentes", ou só
+  não pode vincular NOVOS? Comportamento atual precisa ser confirmado lendo o código de
+  enforcement (`relations.service.ts`), não assumido.
+- Templates "Templates Premium" (Fase 62, exclusivos do plano Plus): um aluno que já
+  tinha um desses templates aplicado continua com acesso normal ao treino já prescrito
+  depois do Personal perder o Plus? (Provavelmente sim, é só uma cópia já aplicada —
+  mas precisa confirmar que nenhuma checagem de plano roda de novo na leitura/execução
+  do treino já aplicado, só na hora de aplicar um NOVO.)
+- Diretório de profissionais (`availableForNewStudents`): já confirmado que desliga
+  sozinho no downgrade pra FREE — mas e num downgrade Plus→Base (continua elegível,
+  Base também pode aparecer no diretório)? Confirmar que não desliga à toa.
+- Lembretes de pagamento (`ClientRelation.paymentReminderDueDate`) configurados por um
+  Personal que depois perde o plano pago: o lembrete continua disparando pro aluno
+  normalmente? Não deveria ter relação nenhuma com o plano, mas vale confirmar que não
+  há nenhum gate acidental.
+- Notificações/e-mails: o Personal É AVISADO de que perdeu o plano (downgrade real via
+  Stripe já tem o retorno `?status=` da tela de upgrade; mas uma expiração de concessão
+  manual do admin, Fase 90, hoje é 100% silenciosa — o Personal só descobre ao tentar
+  vincular um aluno novo e levar um 403). Decidir se isso precisa de um aviso ativo
+  (notificação in-app, e-mail) ou se "descobrir ao tentar" é aceitável.
+- Nutricionista (mesmo sistema de plano do Personal, gap já registrado na Fase 93):
+  incluir explicitamente no escopo desta revisão, já que provavelmente tem exatamente
+  os mesmos pontos cegos.
+
+*Esforço sugerido: a REVISÃO em si é baixo (leitura de código + decisão, sem código) —
+o esforço real depende do que a revisão encontrar (pode virar de "nada a fazer,
+documentar e seguir" até "vários pontos exigindo aviso ativo e/ou migration"). Modelo:
+Sonnet 5 pra revisão; reavaliar modelo depois, conforme o que for encontrado.*
+
+### Grupo AA — Melhoria no cadastro de alunos (PLANEJAMENTO — escopo em aberto, precisa de conversa com o fundador)
+
+Pedido do fundador, ainda sem escopo definido — registrado aqui como item de backlog
+pra não se perder, não como plano pronto pra executar. "Cadastro de alunos" hoje
+acontece de 2 jeitos: (1) o Personal vincula um e-mail já cadastrado
+(`VincularAlunoForm`) ou manda um convite por WhatsApp se o e-mail ainda não existir
+(Fase 86); (2) o aluno se cadastra sozinho (fluxo unificado de e-mail em `/login`,
+Fase 24) e depois aceita/solicita vínculo. Direções possíveis que uma conversa de
+escopo precisa decidir entre (nenhuma destas foi confirmada com o fundador ainda):
+- Cadastro em lote (Personal importa/adiciona vários alunos de uma vez, ex: CSV ou
+  colar uma lista de e-mails) — útil pra quem está migrando uma carteira de alunos de
+  outro sistema/planilha.
+- Capturar mais dado no momento do vínculo (ex: nome do aluno, telefone) em vez de só
+  e-mail — hoje o Personal só informa e-mail; se o aluno ainda não existe, o convite de
+  WhatsApp nem tem o nome de quem está sendo convidado.
+- Um Personal CRIAR a conta do aluno diretamente (sem depender do aluno se cadastrar
+  sozinho depois) — mudaria a asserção atual de que toda conta `ALUNO` se
+  autoautentica com a própria senha desde o início.
+- Simplificar o fluxo de "e-mail ainda não existe" (hoje: WhatsApp com link de
+  cadastro) — ex: um link de convite com token que já pré-vincula automaticamente
+  assim que o aluno completar o cadastro, sem precisar buscar o Personal de novo.
+
+*Próximo passo real: conversa de escopo com o fundador pra escolher entre essas (ou
+outras) direções antes de estimar esforço/modelo — sem isso, qualquer estimativa aqui
+seria inventada.*
+
 ### Adiado de propósito (decisão de produto, não bloqueio)
 Login Google · camadas anti-abuso de conta · web pública vs. só app nas lojas · programa
 de indicação Personal→desconto/bônus (quando a regra de negócio fechar, é migration
