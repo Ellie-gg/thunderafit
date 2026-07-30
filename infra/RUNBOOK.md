@@ -111,6 +111,49 @@ trocar "gerenciar autosuspend" por "gerenciar a VM":
   trocar o secret `DATABASE_URL`, validar todas as rotas — trabalho de migração real,
   não é só trocar uma flag.
 
+#### Fechando o maior risco da Opção A: Neon como backup da VM (pesquisado em 2026-07-30)
+
+Se a Opção A for adotada, o item "sem HA/backup automático" acima é o risco mais sério
+dela (VM única, sem redundância). Pesquisa dedicada sobre usar a **Neon como alvo de
+backup** da VM primária — não como serviço principal, só como destino do backup —,
+porque isso reaproveita o free tier da Neon pra um uso que combina bem com o modelo de
+cobrança dela.
+
+**Achado importante, verificado na documentação oficial da Neon**: a regra "replicação
+mantém o compute sempre ativo, nunca suspende" só vale quando a **Neon é a
+publicadora** (fonte replicando pra fora — cenário que reintroduziria o problema
+original). Quando a **Neon é a assinante** (recebendo de uma fonte externa — o cenário
+aqui: VM primária → Neon), o scale-to-zero continua funcionando normalmente: ela
+acorda só quando chega uma mudança de verdade pra aplicar e volta a suspender depois.
+Ou seja, usar a Neon como backup da VM é compatível por design com o modelo de custo
+dela — não é o mesmo padrão que causou o problema original (poll constante), é uma
+ativação esporádica, e só bate no banco quando há dado novo de verdade.
+
+Duas formas de implementar, com trade-offs diferentes:
+
+- **Replicação lógica contínua** (`CREATE PUBLICATION` na VM + `CREATE SUBSCRIPTION`
+  na Neon, recurso nativo do Postgres) — RPO (perda de dado num desastre) próximo de
+  zero, cada mudança na VM chega quase em tempo real na Neon. Contras reais: DDL
+  (mudança de schema — toda `migrate deploy`) **não replica automaticamente**; o
+  schema da Neon precisaria ser atualizado manualmente em lockstep com toda migration,
+  senão a replicação quebra silenciosamente. Exige `wal_level = logical` habilitado na
+  VM (não é o padrão).
+- **`pg_dump`/restore agendado** (cron, ex: 1x/dia) — bem mais simples de manter, sem
+  o problema de schema dessincronizado, e por ser esporádico mal toca no free tier da
+  Neon. Trade-off: RPO de até 1 dia (pior granularidade que a replicação contínua).
+
+**Terceira opção complementar, não excludente**: GCS (Google Cloud Storage) como
+destino de backup puro (dump comprimido) — também Always Free (5GB), mais barato/
+simples que manter outro banco vivo, mas não dá um "standby" pronto pra assumir
+tráfego rápido como a Neon dá (só um arquivo, precisaria restaurar em algo antes de
+voltar a servir).
+
+**Avaliação**: dado que a assinatura não prende o compute da Neon ativo, essa
+combinação fecha o principal risco da Opção A sem reintroduzir o problema de custo que
+motivou toda essa investigação. Ainda não é uma decisão — só uma pesquisa que
+confirma que a combinação é tecnicamente viável e compatível com o free tier dos dois
+lados, caso a Opção A seja adotada no futuro.
+
 ### Opção B — Cloud SQL for PostgreSQL
 
 **Não tem tier Always Free** — só um trial de 30 dias (instância Enterprise Plus 8
@@ -132,8 +175,20 @@ plano de entrada da Neon contra o tempo de manutenção real da Opção A antes 
 Pra HOJE (bem baixo uso, ~1 pessoa testando), a correção do poll (Fase 102) já deve
 resolver a maior parte do problema sem nenhuma mudança de infra. Se o compute-hours
 continuar alto mesmo depois disso, a Opção A (VM `e2-micro`) é a que elimina o problema
-por completo sem custo mensal novo, mas exige aceitar manutenção própria — decisão a
+por completo sem custo mensal novo — e com a Neon como assinante de backup (ver acima),
+o maior risco dela (falta de HA) também fica coberto sem reintroduzir custo. Ainda
+exige aceitar a manutenção própria da VM em si (patch, firewall, segurança) — decisão a
 retomar com o fundador se/quando o Neon voltar a ser um problema real, não antes.
+
+**Ideia avaliada e descartada nesta pesquisa**: mover o ambiente de DEV pra Neon e
+produção pra GCP (inverso do que documentado acima, que é sempre "produção na GCP"). A
+Neon-como-backup faz sentido combinada com produção na GCP; já usar a Neon pro
+dev/CI trocaria o Postgres local (Docker, hoje 100% offline e isolado por execução,
+essencial pra não gerar flakiness nos testes desta sessão) por uma dependência de rede
+compartilhada — um ganho pequeno (não precisar do Docker local) por um risco real
+(latência em cada teste, dependência de internet pra rodar `npm test`, colisão de dado
+entre execuções concorrentes). Ver conversa registrada em STATUS.md/histórico de
+sessão pra o raciocínio completo; não repetido aqui pra não duplicar.
 
 ## `terraform destroy`
 
