@@ -44,23 +44,24 @@ export const workoutsService = {
   async listWorkoutsForUser(
     userId: string,
     role: "PERSONAL" | "ALUNO" | "NUTRICIONISTA" | "ADMIN",
-    adminTarget?: { alunoId?: string; personalId?: string }
+    adminTarget?: { alunoId?: string; personalId?: string },
+    pagination?: { skip: number; take: number }
   ) {
     if (role === "ADMIN") {
       // Admin não tem treinos próprios — visão ampliada de um aluno ou
       // Personal específico, sem assumir a identidade de nenhum dos dois.
       if (adminTarget?.alunoId) {
-        return workoutsRepository.findAllByAluno(adminTarget.alunoId);
+        return workoutsRepository.findAllByAluno(adminTarget.alunoId, pagination);
       }
       if (adminTarget?.personalId) {
-        return workoutsRepository.findAllByPersonal(adminTarget.personalId);
+        return workoutsRepository.findAllByPersonal(adminTarget.personalId, pagination);
       }
       return [];
     }
     if (role === "ALUNO") {
-      return workoutsRepository.findAllByAluno(userId);
+      return workoutsRepository.findAllByAluno(userId, pagination);
     }
-    return workoutsRepository.findAllByPersonal(userId);
+    return workoutsRepository.findAllByPersonal(userId, pagination);
   },
 
   async createWorkout(personalId: string, alunoId: string, name: string, letter: string) {

@@ -801,7 +801,7 @@
     "createProgramError": "Error creating program.",
     "creating": "Creating...",
     "createProgram": "Create program",
-    "templatesTitle": "My Templates ({count})",
+    "templatesTitle": "My Templates ({count}/{max})",
     "noTemplatesYet": "No templates yet.",
     "sessionsCount": "{count} session(s)",
     "open": "Open →",

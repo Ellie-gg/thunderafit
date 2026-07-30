@@ -46,6 +46,12 @@ const TAG_FILTERS: WorkoutTag[] = [
 // dá pra distinguir "foco" de "nível" só olhando a cor.
 const LEVEL_TAGS = new Set<WorkoutTag>(["INICIANTE", "INTERMEDIARIO", "AVANCADO"]);
 
+// Perf (Grupo Y, item 102 — pedido do fundador): mesmo teto de
+// `MAX_PERSONAL_TEMPLATES` em workout-programs.service.ts, só pra mostrar a
+// contagem aqui sem depender de um campo novo na resposta da API — se o
+// teto do backend mudar, atualizar os dois.
+const MAX_PERSONAL_TEMPLATES = 50;
+
 function TagFilterChips({
   selected,
   onToggle,
@@ -368,7 +374,7 @@ function ProgramasPersonalContent() {
             antes vinha primeiro; Premium/Básico/criar agora têm prioridade. */}
         <section className="flex flex-col gap-3">
           <h2 className="font-display text-lg font-bold">
-            {t("templatesTitle", { count: templates.length })}
+            {t("templatesTitle", { count: templates.length, max: MAX_PERSONAL_TEMPLATES })}
           </h2>
           {templates.length === 0 && (
             <p className="text-sm text-muted">{t("noTemplatesYet")}</p>

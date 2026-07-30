@@ -1338,14 +1338,64 @@ allowlist de serialização:
     `tsc --noEmit` limpo. Nenhuma mudança de contrato JSON (resposta idêntica, só
     serialização compilada).*
 
-**📋 Documentado, NÃO implementado ainda** (itens maiores — cada um precisa de decisão
-de escopo ou cuidado extra antes de começar, não são um lote "rápido" como as Etapas 2-5):
+**✅ Etapa 6 implementada (2026-07-30, registrada como "Fase 101" no STATUS.md):**
 
-102. **Backend: listas de programa/treino sem paginação** (`workout-programs.
-    repository.ts#listByPersonal/listByAluno`, `workouts.repository.ts#
-    findAllByAluno/findAllByPersonal`) — cresce sem teto pra um Personal veterano.
-    **[CONTRATO-API]** — precisa decidir estilo de paginação (cursor vs. offset) e se é
-    aditivo ou quebra contrato existente, antes de estimar.
+102. ✅ **Cap defensivo aditivo em `listByPersonal`/`listByAluno`
+    (workout-programs) e `findAllByAluno`/`findAllByPersonal` (workouts)** — decidido
+    com o fundador antes de implementar (as 2 perguntas do `[CONTRATO-API]`
+    original): **investigação prévia** mostrou que os 3 consumidores atuais de 3 das
+    4 listas (`dashboard.service.ts` faz um `.find()` sobre a lista inteira de
+    `listByAluno`; `/personal/alunos` monta um `Set` a partir da lista inteira de
+    `listByPersonal`; `/personal/programas` filtra e conta a lista inteira) dependiam
+    do resultado COMPLETO pra funcionar direito — paginação "de verdade" (UI de
+    carregar mais) exigiria reescrever os 3 pra tolerar página parcial, esforço
+    desproporcional a um risco hoje só teórico (ceilings reais já pequenos:
+    `limiteAlunos` 3/20/1M por plano, 5-7 sessões por programa). Escolhido em vez
+    disso: `page`/`pageSize` OPCIONAIS na querystring (mesmo padrão já usado em
+    `GET /api/admin/users` — único precedente de paginação no backend, nenhum padrão
+    de cursor existe em lugar nenhum), com um default generoso
+    (`DEFAULT_PAGE_SIZE = 300` em `src/lib/pagination.ts`, teto de 500 mesmo se
+    pedido explicitamente) — cobre confortavelmente qualquer ceiling real mapeado,
+    então nenhum consumidor atual (via HTTP ou chamada direta de service, como o
+    dashboard) muda de comportamento; só protege contra um crescimento fora do
+    previsto (bug de dado, conta de estúdio grande no Plus). Sem envelope novo na
+    resposta (`{programs: [...]}`/`{workouts: [...]}` continuam iguais) — verdadeiro
+    aditivo, zero mudança de contrato pra quem não usar os parâmetros novos.
+    **Bônus do mesmo pedido**: teto fixo de **50 templates por Personal**
+    (`MAX_PERSONAL_TEMPLATES` em `workout-programs.service.ts`), checado nos 2
+    caminhos que criam um template (`createTemplate` E `saveInstanceAsTemplate` — os
+    dois incrementam a mesma contagem via `countTemplates`), resolvendo o mesmo
+    gargalo na ORIGEM (quantos templates existem), não só no consumo. Contagem
+    exposta no frontend sem UI nova — reaproveita o heading já existente
+    ("Meus Templates (12/50)" em vez de só "(12)").
+    *Modelo: Sonnet 5. 9 testes novos (fronteira exata do teto de templates —
+    49→cria, 50→rejeita nos 2 caminhos —, e paginação page/pageSize nos 2
+    endpoints), 474/474 backend, 55/55 Jest/RTL, `tsc --noEmit` limpo nos dois lados.*
+
+**Achado à parte, fora do escopo pedido, mas corrigido na mesma fase**: rodando a
+suíte completa repetidas vezes durante a verificação, `setlogs.test.ts` (detecção de
+PR em tempo real) falhou de forma intermitente (~1 em cada 2-3 rodadas) num jeito que
+não tinha relação nenhuma com paginação/templates. Investigado até a causa raiz: `
+setlogs.service.ts#createSetLog` chamava `detectPersonalRecord(..., before: new
+Date())` pra excluir a própria série que estava prestes a criar do cálculo de
+"maior peso histórico" — mas essa exclusão por tempo era desnecessária (a query já
+roda ANTES do INSERT no mesmo fluxo síncrono, a nova linha simplesmente não existe
+ainda) e ativamente perigosa: comparava um timestamp gerado no Node (`new Date()`)
+contra timestamps gerados no Postgres (`@default(now())`), e qualquer dessincronia
+de relógio entre os dois processos — por menor que fosse — podia excluir por engano
+a série mais recente de verdade, fazendo `previousBest` (e por consequência
+`isPersonalRecord`) ficarem intermitentemente errados pra um aluno real, não só nos
+testes. Corrigido removendo o corte por tempo inteiramente
+(`findMaxHistoricalWeightForExercise` só escopa por `alunoId`+`exerciseId` agora,
+sem `before`) — `buildPersonalRecords` (a versão em lote, usada ao concluir uma
+sessão inteira) **não foi tocada**: aquela usa `windowStart` com um propósito
+diferente e legítimo (separar séries desta sessão de sessões anteriores), não uma
+tentativa de auto-exclusão. 3 rodadas completas da suíte (`npm test`) limpas em
+seguida, contra 1 falha em ~3 rodadas antes da correção.
+
+**📋 Documentado, NÃO implementado ainda** (itens maiores — cada um precisa de decisão
+de escopo ou cuidado extra antes de começar, não são um lote "rápido" como as Etapas 2-6):
+
 105. **Frontend: bundle i18n inteiro (~700 chaves, ~38KB) enviado em toda rota** via
     `NextIntlClientProvider` sem prop `messages` — carregamento por-locale já correto,
     falta escopar por namespace/rota. Mudança arquitetural (toca todo layout/roteamento),

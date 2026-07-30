@@ -8,10 +8,30 @@ import { billingService } from "../../billing/services/billing.service";
 
 const VALID_SCHEMES: SessionScheme[] = ["LETTER", "WEEKDAY"];
 
+// Perf (Grupo Y, item 102 — pedido do fundador na mesma rodada): teto fixo,
+// igual pra todo Personal independente de plano (não é um degrau de
+// billing como `limiteAlunos`) — resolve o mesmo gargalo de crescimento sem
+// teto que motivou o item 102, só que na origem (quantos templates existem),
+// não só no consumo (quantos a lista devolve).
+export const MAX_PERSONAL_TEMPLATES = 50;
+
 function httpError(message: string, statusCode: number) {
   const err = new Error(message) as Error & { statusCode: number };
   err.statusCode = statusCode;
   return err;
+}
+
+// Checado em todo caminho que CRIA um template novo (createTemplate E
+// saveInstanceAsTemplate — os dois incrementam a mesma contagem), não só
+// num deles.
+async function assertUnderTemplateLimit(personalId: string) {
+  const count = await workoutProgramsRepository.countTemplates(personalId);
+  if (count >= MAX_PERSONAL_TEMPLATES) {
+    throw httpError(
+      `Limite de ${MAX_PERSONAL_TEMPLATES} templates atingido. Exclua um template antigo antes de criar outro.`,
+      403
+    );
+  }
 }
 
 export const workoutProgramsService = {
@@ -21,6 +41,7 @@ export const workoutProgramsService = {
     if (!VALID_SCHEMES.includes(scheme)) {
       throw httpError("sessionScheme deve ser LETTER ou WEEKDAY.", 400);
     }
+    await assertUnderTemplateLimit(personalId);
     return workoutProgramsRepository.createProgram(personalId, name.trim(), true, null, scheme);
   },
 
@@ -123,8 +144,13 @@ export const workoutProgramsService = {
     return copy;
   },
 
-  async listPrograms(personalId: string, type?: "template" | "instance", alunoId?: string) {
-    return workoutProgramsRepository.listByPersonal(personalId, type, alunoId);
+  async listPrograms(
+    personalId: string,
+    type?: "template" | "instance",
+    alunoId?: string,
+    pagination?: { skip: number; take: number }
+  ) {
+    return workoutProgramsRepository.listByPersonal(personalId, type, alunoId, pagination);
   },
 
   /**
@@ -150,8 +176,8 @@ export const workoutProgramsService = {
     await workoutProgramsRepository.deleteProgram(programId);
   },
 
-  async listForAluno(alunoId: string) {
-    return workoutProgramsRepository.listByAluno(alunoId);
+  async listForAluno(alunoId: string, pagination?: { skip: number; take: number }) {
+    return workoutProgramsRepository.listByAluno(alunoId, pagination);
   },
 
   /**
@@ -169,6 +195,7 @@ export const workoutProgramsService = {
     if (program.isTemplate) {
       throw httpError("Este programa já é um template.", 400);
     }
+    await assertUnderTemplateLimit(personalId);
     const template = await workoutProgramsRepository.saveAsTemplate(programId, personalId, name.trim());
     if (!template) throw httpError("Falha ao salvar como template.", 500);
     return template;

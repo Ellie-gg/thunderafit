@@ -1070,3 +1070,177 @@ describe("Perf (Grupo Y, item 99) — GET /api/workout-programs/:id não descart
     );
   });
 });
+
+// Perf (Grupo Y, item 102) — cap defensivo aditivo em GET /api/workout-programs
+// (page/pageSize opcionais, mesmo padrão de GET /api/admin/users). Personal
+// dedicado com contagem EXATA de templates (não o `personalId` compartilhado
+// do arquivo, que já acumula programas de todos os outros blocos) — sem
+// isso, o teste de "quantos vieram" ficaria refém da ordem de execução dos
+// outros describes.
+describe("Perf (Grupo Y, item 102) — page/pageSize opcionais em GET /api/workout-programs", () => {
+  let pagPersonalId: string;
+  let pagPersonalToken: string;
+  let seededIds: string[];
+
+  beforeAll(async () => {
+    const reg = await supertest(server.server)
+      .post("/api/auth/register")
+      .send({ email: "wp_pag_personal@thunderafit.test", password: pw, role: "PERSONAL" });
+    pagPersonalId = reg.body.user.id;
+    pagPersonalToken = (
+      await supertest(server.server)
+        .post("/api/auth/login")
+        .send({ email: "wp_pag_personal@thunderafit.test", password: pw })
+    ).body.accessToken;
+
+    // `createdAt` espaçado manualmente (não deixado pro `@default(now())` em
+    // sequência) — 5 creates awaited em sequência podem cair no mesmo
+    // milissegundo, o que tornaria a ordem "mais recente primeiro" ambígua e
+    // o teste de ordem abaixo flaky.
+    seededIds = [];
+    const base = Date.now();
+    for (let i = 0; i < 5; i++) {
+      const p = await prisma.workoutProgram.create({
+        data: {
+          personalId: pagPersonalId,
+          origin: "PERSONAL",
+          name: `Paginação ${i}`,
+          isTemplate: true,
+          createdAt: new Date(base + i * 1000),
+        },
+      });
+      seededIds.push(p.id);
+    }
+  });
+
+  afterAll(async () => {
+    await prisma.workoutProgram.deleteMany({ where: { personalId: pagPersonalId } });
+    await prisma.user.deleteMany({ where: { id: pagPersonalId } });
+  });
+
+  it("sem page/pageSize, devolve todos os 5 (comportamento de hoje preservado)", async () => {
+    const r = await supertest(server.server)
+      .get("/api/workout-programs?type=template")
+      .set("Authorization", `Bearer ${pagPersonalToken}`);
+    expect(r.status).toBe(200);
+    expect(r.body.programs).toHaveLength(5);
+  });
+
+  it("?pageSize=2 devolve só os 2 mais recentes (orderBy createdAt desc preservado)", async () => {
+    const r = await supertest(server.server)
+      .get("/api/workout-programs?type=template&pageSize=2")
+      .set("Authorization", `Bearer ${pagPersonalToken}`);
+    expect(r.status).toBe(200);
+    expect(r.body.programs.map((p: any) => p.id)).toEqual([seededIds[4], seededIds[3]]);
+  });
+
+  it("?pageSize=2&page=2 devolve a próxima dupla, não repete a primeira página", async () => {
+    const r = await supertest(server.server)
+      .get("/api/workout-programs?type=template&pageSize=2&page=2")
+      .set("Authorization", `Bearer ${pagPersonalToken}`);
+    expect(r.status).toBe(200);
+    expect(r.body.programs.map((p: any) => p.id)).toEqual([seededIds[2], seededIds[1]]);
+  });
+});
+
+// Perf (Grupo Y, item 102 — pedido do fundador na mesma rodada): teto fixo
+// de MAX_PERSONAL_TEMPLATES templates por Personal, checado nos dois
+// caminhos que criam um template novo (createTemplate E
+// saveInstanceAsTemplate — os dois incrementam a mesma contagem).
+describe("Perf (Grupo Y, item 102 — pedido do fundador) — teto de 50 templates por Personal", () => {
+  let limitPersonalId: string;
+  let limitPersonalToken: string;
+  let appliedInstanceId: string;
+
+  beforeAll(async () => {
+    const reg = await supertest(server.server)
+      .post("/api/auth/register")
+      .send({ email: "wp_limit_personal@thunderafit.test", password: pw, role: "PERSONAL" });
+    limitPersonalId = reg.body.user.id;
+    limitPersonalToken = (
+      await supertest(server.server)
+        .post("/api/auth/login")
+        .send({ email: "wp_limit_personal@thunderafit.test", password: pw })
+    ).body.accessToken;
+
+    // 48 templates + 1 "template fonte" (vira uma instância aplicada abaixo,
+    // sem gastar uma chamada real de criação a mais) = 49 no total — deixa
+    // exatamente 1 vaga livre até o teto de 50, pra testar a FRONTEIRA exata
+    // (49→cria o 50º, 50→rejeita o 51º) em vez de só "sempre rejeita".
+    // Seed direto no banco: 49 POSTs reais não testariam nada que os testes
+    // de criação já existentes neste arquivo não cobrem.
+    await prisma.workoutProgram.createMany({
+      data: Array.from({ length: 48 }, (_, i) => ({
+        personalId: limitPersonalId,
+        origin: "PERSONAL" as const,
+        name: `Seed ${i}`,
+        isTemplate: true,
+      })),
+    });
+    const source = await prisma.workoutProgram.create({
+      data: { personalId: limitPersonalId, origin: "PERSONAL", name: "Template Fonte", isTemplate: true },
+    });
+    await prisma.workout.create({ data: { programId: source.id, name: "Sessão A", letter: "A" } });
+
+    const alunoReg = await supertest(server.server)
+      .post("/api/auth/register")
+      .send({ email: "wp_limit_aluno@thunderafit.test", password: pw, role: "ALUNO" });
+    await supertest(server.server)
+      .post("/api/relations")
+      .set("Authorization", `Bearer ${limitPersonalToken}`)
+      .send({ alunoId: alunoReg.body.user.id });
+    const applied = await supertest(server.server)
+      .post(`/api/workout-programs/${source.id}/apply`)
+      .set("Authorization", `Bearer ${limitPersonalToken}`)
+      .send({ alunoId: alunoReg.body.user.id });
+    appliedInstanceId = applied.body.program.id;
+  });
+
+  afterAll(async () => {
+    const progs = await prisma.workoutProgram.findMany({
+      where: { personalId: limitPersonalId },
+      select: { id: true },
+    });
+    const progIds = progs.map((p) => p.id);
+    const workouts = await prisma.workout.findMany({
+      where: { programId: { in: progIds } },
+      select: { id: true },
+    });
+    const wIds = workouts.map((w) => w.id);
+    const wes = await prisma.workoutExercise.findMany({ where: { workoutId: { in: wIds } }, select: { id: true } });
+    await prisma.setLog.deleteMany({ where: { workoutExerciseId: { in: wes.map((w) => w.id) } } });
+    await prisma.workoutExercise.deleteMany({ where: { workoutId: { in: wIds } } });
+    await prisma.workout.deleteMany({ where: { programId: { in: progIds } } });
+    await prisma.workoutProgram.deleteMany({ where: { personalId: limitPersonalId } });
+    await prisma.clientRelation.deleteMany({ where: { personalId: limitPersonalId } });
+    await prisma.user.deleteMany({
+      where: { email: { in: ["wp_limit_personal@thunderafit.test", "wp_limit_aluno@thunderafit.test"] } },
+    });
+  });
+
+  it("com 49 templates, cria o 50º normalmente", async () => {
+    const r = await supertest(server.server)
+      .post("/api/workout-programs")
+      .set("Authorization", `Bearer ${limitPersonalToken}`)
+      .send({ name: "Template 50" });
+    expect(r.status).toBe(201);
+  });
+
+  it("com 50 templates (teto atingido), criar mais um retorna 403", async () => {
+    const r = await supertest(server.server)
+      .post("/api/workout-programs")
+      .set("Authorization", `Bearer ${limitPersonalToken}`)
+      .send({ name: "Template 51" });
+    expect(r.status).toBe(403);
+    expect(r.body.error).toContain("50");
+  });
+
+  it("com o teto atingido, salvar uma instância como template também retorna 403 (mesmo teto nos 2 caminhos)", async () => {
+    const r = await supertest(server.server)
+      .post(`/api/workout-programs/${appliedInstanceId}/save-as-template`)
+      .set("Authorization", `Bearer ${limitPersonalToken}`)
+      .send({ name: "Instância Virou Template" });
+    expect(r.status).toBe(403);
+    expect(r.body.error).toContain("50");
+  });
+});

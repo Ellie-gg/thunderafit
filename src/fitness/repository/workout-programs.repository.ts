@@ -1,5 +1,6 @@
 import prisma from "../../lib/prisma";
 import { SessionScheme } from "@prisma/client";
+import { DEFAULT_PAGE_SIZE } from "../../lib/pagination";
 
 // Teto de segurança pro histórico de séries trazido por exercício prescrito —
 // sem isso, `setLogs` cresce sem limite pra sempre pra um usuário de longo
@@ -134,7 +135,12 @@ export const workoutProgramsRepository = {
    *   querer `?type=instance&alunoId=X` juntos) — ambos são adicionados ao
    *   mesmo objeto `where`, não são exclusivos entre si.
    */
-  async listByPersonal(personalId: string, type?: "template" | "instance", alunoId?: string) {
+  async listByPersonal(
+    personalId: string,
+    type?: "template" | "instance",
+    alunoId?: string,
+    pagination: { skip: number; take: number } = { skip: 0, take: DEFAULT_PAGE_SIZE }
+  ) {
     // Fase 34: origin: "PERSONAL" explícito — esta é A listagem do fluxo do
     // Personal; nunca deve devolver um programa origin: SELF, mesmo que
     // algum dia personalId pudesse coincidir por acidente. Defesa explícita,
@@ -151,7 +157,19 @@ export const workoutProgramsRepository = {
     return prisma.workoutProgram.findMany({
       where,
       orderBy: { createdAt: "desc" },
+      skip: pagination.skip,
+      take: pagination.take,
       include: { workouts: { select: { id: true, letter: true, name: true } } },
+    });
+  },
+
+  // Perf (Grupo Y, item 102 — teto de templates por Personal, ver
+  // workout-programs.service.ts#MAX_PERSONAL_TEMPLATES): `count` em vez de
+  // reaproveitar `listByPersonal` pra não trazer nenhuma linha/relação só
+  // pra saber um número.
+  async countTemplates(personalId: string): Promise<number> {
+    return prisma.workoutProgram.count({
+      where: { personalId, origin: "PERSONAL", isTemplate: true },
     });
   },
 
@@ -168,10 +186,15 @@ export const workoutProgramsRepository = {
     });
   },
 
-  async listByAluno(alunoId: string) {
+  async listByAluno(
+    alunoId: string,
+    pagination: { skip: number; take: number } = { skip: 0, take: DEFAULT_PAGE_SIZE }
+  ) {
     return prisma.workoutProgram.findMany({
       where: { alunoId, isTemplate: false },
       orderBy: { createdAt: "desc" },
+      skip: pagination.skip,
+      take: pagination.take,
       include: { workouts: { select: { id: true, letter: true, name: true, lastCompletedAt: true } } },
     });
   },
