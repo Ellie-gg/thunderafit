@@ -23,18 +23,28 @@ export const adminRepository = {
     `;
   },
 
-  async findProfessionalsWithLimite() {
-    return prisma.user.findMany({
-      where: { role: { in: ["PERSONAL", "NUTRICIONISTA"] } },
-      select: { id: true, limiteAlunos: true },
-    });
-  },
-
-  async countRelationsGroupedByPersonal() {
-    return prisma.clientRelation.groupBy({
-      by: ["personalId"],
-      _count: { _all: true },
-    });
+  /**
+   * Perf (triagem 2026-07-29, item de alto impacto): antes trazia TODOS os
+   * profissionais (`findMany`) + o `groupBy` inteiro de `ClientRelation`
+   * pra Node, e comparava linha a linha em memória — cresce com o tamanho
+   * TOTAL da plataforma, não por-tenant. Uma única agregação no Postgres
+   * (LEFT JOIN + COUNT FILTER) devolve só os 2 números finais; nenhuma
+   * linha de usuário/vínculo atravessa a rede.
+   */
+  async countProfessionalsAtFreemiumLimit(): Promise<{ atLimit: number; total: number }> {
+    const rows = await prisma.$queryRaw<Array<{ at_limit: bigint; total: bigint }>>`
+      SELECT
+        count(*) FILTER (WHERE COALESCE(rel.cnt, 0) >= u."limiteAlunos") AS at_limit,
+        count(*) AS total
+      FROM users u
+      LEFT JOIN (
+        SELECT "personalId", count(*)::int AS cnt
+        FROM "ClientRelation"
+        GROUP BY "personalId"
+      ) rel ON rel."personalId" = u.id
+      WHERE u.role IN ('PERSONAL', 'NUTRICIONISTA')
+    `;
+    return { atLimit: Number(rows[0]?.at_limit ?? 0), total: Number(rows[0]?.total ?? 0) };
   },
 
   async findUsersPage(params: { role?: string; skip: number; take: number }) {
