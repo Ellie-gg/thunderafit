@@ -221,10 +221,17 @@ function ExecucaoContent() {
       workoutQuery.error instanceof ApiError
         ? workoutQuery.error.message
         : t("loadError");
+    // Fase 103: mesma exceção de QueryError.tsx — bloqueio por plano do
+    // Personal não é uma falha do app, não deveria assustar com tom de erro.
+    const isPersonalRestricted =
+      workoutQuery.error instanceof ApiError &&
+      workoutQuery.error.data?.code === "PERSONAL_PLAN_RESTRICTED";
     return (
       <main className="flex flex-1 items-center justify-center px-6">
         <Card>
-          <p className="text-sm text-danger">{message}</p>
+          <p className={isPersonalRestricted ? "text-sm text-muted" : "text-sm text-danger"}>
+            {message}
+          </p>
         </Card>
       </main>
     );

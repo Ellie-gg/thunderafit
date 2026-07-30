@@ -1489,9 +1489,49 @@ de escopo ou cuidado extra antes de começar, não são um lote "rápido" como a
     *Modelo: Sonnet 5. `tsc --noEmit` limpo, 55/55 Jest/RTL. Sem mudança de backend
     (só o intervalo/gatilho no frontend).*
 
-### Grupo Z — Revisão de caso de uso: Personal deixa de ser Premium (PLANEJAMENTO — sem código ainda)
+### Grupo Z — Revisão de caso de uso: Personal deixa de ser Premium. ✅ Principal pergunta RESOLVIDA (2026-07-30, registrada como "Fase 103" no STATUS.md) — pontos residuais registrados no final desta seção.
 
-Pedido do fundador: uma auditoria dedicada de TODOS os pontos do produto que dependem
+**Atualização 2026-07-30**: o fundador trouxe a pergunta central desta seção de volta
+como um pedido de correção direta (não mais só levantamento) — "o Personal acima do
+limite não deveria continuar gerenciando/prescrevendo pros alunos já vinculados, e os
+alunos deveriam perder acesso até ele regularizar". Investigado, validado ponto a ponto
+com o fundador (carência, escopo do bloqueio, autoatendimento, UX do aluno, tratamento
+de dado, escopo por papel) e implementado na Fase 103. Respostas às perguntas
+originais desta seção:
+
+- **1ª pergunta (a principal)**: RESOLVIDA — antes, um Personal acima do limite
+  continuava prescrevendo/editando livremente pros alunos já vinculados (só ficava
+  bloqueado de vincular um NOVO). Agora, depois de 5 dias de carência acima do limite,
+  toda prescrição/edição é recusada (403) até desvincular alunos suficientes.
+- **Templates Premium (2ª pergunta)**: a resposta mudou em relação ao que esta seção
+  especulava ("provavelmente continua com acesso normal, é só uma cópia") — a Fase 103
+  adicionou um gate de LEITURA também do lado do aluno (não só de prescrição do
+  Personal), escopado pelo `personalId` do PROGRAMA especifico (nunca pelo aluno como
+  um todo — um aluno com 2 Personals nunca perde acesso ao do outro, que continua em
+  dia). Então agora SIM existe uma checagem de plano na leitura/execução de um treino
+  já aplicado, quando o Personal daquele programa específico está bloqueado — não é
+  mais "só na hora de aplicar um novo".
+- **Notificação ativa (5ª pergunta)**: parcialmente resolvida. Banner no `AppHeader`
+  (Personal) durante a carência e quando bloqueado, e `invoice.payment_failed`
+  (achado: caía num `default` sem ação) agora dispara aviso proativo. **Mas** uma
+  expiração de concessão manual do admin que NÃO produz excesso de alunos (ex: só 2
+  alunos reais, cai pra Free/limite 3, sem consequência nenhuma) continua 100%
+  silenciosa — isso não mudou, seria um aviso sem nenhuma ação necessária do Personal.
+- **Nutricionista (6ª pergunta)**: RESOLVIDA — mesma regra aplicada aos dois papéis,
+  confirmado explicitamente com o fundador antes de implementar.
+
+**Ainda em aberto, não coberto pela Fase 103** (residual desta seção, registrado pra
+não se perder):
+- **Diretório de profissionais num downgrade Plus→Base**: a pergunta original sobre
+  `availableForNewStudents` continuar elegível nesse caminho específico não foi
+  reinvestigada nesta rodada — só o caminho downgrade→FREE já era conhecido
+  (`applyFreePlan` desliga).
+- **Lembretes de pagamento**: não foi reconfirmado nesta rodada que
+  `ClientRelation.paymentReminderDueDate` é de fato independente do plano do Personal
+  (segue presumidamente sim, sem gate identificado, mas sem auditoria dedicada).
+
+Pedido original do fundador (preservado abaixo, pra contexto histórico completo):
+uma auditoria dedicada de TODOS os pontos do produto que dependem
 de `planoAssinatura`/`limiteAlunos` do Personal, especificamente o que acontece quando
 ele DEIXA de ser Base/Plus (cancelamento real via Stripe, expiração de uma concessão
 manual do admin — Fase 90 — ou downgrade manual). Hoje só um pedaço disso está

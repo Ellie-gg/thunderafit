@@ -5,6 +5,7 @@ import { exerciseTranslationService } from "./exercise-translation.service";
 import { programTranslationService } from "./program-translation.service";
 import { alunoPremiumService } from "../../billing/services/aluno-premium.service";
 import { billingService } from "../../billing/services/billing.service";
+import { assertPersonalCanPrescribe, assertAlunoWorkoutAccessible } from "../../lib/plan-expiry";
 
 const VALID_SCHEMES: SessionScheme[] = ["LETTER", "WEEKDAY"];
 
@@ -59,6 +60,12 @@ export const workoutProgramsService = {
     // personalId (mesmo raciocínio de defesa explícita do apply() acima).
     if (program.origin !== "PERSONAL" || program.personalId !== personalId) {
       throw httpError("Você não tem permissão para editar este programa.", 403);
+    }
+    // Fase 103: só bloqueia adicionar sessão numa instância JÁ aplicada a um
+    // aluno (program.alunoId preenchido) — editar um TEMPLATE (alunoId nulo)
+    // não expande nenhuma prescrição de aluno, então nunca é gated aqui.
+    if (program.alunoId) {
+      await assertPersonalCanPrescribe(personalId);
     }
     const validKeys = orderFor(program.sessionScheme);
     if (!validKeys.includes(letter)) {
@@ -121,6 +128,9 @@ export const workoutProgramsService = {
     if (!relation) {
       throw httpError("Aluno não vinculado a este profissional.", 403);
     }
+    // Fase 103: aplicar um template é a prescrição em si — mesmo gate de
+    // workouts.service.ts#createWorkout.
+    await assertPersonalCanPrescribe(personalId);
 
     // Fase 41: 1 programa aplicado por aluno, POR PERSONAL — escopado por
     // personalId de propósito (um aluno pode ter mais de um Personal
@@ -264,6 +274,9 @@ export const workoutProgramsService = {
     if (!relation) {
       throw httpError("Aluno não vinculado a este profissional.", 403);
     }
+    // Fase 103: mesmo gate de apply() acima — aplicar do catálogo também é
+    // prescrição.
+    await assertPersonalCanPrescribe(personalId);
 
     const existing = await workoutProgramsRepository.findAppliedProgramForAlunoByPersonal(
       personalId,
@@ -509,6 +522,12 @@ export const workoutProgramsService = {
     const isOwnerAluno = program.alunoId === userId;
     if (role !== "ADMIN" && !isOwnerPersonal && !isOwnerAluno) {
       throw httpError("Você não tem permissão para acessar este programa.", 403);
+    }
+    // Fase 103: mesmo gate de workouts.service.ts#getWorkout — só bloqueia a
+    // visão do ALUNO, nunca a do próprio Personal (precisa continuar vendo o
+    // que prescreveu pra decidir quem desvincular) nem a do admin.
+    if (isOwnerAluno) {
+      await assertAlunoWorkoutAccessible(program.personalId);
     }
 
     const sessions = sortByScheme(program.workouts, program.sessionScheme);

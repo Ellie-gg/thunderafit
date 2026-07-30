@@ -57,6 +57,26 @@ export const relationsService = {
     return relation;
   },
 
+  /**
+   * Fase 103 — desvincular um aluno. Antes desta fase não existia NENHUM
+   * jeito de um Personal remover um aluno vinculado (nem endpoint nem UI) —
+   * criado especificamente como a forma de autorregularização quando o
+   * Personal fica acima do limite do plano atual (ver
+   * `src/lib/plan-expiry.ts#getPersonalAccessStatus`): sem isso, a única
+   * saída de um bloqueio por excesso seria abrir chamado de suporte.
+   * Histórico do aluno (WorkoutProgram/SetLog) é preservado — só o vínculo
+   * em si é removido (ver comentário em relations.repository.ts#delete).
+   */
+  async removeRelation(personalId: string, alunoId: string) {
+    const existing = await relationsRepository.findByPersonalAndAluno(personalId, alunoId);
+    if (!existing) {
+      const err = new Error("Vínculo não encontrado.");
+      (err as any).statusCode = 404;
+      throw err;
+    }
+    await relationsRepository.delete(personalId, alunoId);
+  },
+
   async listRelations(personalId: string) {
     const relations = await relationsRepository.findAllByPersonal(personalId);
     // Antes fazia 1 findUnique por aluno (N+1) — agora é uma única query

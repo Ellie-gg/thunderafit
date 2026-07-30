@@ -27,6 +27,29 @@ export async function createRelationHandler(
   }
 }
 
+export async function removeRelationHandler(
+  request: FastifyRequest<{ Params: { alunoId: string } }>,
+  reply: FastifyReply
+) {
+  const personalId = (request as any).user.sub;
+  const role = (request as any).user.role;
+  // Mesmo gate de role de createRelationHandler (não o PERSONAL-only mais
+  // restrito de setPaymentReminderHandler) — desvincular precisa estar
+  // disponível pra quem PODE vincular, senão um Nutricionista acima do
+  // limite não teria como se autorregularizar.
+  if (role !== "PERSONAL" && role !== "NUTRICIONISTA") {
+    return reply.status(403).send({ error: "Apenas Personal Trainers ou Nutricionistas podem desvincular alunos." });
+  }
+
+  try {
+    await relationsService.removeRelation(personalId, request.params.alunoId);
+    return reply.status(204).send();
+  } catch (err: any) {
+    const status = (err as any).statusCode ?? 500;
+    return reply.status(status).send({ error: err.message });
+  }
+}
+
 export async function setPaymentReminderHandler(
   request: FastifyRequest<{
     Params: { alunoId: string };

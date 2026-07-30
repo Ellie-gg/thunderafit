@@ -15,10 +15,19 @@ import { Button } from "@/components/ui/button";
 export function QueryError({ error, onRetry }: { error: unknown; onRetry: () => void }) {
   const t = useTranslations("queryError");
   const message = error instanceof ApiError ? error.message : t("connectionError");
+  // Fase 103: acesso restrito porque o Personal do aluno está acima do
+  // limite do plano dele — não é uma falha/bug do app, então não deveria
+  // parecer um erro (vermelho, tom de alarme). Único código com tratamento
+  // especial aqui de propósito: os outros (ex: PREMIUM_REQUIRED) já mostram
+  // seu próprio CTA de upgrade fora deste componente compartilhado.
+  const isPersonalRestricted =
+    error instanceof ApiError && error.data?.code === "PERSONAL_PLAN_RESTRICTED";
 
   return (
     <Card className="flex flex-col gap-3">
-      <p className="text-sm text-danger">{message}</p>
+      <p className={isPersonalRestricted ? "text-sm text-muted" : "text-sm text-danger"}>
+        {message}
+      </p>
       <Button variant="secondary" size="sm" onClick={onRetry} className="self-start">
         {t("retry")}
       </Button>

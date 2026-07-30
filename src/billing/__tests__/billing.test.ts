@@ -309,6 +309,62 @@ describe("Fase 20 — pagamento assíncrono (boleto/Pix): sem PAGO antes de conf
   });
 });
 
+describe("Fase 103 — invoice.payment_failed: avisa o Personal, NÃO muda o plano aqui", () => {
+  let failId: string;
+  let failToken: string;
+  const CUST_FAIL = "cus_test_payment_failed_1";
+
+  beforeAll(async () => {
+    const reg = await supertest(server.server)
+      .post("/api/auth/register")
+      .send({ email: "billing_payfail@thunderafit.test", password: pw, role: "PERSONAL" });
+    failId = reg.body.user.id;
+    failToken = (
+      await supertest(server.server)
+        .post("/api/auth/login")
+        .send({ email: "billing_payfail@thunderafit.test", password: pw })
+    ).body.accessToken;
+    // Precisa já ter um stripeCustomerId pra o webhook conseguir mapear
+    // de volta pro usuário (mesmo pré-requisito de qualquer evento de
+    // subscription — vincula direto no banco, sem passar por checkout de
+    // verdade, já que só o mapeamento importa pra este teste).
+    await prisma.user.update({ where: { id: failId }, data: { stripeCustomerId: CUST_FAIL } });
+  });
+
+  afterAll(async () => {
+    await prisma.user.deleteMany({ where: { email: "billing_payfail@thunderafit.test" } });
+  });
+
+  it("evento assinado com customer conhecido → notifica o Personal, plano continua FREE (não muda aqui)", async () => {
+    const { payload, header } = signed({
+      id: "evt_payment_failed_1",
+      type: "invoice.payment_failed",
+      data: { object: { id: "in_test_1", customer: CUST_FAIL } },
+    });
+    const r = await postWebhook(payload, header);
+    expect(r.status).toBe(200);
+
+    const user = await prisma.user.findUnique({ where: { id: failId } });
+    expect(user?.planoAssinatura).toBe("FREE"); // downgrade real é via subscription.updated, não aqui
+
+    const notifs = await supertest(server.server)
+      .get("/api/notifications")
+      .set("Authorization", `Bearer ${failToken}`);
+    const failures = notifs.body.notifications.filter((n: any) => n.type === "payment_failed");
+    expect(failures).toHaveLength(1);
+  });
+
+  it("customer desconhecido não quebra o webhook (200, sem notificação nenhuma)", async () => {
+    const { payload, header } = signed({
+      id: "evt_payment_failed_unknown",
+      type: "invoice.payment_failed",
+      data: { object: { id: "in_test_2", customer: "cus_nao_existe_no_banco" } },
+    });
+    const r = await postWebhook(payload, header);
+    expect(r.status).toBe(200);
+  });
+});
+
 describe("Fase 20 — checkout-session e portal (API do Stripe mockada)", () => {
   it("POST /api/billing/checkout-session com tier=BASE retorna a URL de checkout com o price certo", async () => {
     const stripe = getStripe();

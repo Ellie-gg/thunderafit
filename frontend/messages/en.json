@@ -914,6 +914,18 @@
     "deleting": "Deleting...",
     "confirmDelete": "Yes, delete"
   },
+  "removeAlunoButton": {
+    "remove": "Remove",
+    "confirmRemove": "Unlink this student? Their workout history is preserved — only the link itself is removed. You can link them again later.",
+    "removeError": "Error unlinking.",
+    "removing": "Removing...",
+    "confirmRemoveButton": "Yes, unlink"
+  },
+  "personalOverLimitBanner": {
+    "graceMessage": "You have more students linked than your current plan allows. In {days} day(s), prescribing new workouts will be blocked until you regularize.",
+    "blockedMessage": "You have more students linked than your current plan allows — prescribing new workouts is blocked. Unlink students or upgrade to continue.",
+    "manageStudentsCta": "Manage students"
+  },
   "deleteExerciseButton": {
     "delete": "Delete",
     "confirmDelete": "Delete this exercise from the catalog? This action cannot be undone.",

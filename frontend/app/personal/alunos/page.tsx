@@ -1,13 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { listRelations } from "@/lib/api/relations";
 import { listWorkoutPrograms } from "@/lib/api/workouts";
 import { AuthGuard } from "@/components/auth-guard";
 import { AppHeader } from "@/components/app-header";
 import { Card } from "@/components/ui/card";
 import { QueryError } from "@/components/query-error";
+import { RemoveAlunoButton } from "@/components/remove-aluno-button";
 import { useActiveIntlLocale } from "@/i18n/use-active-locale";
 import { useTranslations } from "next-intl";
 
@@ -23,6 +24,7 @@ function GerenciarAlunosContent() {
   const t = useTranslations("personalAlunosList");
   const tc = useTranslations("common");
   const intlLocale = useActiveIntlLocale();
+  const queryClient = useQueryClient();
 
   const relationsQuery = useQuery({ queryKey: ["relations"], queryFn: listRelations });
   const programsQuery = useQuery({
@@ -68,7 +70,20 @@ function GerenciarAlunosContent() {
                     )}
                   </div>
                 </div>
-                <span className="shrink-0 text-sm text-muted">{t("gerenciar")}</span>
+                <div className="flex shrink-0 items-center gap-2">
+                  <RemoveAlunoButton
+                    alunoId={a.id}
+                    onRemoved={() => {
+                      queryClient.invalidateQueries({ queryKey: ["relations"] });
+                      // Fase 103: também invalida o billing-status — desvincular
+                      // pode fazer o Personal voltar pra dentro do limite, e o
+                      // banner de carência (AppHeader) precisa refletir isso na
+                      // hora, não só na próxima navegação.
+                      queryClient.invalidateQueries({ queryKey: ["billing-status"] });
+                    }}
+                  />
+                  <span className="text-sm text-muted">{t("gerenciar")}</span>
+                </div>
               </Card>
             </Link>
           ))}

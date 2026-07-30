@@ -191,6 +191,87 @@ describe("Fase 11 — Nutricionista como segundo tipo de profissional (limite po
   });
 });
 
+describe("Fase 103 — DELETE /api/relations/:alunoId (desvincular)", () => {
+  // studentIds[0..2] vinculados ao Personal (accessToken); studentIds[3]
+  // não vinculado a ele (bloqueado pelo limite 3/3 desde o describe acima).
+  it("desvincular preserva WorkoutProgram/histórico do aluno — só o vínculo some", async () => {
+    const program = await prisma.workoutProgram.create({
+      data: { personalId, origin: "PERSONAL", alunoId: studentIds[0], name: "Programa preservado", isTemplate: false },
+    });
+
+    const r = await supertest(server.server)
+      .delete(`/api/relations/${studentIds[0]}`)
+      .set("Authorization", `Bearer ${accessToken}`);
+    expect(r.status).toBe(204);
+
+    const relation = await prisma.clientRelation.findUnique({
+      where: { personalId_alunoId: { personalId, alunoId: studentIds[0] } },
+    });
+    expect(relation).toBeNull();
+
+    const preserved = await prisma.workoutProgram.findUnique({ where: { id: program.id } });
+    expect(preserved).not.toBeNull();
+    expect(preserved?.alunoId).toBe(studentIds[0]);
+
+    await prisma.workoutProgram.delete({ where: { id: program.id } });
+  });
+
+  it("desvincular um aluno já desvinculado (ou nunca vinculado) retorna 404", async () => {
+    const r = await supertest(server.server)
+      .delete(`/api/relations/${studentIds[0]}`)
+      .set("Authorization", `Bearer ${accessToken}`);
+    expect(r.status).toBe(404);
+  });
+
+  it("abre vaga: o 4º aluno (bloqueado antes) agora pode ser vinculado", async () => {
+    // Depois do 1º teste deste describe, o Personal está em 2/3
+    // (studentIds[1,2] — studentIds[0] foi desvinculado). Confirma que a
+    // vaga abriu de verdade (limite reforçado de novo, não uma exceção
+    // permanente), depois desfaz pra deixar exatamente [0,1,2] vinculados —
+    // o estado que "Lembrete de pagamento" (próximo describe) assume.
+    const r = await supertest(server.server)
+      .post("/api/relations")
+      .set("Authorization", `Bearer ${accessToken}`)
+      .send({ alunoId: studentIds[3] });
+    expect(r.status).toBe(201);
+
+    await prisma.clientRelation.delete({
+      where: { personalId_alunoId: { personalId, alunoId: studentIds[3] } },
+    });
+    await supertest(server.server)
+      .post("/api/relations")
+      .set("Authorization", `Bearer ${accessToken}`)
+      .send({ alunoId: studentIds[0] });
+  });
+
+  it("ALUNO não pode chamar DELETE /api/relations/:alunoId (403)", async () => {
+    const loginAluno = await supertest(server.server)
+      .post("/api/auth/login")
+      .send({ email: "test_aluno2@thunderafit.test", password: "SenhaSegura@123" });
+    const r = await supertest(server.server)
+      .delete(`/api/relations/${studentIds[1]}`)
+      .set("Authorization", `Bearer ${loginAluno.body.accessToken}`);
+    expect(r.status).toBe(403);
+  });
+
+  it("desvincular um aluno vinculado a OUTRO profissional retorna 404 (não vaza)", async () => {
+    // studentIds[1] está vinculado ao Personal, não a este Nutricionista
+    // recém-criado (registrado só nesta asserção pra não depender do bloco
+    // "Fase 11" mais abaixo, que roda depois na ordem do arquivo).
+    const nutriReg = await supertest(server.server)
+      .post("/api/auth/register")
+      .send({ email: "test_nutri_desvinc@thunderafit.test", password: "SenhaSegura@123", role: "NUTRICIONISTA" });
+    const nutriLogin = await supertest(server.server)
+      .post("/api/auth/login")
+      .send({ email: "test_nutri_desvinc@thunderafit.test", password: "SenhaSegura@123" });
+    const r = await supertest(server.server)
+      .delete(`/api/relations/${studentIds[1]}`)
+      .set("Authorization", `Bearer ${nutriLogin.body.accessToken}`);
+    expect(r.status).toBe(404);
+    await prisma.user.delete({ where: { id: nutriReg.body.user.id } });
+  });
+});
+
 describe("Lembrete de pagamento (ClientRelation)", () => {
   // studentIds[0..2] já vinculados ao Personal (accessToken) no describe acima.
   it("Personal configura um lembrete com vencimento no passado; login do aluno dispara UMA notificação e limpa a data (não-recorrente)", async () => {
