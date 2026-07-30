@@ -9,6 +9,7 @@ import {
   getWorkoutHandler,
   completeWorkoutHandler,
 } from "../controllers/workouts.controller";
+import { workoutDetailSchema } from "./workout-response-schemas";
 
 export async function workoutsRoutes(fastify: FastifyInstance) {
   fastify.get(
@@ -66,6 +67,17 @@ export async function workoutsRoutes(fastify: FastifyInstance) {
     "/api/workouts/:id",
     {
       preHandler: [(fastify as any).authenticate],
+      // Perf (Grupo Y, item 99): tela de execução de treino, a mais aberta
+      // pelo aluno — ver workout-response-schemas.ts pro mapeamento
+      // campo-a-campo que justifica cada propriedade aqui.
+      schema: {
+        response: {
+          200: {
+            type: "object",
+            properties: { workout: workoutDetailSchema },
+          },
+        },
+      },
     },
     getWorkoutHandler
   );

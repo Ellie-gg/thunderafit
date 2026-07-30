@@ -14,6 +14,7 @@ import {
   createSelfProgramHandler,
   addSelfSessionHandler,
 } from "../controllers/workout-programs.controller";
+import { workoutProgramDetailSchema } from "./workout-response-schemas";
 
 export async function workoutProgramsRoutes(fastify: FastifyInstance) {
   const auth = { preHandler: [(fastify as any).authenticate] };
@@ -32,7 +33,23 @@ export async function workoutProgramsRoutes(fastify: FastifyInstance) {
   );
   // Fase 85 — mesmo motivo acima: "self" precisa vir ANTES de "/:id".
   fastify.post("/api/workout-programs/self", auth, createSelfProgramHandler);
-  fastify.get("/api/workout-programs/:id", auth, getProgramHandler);
+  fastify.get(
+    "/api/workout-programs/:id",
+    {
+      ...auth,
+      // Perf (Grupo Y, item 99): ver workout-response-schemas.ts pro
+      // mapeamento campo-a-campo que justifica cada propriedade aqui.
+      schema: {
+        response: {
+          200: {
+            type: "object",
+            properties: { program: workoutProgramDetailSchema },
+          },
+        },
+      },
+    },
+    getProgramHandler
+  );
   fastify.post("/api/workout-programs/:id/sessions", auth, addSessionHandler);
   fastify.post("/api/workout-programs/:id/self-sessions", auth, addSelfSessionHandler);
   fastify.post("/api/workout-programs/:id/apply", auth, applyProgramHandler);

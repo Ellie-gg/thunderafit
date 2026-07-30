@@ -929,3 +929,144 @@ describe("Fase 62 — catálogo de templates do Personal (Básico + Premium)", (
     expect(r.status).toBe(403);
   });
 });
+
+// Perf (Grupo Y, item 99): response schema novo em GET /api/workout-programs/:id
+// (fast-json-stringify) funciona como ALLOWLIST de serialização — um campo
+// esquecido no schema some da resposta em silêncio, sem erro nenhum. Este
+// bloco monta um programa aplicado com sessão + exercício + série real e
+// compara as CHAVES de cada nível aninhado contra a lista exata esperada
+// (mapeada campo a campo em workout-response-schemas.ts), pra pegar tanto um
+// campo que sumiu quanto um campo novo que ninguém lembrou de adicionar ao
+// schema no futuro. Reaproveita o `personalId`/`personalToken` compartilhado
+// do arquivo — o `afterAll` global (linhas 86-101) já limpa tudo que fica
+// sob esse `personalId` (programa, sessão, exercício, série) e todo usuário
+// com email contendo "wp_", sem precisar de um afterAll local aqui.
+describe("Perf (Grupo Y, item 99) — GET /api/workout-programs/:id não descarta nenhum campo esperado", () => {
+  let schemaAlunoToken: string;
+  let schemaProgramId: string;
+
+  beforeAll(async () => {
+    const reg = await supertest(server.server)
+      .post("/api/auth/register")
+      .send({ email: "wp_schema_check@thunderafit.test", password: pw, role: "ALUNO" });
+    const schemaAlunoId = reg.body.user.id;
+    schemaAlunoToken = (
+      await supertest(server.server)
+        .post("/api/auth/login")
+        .send({ email: "wp_schema_check@thunderafit.test", password: pw })
+    ).body.accessToken;
+    await supertest(server.server)
+      .post("/api/relations")
+      .set("Authorization", `Bearer ${personalToken}`)
+      .send({ alunoId: schemaAlunoId });
+
+    const tpl = await supertest(server.server)
+      .post("/api/workout-programs")
+      .set("Authorization", `Bearer ${personalToken}`)
+      .send({ name: "Programa Schema Check" });
+    const session = await supertest(server.server)
+      .post(`/api/workout-programs/${tpl.body.program.id}/sessions`)
+      .set("Authorization", `Bearer ${personalToken}`)
+      .send({ letter: "A" });
+
+    await supertest(server.server)
+      .post(`/api/workouts/${session.body.session.id}/exercises`)
+      .set("Authorization", `Bearer ${personalToken}`)
+      .send({ exerciseId: exerciseIds[0], sets: 3, repsRange: "8-12", restSeconds: 60, order: 1 });
+
+    const applied = await supertest(server.server)
+      .post(`/api/workout-programs/${tpl.body.program.id}/apply`)
+      .set("Authorization", `Bearer ${personalToken}`)
+      .send({ alunoId: schemaAlunoId });
+    schemaProgramId = applied.body.program.id;
+    const appliedWorkoutId = applied.body.program.workouts[0].id;
+    const appliedWorkoutExerciseId = applied.body.program.workouts[0].exercises[0].id;
+
+    await supertest(server.server)
+      .post(`/api/workouts/${appliedWorkoutId}/exercises/${appliedWorkoutExerciseId}/logs`)
+      .set("Authorization", `Bearer ${schemaAlunoToken}`)
+      .send({ setNumber: 1, repsDone: 10, weightKg: 20 });
+  });
+
+  it("chaves de programa/sessão/exercício/série batem exatamente com o mapeamento campo-a-campo", async () => {
+    const r = await supertest(server.server)
+      .get(`/api/workout-programs/${schemaProgramId}`)
+      .set("Authorization", `Bearer ${schemaAlunoToken}`);
+    expect(r.status).toBe(200);
+
+    const program = r.body.program;
+    expect(Object.keys(program).sort()).toEqual(
+      [
+        "id",
+        "personalId",
+        "origin",
+        "name",
+        "isTemplate",
+        "alunoId",
+        "sessionScheme",
+        "createdAt",
+        "updatedAt",
+        "category",
+        "bannerImageUrl",
+        "description",
+        "tags",
+        "workouts",
+      ].sort()
+    );
+
+    const session = program.workouts[0];
+    expect(Object.keys(session).sort()).toEqual(
+      [
+        "id",
+        "programId",
+        "personalId",
+        "alunoId",
+        "name",
+        "letter",
+        "lastCompletedAt",
+        "createdAt",
+        "updatedAt",
+        "suggestedNext",
+        "exercises",
+      ].sort()
+    );
+
+    const we = session.exercises[0];
+    expect(Object.keys(we).sort()).toEqual(
+      [
+        "id",
+        "workoutId",
+        "exerciseId",
+        "sets",
+        "repsRange",
+        "restSeconds",
+        "order",
+        "notes",
+        "createdAt",
+        "updatedAt",
+        "exercise",
+        "setLogs",
+      ].sort()
+    );
+    expect(Object.keys(we.exercise).sort()).toEqual(
+      [
+        "id",
+        "name",
+        "muscleGroup",
+        "equipment",
+        "mediaUrl",
+        "youtubeSupplementUrl",
+        "mediaType",
+        "description",
+        "difficultyLevel",
+        "isFeatured",
+        "createdAt",
+        "updatedAt",
+      ].sort()
+    );
+    expect(we.setLogs).toHaveLength(1);
+    expect(Object.keys(we.setLogs[0]).sort()).toEqual(
+      ["id", "workoutExerciseId", "setNumber", "repsDone", "weightKg", "loggedAt"].sort()
+    );
+  });
+});
