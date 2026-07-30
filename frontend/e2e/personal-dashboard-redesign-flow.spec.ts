@@ -51,7 +51,7 @@ test("dashboard do Personal mostra os 2 cards do novo layout e a contagem real d
 
   // --- Card "Meus Alunos" ---
   await expect(page.getByRole("heading", { name: "👥 Meus Alunos" })).toBeVisible();
-  await expect(page.getByRole("link", { name: "Vincular Novo Aluno" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Convidar Aluno" })).toBeVisible();
   await expect(page.getByRole("link", { name: "Gerenciar alunos →" })).toBeVisible();
 
   // --- "Dúvidas de alunos": sem pendências ainda ---

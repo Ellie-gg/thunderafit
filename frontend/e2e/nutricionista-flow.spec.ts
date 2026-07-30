@@ -42,11 +42,32 @@ test("Nutricionista se cadastra, vincula aluno e cria plano de dieta com 2 refei
   await expect(page).toHaveURL(/\/nutricionista\/dashboard$/);
   await expect(page.getByText("0/3")).toBeVisible();
 
-  // --- 2. Vincula o aluno pela UI ---
-  await page.getByRole("link", { name: "Vincular novo aluno" }).click();
+  // --- 2. Convida o aluno pela UI (Fase 104 — substitui o vínculo direto
+  // por e-mail: o Nutricionista só gera um link de convite; o vínculo em
+  // si acontece quando o ALUNO abre o link e loga/cadastra) ---
+  await page.getByRole("link", { name: "Convidar aluno" }).click();
   await expect(page).toHaveURL(/\/nutricionista\/alunos\/novo$/);
+  await page.locator("#label").fill("Aluno E2E");
+
+  const [createInviteResponse] = await Promise.all([
+    page.waitForResponse((res) => res.url().includes("/api/client-invites") && res.request().method() === "POST"),
+    page.getByRole("button", { name: "Gerar convite" }).click(),
+  ]);
+  const { token: inviteToken } = await createInviteResponse.json();
+  await expect(page.getByText("Convite pronto!")).toBeVisible();
+
+  // O aluno já existe (registrado via API acima) — abre o link do convite e
+  // LOGA (não cadastra) — o vínculo automático acontece na mesma chamada.
+  await page.goto(`/login?invite=${inviteToken}`);
+  await expect(page.getByText(/Convite de/)).toBeVisible();
   await page.locator("#email").fill(alunoEmail);
-  await page.getByRole("button", { name: "Vincular aluno" }).click();
+  await page.getByRole("button", { name: "Continuar" }).click();
+  await page.locator("#password").fill(password);
+  await page.getByRole("button", { name: "Entrar" }).click();
+  await expect(page).toHaveURL(/\/dashboard$/);
+
+  // Volta a logar como o Nutricionista pra continuar o fluxo original.
+  await loginViaUI(page, nutriEmail, password);
   await expect(page).toHaveURL(/\/nutricionista\/dashboard$/);
   await expect(page.getByText("1/3")).toBeVisible();
   await expect(page.getByText(alunoEmail)).toBeVisible();

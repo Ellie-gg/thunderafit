@@ -1189,6 +1189,42 @@ CI) — depois disso, os builds de release subsequentes podem migrar pra CI.
 bump de `targetSdkVersion`. Modelo: Sonnet 5 é suficiente (nenhuma decisão arquitetural
 complexa, é execução de um checklist bem definido).*
 
+#### 5. Pendência nova (2026-07-30): Android App Links — hoje links compartilhados (ex:
+o convite de aluno da Fase 104) abrem SEMPRE no navegador do celular, nunca dentro do
+app instalado
+
+Investigado ao decidir como o link de convite (Fase 104) deveria se comportar num
+celular com o app já instalado. Confirmado no código: `AndroidManifest.xml` só tem o
+filtro de intenção padrão de abrir pelo ícone — nenhum `android:scheme`/`android:host`/
+`autoVerify`, e não existe `assetlinks.json` em lugar nenhum (é isso que "prova" pro
+Android que este app tem permissão de abrir links de um domínio específico —
+**Android App Links**). O domínio próprio já verificado (`thunderafit.com.br`, usado
+hoje só pra e-mail) também ainda não está mapeado pro Cloud Run do frontend — hoje o
+app vive só na URL automática `*.run.app`.
+
+**Decisão tomada com o fundador**: não é retrabalho pra Fase 104 nem bloqueia ela — a
+URL do convite não muda de formato nenhum quando o App Links for configurado depois, só
+passa a abrir num lugar diferente pra quem já tem o app instalado (hoje/sem isso, abre
+no navegador do celular — que já funciona perfeitamente, já que o app é 100% WebView da
+mesma produção). Registrado aqui, junto do resto do checklist de publicação, porque os
+2 pré-requisitos reais (keystore de release + mapear o domínio próprio pro Cloud Run)
+já fazem parte do checklist de publicação na Play Store de qualquer forma — não é
+trabalho extra só por causa de links de convite.
+
+Passos, quando decidido executar (depende de 2 itens já listados acima: keystore de
+release, item 3, e mapear domínio, ainda não listado):
+1. Mapear `thunderafit.com.br` (ou um subdomínio) pro Cloud Run do frontend (domain
+   mapping do Cloud Run, ou load balancer + domínio customizado).
+2. Gerar/ter a keystore de release (já é pré-requisito de publicação, item 3 acima) —
+   o SHA-256 do certificado de assinatura precisa ir no `assetlinks.json`.
+3. Hospedar `/.well-known/assetlinks.json` no domínio mapeado, com esse fingerprint.
+4. Adicionar um intent-filter com `autoVerify="true"` + `android:host` no
+   `AndroidManifest.xml`, apontando pro mesmo domínio.
+5. Rebuildar/reassinar o app.
+
+*Esforço: baixo, mas só depois dos 2 pré-requisitos (keystore + domínio mapeado)
+existirem — nenhuma decisão arquitetural nova, é configuração. Modelo: Sonnet 5.*
+
 ### Grupo Y — Performance, rodada 3 (triagem 2026-07-29). Os 3 itens de alto impacto ✅ CONCLUÍDOS (registrados como "Fase 96" no STATUS.md); o restante fica documentado abaixo, separado por tarefa, para uma fase futura.
 
 Terceira triagem de performance (não auditoria exaustiva), reaproveitando o que já
@@ -1571,31 +1607,98 @@ o esforço real depende do que a revisão encontrar (pode virar de "nada a fazer
 documentar e seguir" até "vários pontos exigindo aviso ativo e/ou migration"). Modelo:
 Sonnet 5 pra revisão; reavaliar modelo depois, conforme o que for encontrado.*
 
-### Grupo AA — Melhoria no cadastro de alunos (PLANEJAMENTO — escopo em aberto, precisa de conversa com o fundador)
+### Grupo AA — Melhoria no cadastro de alunos. ✅ Uma das 4 direções escolhida e IMPLEMENTADA (2026-07-30, registrada como "Fase 104" no STATUS.md, ver Grupo AB abaixo) — as outras 3 seguem em aberto.
 
-Pedido do fundador, ainda sem escopo definido — registrado aqui como item de backlog
-pra não se perder, não como plano pronto pra executar. "Cadastro de alunos" hoje
-acontece de 2 jeitos: (1) o Personal vincula um e-mail já cadastrado
+Pedido original do fundador (preservado abaixo, pra contexto histórico): "Cadastro de
+alunos" acontecia de 2 jeitos: (1) o Personal vincula um e-mail já cadastrado
 (`VincularAlunoForm`) ou manda um convite por WhatsApp se o e-mail ainda não existir
 (Fase 86); (2) o aluno se cadastra sozinho (fluxo unificado de e-mail em `/login`,
-Fase 24) e depois aceita/solicita vínculo. Direções possíveis que uma conversa de
-escopo precisa decidir entre (nenhuma destas foi confirmada com o fundador ainda):
-- Cadastro em lote (Personal importa/adiciona vários alunos de uma vez, ex: CSV ou
-  colar uma lista de e-mails) — útil pra quem está migrando uma carteira de alunos de
-  outro sistema/planilha.
-- Capturar mais dado no momento do vínculo (ex: nome do aluno, telefone) em vez de só
-  e-mail — hoje o Personal só informa e-mail; se o aluno ainda não existe, o convite de
-  WhatsApp nem tem o nome de quem está sendo convidado.
-- Um Personal CRIAR a conta do aluno diretamente (sem depender do aluno se cadastrar
-  sozinho depois) — mudaria a asserção atual de que toda conta `ALUNO` se
-  autoautentica com a própria senha desde o início.
-- Simplificar o fluxo de "e-mail ainda não existe" (hoje: WhatsApp com link de
-  cadastro) — ex: um link de convite com token que já pré-vincula automaticamente
-  assim que o aluno completar o cadastro, sem precisar buscar o Personal de novo.
+Fase 24) e depois aceita/solicita vínculo. 4 direções possíveis tinham sido listadas
+aqui, sem nenhuma confirmada ainda:
 
-*Próximo passo real: conversa de escopo com o fundador pra escolher entre essas (ou
-outras) direções antes de estimar esforço/modelo — sem isso, qualquer estimativa aqui
-seria inventada.*
+- ✅ **"Simplificar o fluxo de 'e-mail ainda não existe'... um link de convite com
+  token que já pré-vincula automaticamente assim que o aluno completar o cadastro"**
+  — exatamente essa direção foi a escolhida pelo fundador e implementada na Fase 104:
+  substitui por completo o fluxo antigo de digitar e-mail (ver detalhes no Grupo AB).
+- ⬜ Cadastro em lote (CSV/colar lista de e-mails) — continua em aberto, não fez parte
+  do escopo da Fase 104.
+- ⬜ Capturar mais dado no momento do vínculo (nome, telefone) — parcialmente tocado
+  (o convite agora tem um "apelido" de referência do Personal), mas não da forma
+  original imaginada (dado do PRÓPRIO aluno, não um apelido interno) — segue em
+  aberto se o fundador quiser capturar nome/telefone de verdade no convite.
+- ⬜ Personal criar a conta do aluno diretamente (sem o aluno se autoautenticar) —
+  não avaliado nesta rodada, contradiz a asserção atual de toda conta ALUNO ter senha
+  própria desde o início; precisaria de conversa de escopo à parte.
+
+### Grupo AB — Convite por link substitui o vínculo direto por e-mail. ✅ CONCLUÍDA (2026-07-30, registrada como "Fase 104" no STATUS.md)
+
+Motivado pelo fundador diretamente ("hoje pra o personal fazer a vinculação do aluno é
+somente colocando o email e esperando ele aceitar o vínculo, não acho isso bom em
+questão de usabilidade") — pesquisado antes de implementar (padrões de convite por
+link em SaaS + apps de personal trainer) e validado ponto a ponto com o fundador
+(substituir vs. coexistir, expiração, dado exigido no convite) antes de codar.
+
+**Investigação prévia confirmou 2 fluxos distintos e independentes** — importante não
+confundir: (a) `POST /api/relations` (vínculo direto por e-mail, sem nenhum aceite —
+a "espera" que o fundador sentia era o aluno precisar se cadastrar sozinho em outro
+lugar e o Personal ter que voltar manualmente depois pra repetir a busca, não um
+aceite formal) e (b) o domínio `connections` (Fase 21 — aluno descobre um profissional
+num diretório público e pede pra se conectar, com aprovação manual). Só o fluxo (a)
+foi redesenhado; (b) resolve um problema diferente (descoberta entre desconhecidos) e
+não precisou mudar.
+
+**Desenho implementado**:
+- Novo model `ClientInvite` — Personal só dá um apelido (reconhecimento na própria
+  lista, nunca mostrado pro convidado) — não precisa saber o e-mail do aluno de
+  antemão, removendo o maior atrito do fluxo antigo.
+- Token de 256 bits (mesmo padrão de `auth.service.ts` — email verification/password
+  reset: só o hash sha256 é gravado, o token cru só existe na hora de montar o link).
+  Expira em 7 dias (padrão de mercado pesquisado), revogável manualmente antes disso.
+- `GET /api/client-invites/preview?token=` — pública (endpoint sem sessão, a tela de
+  login/cadastro chama antes de existir conta), devolve só o nome de quem convidou
+  (nunca o apelido, que é uso interno do Personal).
+- Consumo é melhor-esforço em 3 pontos (`register`/`login`/SSO Google) — nunca
+  derruba o cadastro/login de quem está se vinculando, mesmo se o convite já expirou
+  ou o limite de alunos mudou nesse meio-tempo. Update condicional atômico
+  (`updateMany` com `consumedAt: null` no WHERE) protege contra 2 chamadas
+  concorrentes tentando consumir o MESMO token. Só `role === "ALUNO"` consome — um
+  PERSONAL/NUTRICIONISTA se cadastrando pelo mesmo link (engano ou não) nunca vira
+  cliente de outro profissional.
+- `/login` (fluxo unificado de cadastro) lê `?invite=`, pula a escolha de papel
+  (convite já implica "vire meu aluno") e mostra de quem é o convite.
+- `/personal/alunos` ganhou uma seção de convites pendentes (aparece só se houver
+  algum) com selo Pendente/Expirado e revogar.
+
+**Achados durante a implementação**:
+- Checagem de limite de alunos extraída de `createRelation` pra um helper
+  (`relationsService.assertUnderAlunoLimit`) reaproveitado também na CRIAÇÃO do
+  convite — falha rápido (feedback imediato) em vez de gerar um convite que nunca
+  conseguiria ser consumido de verdade.
+- **Limpeza de código morto causada pela própria mudança**: `lookupAlunoByEmail`/
+  `createRelation` (funções do frontend) ficaram sem nenhum consumidor de UI depois
+  da reescrita de `VincularAlunoForm` — removidas do frontend (junto do teste
+  dedicado a elas). Os endpoints do BACKEND (`GET /api/users/lookup`,
+  `POST /api/relations`) foram mantidos intactos de propósito — `POST /api/relations`
+  continua ativo internamente (chamado por `consumeInvite` e pelo domínio
+  `connections` na aceitação de pedido); remover API pública é uma decisão maior,
+  fora do que foi pedido nesta fase.
+- 2 specs Playwright (`nutricionista-flow.spec.ts`, `personal-dashboard-redesign-flow.spec.ts`)
+  atualizadas pro texto/fluxo novo (botão "Convidar Aluno", captura do token via
+  `waitForResponse`, login do aluno pelo link do convite) — texto/fluxo corrigido, mas
+  não executado nesta sessão (Playwright não faz parte da suíte Jest rodada).
+
+**Achado à parte, registrado (não implementado agora)**: links de convite (e qualquer
+link compartilhado) sempre abrem no navegador do celular, nunca dentro do app
+instalado — falta configurar Android App Links (ver Grupo X, item 5, pendência nova).
+Não bloqueia nem muda o formato da URL do convite — só uma melhoria aditiva pra depois
+que os pré-requisitos de publicação na Play Store (keystore + domínio mapeado)
+existirem.
+
+*Modelo: Sonnet 5. 1 migration aditiva (`ClientInvite`, tabela nova). 16 testes novos
+de backend (domínio client-invites completo + consumo em register/login/SSO Google),
+teste de componente reescrito (3 casos, era 4 no fluxo antigo) + teste de
+`lib/api/relations` reduzido (código morto removido), 514/514 backend, 52/52 Jest/RTL,
+`tsc --noEmit` limpo nos dois lados.*
 
 ### Adiado de propósito (decisão de produto, não bloqueio)
 Login Google · camadas anti-abuso de conta · web pública vs. só app nas lojas · programa

@@ -3,14 +3,12 @@ import userEvent from "@testing-library/user-event";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { NextIntlClientProvider } from "next-intl";
 import VincularAlunoPage from "@/app/personal/alunos/novo/page";
-import { lookupAlunoByEmail, createRelation } from "@/lib/api/relations";
+import { createClientInvite } from "@/lib/api/client-invites";
 import { ApiError } from "@/lib/api/client";
 import ptMessages from "@/messages/pt.json";
 
-const push = jest.fn();
-
 jest.mock("next/navigation", () => ({
-  useRouter: () => ({ push, replace: jest.fn() }),
+  useRouter: () => ({ push: jest.fn(), replace: jest.fn() }),
 }));
 
 jest.mock("@/components/auth-guard", () => ({
@@ -21,13 +19,11 @@ jest.mock("@/components/app-header", () => ({
   AppHeader: () => null,
 }));
 
-jest.mock("@/lib/api/relations", () => ({
-  lookupAlunoByEmail: jest.fn(),
-  createRelation: jest.fn(),
+jest.mock("@/lib/api/client-invites", () => ({
+  createClientInvite: jest.fn(),
 }));
 
-const mockedLookup = lookupAlunoByEmail as jest.Mock;
-const mockedCreateRelation = createRelation as jest.Mock;
+const mockedCreateInvite = createClientInvite as jest.Mock;
 
 function renderPage() {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } });
@@ -40,67 +36,49 @@ function renderPage() {
   );
 }
 
-async function submit(email: string) {
+async function submit(label: string) {
   const user = userEvent.setup();
-  await user.type(screen.getByLabelText("E-mail do aluno"), email);
-  await user.click(screen.getByRole("button", { name: /vincular aluno/i }));
+  await user.type(screen.getByLabelText("Apelido do convite"), label);
+  await user.click(screen.getByRole("button", { name: /gerar convite/i }));
 }
 
 beforeEach(() => {
-  push.mockClear();
-  mockedLookup.mockReset();
-  mockedCreateRelation.mockReset();
+  mockedCreateInvite.mockReset();
 });
 
-describe("Tela de vincular novo aluno", () => {
-  it("sucesso: navega para o dashboard do personal", async () => {
-    mockedLookup.mockResolvedValue({ user: { id: "aluno-1", email: "aluno@x.com", role: "ALUNO" } });
-    mockedCreateRelation.mockResolvedValue({ relation: { id: "rel-1" } });
+describe("Tela de convidar novo aluno (Fase 104 — substitui o fluxo de e-mail)", () => {
+  it("sucesso: mostra o link do convite pronto pra compartilhar (WhatsApp + copiar)", async () => {
+    mockedCreateInvite.mockResolvedValue({
+      invite: { id: "inv-1", label: "João da academia" },
+      token: "abc123tokenxyz",
+    });
 
     renderPage();
-    await submit("aluno@x.com");
+    await submit("João da academia");
 
-    await waitFor(() => expect(push).toHaveBeenCalledWith("/personal/dashboard"));
+    expect(await screen.findByText("Convite pronto!")).toBeInTheDocument();
+    expect(mockedCreateInvite).toHaveBeenCalledWith("João da academia");
+
+    const whatsappLink = screen.getByRole("link", { name: "Enviar no WhatsApp" });
+    expect(whatsappLink).toHaveAttribute("href", expect.stringContaining("https://wa.me/?text="));
+    const decoded = decodeURIComponent(whatsappLink.getAttribute("href")!.split("?text=")[1]);
+    expect(decoded).toContain("/login?invite=abc123tokenxyz");
+    expect(whatsappLink).toHaveAttribute("target", "_blank");
+
+    expect(screen.getByRole("button", { name: "Copiar link" })).toBeInTheDocument();
   });
 
-  it("404: mostra mensagem acionável com link pro WhatsApp (Fase 86)", async () => {
-    mockedLookup.mockRejectedValue(new ApiError(404, "Aluno não encontrado com este e-mail."));
+  it("erro (ex: limite de alunos atingido): mostra a mensagem real do backend", async () => {
+    mockedCreateInvite.mockRejectedValue(new ApiError(403, "Limite de alunos atingido."));
 
     renderPage();
-    await submit("naoexiste@x.com");
+    await submit("Maria");
 
-    expect(
-      await screen.findByText(
-        "Esse e-mail ainda não tem conta no ThunderaFit. Peça para seu aluno se cadastrar primeiro."
-      )
-    ).toBeInTheDocument();
-    expect(push).not.toHaveBeenCalled();
-
-    const link = await screen.findByRole("link", { name: "Enviar convite no WhatsApp" });
-    expect(link).toHaveAttribute("href", expect.stringContaining("https://wa.me/?text="));
-    expect(decodeURIComponent(link.getAttribute("href")!.split("?text=")[1])).toContain("/login");
-    expect(link).toHaveAttribute("target", "_blank");
+    expect(await screen.findByText("Limite de alunos atingido.")).toBeInTheDocument();
   });
 
-  it("409: mostra mensagem específica de vínculo já existente", async () => {
-    mockedLookup.mockResolvedValue({ user: { id: "aluno-2", email: "ja@x.com", role: "ALUNO" } });
-    mockedCreateRelation.mockRejectedValue(new ApiError(409, "Vínculo já existe."));
-
+  it("botão fica desabilitado sem apelido preenchido", () => {
     renderPage();
-    await submit("ja@x.com");
-
-    expect(await screen.findByText("Esse aluno já está vinculado a você.")).toBeInTheDocument();
-  });
-
-  it("403: mostra mensagem específica de limite atingido", async () => {
-    mockedLookup.mockResolvedValue({ user: { id: "aluno-3", email: "limite@x.com", role: "ALUNO" } });
-    mockedCreateRelation.mockRejectedValue(new ApiError(403, "Limite de alunos atingido."));
-
-    renderPage();
-    await submit("limite@x.com");
-
-    expect(
-      await screen.findByText("Você atingiu o limite de alunos do seu plano. Faça upgrade para vincular mais.")
-    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /gerar convite/i })).toBeDisabled();
   });
 });

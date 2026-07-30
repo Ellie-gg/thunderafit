@@ -4,11 +4,13 @@ import Link from "next/link";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { listRelations } from "@/lib/api/relations";
 import { listWorkoutPrograms } from "@/lib/api/workouts";
+import { listClientInvites } from "@/lib/api/client-invites";
 import { AuthGuard } from "@/components/auth-guard";
 import { AppHeader } from "@/components/app-header";
 import { Card } from "@/components/ui/card";
 import { QueryError } from "@/components/query-error";
 import { RemoveAlunoButton } from "@/components/remove-aluno-button";
+import { RevokeInviteButton } from "@/components/revoke-invite-button";
 import { useActiveIntlLocale } from "@/i18n/use-active-locale";
 import { useTranslations } from "next-intl";
 
@@ -31,6 +33,9 @@ function GerenciarAlunosContent() {
     queryKey: ["workout-programs", "personal"],
     queryFn: () => listWorkoutPrograms(),
   });
+  // Fase 104: convites ainda não consumidos (inclui expirados de propósito
+  // — ver comentário em client-invites.repository.ts#findActiveByPersonal).
+  const invitesQuery = useQuery({ queryKey: ["client-invites"], queryFn: listClientInvites });
 
   const alunos = relationsQuery.data?.relations ?? [];
   const alunoIdsComTreino = new Set(
@@ -49,6 +54,38 @@ function GerenciarAlunosContent() {
         {relationsQuery.isLoading && <p className="text-sm text-muted">{tc("loading")}</p>}
         {relationsQuery.isError && (
           <QueryError error={relationsQuery.error} onRetry={() => relationsQuery.refetch()} />
+        )}
+
+        {/* Fase 104 — convites pendentes: só aparece a seção se houver
+            algum, pra não poluir a tela de quem não tem nenhum convite em
+            aberto. */}
+        {(invitesQuery.data?.invites.length ?? 0) > 0 && (
+          <div className="flex flex-col gap-2">
+            <h2 className="text-xs font-semibold uppercase tracking-wide text-muted">
+              {t("convitesPendentes")}
+            </h2>
+            {invitesQuery.data!.invites.map((invite) => {
+              const expired = new Date(invite.expiresAt).getTime() < Date.now();
+              return (
+                <Card key={invite.id} className="flex items-center justify-between gap-3">
+                  <div className="min-w-0 flex-1">
+                    <span className="block truncate text-sm font-semibold">{invite.label}</span>
+                    <span
+                      className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${
+                        expired ? "border-danger/40 text-danger" : "border-border text-muted"
+                      }`}
+                    >
+                      {expired ? t("conviteExpirado") : t("convitePendente")}
+                    </span>
+                  </div>
+                  <RevokeInviteButton
+                    inviteId={invite.id}
+                    onRevoked={() => queryClient.invalidateQueries({ queryKey: ["client-invites"] })}
+                  />
+                </Card>
+              );
+            })}
+          </div>
         )}
 
         <div className="flex flex-col gap-2">

@@ -15,18 +15,29 @@ export function checkEmailRequest(email: string) {
   });
 }
 
-export function registerRequest(email: string, password: string, role: Role, name: string) {
+// Fase 104: `inviteToken` opcional — presente quando o cadastro veio de um
+// link de convite (`/login?invite=...`), consumido no backend só se
+// role === "ALUNO" (o vínculo automático acontece na mesma chamada).
+export function registerRequest(
+  email: string,
+  password: string,
+  role: Role,
+  name: string,
+  inviteToken?: string
+) {
   return apiFetch<{ user: User }>("/api/auth/register", {
     method: "POST",
-    body: { email, password, role, name },
+    body: { email, password, role, name, inviteToken },
     auth: false,
   });
 }
 
-export function loginRequest(email: string, password: string) {
+// Fase 104: `inviteToken` cobre quem clica no link do convite mas JÁ tinha
+// conta (login em vez de cadastro) — mesmo vínculo automático.
+export function loginRequest(email: string, password: string, inviteToken?: string) {
   return apiFetch<AuthResponse>("/api/auth/login", {
     method: "POST",
-    body: { email, password },
+    body: { email, password, inviteToken },
     auth: false,
   });
 }
@@ -35,11 +46,12 @@ type GoogleAuthResponse = { needsRole: true; email: string } | ({ needsRole: fal
 
 // Fase 77 — SSO Google. Sem `role`: login se a conta já existir, ou
 // `{ needsRole: true }` se for a 1ª vez desse e-mail (ainda não cria nada).
-// Com `role`: finaliza a criação da conta nova.
-export function googleAuthRequest(idToken: string, role?: Role) {
+// Com `role`: finaliza a criação da conta nova. Fase 104: `inviteToken` cobre
+// os dois casos, mesmo padrão de registerRequest/loginRequest acima.
+export function googleAuthRequest(idToken: string, role?: Role, inviteToken?: string) {
   return apiFetch<GoogleAuthResponse>("/api/auth/google", {
     method: "POST",
-    body: { idToken, role },
+    body: { idToken, role, inviteToken },
     auth: false,
   });
 }
