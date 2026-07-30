@@ -306,3 +306,111 @@ describe("Consumo do convite — register/login criam o ClientRelation automatic
     });
   });
 });
+
+describe("POST /api/client-invites/consume — pra quem já está logado (correção pós-lançamento)", () => {
+  // Achado real em produção: quem abre o link do convite já autenticado
+  // (sessão de uma visita anterior) nunca passa pelo register/login/SSO de
+  // novo — sem este endpoint, o convite nunca era consumido e o aluno
+  // ficava "órfão" (cadastro existe, vínculo nunca acontece).
+  it("aluno autenticado consome com sucesso e cria o vínculo", async () => {
+    const created = await supertest(server.server)
+      .post("/api/client-invites")
+      .set("Authorization", `Bearer ${personalToken}`)
+      .send({ label: "Consumo autenticado" });
+
+    const r = await supertest(server.server)
+      .post("/api/client-invites/consume")
+      .set("Authorization", `Bearer ${alunoToken}`)
+      .send({ token: created.body.token });
+    expect(r.status).toBe(200);
+    expect(r.body.consumed).toBe(true);
+
+    const login = await supertest(server.server)
+      .post("/api/auth/login")
+      .send({ email: "invite_aluno_existing@thunderafit.test", password: pw });
+    const alunoId = login.body.user.id;
+
+    const relation = await prisma.clientRelation.findUnique({
+      where: { personalId_alunoId: { personalId, alunoId } },
+    });
+    expect(relation).not.toBeNull();
+
+    await prisma.clientRelation.deleteMany({ where: { personalId, alunoId } });
+  });
+
+  it("PERSONAL autenticado tentando consumir recebe 403, convite continua intacto", async () => {
+    const created = await supertest(server.server)
+      .post("/api/client-invites")
+      .set("Authorization", `Bearer ${personalToken}`)
+      .send({ label: "Não deveria consumir (papel errado)" });
+
+    const r = await supertest(server.server)
+      .post("/api/client-invites/consume")
+      .set("Authorization", `Bearer ${personalToken}`)
+      .send({ token: created.body.token });
+    expect(r.status).toBe(403);
+
+    const invite = await prisma.clientInvite.findUnique({ where: { id: created.body.invite.id } });
+    expect(invite?.consumedAt).toBeNull();
+  });
+
+  it("sem token no body retorna 400", async () => {
+    const r = await supertest(server.server)
+      .post("/api/client-invites/consume")
+      .set("Authorization", `Bearer ${alunoToken}`)
+      .send({});
+    expect(r.status).toBe(400);
+  });
+
+  it("token inválido/inexistente retorna 400 com motivo", async () => {
+    const r = await supertest(server.server)
+      .post("/api/client-invites/consume")
+      .set("Authorization", `Bearer ${alunoToken}`)
+      .send({ token: "token-que-nao-existe-nunca" });
+    expect(r.status).toBe(400);
+    expect(r.body.error).toMatch(/inválido/i);
+  });
+
+  it("token expirado retorna 400 com motivo", async () => {
+    const created = await supertest(server.server)
+      .post("/api/client-invites")
+      .set("Authorization", `Bearer ${personalToken}`)
+      .send({ label: "Vai expirar (consume)" });
+    await prisma.clientInvite.update({
+      where: { id: created.body.invite.id },
+      data: { expiresAt: new Date(Date.now() - 1000) },
+    });
+
+    const r = await supertest(server.server)
+      .post("/api/client-invites/consume")
+      .set("Authorization", `Bearer ${alunoToken}`)
+      .send({ token: created.body.token });
+    expect(r.status).toBe(400);
+    expect(r.body.error).toMatch(/expirou/i);
+  });
+
+  it("token já consumido retorna 400 com motivo", async () => {
+    const created = await supertest(server.server)
+      .post("/api/client-invites")
+      .set("Authorization", `Bearer ${personalToken}`)
+      .send({ label: "Vai ser consumido 2x" });
+
+    const first = await supertest(server.server)
+      .post("/api/client-invites/consume")
+      .set("Authorization", `Bearer ${alunoToken}`)
+      .send({ token: created.body.token });
+    expect(first.status).toBe(200);
+
+    const second = await supertest(server.server)
+      .post("/api/client-invites/consume")
+      .set("Authorization", `Bearer ${alunoToken}`)
+      .send({ token: created.body.token });
+    expect(second.status).toBe(400);
+    expect(second.body.error).toMatch(/já foi usado/i);
+
+    const login = await supertest(server.server)
+      .post("/api/auth/login")
+      .send({ email: "invite_aluno_existing@thunderafit.test", password: pw });
+    await prisma.clientRelation.deleteMany({ where: { personalId, alunoId: login.body.user.id } });
+  });
+});

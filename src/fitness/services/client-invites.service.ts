@@ -86,24 +86,39 @@ export const clientInvitesService = {
   },
 
   /**
-   * Consome o convite — SEMPRE melhor esforço (nunca derruba o cadastro/
-   * login/SSO de quem está se vinculando, mesmo se o convite já expirou,
-   * já foi usado, ou o limite de alunos do Personal mudou nesse meio-tempo:
-   * a conta da pessoa já existe/logou antes desta chamada rodar, então uma
-   * falha aqui só significa "o vínculo automático não aconteceu", nunca
-   * "o cadastro falhou").
+   * Consome o convite — NUNCA lança (usada tanto no register/login/SSO —
+   * onde uma falha aqui não pode derrubar o cadastro que já aconteceu antes
+   * desta chamada — quanto no endpoint dedicado abaixo, chamado por quem já
+   * estava logado quando abriu o link). Devolve o resultado (em vez de só
+   * engolir silenciosamente) porque o endpoint dedicado PRECISA saber se
+   * funcionou pra mostrar sucesso/erro de verdade pra quem clicou "Vincular
+   * agora" — só o register/login/SSO ignoram o retorno de propósito.
    */
-  async consumeInvite(rawToken: string, alunoId: string): Promise<void> {
+  async consumeInvite(
+    rawToken: string,
+    alunoId: string
+  ): Promise<{ consumed: boolean; reason?: string }> {
     try {
       const invite = await clientInvitesRepository.findByTokenHash(hashToken(rawToken));
-      if (!invite || invite.expiresAt.getTime() < Date.now()) return;
+      if (!invite) return { consumed: false, reason: "Convite inválido." };
+      if (invite.expiresAt.getTime() < Date.now()) {
+        return { consumed: false, reason: "Este convite expirou." };
+      }
 
       const claimed = await clientInvitesRepository.tryConsume(invite.id, alunoId);
-      if (!claimed) return; // corrida perdida (já consumido por outra chamada) ou concorrência
+      if (!claimed) {
+        return { consumed: false, reason: "Este convite já foi usado." };
+      }
 
       await relationsService.createRelation(invite.personalId, alunoId, invite.professionalType);
+      return { consumed: true };
     } catch (err) {
-      console.error("Falha ao consumir convite de vínculo (não afeta o cadastro/login):", err);
+      // Fase 20 já rejeita duplicata (409) e limite (403) aqui dentro — a
+      // mensagem real (`err.message`) é mais útil pra quem clicou o botão
+      // do que um genérico "algo deu errado".
+      const message = err instanceof Error ? err.message : "Não foi possível concluir o vínculo.";
+      console.error("Falha ao consumir convite de vínculo:", err);
+      return { consumed: false, reason: message };
     }
   },
 };
