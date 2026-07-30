@@ -29,6 +29,13 @@ guide under `frontend/node_modules/next/dist/docs/`.
 
 ## Ambiente local (Windows) — `gcloud` só existe no WSL
 
+**Antes de concluir que `gcloud`/logs de produção estão indisponíveis neste ambiente,
+leia esta seção primeiro** — esse engano já se repetiu mais de uma vez entre sessões e
+agentes diferentes (mais recentemente investigando o bug da Fase 105, onde a causa raiz
+foi confirmada só por leitura de código porque o agente daquela sessão não tentou o
+comando abaixo). Isso vale independente de qual IA/agente esteja rodando ou de onde a
+sessão for aberta nesta máquina — a regra é sobre o AMBIENTE, não sobre quem opera nele.
+
 O terminal padrão do agente (Git Bash/MSYS, `MINGW64`) **não tem `gcloud` instalado**,
 e não é o mesmo ambiente do WSL Ubuntu que o fundador usa manualmente. Rodar `gcloud`
 direto no Git Bash ou via PowerShell falha com "command not found" — não é um bug de
@@ -39,8 +46,8 @@ shell de login (senão o `PATH` do WSL não carrega o SDK):
 ```
 wsl -d Ubuntu -- bash -lic "gcloud <comando>"
 ```
-Confirmado funcional nesta máquina (Fase 87) — sem `-lic` (login+interactive), o
-`gcloud` não é encontrado mesmo dentro do WSL.
+Confirmado funcional nesta máquina (Fase 87, re-confirmado na Fase 105) — sem `-lic`
+(login+interactive), o `gcloud` não é encontrado mesmo dentro do WSL.
 
 ## Commands
 
