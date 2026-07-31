@@ -1108,3 +1108,85 @@ Itens que os auditores explicitamente **não** fecharam:
    confirmação empírica (logs de 500 em `/refresh` e `/login`; teste real com 2 dispositivos).
    `gcloud` está disponível nesta máquina via `wsl -d Ubuntu -- bash -lic "gcloud ..."` (ver
    `AGENTS.md`), então os logs de produção são acessíveis se você quiser fechar esses três.
+
+---
+
+# Apêndice — resolução (Fase 107, 2026-07-31)
+
+Depois desta auditoria, o fundador autorizou corrigir na sequência de prioridade acima, com uma
+ressalva: **NUTRICIONISTA é papel descontinuado** (sem UI, sem previsão de uso futuro) — achados
+que só existem por causa dele foram avaliados achado-a-achado em vez de construir feature nova
+pra um papel morto. Trabalho feito em 5 lotes/commits na branch
+`fix/fase107-auditoria-billing-authz-frontend` (billing → auth → fitness → connections/admin/
+support → frontend), cada um com testes novos, `tsc --noEmit` limpo nos dois lados e suíte
+completa verde antes do commit seguinte. Resumo narrativo no STATUS.md, Fase 107. Abaixo, o
+mapeamento achado-a-achado.
+
+## Corrigidos
+
+**Seção 1 — Alta**: B1, B2, B3, F1, A2 (código; ver ressalva abaixo), A3, X1, C1, Fr1, Fr2, Fr3.
+**Seção 1 — Média**: B5, B7/C2, B9, B10, B12 (dentro do achado B-cluster, ver `billing.service.ts`),
+F3, F4, F9, F10, F11, A1, A5, A6, A7, A9 (ordem trocada; o vazamento de mensagem do Resend em
+`resendVerificationEmailHandler`, mesmo achado, não foi tocado — ver pendências), A11 (parte do
+mesmo commit de A6), C3, C5, Fr4, Fr5, Fr6, Fr7, Fr9, Fr10, Fr11, Fr12, Fr15, Fr16, X4, X7, X8.
+**Seção 1 — Baixa**: C9, C10, C11, Fr17 (=F14), Fr18, Fr19, Fr20, A10 (google-sign-in-button retry).
+**Seção 2**: X1 (fluxo "prescrever treino" — o único que era brecha de autorização; os outros 4
+fluxos do papel Nutricionista continuam sem UI, ver "Não corrigido" abaixo), X7, X8.
+
+## Corrigido parcialmente
+
+- **Fr13/C8** — só os itens de `/profissionais` (hydration em erro, `saveCityMutation.isError`,
+  `requestsQuery.isError`) e `conversation-thread.tsx` (`messagesQuery.isError`) foram fechados.
+  Continuam silenciosos: `dashboard/page.tsx` (`myPersonalsQuery`, `weeklySummaryQuery`),
+  `personal/alunos/page.tsx` (`programsQuery`, `invitesQuery`), `personal/dashboard/page.tsx`
+  (`threadsQuery`), `duvidas/page.tsx` (`personalsQuery`), `nimbus/treinos-pessoais/page.tsx`
+  (painel de edição), `meu-treino-pessoal/page.tsx`/`criar/page.tsx` (`replaceMutation` sem
+  `onError`).
+- **Fr14** — `template-preview-dialog.tsx` (usado em `/personal/programas`) e
+  `meu-treino-pessoal/page.tsx` ganharam `isApplying`/mensagem de erro visível. Nenhuma mudança
+  em componentes de mutação fora desses dois fluxos.
+- **A9** — só a ordem (token gravado depois de resolver `ALLOWED_ORIGIN`, não antes) foi corrigida.
+  O vazamento de mensagem crua do Resend em `resendVerificationEmailHandler` **não foi tratado**.
+
+## Deliberadamente NÃO corrigido — Nutricionista descontinuado
+
+Avaliado explicitamente com o fundador: não compensa construir UI nova pra um papel sem uso
+previsto. **F6** (sem tela de desvincular aluno) e os 4 fluxos restantes de **X1** (upgrade,
+solicitações, dashboard lendo o store) continuam exatamente como descritos na auditoria — só o
+fluxo de prescrição de treino (que era uma brecha de autorização, não só UI faltando) foi
+fechado.
+
+## Deliberadamente NÃO corrigido — outros
+
+- **C4** (corrida de limite de alunos em aceite duplo-clique) — precisa de constraint de banco
+  ou transação serializável com retry; risco real é uma janela estreita, esforço/risco da
+  correção robusta desproporcional. Mesmo padrão de decisão já usado na Fase 101 pra um caso
+  parecido.
+- **B4, B6, B8, B11, B13** — baixo risco/raro (B4 depende de troca de Price nunca feita ainda;
+  B6/B11 são estado inconsistente sem vazamento de recurso pago; B8 é gap de configuração,
+  fácil de corrigir mas não tocado nesta leva; B13 é corrida de milissegundos sem impacto prático
+  observável).
+- **F2/A4** (convite consumido antes de criar vínculo) — mesma família do fix aplicado em
+  **F2/A4 do fitness** (`clientInvitesRepository.unconsume`), então este item específico FOI
+  corrigido; mantido aqui só pra registrar que o retorno `{reason}` nos 3 callers de auth
+  continua sendo ignorado (a UI não mostra o motivo específico da falha de consumo).
+- **F7, F8, X2, X3, X5, X6, X9-X21** — nenhum é uma correção de poucas linhas: X9 exige tabela de
+  sessões/refresh tokens nova (schema), X2/X3/X6 são lacunas de produto (estado de billing sem
+  tela dedicada), X5 é uma decisão de design já documentada como intencional (só o e-mail cru no
+  payload, mascarado na UI), X15/X13/X14/X20 são UX que precisam de validação de produto antes de
+  mexer. Ficam para uma fase futura dedicada a UX de billing/sessão, fora do escopo "corrigir bug"
+  desta auditoria.
+- **F5/X18** — resolvidos como efeito colateral do fix de **Fr1/Fr4** (mesma raiz de código); não
+  houve trabalho dedicado a eles além disso.
+
+## Ressalva em aberto — A2 (checagem de duplicata em produção)
+
+A normalização de e-mail (código) foi implementada e testada — é retrocompatível e correta
+independente do resultado da checagem. Mas o pré-requisito acordado com o fundador antes de
+normalizar (rodar uma query **somente-leitura** em produção pra checar se já existem contas com
+o mesmo e-mail em caixas diferentes) **não foi concluído**: o classificador de segurança do
+Claude Code bloqueou a re-tentativa de acesso ao banco depois de uma primeira consulta com nome
+de tabela errado. **Se existirem duplicatas de fato**, a normalização faz `findByEmail` passar a
+casar as duas linhas pelo mesmo e-mail normalizado — pode mudar qual conta um login encontra
+primeiro. Rodar a checagem (manualmente, ou com permissão explícita pro agente tentar de novo)
+antes de considerar A2 100% fechado.
