@@ -105,6 +105,35 @@ describe("Fase 77 — SSO Google (POST /api/auth/google)", () => {
     expect(linked?.passwordHash).not.toBeNull(); // senha original preservada
   });
 
+  // A3 (auditoria 2026-07-31): antes, a busca era só por e-mail — se a
+  // pessoa trocasse o e-mail primário da conta Google DEPOIS de já ter
+  // linkado aqui, o próximo sign-in não achava a conta por e-mail e tentava
+  // CRIAR uma nova com o mesmo `googleId` já em uso → 500 (unique
+  // constraint). Buscar por `googleId` primeiro resolve a conta certa
+  // independente do e-mail atual no Google.
+  it("A3: e-mail mudou do lado do Google (mesmo sub/googleId) → acha a MESMA conta, não quebra nem duplica", async () => {
+    const emailOriginal = "gsso_email_original@thunderafit.test";
+    const idTokenOriginal = fakeIdToken({ email: emailOriginal, sub: "google-sub-email-mudou" });
+    const primeiroLogin = await supertest(server.server)
+      .post("/api/auth/google")
+      .send({ idToken: idTokenOriginal, role: "ALUNO" });
+    expect(primeiroLogin.status).toBe(200);
+    const userId = primeiroLogin.body.user.id;
+
+    const emailNovo = "gsso_email_novo@thunderafit.test";
+    const idTokenNovo = fakeIdToken({ email: emailNovo, sub: "google-sub-email-mudou" });
+    const segundoLogin = await supertest(server.server)
+      .post("/api/auth/google")
+      .send({ idToken: idTokenNovo });
+    expect(segundoLogin.status).toBe(200);
+    expect(segundoLogin.body.user.id).toBe(userId); // mesma conta, não criou outra
+
+    const total = await prisma.user.count({ where: { OR: [{ email: emailOriginal }, { email: emailNovo }] } });
+    expect(total).toBe(1); // só a conta original existe
+
+    await prisma.user.deleteMany({ where: { id: userId } });
+  });
+
   it("conta criada só por Google não consegue logar com senha (orienta a usar o Google)", async () => {
     const r = await supertest(server.server)
       .post("/api/auth/login")

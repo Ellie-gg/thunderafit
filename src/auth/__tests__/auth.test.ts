@@ -72,6 +72,43 @@ describe("POST /api/auth/register", () => {
 
     expect(response.status).toBe(409);
   });
+
+  // A2 (auditoria 2026-07-31): e-mail agora é normalizado (trim + lowercase)
+  // na leitura/escrita — antes, "Test_Personal@..." e "test_personal@..."
+  // eram 2 contas diferentes (a constraint única do banco é case-sensitive).
+  it("A2: registrar com a MESMA conta em CAIXA DIFERENTE retorna 409 (não cria uma 2ª conta)", async () => {
+    const response = await supertest(app.server)
+      .post("/api/auth/register")
+      .send({ email: TEST_EMAIL.toUpperCase(), password: TEST_PASSWORD, role: "PERSONAL" });
+
+    expect(response.status).toBe(409);
+  });
+
+  it("A2: e-mail é gravado normalizado mesmo se digitado com espaços/caixa diferente", async () => {
+    const email = "  Test_Normaliza@Thunderafit.TEST  ";
+    const response = await supertest(app.server)
+      .post("/api/auth/register")
+      .send({ email, password: TEST_PASSWORD, role: "ALUNO" });
+
+    expect(response.status).toBe(201);
+    expect(response.body.user.email).toBe("test_normaliza@thunderafit.test");
+  });
+
+  // A6 (auditoria 2026-07-31): register() nunca validava formato de e-mail
+  // nem tamanho mínimo de senha — só presença.
+  it("A6: e-mail em formato inválido retorna 400", async () => {
+    const response = await supertest(app.server)
+      .post("/api/auth/register")
+      .send({ email: "nao-e-um-email", password: TEST_PASSWORD, role: "ALUNO" });
+    expect(response.status).toBe(400);
+  });
+
+  it("A6: senha menor que o mínimo retorna 400", async () => {
+    const response = await supertest(app.server)
+      .post("/api/auth/register")
+      .send({ email: "test_senha_curta@thunderafit.test", password: "123", role: "ALUNO" });
+    expect(response.status).toBe(400);
+  });
 });
 
 // ---------------------------------------------------------------
@@ -105,6 +142,13 @@ describe("POST /api/auth/login", () => {
       .send({ email: TEST_EMAIL, password: "SenhaErrada@999" });
 
     expect(response.status).toBe(401);
+  });
+
+  it("A2: login funciona com o e-mail em CAIXA DIFERENTE da cadastrada", async () => {
+    const response = await supertest(app.server)
+      .post("/api/auth/login")
+      .send({ email: TEST_EMAIL.toUpperCase(), password: TEST_PASSWORD });
+    expect(response.status).toBe(200);
   });
 
   // ---------------------------------------------------------------

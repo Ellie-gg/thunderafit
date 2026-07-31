@@ -111,6 +111,7 @@
     "connectionError": "Couldn't connect to the server.",
     "continue": "Continue",
     "orDivider": "or",
+    "googleLoadError": "Couldn't load Google sign-in right now. Reload the page to try again.",
     "backToEmail": "← change email",
     "backToRole": "← change profile",
     "termsAcceptance": "By creating an account, you agree to our <terms>Terms of Use</terms> and <privacy>Privacy Policy</privacy>.",

@@ -111,6 +111,7 @@
     "connectionError": "Não foi possível conectar ao servidor.",
     "continue": "Continuar",
     "orDivider": "ou",
+    "googleLoadError": "Não foi possível carregar o login do Google agora. Recarregue a página pra tentar de novo.",
     "backToEmail": "← trocar e-mail",
     "backToRole": "← trocar perfil",
     "termsAcceptance": "Ao criar uma conta, você concorda com nossos <terms>Termos de Uso</terms> e <privacy>Política de Privacidade</privacy>.",
