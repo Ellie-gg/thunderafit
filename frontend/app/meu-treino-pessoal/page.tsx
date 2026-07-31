@@ -475,6 +475,13 @@ function MeuTreinoPessoalContent() {
         <ReplaceSelfTemplateDialog
           existingProgramName={pendingReplace.existingProgramName}
           isPending={replaceMutation.isPending}
+          errorMessage={
+            replaceMutation.isError
+              ? replaceMutation.error instanceof ApiError
+                ? replaceMutation.error.message
+                : t("replaceError")
+              : null
+          }
           onCancel={() => setPendingReplace(null)}
           onConfirm={() => replaceMutation.mutate(pendingReplace.template.id)}
         />

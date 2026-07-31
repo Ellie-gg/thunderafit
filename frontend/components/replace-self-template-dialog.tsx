@@ -14,11 +14,13 @@ export function ReplaceSelfTemplateDialog({
   onConfirm,
   onCancel,
   isPending = false,
+  errorMessage = null,
 }: {
   existingProgramName: string;
   onConfirm: () => void;
   onCancel: () => void;
   isPending?: boolean;
+  errorMessage?: string | null;
 }) {
   const t = useTranslations("meuTreinoPessoal");
   const tCommon = useTranslations("common");
@@ -30,6 +32,11 @@ export function ReplaceSelfTemplateDialog({
         <p className="text-sm text-muted">
           {t("replaceDialogMessage", { name: existingProgramName })}
         </p>
+        {/* Fr13/Fr14 (auditoria 2026-07-31): `replaceMutation` não tinha
+            NENHUM tratamento de erro — em 3G, clicar "Substituir" e falhar
+            (ex: 402 de Premium expirado no meio do fluxo) não mostrava nada;
+            o diálogo continuava idêntico e o aluno clicava várias vezes. */}
+        {errorMessage && <p className="text-sm text-danger">{errorMessage}</p>}
         <div className="flex justify-end gap-2">
           <Button type="button" variant="ghost" onClick={onCancel} disabled={isPending}>
             {tCommon("cancel")}

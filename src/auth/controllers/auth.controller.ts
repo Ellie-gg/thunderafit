@@ -295,7 +295,17 @@ export async function resendVerificationEmailHandler(request: FastifyRequest, re
     return reply.status(200).send({ message: "E-mail de confirmação reenviado." });
   } catch (err) {
     const error = err as Error & { statusCode?: number };
-    return reply.status(error.statusCode ?? 500).send({ error: error.message });
+    // A9 (auditoria 2026-07-31): erros de domínio (404/400, "já verificado"
+    // etc.) já vêm com `statusCode` setado explicitamente pelo service — só
+    // esses têm mensagem segura pra expor. Uma falha de envio de e-mail
+    // (Resend fora do ar, chave inválida) não seta `statusCode`, e sua
+    // `.message` crua ("Resend: <detalhe do provedor>") não deveria vazar
+    // pro cliente.
+    if (typeof error.statusCode === "number") {
+      return reply.status(error.statusCode).send({ error: error.message });
+    }
+    request.log.error({ err: error.message }, "Falha ao reenviar e-mail de verificação");
+    return reply.status(500).send({ error: "Não foi possível reenviar o e-mail de confirmação." });
   }
 }
 

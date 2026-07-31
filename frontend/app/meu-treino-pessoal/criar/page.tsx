@@ -127,6 +127,13 @@ function CriarTreinoContent() {
         <ReplaceSelfTemplateDialog
           existingProgramName={pendingReplace.existingProgramName}
           isPending={replaceMutation.isPending}
+          errorMessage={
+            replaceMutation.isError
+              ? replaceMutation.error instanceof ApiError
+                ? replaceMutation.error.message
+                : t("createError")
+              : null
+          }
           onCancel={() => setPendingReplace(null)}
           onConfirm={() => replaceMutation.mutate()}
         />

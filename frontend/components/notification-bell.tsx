@@ -178,10 +178,31 @@ export function NotificationBell() {
             )}
           </div>
 
+          {(markReadMutation.isError || markAllMutation.isError) && (
+            <p className="px-2 pb-1 text-xs text-danger">{t("actionError")}</p>
+          )}
+
           <div className="mt-1 flex max-h-80 flex-col gap-1 overflow-y-auto">
             {listQuery.isLoading && <p className="px-2 py-2 text-sm text-muted">{tCommon("loading")}</p>}
 
-            {listQuery.data?.notifications.length === 0 && (
+            {/* C7 (auditoria 2026-07-31): sem isto, uma falha no GET deixava
+                o dropdown TOTALMENTE em branco — nem "carregando", nem
+                "vazio", nem erro (isLoading e isSuccess já eram ambos
+                `false` nesse caso) — parecia lista vazia de verdade. */}
+            {listQuery.isError && (
+              <div className="flex flex-col items-start gap-1 px-2 py-2">
+                <p className="text-sm text-danger">{t("loadError")}</p>
+                <button
+                  type="button"
+                  onClick={() => listQuery.refetch()}
+                  className="text-xs text-accent-secondary hover:underline"
+                >
+                  {tCommon("retry")}
+                </button>
+              </div>
+            )}
+
+            {listQuery.isSuccess && listQuery.data.notifications.length === 0 && (
               <p className="px-2 py-2 text-sm text-muted">{t("empty")}</p>
             )}
 

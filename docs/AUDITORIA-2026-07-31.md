@@ -1133,20 +1133,47 @@ mesmo commit de A6), C3, C5, Fr4, Fr5, Fr6, Fr7, Fr9, Fr10, Fr11, Fr12, Fr15, Fr
 **Seção 2**: X1 (fluxo "prescrever treino" — o único que era brecha de autorização; os outros 4
 fluxos do papel Nutricionista continuam sem UI, ver "Não corrigido" abaixo), X7, X8.
 
-## Corrigido parcialmente
+## Corrigido parcialmente (na Fase 107 — fechado na Fase 108, ver abaixo)
 
-- **Fr13/C8** — só os itens de `/profissionais` (hydration em erro, `saveCityMutation.isError`,
-  `requestsQuery.isError`) e `conversation-thread.tsx` (`messagesQuery.isError`) foram fechados.
-  Continuam silenciosos: `dashboard/page.tsx` (`myPersonalsQuery`, `weeklySummaryQuery`),
-  `personal/alunos/page.tsx` (`programsQuery`, `invitesQuery`), `personal/dashboard/page.tsx`
-  (`threadsQuery`), `duvidas/page.tsx` (`personalsQuery`), `nimbus/treinos-pessoais/page.tsx`
-  (painel de edição), `meu-treino-pessoal/page.tsx`/`criar/page.tsx` (`replaceMutation` sem
-  `onError`).
+- ~~**Fr13/C8** — só os itens de `/profissionais`... `meu-treino-pessoal/page.tsx`/`criar/page.tsx`
+  (`replaceMutation` sem `onError`).~~ **Fechado na Fase 108** (ver apêndice abaixo).
 - **Fr14** — `template-preview-dialog.tsx` (usado em `/personal/programas`) e
-  `meu-treino-pessoal/page.tsx` ganharam `isApplying`/mensagem de erro visível. Nenhuma mudança
-  em componentes de mutação fora desses dois fluxos.
-- **A9** — só a ordem (token gravado depois de resolver `ALLOWED_ORIGIN`, não antes) foi corrigida.
-  O vazamento de mensagem crua do Resend em `resendVerificationEmailHandler` **não foi tratado**.
+  `meu-treino-pessoal/page.tsx` ganharam `isApplying`/mensagem de erro visível na Fase 107;
+  `replace-self-template-dialog.tsx` (troca de treino pessoal ativo) ganhou o mesmo tratamento
+  na Fase 108.
+- ~~**A9** — só a ordem... O vazamento de mensagem crua do Resend em
+  `resendVerificationEmailHandler` não foi tratado.~~ **Fechado na Fase 108.**
+
+---
+
+# Apêndice — resolução (Fase 108, 2026-07-31, mesmo dia)
+
+Segunda rodada, pedida logo em seguida ("inicie a próxima rodada de correções"), fechando os
+itens que a Fase 107 tinha deixado como "parcial" ou "não corrigido" por não exigirem schema
+novo, decisão de produto, nem tocar no papel Nutricionista. Branch
+`fix/fase108-auditoria-queries-silenciosas`, 1 commit, testes novos não adicionados (mudanças de
+UI/mensagem de erro, cobertas pela suíte existente — nenhuma lógica de negócio nova), `tsc
+--noEmit` limpo nos dois lados, 37/37 suítes backend (559 testes) e 8/8 frontend (52 testes)
+verdes antes do commit.
+
+**Corrigidos nesta rodada**: **C6** (`/nimbus/treinos-pessoais` — `detailQuery`/`addSessionMutation`/
+`deleteMutation` agora mostram erro visível em vez de painel vazio com botões ainda ativos);
+**C7** (`notification-bell.tsx` — `listQuery.isError` e erro de `markRead`/`markAllRead`
+visíveis, antes dropdown ficava em branco); **Fr13 restante** (`dashboard/page.tsx`:
+`myPersonalsQuery`/`weeklySummaryQuery`; `personal/alunos/page.tsx`: `programsQuery`/
+`invitesQuery`; `personal/dashboard/page.tsx`: `threadsQuery`, tratamento mais leve por ser
+Baixa severidade; `duvidas/page.tsx`: `personalsQuery`); **Fr13/Fr14** (`replaceMutation` em
+`meu-treino-pessoal/page.tsx` e `criar/page.tsx` — `ReplaceSelfTemplateDialog` ganhou prop
+`errorMessage`, mesmo padrão já usado em `template-preview-dialog.tsx`); **A9 restante**
+(`sendVerificationEmail` agora checa o retorno booleano de `sendMail` — falha silenciosa por
+falta de `RESEND_API_KEY` deixa de responder "reenviado" com sucesso falso —, e
+`resendVerificationEmailHandler` só expõe `error.message` ao cliente quando o erro já tem
+`statusCode` setado pelo domínio, evitando vazar texto cru do provedor Resend).
+
+**Ainda não corrigido desta mesma família** (baixo valor pra continuar agora): `nimbus/
+treinos-pessoais/page.tsx` — editores de nome/tradução de sessão/template já tinham erro visível
+antes desta rodada (não fazem parte do C6); a listagem de mensagens de `conversation-thread.tsx`
+e os 4 itens de `/profissionais` já tinham sido fechados na Fase 107, não nesta.
 
 ## Deliberadamente NÃO corrigido — Nutricionista descontinuado
 
@@ -1162,10 +1189,12 @@ fechado.
   ou transação serializável com retry; risco real é uma janela estreita, esforço/risco da
   correção robusta desproporcional. Mesmo padrão de decisão já usado na Fase 101 pra um caso
   parecido.
-- **B4, B6, B8, B11, B13** — baixo risco/raro (B4 depende de troca de Price nunca feita ainda;
-  B6/B11 são estado inconsistente sem vazamento de recurso pago; B8 é gap de configuração,
-  fácil de corrigir mas não tocado nesta leva; B13 é corrida de milissegundos sem impacto prático
-  observável).
+- **B4, B6, B11, B13** — baixo risco/raro (B4 depende de troca de Price nunca feita ainda;
+  B6/B11 são estado inconsistente sem vazamento de recurso pago; B13 é corrida de milissegundos
+  sem impacto prático observável). **B8 foi corrigido** (só faltou listar aqui antes): checklist
+  e configuração documentada de `BILLING_SETUP.md` atualizados pra incluir `invoice.payment_failed`
+  nos eventos do webhook (teste e live) — o handler já existia desde a Fase 103, só a doc/checklist
+  de ativação tinham ficado pra trás.
 - **F2/A4** (convite consumido antes de criar vínculo) — mesma família do fix aplicado em
   **F2/A4 do fitness** (`clientInvitesRepository.unconsume`), então este item específico FOI
   corrigido; mantido aqui só pra registrar que o retorno `{reason}` nos 3 callers de auth
