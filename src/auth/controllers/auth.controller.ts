@@ -111,11 +111,14 @@ export async function loginHandler(
   } catch (err) {
     const error = err as Error & { statusCode?: number };
     // A5 (auditoria 2026-07-31): só credencial INVÁLIDA (401) conta como
-    // tentativa falha — antes, qualquer erro (inclusive um 500 de causa
-    // alheia à senha, ex: falha ao checar lembrete de pagamento) também
-    // contava, então alguém digitando a senha CERTA repetidamente durante
-    // uma instabilidade podia se auto-bloquear por 15min sem nunca ter
-    // errado a senha.
+    // tentativa falha — antes, qualquer erro (inclusive um 500 sem relação
+    // com a senha) também contava, então alguém digitando a senha CERTA
+    // repetidamente durante uma instabilidade podia se auto-bloquear por
+    // 15min sem nunca ter errado a senha. O exemplo original que motivou
+    // este fix (falha ao checar lembrete de pagamento) foi corrigido
+    // separadamente pelo A1 (`safeCheckAndFireDueReminders`, nunca mais
+    // lança) — este guard continua valendo como defesa pra qualquer OUTRO
+    // 500 não relacionado à senha.
     if (error.statusCode === 401) {
       loginRateLimiter.recordFailedAttempt(ip, email);
     }

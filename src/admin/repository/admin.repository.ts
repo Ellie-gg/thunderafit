@@ -230,10 +230,6 @@ export const adminRepository = {
     return prisma.user.count({ where: { role } });
   },
 
-  async updateUserRole(id: string, role: "PERSONAL" | "ALUNO" | "NUTRICIONISTA" | "ADMIN") {
-    return prisma.user.update({ where: { id }, data: { role } });
-  },
-
   /**
    * C5 (auditoria 2026-07-31): `updateUserRole` + `createAuditLog` eram 2
    * escritas INDEPENDENTES no service — se a mudança de role comitasse mas o

@@ -158,6 +158,18 @@ function UpgradeContent() {
 
   const tier = statusQuery.data?.planoAssinatura;
   const isPago = !!tier && tier !== "FREE";
+  // Achado real (checagem de consistência pós-auditoria, 2026-07-31): B1
+  // passou a manter `stripeSubscriptionId` num downgrade não-terminal
+  // (`past_due`/`unpaid`) em vez de zerá-lo — então `tier` já volta a
+  // "FREE" antes de qualquer coisa ser cancelada de verdade no Stripe.
+  // Gatear a tela por `isPago` (só o tier) deixava essa pessoa vendo os
+  // botões de assinar, e o novo guard do B10 rejeita um 2º checkout
+  // enquanto `stripeSubscriptionId` existir — beco sem saída, sem botão de
+  // Portal visível pra ela resolver o pagamento. `hasSubscription` (Fase 93,
+  // já existia na API, nunca lido aqui) reflete exatamente essa mesma
+  // condição que o backend usa pra bloquear o checkout, então é o gate certo
+  // pra decidir "assinar" vs. "gerenciar pelo Portal".
+  const hasSubscription = !!statusQuery.data?.hasSubscription;
   const tierNome = tier === "PLUS" ? "Plus" : tier === "BASE" ? "Base" : null;
 
   return (
@@ -169,7 +181,11 @@ function UpgradeContent() {
             {t("planoEyebrow")}
           </span>
           <h1 className="font-display text-2xl font-bold tracking-tight">
-            {isPago ? t("suaAssinatura") : t("fazerUpgradeTitulo")}
+            {isPago
+              ? t("suaAssinatura")
+              : hasSubscription
+                ? t("assinaturaPendenteTitulo")
+                : t("fazerUpgradeTitulo")}
           </h1>
           <p className="text-sm text-muted">
             {isPago
@@ -177,7 +193,9 @@ function UpgradeContent() {
                   plano: tierNome ?? "",
                   limite: tier === "PLUS" ? t("limiteIlimitado") : t("limiteAte20"),
                 })
-              : t("planoGratuito")}
+              : hasSubscription
+                ? t("assinaturaPendenteDescricao")
+                : t("planoGratuito")}
           </p>
           {/* Fase 93: só aparece numa concessão manual do admin com prazo
               (Fase 90) — assinatura Stripe real nunca tem essa data (é
@@ -214,15 +232,19 @@ function UpgradeContent() {
         )}
 
         {/* Achado real (auditoria 2026-07-31, B10): quando `statusQuery` falha,
-            `tier` fica `undefined` e `isPago` cai (por acidente) em `false` —
-            antes disso mostrava os botões de assinar JUNTO com o erro, e um
-            clique nesse estado podia criar uma 2ª assinatura pra quem já
-            tinha uma ativa. Sem saber o plano real, não mostra nenhum dos 2
-            blocos — só o erro acima, com retry. */}
-        {!statusQuery.isError && (isPago ? (
+            `tier` fica `undefined` e `isPago`/`hasSubscription` caem (por
+            acidente) em `false` — antes disso mostrava os botões de assinar
+            JUNTO com o erro, e um clique nesse estado podia criar uma 2ª
+            assinatura pra quem já tinha uma ativa. Sem saber o plano real,
+            não mostra nenhum dos 2 blocos — só o erro acima, com retry.
+            Gate por `hasSubscription` (não `isPago`) — ver comentário na
+            declaração da variável acima. */}
+        {!statusQuery.isError && (hasSubscription ? (
           <Card className="flex flex-col gap-3">
             <h2 className="font-display text-lg font-bold">{t("gerenciarAssinatura")}</h2>
-            <p className="text-sm text-muted">{t("gerenciarAssinaturaDescricao")}</p>
+            <p className="text-sm text-muted">
+              {isPago ? t("gerenciarAssinaturaDescricao") : t("gerenciarAssinaturaPendenteDescricao")}
+            </p>
             {portalMutation.isError && (
               <p className="text-sm text-danger">
                 {portalMutation.error instanceof ApiError

@@ -7,7 +7,7 @@ import { useParams, useRouter } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { getWorkoutProgram, addSelfProgramSession } from "@/lib/api/workouts";
 import { ApiError } from "@/lib/api/client";
-import { labelFor, nextKeyInSequence } from "@/lib/session-scheme";
+import { labelFor, nextKeyInSequence, firstMissingKey } from "@/lib/session-scheme";
 import { AuthGuard } from "@/components/auth-guard";
 import { AppHeader } from "@/components/app-header";
 import { Card } from "@/components/ui/card";
@@ -55,7 +55,15 @@ function SessaoContent() {
 
   const { session, nextKey, nextSession, sessionExercises } = useMemo(() => {
     const session = program?.workouts?.find((w) => w.id === sessionId);
-    const nextKey = session ? nextKeyInSequence(scheme, session.letter) : null;
+    // Checagem de consistência pós-auditoria (2026-07-31, F12): mesmo achado
+    // já corrigido em `/programas/[id]` e na versão do Personal desta mesma
+    // tela — `nextKeyInSequence` esconde o "Próximo" inteiro pra sessão que
+    // está por último na ordem do esquema, mesmo com dias/letras livres mais
+    // cedo na sequência. `firstMissingKey` só entra quando não há um próximo
+    // posicional (preserva o caso comum sem mudança).
+    const positionalNext = session ? nextKeyInSequence(scheme, session.letter) : null;
+    const existingLetters = program?.workouts?.map((w) => w.letter) ?? [];
+    const nextKey = session ? (positionalNext ?? firstMissingKey(scheme, existingLetters)) : null;
     const nextSession = nextKey ? program?.workouts?.find((w) => w.letter === nextKey) : undefined;
     const sessionExercises = [...(session?.exercises ?? [])].sort((a, b) => a.order - b.order);
     return { session, nextKey, nextSession, sessionExercises };
