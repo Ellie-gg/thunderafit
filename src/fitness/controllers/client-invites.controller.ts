@@ -4,7 +4,12 @@ import * as loginRateLimiter from "../../auth/services/login-rate-limiter";
 
 function handleError(err: any, reply: FastifyReply) {
   const status = err?.statusCode ?? 500;
-  return reply.status(status).send({ error: err?.message ?? "Erro interno." });
+  // Checagem de consistência pós-auditoria (2026-07-31, F3): os outros
+  // controllers de fitness tocados pelo F3 passaram a incluir `code` no
+  // corpo do erro — este ficou de fora. Inofensivo até aqui (nenhum erro
+  // deste serviço seta `.code` hoje), mas mantém o mesmo formato de
+  // resposta em todo o domínio.
+  return reply.status(status).send({ error: err?.message ?? "Erro interno.", code: err?.code });
 }
 
 function assertProfessional(request: FastifyRequest): void {

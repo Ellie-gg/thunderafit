@@ -103,6 +103,12 @@ function MeuTreinoPessoalContent() {
   } | null>(null);
 
   function onApplySuccess(data: { program: WorkoutProgram }) {
+    // Checagem de consistência pós-auditoria (2026-07-31, Fr14): fecha o
+    // preview em caso de sucesso — a navegação abaixo já tira o aluno desta
+    // tela, mas fechar explicitamente evita o dialog reaparecer se o usuário
+    // voltar rápido o suficiente (ex: gesto de voltar do navegador antes do
+    // push terminar).
+    setPreviewTemplate(null);
     queryClient.invalidateQueries({ queryKey: ["self-templates"] });
     // Fr6 (auditoria 2026-07-31): mesmo achado do `applyMutation` acima —
     // usado pelos carrosséis "Treino em Casa"/"Treinos Prontos"/Premium E
@@ -121,6 +127,10 @@ function MeuTreinoPessoalContent() {
       if (error instanceof ApiError && error.status === 409 && error.data?.code === "SELF_PROGRAM_EXISTS") {
         const template = homeTemplates.find((tpl) => tpl.id === programId);
         if (template) {
+          // Fecha o preview antes de abrir o diálogo de troca — os dois
+          // são `fixed inset-0 z-50`, então deixar os dois `state` truthy
+          // ao mesmo tempo sobrepõe um dialog em cima do outro.
+          setPreviewTemplate(null);
           setPendingReplace({
             template,
             existingProgramName: String(error.data.existingProgramName ?? ""),
@@ -141,6 +151,7 @@ function MeuTreinoPessoalContent() {
       if (error instanceof ApiError && error.status === 409 && error.data?.code === "SELF_PROGRAM_EXISTS") {
         const template = prontosTemplates.find((tpl) => tpl.id === programId);
         if (template) {
+          setPreviewTemplate(null);
           setPendingReplace({
             template,
             existingProgramName: String(error.data.existingProgramName ?? ""),
@@ -169,6 +180,7 @@ function MeuTreinoPessoalContent() {
       if (error instanceof ApiError && error.status === 409 && error.data?.code === "SELF_PROGRAM_EXISTS") {
         const template = premiumTemplates.find((tpl) => tpl.id === programId);
         if (template) {
+          setPreviewTemplate(null);
           setPendingReplace({
             template,
             existingProgramName: String(error.data.existingProgramName ?? ""),
@@ -211,6 +223,22 @@ function MeuTreinoPessoalContent() {
     prontosApplyMutation.isPending ||
     premiumApplyMutation.isPending ||
     replaceMutation.isPending;
+
+  // Checagem de consistência pós-auditoria (2026-07-31, Fr14): o preview só
+  // pode estar aberto por causa de UMA destas 3 mutations (as únicas cujo
+  // `apply` é passado pra `setPreviewTemplate` — GERAL aplica direto sem
+  // preview, `replaceMutation` tem seu próprio diálogo) — nunca mais de uma
+  // ao mesmo tempo na prática, então basta combinar os 3 estados pra saber
+  // o que mostrar dentro do `TemplatePreviewDialog` enquanto ele está aberto.
+  const previewApplyPending =
+    homeApplyMutation.isPending || prontosApplyMutation.isPending || premiumApplyMutation.isPending;
+  const previewApplyError = homeApplyMutation.isError
+    ? homeApplyMutation.error
+    : prontosApplyMutation.isError
+      ? prontosApplyMutation.error
+      : premiumApplyMutation.isError
+        ? premiumApplyMutation.error
+        : null;
 
   function handleSelectProntos(template: WorkoutProgram) {
     if (anyApplyPending) return;
@@ -464,10 +492,15 @@ function MeuTreinoPessoalContent() {
         <TemplatePreviewDialog
           template={previewTemplate.template}
           onCancel={() => setPreviewTemplate(null)}
-          onApply={() => {
-            previewTemplate.apply();
-            setPreviewTemplate(null);
-          }}
+          onApply={previewTemplate.apply}
+          isApplying={previewApplyPending}
+          errorMessage={
+            previewApplyError
+              ? previewApplyError instanceof ApiError
+                ? previewApplyError.message
+                : t("applyError")
+              : null
+          }
         />
       )}
 

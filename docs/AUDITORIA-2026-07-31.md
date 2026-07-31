@@ -1219,3 +1219,61 @@ de tabela errado. **Se existirem duplicatas de fato**, a normalização faz `fin
 casar as duas linhas pelo mesmo e-mail normalizado — pode mudar qual conta um login encontra
 primeiro. Rodar a checagem (manualmente, ou com permissão explícita pro agente tentar de novo)
 antes de considerar A2 100% fechado.
+
+---
+
+# Apêndice — checagem de consistência pós-correções (Fase 109, 2026-07-31, mesmo dia)
+
+Depois das Fases 107/108 (todo o lote de correções da auditoria), pedido explícito de uma
+checagem rápida e rasa (não uma nova auditoria) só atrás de **inconsistências causadas por
+combinar as correções entre si** — uma correção mudando uma premissa que outra correção, feita
+num commit diferente, ainda assumia verdadeira. 4 agentes em paralelo, um por área (billing/
+plan-expiry, auth, fitness/connections/admin/support, frontend), cada um comparando
+`git diff` do intervalo inteiro contra o estado atual. 7 achados reais, verificados manualmente
+antes deste relatório. Todos corrigidos na sequência, branch `fix/fase109-consistencia-pos-correcoes`.
+
+**Corrigidos:**
+
+1. **`/personal/upgrade` sem saída pra quem está em `past_due`** — combinação B1+B10: o downgrade
+   não-terminal (B1) passou a manter `stripeSubscriptionId` mesmo caindo pra `planoAssinatura:
+   "FREE"`, mas a tela só decidia "assinar" vs. "gerenciar pelo Portal" pelo `tier` (`isPago`) —
+   nunca lia `hasSubscription` (já existia na API desde a Fase 93, nunca consumido). Resultado:
+   via os botões de assinar, clicava, e o guard novo do B10 rejeitava com "gerencie pelo Portal",
+   sem nenhum botão de Portal visível. Corrigido: o gate virou `hasSubscription` (mesma condição
+   que o backend usa pra bloquear checkout), com título/descrição própria pro caso "FREE mas com
+   assinatura pendente de atenção" (`assinaturaPendenteTitulo`/`assinaturaPendenteDescricao`/
+   `gerenciarAssinaturaPendenteDescricao`, novas chaves em pt/en/es).
+2. **F12 (`firstMissingKey`) só tinha sido aplicado em 1 das 3 telas com o mesmo bug** — as duas
+   telas de sessão (`meu-treino-pessoal/[id]/sessoes/[sessionId]` e `personal/programas/[id]/
+   sessoes/[sessionId]`) continuavam usando só `nextKeyInSequence`, escondendo o botão "Próximo"
+   inteiro quando a sessão aberta é a última na ordem do esquema, mesmo com dias/letras livres
+   mais cedo na sequência (ex: WEEKDAY com só SEGUNDA+DOMINGO, abrindo DOMINGO). Corrigido com um
+   fallback: usa a posição seguinte quando existe; só cai no `firstMissingKey` (primeira lacuna
+   real) quando não há próximo posicional — preserva 100% o comportamento comum (navegar pra
+   sessão já criada) e só fecha o caso de borda.
+3. **`TemplatePreviewDialog` em `/meu-treino-pessoal` não recebeu o padrão Fr14/Fr16** — o
+   componente ganhou `isApplying`/`errorMessage` nas Fases 107, mas esta tela continuava fechando
+   o diálogo no clique, antes de saber se a mutation deu certo (`previewTemplate.apply();
+   setPreviewTemplate(null);` os dois síncronos). Corrigido: o diálogo só fecha em sucesso real
+   (dentro de `onApplySuccess`) ou quando um 409 abre o diálogo de troca (fechado explicitamente
+   ali, pra evitar 2 overlays `fixed inset-0` abertos ao mesmo tempo — mesmo cuidado já usado
+   nesta tela pra outro fluxo); qualquer outro erro mantém o diálogo aberto com a mensagem visível.
+4. **`personal/programas/[id]/sessoes/[sessionId]` ainda liberava NUTRICIONISTA na UI** —
+   `AuthGuard allowedRoles={["PERSONAL","NUTRICIONISTA"]}`, enquanto as telas irmãs já tinham sido
+   restritas a `["PERSONAL"]` quando o X1 fechou a brecha de autorização. Não era brecha de
+   segurança (backend já rejeitava com 403), só experiência confusa. Corrigido pra `["PERSONAL"]`.
+5. **Código morto**: `adminRepository.updateUserRole` (a versão antiga, 2 escritas
+   independentes) não tinha mais nenhum chamador desde que C5 trocou pra
+   `updateUserRoleWithAuditLog` — removido.
+6. **Comentário desatualizado em A5**: citava "falha ao checar lembrete de pagamento" como o
+   cenário motivador do guard "só 401 conta como tentativa falha" — mas o A1 (mesma leva) já
+   blindou essa checagem específica com try/catch, então esse cenário não pode mais acontecer.
+   Comentário corrigido pra explicar que o guard continua útil como defesa geral, e que o
+   exemplo original foi fechado separadamente.
+7. **`client-invites.controller.ts#handleError`** não incluía `code` no corpo do erro, diferente
+   dos outros controllers de fitness tocados pelo F3. Inofensivo até aqui (nenhum erro deste
+   domínio seta `.code`), mas inconsistente — corrigido pro mesmo formato.
+
+`tsc --noEmit` limpo nos dois lados, 37/37 suítes backend (559 testes), 8/8 frontend (52 testes)
+verdes antes do commit. Sem testes novos (nenhuma lógica de negócio nova — ajustes de gate de UI,
+remoção de código morto e correção de comentário).
