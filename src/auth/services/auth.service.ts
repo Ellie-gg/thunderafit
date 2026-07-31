@@ -214,11 +214,23 @@ export async function sendVerificationEmail(userId: string, email: string) {
 
   const appUrl = getEnv("ALLOWED_ORIGIN");
   const link = `${appUrl}/verificar-email?uid=${userId}&token=${rawToken}`;
-  await sendMail({
+  const sent = await sendMail({
     to: email,
     subject: "Confirme seu e-mail — ThunderaFit",
     text: `Confirme seu e-mail clicando no link abaixo (válido por 24 horas):\n\n${link}\n\nSe você não criou uma conta no ThunderaFit, ignore este e-mail.`,
   });
+  // A9 (auditoria 2026-07-31): `sendMail` devolve `false` sem lançar quando
+  // não há `RESEND_API_KEY` configurada (contrato documentado em
+  // `mailer.ts`) — sem checar o retorno aqui, o chamador de `register()`
+  // (que engole qualquer erro de propósito, best-effort) nunca notava, mas
+  // `resendVerificationEmail` abaixo precisa saber: é a ÚNICA ação cujo
+  // propósito inteiro é "mande o e-mail agora", então um "sucesso" que na
+  // verdade não enviou nada é pior que um erro.
+  if (!sent) {
+    const err = new Error("Não foi possível enviar o e-mail de confirmação.");
+    (err as Error & { statusCode: number }).statusCode = 500;
+    throw err;
+  }
 }
 
 export async function resendVerificationEmail(userId: string) {

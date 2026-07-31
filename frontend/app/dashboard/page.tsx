@@ -257,6 +257,14 @@ function DashboardContent() {
           <QueryError error={programsQuery.error} onRetry={() => programsQuery.refetch()} />
         )}
 
+        {/* Fr13 (auditoria 2026-07-31): sem isto, uma falha aqui deixava o
+            aluno achando que o Personal "apagou" o treino prescrito — Bloco
+            1 e o convite ficam ambos escondidos quando `myPersonalsQuery`
+            falha (nenhum dos dois sabe se há vínculo ou não). */}
+        {myPersonalsQuery.isError && (
+          <QueryError error={myPersonalsQuery.error} onRetry={() => myPersonalsQuery.refetch()} />
+        )}
+
         {isFirstTime ? (
           <FirstTimeEmptyState />
         ) : (
@@ -328,6 +336,16 @@ function DashboardContent() {
             </span>
             <WeeklyVoltageBar days={weeklySummary.days} />
           </div>
+        )}
+
+        {/* Fr13: sem isto, a barra de "Últimos 7 dias" e o card de sequência
+            simplesmente somem em silêncio — o aluno interpreta como perda de
+            histórico, não como falha de rede passageira. */}
+        {weeklySummaryQuery.isError && (
+          <QueryError
+            error={weeklySummaryQuery.error}
+            onRetry={() => weeklySummaryQuery.refetch()}
+          />
         )}
 
         {allPrograms.length > 0 && (

@@ -455,6 +455,10 @@ function TreinosPessoaisContent() {
                   </div>
                 </div>
 
+                {deleteMutation.isError && deleteMutation.variables === tpl.id && (
+                  <p className="text-sm text-danger">{t("deleteError")}</p>
+                )}
+
                 <TemplateBannerUpload
                   programId={tpl.id}
                   currentBannerUrl={tpl.bannerImageUrl}
@@ -465,6 +469,16 @@ function TreinosPessoaisContent() {
                   <div className="flex flex-col gap-4 border-t border-border pt-3">
                     {detailQuery.isLoading && (
                       <p className="text-sm text-muted">{t("loadingSessions")}</p>
+                    )}
+
+                    {/* C6 (auditoria 2026-07-31): sem isto, uma falha aqui
+                        abria o painel de edição vazio, mas com os botões "+
+                        A/B/C" ainda ativos (achavam que não havia sessão
+                        nenhuma ainda) — dava pra criar sessões duplicadas
+                        por cima de um template que na verdade já tinha
+                        conteúdo, só não carregado. */}
+                    {detailQuery.isError && (
+                      <p className="text-sm text-danger">{t("detailLoadError")}</p>
                     )}
 
                     {detailQuery.data?.program && (
@@ -558,6 +572,9 @@ function TreinosPessoaisContent() {
                           </Button>
                         ))}
                       </div>
+                    )}
+                    {addSessionMutation.isError && (
+                      <p className="text-sm text-danger">{t("addSessionError")}</p>
                     )}
                   </div>
                 )}

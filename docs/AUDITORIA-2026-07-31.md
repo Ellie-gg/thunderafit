@@ -1162,10 +1162,12 @@ fechado.
   ou transação serializável com retry; risco real é uma janela estreita, esforço/risco da
   correção robusta desproporcional. Mesmo padrão de decisão já usado na Fase 101 pra um caso
   parecido.
-- **B4, B6, B8, B11, B13** — baixo risco/raro (B4 depende de troca de Price nunca feita ainda;
-  B6/B11 são estado inconsistente sem vazamento de recurso pago; B8 é gap de configuração,
-  fácil de corrigir mas não tocado nesta leva; B13 é corrida de milissegundos sem impacto prático
-  observável).
+- **B4, B6, B11, B13** — baixo risco/raro (B4 depende de troca de Price nunca feita ainda;
+  B6/B11 são estado inconsistente sem vazamento de recurso pago; B13 é corrida de milissegundos
+  sem impacto prático observável). **B8 foi corrigido** (só faltou listar aqui antes): checklist
+  e configuração documentada de `BILLING_SETUP.md` atualizados pra incluir `invoice.payment_failed`
+  nos eventos do webhook (teste e live) — o handler já existia desde a Fase 103, só a doc/checklist
+  de ativação tinham ficado pra trás.
 - **F2/A4** (convite consumido antes de criar vínculo) — mesma família do fix aplicado em
   **F2/A4 do fitness** (`clientInvitesRepository.unconsume`), então este item específico FOI
   corrigido; mantido aqui só pra registrar que o retorno `{reason}` nos 3 callers de auth
