@@ -277,7 +277,18 @@ export const adminRepository = {
   ) {
     return prisma.user.update({
       where: { id: userId },
-      data: { planoAssinatura: plano, limiteAlunos, planoAssinaturaExpiresAt: expiresAt },
+      data: {
+        planoAssinatura: plano,
+        limiteAlunos,
+        planoAssinaturaExpiresAt: expiresAt,
+        // B7 (auditoria 2026-07-31): `billingRepository.applyFreePlan` (o
+        // downgrade via webhook) desliga isto de propósito ao cair pra
+        // FREE — este caminho (revogação manual do admin) não desligava,
+        // deixando o toggle "ligado" na tela do Personal mesmo já invisível
+        // no diretório de verdade (o filtro de `connections.repository.ts`
+        // já exclui FREE) — estado inconsistente, não vazamento.
+        ...(plano === "FREE" ? { availableForNewStudents: false } : {}),
+      },
     });
   },
 

@@ -25,7 +25,7 @@ async function assertOwnerAluno(
   // de workouts.service.ts#getWorkout. Admin (papel exigido acima pra ler
   // sem ser o próprio dono) não é bloqueado, mesma exceção já feita ali.
   if (role !== "ADMIN") {
-    await assertAlunoWorkoutAccessible(workout.personalId);
+    await assertAlunoWorkoutAccessible(workout.personalId, alunoId);
   }
 
   const workoutExercise = await setlogsRepository.findWorkoutExerciseById(workoutExerciseId);

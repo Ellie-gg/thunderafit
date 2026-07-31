@@ -54,6 +54,42 @@ export function stripePriceEnvVar(tier: PlanTier, interval: BillingInterval): st
   return `STRIPE_PRICE_ID_${tier}_${interval === "quarterly" ? "QUARTERLY" : "MONTHLY"}`;
 }
 
+/**
+ * Mapa reverso price ID -> degrau, usado quando o Stripe manda um evento que
+ * só traz o price atual da subscription (`customer.subscription.updated`,
+ * disparado inclusive quando o cliente TROCA de degrau pelo Portal do
+ * Cliente, fora do nosso fluxo de checkout) — não dá pra confiar em metadata
+ * setado na criação nesse caso, porque o Portal não reescreve ela ao trocar
+ * de price. Ignora silenciosamente um degrau cujas env vars não estão
+ * configuradas neste ambiente (ex: só BASE está ativo ainda).
+ *
+ * Vive aqui (não em `billing.service.ts`) pra `src/lib/plan-expiry.ts`
+ * conseguir reaproveitar sem criar import circular (`plan-expiry` já é
+ * importado POR `billing.service.ts`).
+ */
+export function tierForPriceId(priceId: string): PlanTier {
+  const tiers: PlanTier[] = ["BASE", "PLUS"];
+  const intervals: BillingInterval[] = ["monthly", "quarterly"];
+  for (const tier of tiers) {
+    for (const interval of intervals) {
+      const envVar = stripePriceEnvVar(tier, interval);
+      if (process.env[envVar] === priceId) return tier;
+    }
+  }
+  // Price desconhecido (env não configurada, ou price fora do catálogo atual
+  // — ex: um price legado de um assinante grandfathered depois de um reajuste
+  // de preço) — concede o degrau pago mais conservador em vez de falhar a
+  // assinatura ativa inteira; nunca PLUS por adivinhação. Achado real
+  // (auditoria 2026-07-31): isso rebaixa PLUS legados pra BASE em silêncio
+  // sempre que o price não é reconhecido — logado aqui pra parar de ser
+  // silencioso; a causa real (price legado sem entrada correspondente nas
+  // env vars) precisa de decisão manual, não dá pra resolver sozinho aqui.
+  console.warn(
+    `[billing] Price desconhecido "${priceId}" não corresponde a nenhuma env var configurada — concedendo BASE como fallback conservador. Se este price já foi válido (assinante legado), adicione a env var correspondente.`
+  );
+  return "BASE";
+}
+
 // Fase 56 (Aluno Premium — guardrails), preços atualizados na Fase 87
 // (fundador definiu direto, sem checkout Stripe real ainda — "vamos refinar
 // isso quando colocarmos o pagamento em produção"; só constantes

@@ -113,6 +113,16 @@ describe("Billing 3 degraus BLOCO 2 — upgrade via webhook: BASE + limite 20 + 
   });
 
   it("checkout.session.completed assinado com metadata.tier=BASE → usuário vira BASE, limite 20, customer salvo", async () => {
+    // B2 (auditoria 2026-07-31): o handler agora confirma o estado AO VIVO
+    // da subscription no Stripe antes de conceder o plano (em vez de confiar
+    // cegamente na metadata congelada da sessão) — mocka a mesma forma já
+    // usada pros outros métodos do Stripe neste arquivo.
+    const stripe = getStripe();
+    const subRetrieve = jest.spyOn(stripe.subscriptions, "retrieve").mockResolvedValue({
+      status: "active",
+      items: { data: [{ price: { id: process.env.STRIPE_PRICE_ID_BASE_MONTHLY } }] },
+    } as any);
+
     const { payload, header } = signed({
       id: "evt_checkout_1",
       type: "checkout.session.completed",
@@ -129,12 +139,14 @@ describe("Billing 3 degraus BLOCO 2 — upgrade via webhook: BASE + limite 20 + 
     });
     const r = await postWebhook(payload, header);
     expect(r.status).toBe(200);
+    expect(subRetrieve).toHaveBeenCalledWith(SUBSCRIPTION);
 
     const user = await prisma.user.findUnique({ where: { id: personalId } });
     expect(user?.planoAssinatura).toBe("BASE");
     expect(user?.limiteAlunos).toBe(20);
     expect(user?.stripeCustomerId).toBe(CUSTOMER);
     expect(user?.stripeSubscriptionId).toBe(SUBSCRIPTION);
+    subRetrieve.mockRestore();
   });
 
   it("agora o 4º vínculo é permitido (201)", async () => {
@@ -283,6 +295,12 @@ describe("Fase 20 — pagamento assíncrono (boleto/Pix): sem PAGO antes de conf
   });
 
   it("async_payment_succeeded com metadata.tier=PLUS → agora sim vira PLUS + limite ilimitado", async () => {
+    const stripe = getStripe();
+    const subRetrieve = jest.spyOn(stripe.subscriptions, "retrieve").mockResolvedValue({
+      status: "active",
+      items: { data: [{ price: { id: process.env.STRIPE_PRICE_ID_PLUS_MONTHLY } }] },
+    } as any);
+
     const { payload, header } = signed({
       id: "evt_async_paid",
       type: "checkout.session.async_payment_succeeded",
@@ -302,6 +320,7 @@ describe("Fase 20 — pagamento assíncrono (boleto/Pix): sem PAGO antes de conf
     const user = await prisma.user.findUnique({ where: { id: proId } });
     expect(user?.planoAssinatura).toBe("PLUS");
     expect(user?.limiteAlunos).toBe(1_000_000);
+    subRetrieve.mockRestore();
   });
 
   afterAll(async () => {
@@ -362,6 +381,182 @@ describe("Fase 103 — invoice.payment_failed: avisa o Personal, NÃO muda o pla
     });
     const r = await postWebhook(payload, header);
     expect(r.status).toBe(200);
+  });
+});
+
+describe("Auditoria 2026-07-31 — correções B1/B2/B10/B12", () => {
+  let recId: string;
+  let recToken: string;
+  const CUST_REC = "cus_test_recovery_1";
+  const SUB_REC = "sub_test_recovery_1";
+
+  beforeAll(async () => {
+    const reg = await supertest(server.server)
+      .post("/api/auth/register")
+      .send({ email: "billing_recovery@thunderafit.test", password: pw, role: "PERSONAL" });
+    recId = reg.body.user.id;
+    recToken = (
+      await supertest(server.server)
+        .post("/api/auth/login")
+        .send({ email: "billing_recovery@thunderafit.test", password: pw })
+    ).body.accessToken;
+    await prisma.user.update({
+      where: { id: recId },
+      data: {
+        stripeCustomerId: CUST_REC,
+        stripeSubscriptionId: SUB_REC,
+        planoAssinatura: "BASE",
+        limiteAlunos: 20,
+      },
+    });
+  });
+
+  afterAll(async () => {
+    await prisma.user.deleteMany({ where: { email: "billing_recovery@thunderafit.test" } });
+  });
+
+  it("B1: updated(past_due) derruba pra FREE MAS mantém stripeSubscriptionId (não é como o cancelamento)", async () => {
+    const { payload, header } = signed({
+      id: "evt_rec_past_due",
+      type: "customer.subscription.updated",
+      data: { object: { id: SUB_REC, customer: CUST_REC, status: "past_due" } },
+    });
+    const r = await postWebhook(payload, header);
+    expect(r.status).toBe(200);
+    const user = await prisma.user.findUnique({ where: { id: recId } });
+    expect(user?.planoAssinatura).toBe("FREE");
+    expect(user?.stripeSubscriptionId).toBe(SUB_REC); // NÃO zerado — pode se recuperar
+  });
+
+  it("B1: updated(active) de RECUPERAÇÃO da MESMA subscription restaura o plano (antes ficava FREE pra sempre)", async () => {
+    const { payload, header } = signed({
+      id: "evt_rec_active_again",
+      type: "customer.subscription.updated",
+      data: {
+        object: {
+          id: SUB_REC,
+          customer: CUST_REC,
+          status: "active",
+          items: { data: [{ price: { id: process.env.STRIPE_PRICE_ID_BASE_MONTHLY } }] },
+        },
+      },
+    });
+    const r = await postWebhook(payload, header);
+    expect(r.status).toBe(200);
+    const user = await prisma.user.findUnique({ where: { id: recId } });
+    expect(user?.planoAssinatura).toBe("BASE");
+    expect(user?.limiteAlunos).toBe(20);
+  });
+
+  it("B5: upgrade de plano reseta overLimiteAlunosSince (nova carência, não herda o timer antigo)", async () => {
+    const oldSince = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000);
+    await prisma.user.update({ where: { id: recId }, data: { overLimiteAlunosSince: oldSince } });
+
+    const { payload, header } = signed({
+      id: "evt_rec_b5_upgrade",
+      type: "customer.subscription.updated",
+      data: {
+        object: {
+          id: SUB_REC,
+          customer: CUST_REC,
+          status: "active",
+          items: { data: [{ price: { id: process.env.STRIPE_PRICE_ID_PLUS_MONTHLY } }] },
+        },
+      },
+    });
+    const r = await postWebhook(payload, header);
+    expect(r.status).toBe(200);
+    const user = await prisma.user.findUnique({ where: { id: recId } });
+    expect(user?.planoAssinatura).toBe("PLUS");
+    expect(user?.overLimiteAlunosSince).toBeNull();
+  });
+
+  it("B2: reentrega tardia de checkout.session.completed é ignorada se a subscription já não está mais ativa no Stripe", async () => {
+    const stripe = getStripe();
+    const subRetrieve = jest
+      .spyOn(stripe.subscriptions, "retrieve")
+      .mockResolvedValue({ status: "canceled" } as any);
+
+    // Zera o plano pra simular "já cancelou de verdade" antes da reentrega chegar.
+    await prisma.user.update({
+      where: { id: recId },
+      data: { planoAssinatura: "FREE", limiteAlunos: 3, stripeSubscriptionId: null },
+    });
+
+    const { payload, header } = signed({
+      id: "evt_rec_stale_checkout",
+      type: "checkout.session.completed",
+      data: {
+        object: {
+          id: "cs_stale_1",
+          client_reference_id: recId,
+          customer: CUST_REC,
+          subscription: SUB_REC,
+          payment_status: "paid",
+          metadata: { tier: "BASE" },
+        },
+      },
+    });
+    const r = await postWebhook(payload, header);
+    expect(r.status).toBe(200);
+    const user = await prisma.user.findUnique({ where: { id: recId } });
+    expect(user?.planoAssinatura).toBe("FREE"); // não reativou a partir de uma subscription já cancelada
+    subRetrieve.mockRestore();
+  });
+
+  it("B10: uma 2ª tentativa de checkout com assinatura já ativa é rejeitada (400)", async () => {
+    await prisma.user.update({
+      where: { id: recId },
+      data: { stripeSubscriptionId: SUB_REC, planoAssinatura: "BASE", limiteAlunos: 20 },
+    });
+    const r = await supertest(server.server)
+      .post("/api/billing/checkout-session")
+      .set("Authorization", `Bearer ${recToken}`)
+      .send({ tier: "PLUS", interval: "monthly" });
+    expect(r.status).toBe(400);
+    expect(r.body.error).toMatch(/já tem uma assinatura ativa/i);
+  });
+
+  it("B12: invoice.payment_failed de uma subscription DIFERENTE da corrente não notifica", async () => {
+    const { payload, header } = signed({
+      id: "evt_rec_payfail_wrong_sub",
+      type: "invoice.payment_failed",
+      data: {
+        object: {
+          id: "in_rec_1",
+          customer: CUST_REC,
+          parent: { subscription_details: { subscription: "sub_outra_totalmente_diferente" } },
+        },
+      },
+    });
+    const r = await postWebhook(payload, header);
+    expect(r.status).toBe(200);
+    const notifs = await supertest(server.server)
+      .get("/api/notifications")
+      .set("Authorization", `Bearer ${recToken}`);
+    const failures = notifs.body.notifications.filter((n: any) => n.type === "payment_failed");
+    expect(failures).toHaveLength(0);
+  });
+
+  it("B12: invoice.payment_failed da subscription CORRENTE continua notificando normalmente", async () => {
+    const { payload, header } = signed({
+      id: "evt_rec_payfail_right_sub",
+      type: "invoice.payment_failed",
+      data: {
+        object: {
+          id: "in_rec_2",
+          customer: CUST_REC,
+          parent: { subscription_details: { subscription: SUB_REC } },
+        },
+      },
+    });
+    const r = await postWebhook(payload, header);
+    expect(r.status).toBe(200);
+    const notifs = await supertest(server.server)
+      .get("/api/notifications")
+      .set("Authorization", `Bearer ${recToken}`);
+    const failures = notifs.body.notifications.filter((n: any) => n.type === "payment_failed");
+    expect(failures).toHaveLength(1);
   });
 });
 

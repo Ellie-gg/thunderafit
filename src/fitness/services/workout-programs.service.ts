@@ -523,11 +523,24 @@ export const workoutProgramsService = {
     if (role !== "ADMIN" && !isOwnerPersonal && !isOwnerAluno) {
       throw httpError("Você não tem permissão para acessar este programa.", 403);
     }
+    // Achado real (auditoria 2026-07-31, X7): o Personal mantinha acesso de
+    // LEITURA ao programa/histórico de um aluno pra sempre, mesmo depois de
+    // desvinculado (a posse era só `program.personalId`, nunca revalidada
+    // contra o vínculo atual) — decisão tomada: desvincular revoga esse
+    // acesso (o histórico do ALUNO continua intacto, só o profissional perde
+    // a visão). Só se aplica a uma instância aplicada (`alunoId` presente) —
+    // um TEMPLATE nunca tem aluno associado, não há vínculo pra checar.
+    if (isOwnerPersonal && program.alunoId) {
+      const relation = await relationsRepository.findByPersonalAndAluno(program.personalId!, program.alunoId);
+      if (!relation) {
+        throw httpError("Você não tem mais vínculo com este aluno.", 403);
+      }
+    }
     // Fase 103: mesmo gate de workouts.service.ts#getWorkout — só bloqueia a
     // visão do ALUNO, nunca a do próprio Personal (precisa continuar vendo o
     // que prescreveu pra decidir quem desvincular) nem a do admin.
     if (isOwnerAluno) {
-      await assertAlunoWorkoutAccessible(program.personalId);
+      await assertAlunoWorkoutAccessible(program.personalId, userId);
     }
 
     const sessions = sortByScheme(program.workouts, program.sessionScheme);

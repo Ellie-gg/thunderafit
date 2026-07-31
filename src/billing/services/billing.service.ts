@@ -1,5 +1,5 @@
 import type Stripe from "stripe";
-import { getStripe, stripePriceEnvVar, PlanTier, BillingInterval } from "../stripe";
+import { getStripe, tierForPriceId, stripePriceEnvVar, PlanTier, BillingInterval } from "../stripe";
 import { billingRepository } from "../repository/billing.repository";
 import { revertExpiredPersonalPlan, getPersonalAccessStatus } from "../../lib/plan-expiry";
 import { notificationsService } from "../../notifications/services/notifications.service";
@@ -26,30 +26,6 @@ function priceIdFor(tier: PlanTier, interval: Interval): string {
   return requireEnv(stripePriceEnvVar(tier, interval));
 }
 
-/**
- * Mapa reverso price ID -> degrau, usado quando o Stripe manda um evento que
- * só traz o price atual da subscription (`customer.subscription.updated`,
- * disparado inclusive quando o cliente TROCA de degrau pelo Portal do
- * Cliente, fora do nosso fluxo de checkout) — não dá pra confiar em metadata
- * setado na criação nesse caso, porque o Portal não reescreve ela ao trocar
- * de price. Ignora silenciosamente um degrau cujas env vars não estão
- * configuradas neste ambiente (ex: só BASE está ativo ainda).
- */
-function tierForPriceId(priceId: string): PlanTier {
-  const tiers: PlanTier[] = ["BASE", "PLUS"];
-  const intervals: Interval[] = ["monthly", "quarterly"];
-  for (const tier of tiers) {
-    for (const interval of intervals) {
-      const envVar = stripePriceEnvVar(tier, interval);
-      if (process.env[envVar] === priceId) return tier;
-    }
-  }
-  // Price desconhecido (env não configurada ou price fora do catálogo atual)
-  // — concede o degrau pago mais conservador em vez de falhar a assinatura
-  // ativa inteira; nunca PLUS por adivinhação.
-  return "BASE";
-}
-
 export const billingService = {
   /**
    * Cria uma Stripe Checkout Session (hospedada) para o profissional
@@ -60,6 +36,19 @@ export const billingService = {
   async createCheckoutSession(userId: string, tier: PlanTier, interval: Interval): Promise<string> {
     const user = await billingRepository.findUserById(userId);
     if (!user) throw httpError("Usuário não encontrado.", 404);
+    // B10 (auditoria 2026-07-31): sem isso, quem já tem uma subscription
+    // ativa podia criar uma SEGUNDA no mesmo customer (ex: página de upgrade
+    // aberta durante uma instabilidade, `statusQuery` erra, a UI falha
+    // aberta e mostra os botões de assinar de novo) — cobrança duplicada, e
+    // cancelar a assinatura errada pelo Portal não corrige nada porque o
+    // guard de reordenação do webhook ignora eventos de uma subscription que
+    // não é mais a corrente. Troca de degrau é só pelo Portal do Cliente.
+    if (user.stripeSubscriptionId) {
+      throw httpError(
+        "Você já tem uma assinatura ativa. Gerencie ou troque de plano pelo Portal do Cliente.",
+        400
+      );
+    }
 
     const priceId = priceIdFor(tier, interval);
     const stripe = getStripe();
@@ -156,9 +145,33 @@ export const billingService = {
    *    subscription CORRENTE do usuário (`user.stripeSubscriptionId`). O
    *    Stripe não garante ordem nem unicidade de entrega; sem essa guarda, um
    *    `updated(active)` obsoleto reentregue APÓS um cancelamento reativaria o
-   *    plano indevidamente. Como o downgrade zera `stripeSubscriptionId`, o
-   *    evento obsoleto não casa e é ignorado.
+   *    plano indevidamente. Como o cancelamento (`deleted`) zera
+   *    `stripeSubscriptionId`, o evento obsoleto não casa e é ignorado — mas
+   *    um downgrade NÃO-terminal (`updated` com status `past_due`/`unpaid`/
+   *    etc.) mantém o id (`applyInactivePlan`), porque a subscription ainda
+   *    existe e pode voltar a ficar ativa (ver achado abaixo).
    *  - Idempotente: reaplicar PAGO/FREE do mesmo estado não causa dano.
+   *
+   * **Achados corrigidos nesta revisão (auditoria 2026-07-31):**
+   *  - B1: `updated(past_due)` zerava `stripeSubscriptionId` (mesmo tratamento
+   *    de `deleted`) — quando o cliente corrigia o pagamento, o
+   *    `updated(active)` de RECUPERAÇÃO da MESMA subscription era rejeitado
+   *    pelo guard de reordenação acima (id já nulo), e o plano nunca voltava
+   *    enquanto o Stripe seguia cobrando. Corrigido usando `applyInactivePlan`
+   *    (mantém o id) para status não-ativo vindo de `updated`; só `deleted`
+   *    (a subscription realmente não existe mais) zera o id.
+   *  - B2: `checkout.session.completed`/`async_payment_succeeded` confiavam
+   *    cegamente em `session.metadata.tier` (congelado na criação da sessão)
+   *    e aplicavam o plano incondicionalmente — uma reentrega tardia (depois
+   *    do Stripe re-tentar um 500 nosso) podia conceder um plano já cancelado
+   *    ou rebaixar quem já tinha feito upgrade. Corrigido buscando o estado
+   *    AO VIVO da subscription no Stripe antes de aplicar: só concede se ela
+   *    ainda está ativa, e deriva o degrau do price ATUAL (não da metadata
+   *    congelada) — mesma fonte de verdade já usada em `updated` acima.
+   *  - B12: `invoice.payment_failed` notificava sem checar se a fatura é da
+   *    subscription CORRENTE do usuário — no caso de 2 subscriptions no mesmo
+   *    customer (ver B10), a falha de uma subscription órfã gerava um aviso
+   *    sobre a assinatura ATIVA, que está em dia.
    */
   async handleWebhookEvent(event: Stripe.Event): Promise<void> {
     switch (event.type) {
@@ -176,14 +189,35 @@ export const billingService = {
 
         const pago =
           session.payment_status === "paid" || session.payment_status === "no_payment_required";
-        if (pago) {
-          const tier = session.metadata?.tier === "PLUS" ? "PLUS" : "BASE";
-          if (customerId) await billingRepository.setStripeCustomerId(userId, customerId);
-          await billingRepository.applyPaidPlan(userId, tier, subscriptionId);
-        } else {
+        if (!pago) {
           // Pagamento pendente (ex: boleto/Pix): guarda os ids para casar os
           // eventos futuros, mas NÃO concede o plano ainda.
           if (customerId) await billingRepository.linkStripe(userId, customerId, subscriptionId);
+          return;
+        }
+
+        if (customerId) await billingRepository.setStripeCustomerId(userId, customerId);
+
+        // B2: confirma o estado AO VIVO da subscription em vez de confiar
+        // cegamente na sessão (que pode ser uma reentrega tardia de um evento
+        // já superado por um cancelamento ou upgrade posterior).
+        if (subscriptionId) {
+          const stripe = getStripe();
+          const liveSub = await stripe.subscriptions.retrieve(subscriptionId);
+          const aindaAtiva = liveSub.status === "active" || liveSub.status === "trialing";
+          if (!aindaAtiva) {
+            // Reentrega tardia de um checkout cuja subscription já foi
+            // cancelada/expirou nesse meio-tempo — não concede nada.
+            return;
+          }
+          const priceId = liveSub.items?.data?.[0]?.price?.id;
+          const tier = priceId ? tierForPriceId(priceId) : "BASE";
+          await billingRepository.applyPaidPlan(userId, tier, subscriptionId);
+        } else {
+          // Sem subscription (não deveria acontecer em `mode: "subscription"`,
+          // mas não há o que verificar ao vivo) — usa a metadata como antes.
+          const tier = session.metadata?.tier === "PLUS" ? "PLUS" : "BASE";
+          await billingRepository.applyPaidPlan(userId, tier, subscriptionId);
         }
         return;
       }
@@ -209,7 +243,12 @@ export const billingService = {
           const tier = priceId ? tierForPriceId(priceId) : "BASE";
           await billingRepository.applyPaidPlan(user.id, tier, sub.id);
         } else {
-          await billingRepository.applyFreePlan(user.id);
+          // B1: status não-ativo mas NÃO terminal (past_due, unpaid,
+          // incomplete...) — a subscription ainda existe no Stripe e pode se
+          // recuperar. Mantém o id (`applyInactivePlan`) pra o evento de
+          // recuperação da MESMA subscription não ser rejeitado pelo guard
+          // acima. Só `deleted` (abaixo) zera o id de verdade.
+          await billingRepository.applyInactivePlan(user.id, sub.id);
         }
         return;
       }
@@ -241,6 +280,15 @@ export const billingService = {
         if (!customerId) return;
         const user = await billingRepository.findUserByStripeCustomerId(customerId);
         if (!user) return;
+        // B12: só notifica se a fatura é da subscription CORRENTE do usuário
+        // — evita avisar sobre uma subscription órfã (ver B10) enquanto a
+        // assinatura ativa de verdade está em dia. Nesta versão da API do
+        // Stripe, a subscription de origem vive em `invoice.parent.
+        // subscription_details.subscription` (não mais em `invoice.subscription`).
+        const invoiceSubscription = invoice.parent?.subscription_details?.subscription;
+        const invoiceSubscriptionId =
+          typeof invoiceSubscription === "string" ? invoiceSubscription : invoiceSubscription?.id;
+        if (invoiceSubscriptionId && invoiceSubscriptionId !== user.stripeSubscriptionId) return;
         await notificationsService.notify(
           user.id,
           "payment_failed",

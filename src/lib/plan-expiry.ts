@@ -1,5 +1,5 @@
 import prisma from "./prisma";
-import { FREE_LIMITE_ALUNOS } from "../billing/stripe";
+import { FREE_LIMITE_ALUNOS, BASE_LIMITE_ALUNOS, PLUS_LIMITE_ALUNOS, getStripe, tierForPriceId } from "../billing/stripe";
 
 /**
  * Fase 90 — concessão manual de plano com prazo pelo admin ("brinde por
@@ -14,27 +14,70 @@ import { FREE_LIMITE_ALUNOS } from "../billing/stripe";
  * qualquer leitor (conhecido ou futuro) já ver o dado certo sem precisar
  * passar por aqui.
  *
- * Nunca reduz uma assinatura Stripe REAL: o webhook
- * (`billing.repository.ts#applyPaidPlan`/`applyFreePlan`) sempre limpa
- * `planoAssinaturaExpiresAt` em toda escrita — esse campo só sobrevive não
- * nulo quando o plano atual veio de uma concessão manual.
+ * Nunca reduz uma assinatura Stripe REAL — mas essa invariante só valia na
+ * ordem "concessão manual primeiro, Stripe depois" (o webhook sempre limpa
+ * `planoAssinaturaExpiresAt` em toda escrita real). Achado real (auditoria
+ * 2026-07-31, B3): na ordem inversa — Personal JÁ é assinante Stripe pagante
+ * e o admin concede uma cortesia por cima (`planoAssinaturaExpiresAt`
+ * setado sem tocar `stripeSubscriptionId`) — a invariante quebrava: ao
+ * vencer a cortesia, esta função revertia direto pra FREE, rebaixando um
+ * cliente que o Stripe continuava cobrando normalmente. Corrigido: quando
+ * `stripeSubscriptionId` está presente, sincroniza com o estado AO VIVO da
+ * assinatura no Stripe em vez de assumir FREE — só cai no fallback FREE se
+ * a assinatura já não existir mais lá também (ou se a consulta ao Stripe
+ * falhar, caso em que loga e usa o fallback mais conservador).
  */
 export async function revertExpiredPersonalPlan<
-  T extends { id: string; planoAssinaturaExpiresAt: Date | null },
+  T extends { id: string; planoAssinaturaExpiresAt: Date | null; stripeSubscriptionId?: string | null },
 >(user: T): Promise<T> {
   if (!user.planoAssinaturaExpiresAt || user.planoAssinaturaExpiresAt.getTime() > Date.now()) {
     return user;
   }
+
+  if (user.stripeSubscriptionId) {
+    try {
+      const stripe = getStripe();
+      const liveSub = await stripe.subscriptions.retrieve(user.stripeSubscriptionId);
+      const ativo = liveSub.status === "active" || liveSub.status === "trialing";
+      if (ativo) {
+        const priceId = liveSub.items?.data?.[0]?.price?.id;
+        const tier = priceId ? tierForPriceId(priceId) : "BASE";
+        const reverted = await prisma.user.update({
+          where: { id: user.id },
+          data: {
+            planoAssinatura: tier,
+            limiteAlunos: tier === "PLUS" ? PLUS_LIMITE_ALUNOS : BASE_LIMITE_ALUNOS,
+            planoAssinaturaExpiresAt: null,
+          },
+          select: { planoAssinatura: true, limiteAlunos: true, planoAssinaturaExpiresAt: true },
+        });
+        return { ...user, ...reverted };
+      }
+      // Assinatura existe no Stripe mas não está ativa — cai no fallback
+      // FREE abaixo (mesmo destino que `applyInactivePlan` já daria).
+    } catch (err) {
+      console.warn(
+        `[plan-expiry] Falha ao consultar assinatura Stripe ao reverter concessão expirada (userId=${user.id}): ${(err as Error).message} — usando fallback FREE.`
+      );
+    }
+  }
+
   // `select` explícito (não o objeto inteiro do Prisma) — o retorno é
   // espalhado de volta em `user` (que pode vir de um SELECT parcial, ex: a
   // listagem de admin), e um update() sem select traria passwordHash/
   // refreshTokenHash junto, vazando campos sensíveis pro chamador.
+  //
+  // B7 (auditoria 2026-07-31): `availableForNewStudents: false` — mesmo
+  // ajuste de `admin.repository.ts#setPersonalPlano`, pelo mesmo motivo
+  // (`applyFreePlan`, o downgrade via webhook, já desliga isto; este
+  // caminho — expiração de concessão manual — não desligava).
   const reverted = await prisma.user.update({
     where: { id: user.id },
     data: {
       planoAssinatura: "FREE",
       limiteAlunos: FREE_LIMITE_ALUNOS,
       planoAssinaturaExpiresAt: null,
+      availableForNewStudents: false,
     },
     select: { planoAssinatura: true, limiteAlunos: true, planoAssinaturaExpiresAt: true },
   });
@@ -93,6 +136,7 @@ export async function getPersonalAccessStatus(
       limiteAlunos: true,
       planoAssinaturaExpiresAt: true,
       overLimiteAlunosSince: true,
+      stripeSubscriptionId: true,
     },
   });
   if (!user) return { blocked: false, overLimit: false, graceDaysLeft: null };
@@ -155,14 +199,29 @@ export async function assertPersonalCanPrescribe(personalId: string): Promise<vo
  * acessado (`program.personalId`/`workout.personalId`), nunca o usuário
  * autenticado da requisição (que é o aluno). Nulo (programa origin: SELF)
  * nunca bloqueia — resolvido dentro de `getPersonalAccessStatus`.
+ *
+ * `alunoId` (auditoria 2026-07-31, X8): antes, um aluno DESVINCULADO daquele
+ * Personal continuava sujeito ao estado de plano dele enquanto usasse um
+ * programa antigo — mesmo sem nenhum `ClientRelation` vigente. O propósito
+ * inteiro deste bloqueio é pressionar o Personal a desvincular alunos (ou
+ * pagar) pra sair do excesso; uma vez que o aluno JÁ foi desvinculado, ele
+ * não é mais parte do que está causando o excesso, então continuar
+ * bloqueando o acesso dele não serve o mecanismo — só pune sem motivo. A
+ * checagem de vínculo só roda quando `status.blocked` já é `true` (evita 1
+ * query a mais no caminho comum, onde quase sempre não está bloqueado).
  */
-export async function assertAlunoWorkoutAccessible(personalId: string | null): Promise<void> {
+export async function assertAlunoWorkoutAccessible(personalId: string | null, alunoId: string): Promise<void> {
   const status = await getPersonalAccessStatus(personalId);
-  if (status.blocked) {
-    throw httpError(
-      "Seu Personal precisa regularizar a assinatura dele para você voltar a acessar este treino.",
-      403,
-      "PERSONAL_PLAN_RESTRICTED"
-    );
-  }
+  if (!status.blocked) return;
+
+  const relation = await prisma.clientRelation.findUnique({
+    where: { personalId_alunoId: { personalId: personalId as string, alunoId } },
+  });
+  if (!relation) return;
+
+  throw httpError(
+    "Seu Personal precisa regularizar a assinatura dele para você voltar a acessar este treino.",
+    403,
+    "PERSONAL_PLAN_RESTRICTED"
+  );
 }
