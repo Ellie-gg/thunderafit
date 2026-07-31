@@ -111,6 +111,7 @@
     "connectionError": "Couldn't connect to the server.",
     "continue": "Continue",
     "orDivider": "or",
+    "googleLoadError": "Couldn't load Google sign-in right now. Reload the page to try again.",
     "backToEmail": "← change email",
     "backToRole": "← change profile",
     "termsAcceptance": "By creating an account, you agree to our <terms>Terms of Use</terms> and <privacy>Privacy Policy</privacy>.",
@@ -426,6 +427,7 @@
     "fullNameLabel": "Full name",
     "birthDateLabel": "Date of birth",
     "heightLabel": "Height (cm)",
+    "invalidHeightOrWeight": "Height and weight must be numbers (e.g. 1.75 or 70.5).",
     "weightLabel": "Weight (kg)",
     "goalsHeading": "Goals",
     "goalsLabel": "Goals",
@@ -471,6 +473,7 @@
   },
   "conversationThread": {
     "loading": "Loading messages...",
+    "loadError": "Couldn't load the messages.",
     "placeholder": "Write a message...",
     "send": "Send",
     "sending": "Sending...",

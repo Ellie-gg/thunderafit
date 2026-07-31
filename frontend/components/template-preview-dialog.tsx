@@ -28,12 +28,23 @@ export function TemplatePreviewDialog({
   onApplyToAluno,
   alunoOptions,
   onCancel,
+  isApplying,
+  errorMessage,
 }: {
   template: WorkoutProgram;
   onApply?: () => void;
   onApplyToAluno?: (alunoId: string) => void;
   alunoOptions?: { id: string; email: string }[];
   onCancel: () => void;
+  // Fr14/Fr16 (auditoria 2026-07-31): antes o diálogo não tinha estado de
+  // pendência nem de erro — um 409 (já tem programa aplicado)/402
+  // (Premium)/403 (over-limit) ao aplicar não mostrava nada visível (o
+  // texto de erro do chamador renderizava ATRÁS do overlay `fixed inset-0
+  // z-50` deste diálogo), então o clique parecia simplesmente não ter
+  // funcionado — e sem `disabled` no botão, um segundo clique reenviava a
+  // mesma aplicação.
+  isApplying?: boolean;
+  errorMessage?: string | null;
 }) {
   const t = useTranslations("meuTreinoPessoal");
   const tCommon = useTranslations("common");
@@ -83,21 +94,23 @@ export function TemplatePreviewDialog({
           </select>
         )}
 
+        {errorMessage && <p className="text-sm text-danger">{errorMessage}</p>}
+
         <div className="flex justify-end gap-2">
-          <Button type="button" variant="ghost" onClick={onCancel}>
+          <Button type="button" variant="ghost" onClick={onCancel} disabled={isApplying}>
             {tCommon("cancel")}
           </Button>
           {alunoOptions ? (
             <Button
               type="button"
-              disabled={!selectedAluno}
+              disabled={!selectedAluno || isApplying}
               onClick={() => onApplyToAluno?.(selectedAluno)}
             >
-              {t("previewApplyButton")}
+              {isApplying ? tCommon("loading") : t("previewApplyButton")}
             </Button>
           ) : (
-            <Button type="button" onClick={onApply}>
-              {t("previewApplyButton")}
+            <Button type="button" onClick={onApply} disabled={isApplying}>
+              {isApplying ? tCommon("loading") : t("previewApplyButton")}
             </Button>
           )}
         </div>

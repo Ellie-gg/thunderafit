@@ -6,6 +6,7 @@ import { useTranslations } from "next-intl";
 import { useParams, useRouter } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { getWorkoutProgram, addSelfProgramSession } from "@/lib/api/workouts";
+import { ApiError } from "@/lib/api/client";
 import { labelFor, nextKeyInSequence } from "@/lib/session-scheme";
 import { AuthGuard } from "@/components/auth-guard";
 import { AppHeader } from "@/components/app-header";
@@ -133,7 +134,12 @@ function SessaoContent() {
               />
             </Card>
 
-            <div className="flex gap-3">
+            {/* Fr10 (auditoria 2026-07-31): 2 botões `flex-1` sem `flex-wrap`
+                — com o esquema "Dias da semana" ("Próximo: Segunda →") a
+                linha pede mais largura do que cabe em qualquer celular até
+                ~390px, e a página inteira passava a rolar na horizontal.
+                `flex-wrap` empilha os 2 botões em telas estreitas. */}
+            <div className="flex flex-wrap gap-3">
               <Button asChild variant="secondary" className="flex-1">
                 <Link href={`/programas/${programId}`}>{t("backToProgram")}</Link>
               </Button>
@@ -157,7 +163,13 @@ function SessaoContent() {
                 ))}
             </div>
             {addSessionMutation.isError && (
-              <p className="text-sm text-danger">{t("nextSessionError")}</p>
+              // Fr15 (auditoria 2026-07-31): mesmo achado de /programas/[id]
+              // — texto genérico escondia a mensagem real do backend.
+              <p className="text-sm text-danger">
+                {addSessionMutation.error instanceof ApiError
+                  ? addSessionMutation.error.message
+                  : t("nextSessionError")}
+              </p>
             )}
           </>
         )}

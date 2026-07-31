@@ -114,6 +114,31 @@ export const connectionsRepository = {
     });
   },
 
+  /**
+   * C3 (auditoria 2026-07-31): usado quando um `ClientRelation` é removido
+   * (`relationsService.removeRelation`, fitness) — se existia uma
+   * `ConnectionRequest` ACEITA daquele par, ela precisa sumir junto, senão
+   * `findRequestByPair` continua achando `status: "ACEITA"` pra sempre e
+   * `createRequest` recusa qualquer nova tentativa de solicitação com 409
+   * "Você já está vinculado a este profissional", mesmo sem vínculo nenhum
+   * existir mais — o aluno nunca mais conseguiria pedir pra se conectar de
+   * novo com aquele profissional. `deleteMany` (não `delete`) porque o par
+   * pode não ter `ConnectionRequest` nenhuma (vínculo criado direto por
+   * e-mail/convite, nunca passou pelo diretório) — nesse caso é no-op.
+   */
+  async deleteRequestByPair(alunoId: string, professionalId: string) {
+    // `ConnectionMessage` referencia `ConnectionRequest` sem cascade no
+    // schema — precisa apagar as mensagens primeiro, senão a FK rejeita o
+    // delete da solicitação (achado ao testar C3: toda solicitação aceita
+    // tem pelo menos 1 mensagem, a que o aluno mandou ao pedir o vínculo).
+    const existing = await prisma.connectionRequest.findUnique({
+      where: { alunoId_professionalId: { alunoId, professionalId } },
+    });
+    if (!existing) return;
+    await prisma.connectionMessage.deleteMany({ where: { connectionRequestId: existing.id } });
+    await prisma.connectionRequest.delete({ where: { id: existing.id } });
+  },
+
   findRequestsForProfessional(professionalId: string) {
     return prisma.connectionRequest.findMany({
       where: { professionalId },

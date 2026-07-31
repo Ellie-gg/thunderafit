@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { createSelfWorkoutProgram, addSelfProgramSession } from "@/lib/api/workouts";
 import { ApiError } from "@/lib/api/client";
 import { AuthGuard } from "@/components/auth-guard";
@@ -28,6 +28,7 @@ function CriarTreinoContent() {
   const t = useTranslations("criarMeuTreino");
   const tCommon = useTranslations("common");
   const router = useRouter();
+  const queryClient = useQueryClient();
   const [name, setName] = useState("");
   const [pendingReplace, setPendingReplace] = useState<{ existingProgramName: string } | null>(null);
 
@@ -37,9 +38,20 @@ function CriarTreinoContent() {
     return { program, session };
   }
 
+  // Fr5 (auditoria 2026-07-31): esta tela não invalidava NADA — quem já
+  // tinha um treino pessoal, criava um novo (ou confirmava a substituição,
+  // que APAGA o antigo no backend) e voltava ao dashboard/`/programas` em
+  // menos de 2min (staleTime dessas chaves) via card antigo, apontando pra
+  // um programa que o backend já tinha deletado.
+  function invalidateSelfWorkoutCaches() {
+    queryClient.invalidateQueries({ queryKey: ["aluno-dashboard-summary"] });
+    queryClient.invalidateQueries({ queryKey: ["workout-programs", "aluno"] });
+  }
+
   const mutation = useMutation({
     mutationFn: () => createAndOpenFirstSession(false),
     onSuccess: ({ program, session }) => {
+      invalidateSelfWorkoutCaches();
       router.push(`/meu-treino-pessoal/${program.id}/sessoes/${session.id}`);
     },
     onError: (error) => {
@@ -52,6 +64,7 @@ function CriarTreinoContent() {
   const replaceMutation = useMutation({
     mutationFn: () => createAndOpenFirstSession(true),
     onSuccess: ({ program, session }) => {
+      invalidateSelfWorkoutCaches();
       router.push(`/meu-treino-pessoal/${program.id}/sessoes/${session.id}`);
     },
   });

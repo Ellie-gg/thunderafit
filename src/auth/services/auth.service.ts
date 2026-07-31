@@ -28,6 +28,26 @@ function generateRawToken(bytes: number): string {
   return crypto.randomBytes(bytes).toString("base64url");
 }
 
+/**
+ * Achado real (auditoria 2026-07-31, A1): `checkAndFireDueReminders` era
+ * chamado direto (sem try/catch) em login/refresh/SSO Google — uma falha ali
+ * (timeout do banco, erro ao criar a notificação) derrubava o fluxo inteiro
+ * com 500, e no caso do `refresh()` especificamente, o novo refresh token JÁ
+ * tinha sido gravado antes dessa chamada, deixando o cliente com um token
+ * órfão que dispararia a detecção de reuso (roubo) na tentativa seguinte —
+ * um erro de lembrete de pagamento derrubando a sessão inteira do usuário.
+ * Nunca deve poder quebrar login/refresh/SSO — é best-effort por natureza
+ * (mesmo espírito do `try/catch` já existente em `sendVerificationEmail`
+ * logo abaixo).
+ */
+async function safeCheckAndFireDueReminders(userId: string): Promise<void> {
+  try {
+    await relationsService.checkAndFireDueReminders(userId);
+  } catch (err) {
+    console.error("Falha ao checar/disparar lembrete de pagamento:", err);
+  }
+}
+
 function hashToken(token: string): string {
   return crypto.createHash("sha256").update(token).digest("hex");
 }
@@ -99,8 +119,35 @@ function generateTokens(payload: JwtPayload): {
  * Registra um novo usuário.
  * Lança erro se o e-mail já estiver em uso.
  */
+// A6 (auditoria 2026-07-31): `register()` nunca validava formato de e-mail
+// nem tamanho mínimo de senha (só presença) — diferente de `resetPassword`/
+// `changePassword`, que já exigem `MIN_PASSWORD_LENGTH`, e de `checkEmailExists`/
+// `requestPasswordReset` no controller, que já exigem este mesmo formato de
+// e-mail. Duplicar o regex aqui (em vez de importar do controller) preserva
+// a direção normal de dependência (controller → service, nunca o contrário).
+const REGISTER_EMAIL_FORMAT_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
 export async function register(input: RegisterInput) {
-  const existing = await authRepository.findByEmail(input.email);
+  // A2: normaliza ANTES de validar o formato — trim primeiro, senão um
+  // e-mail colado com espaço (erro de copiar/colar comum) falharia a
+  // validação de formato por causa do espaço, não por ser realmente
+  // inválido. O repositório normaliza de novo na escrita/leitura (defesa em
+  // profundidade, idempotente) — normalizar aqui também é o que permite
+  // validar o formato do valor que de fato vai ser gravado.
+  const email = input.email.trim().toLowerCase();
+
+  if (!REGISTER_EMAIL_FORMAT_REGEX.test(email)) {
+    const err = new Error("E-mail em formato inválido.");
+    (err as Error & { statusCode: number }).statusCode = 400;
+    throw err;
+  }
+  if (input.password.length < MIN_PASSWORD_LENGTH) {
+    const err = new Error(`A senha deve ter pelo menos ${MIN_PASSWORD_LENGTH} caracteres.`);
+    (err as Error & { statusCode: number }).statusCode = 400;
+    throw err;
+  }
+
+  const existing = await authRepository.findByEmail(email);
   if (existing) {
     const err = new Error("E-mail já cadastrado.");
     (err as Error & { statusCode: number }).statusCode = 409;
@@ -109,12 +156,28 @@ export async function register(input: RegisterInput) {
 
   const passwordHash = await bcrypt.hash(input.password, BCRYPT_SALT_ROUNDS);
 
-  const user = await authRepository.createUser({
-    email: input.email,
-    passwordHash,
-    role: input.role,
-    name: input.name,
-  });
+  let user;
+  try {
+    user = await authRepository.createUser({
+      email,
+      passwordHash,
+      role: input.role,
+      name: input.name,
+    });
+  } catch (err) {
+    // A11 (auditoria 2026-07-31): 2 cadastros concorrentes com o mesmo
+    // e-mail (duplo clique, 2 abas) passam ambos pelo `findByEmail` acima
+    // antes de qualquer um dos dois existir — o 2º `createUser` estoura a
+    // constraint única do banco. Sem isso, virava 500 com a mensagem crua do
+    // Prisma em vez do 409 "E-mail já cadastrado." que este mesmo serviço já
+    // define alguns segundos antes.
+    if ((err as { code?: string })?.code === "P2002") {
+      const dupErr = new Error("E-mail já cadastrado.");
+      (dupErr as Error & { statusCode: number }).statusCode = 409;
+      throw dupErr;
+    }
+    throw err;
+  }
 
   // Fase 81: dispara o e-mail de confirmação — best-effort, nunca derruba o
   // cadastro se o envio falhar (mesmo espírito do Fale Conosco: a conta já
@@ -220,12 +283,19 @@ export async function requestPasswordReset(email: string) {
   const user = await authRepository.findByEmail(email);
   if (!user) return;
 
+  // A9 (auditoria 2026-07-31): `getEnv("ALLOWED_ORIGIN")` lança se a env var
+  // faltar — isso rodava DEPOIS de já gravar o token novo no banco, então um
+  // ambiente mal configurado apagava (sobrescrevia) um link de reset VÁLIDO
+  // que a pessoa já tivesse recebido antes, sem nunca enviar o novo e-mail
+  // no lugar. Monta o link ANTES de tocar no banco — se faltar a env var,
+  // não escreve nada, e o link anterior (se existir) continua íntegro.
   const rawToken = generateRawToken(PASSWORD_RESET_TOKEN_BYTES);
+  const appUrl = getEnv("ALLOWED_ORIGIN");
+  const link = `${appUrl}/redefinir-senha?uid=${user.id}&token=${rawToken}`;
+
   const expiresAt = new Date(Date.now() + PASSWORD_RESET_EXPIRY_MS);
   await authRepository.setPasswordResetToken(user.id, hashToken(rawToken), expiresAt);
 
-  const appUrl = getEnv("ALLOWED_ORIGIN");
-  const link = `${appUrl}/redefinir-senha?uid=${user.id}&token=${rawToken}`;
   try {
     await sendMail({
       to: user.email,
@@ -363,7 +433,7 @@ export async function login(input: LoginInput, ipAddress: string | null = null) 
   // Lembrete de pagamento (MASTER_SPEC): checagem simples no login, só para
   // ALUNO — Personal/Nutricionista/Admin nunca são o alvo de um lembrete.
   if (user.role === "ALUNO") {
-    await relationsService.checkAndFireDueReminders(user.id);
+    await safeCheckAndFireDueReminders(user.id);
   }
 
   // Fase 104 — cobre quem clica no link do convite mas JÁ tinha conta
@@ -420,7 +490,20 @@ export async function loginOrRegisterWithGoogle(idToken: string, role?: Role, in
   }
 
   const { email, sub: googleId, name } = payload;
-  let user = await authRepository.findByEmail(email);
+  // A3 (auditoria 2026-07-31): busca por `googleId` PRIMEIRO — é o
+  // identificador estável (o comentário do schema já dizia isso, mas
+  // `findByGoogleId` nunca tinha chamador nenhum, era código morto). Antes,
+  // buscar só por e-mail quebrava se a pessoa trocasse o e-mail primário da
+  // conta Google depois de já ter linkado aqui: `findByEmail` não achava
+  // mais a conta existente, caía no ramo de CRIAR conta nova com o mesmo
+  // `googleId` já em uso → 500 (`Unique constraint failed on the fields:
+  // (googleId)`) — a pessoa nunca mais conseguia entrar por Google. Buscar
+  // por `googleId` primeiro resolve a conta certa independente do e-mail
+  // atual no Google.
+  let user = await authRepository.findByGoogleId(googleId);
+  if (!user) {
+    user = await authRepository.findByEmail(email);
+  }
 
   if (!user) {
     if (!role) {
@@ -454,7 +537,7 @@ export async function loginOrRegisterWithGoogle(idToken: string, role?: Role, in
   await authRepository.recordLogin(user.id, null);
 
   if (user.role === "ALUNO") {
-    await relationsService.checkAndFireDueReminders(user.id);
+    await safeCheckAndFireDueReminders(user.id);
   }
 
   // Fase 104 — mesmo raciocínio de register()/login(): cobre tanto quem se
@@ -528,7 +611,7 @@ export async function refresh(token: string) {
   await authRepository.updateRefreshTokenHash(user.id, newRefreshTokenHash);
 
   if (user.role === "ALUNO") {
-    await relationsService.checkAndFireDueReminders(user.id);
+    await safeCheckAndFireDueReminders(user.id);
   }
 
   return { accessToken, refreshToken: newRefreshToken };

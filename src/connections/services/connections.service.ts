@@ -233,13 +233,26 @@ export const connectionsService = {
       throw httpError("Esta solicitação já foi respondida.", 409);
     }
 
-    // Pode lançar 403 (limite atingido), 404 (aluno inválido) ou 409 (já
-    // vinculado) — nesses casos a solicitação segue PENDENTE.
-    await relationsService.createRelation(
-      professionalId,
-      request.alunoId,
-      request.professionalType as ProfessionalRole
-    );
+    // Pode lançar 403 (limite atingido) ou 404 (aluno inválido) — nesses
+    // casos a solicitação segue PENDENTE, de propósito (o profissional
+    // resolve a causa e tenta aceitar de novo).
+    try {
+      await relationsService.createRelation(
+        professionalId,
+        request.alunoId,
+        request.professionalType as ProfessionalRole
+      );
+    } catch (err) {
+      // C1 (auditoria 2026-07-31): se o vínculo JÁ EXISTE (criado por outro
+      // caminho — vínculo direto por e-mail, convite por link — enquanto
+      // esta solicitação ainda estava pendente), trata como sucesso: aceitar
+      // aqui só formaliza o que já é verdade. Sem isso, a solicitação ficava
+      // PRESA em PENDENTE pra sempre — aceitar sempre dava 409 de novo, e
+      // recusar fecharia a conversa de um aluno que já é cliente.
+      const isDuplicate =
+        (err as any)?.statusCode === 409 && /vínculo já existe/i.test((err as Error).message ?? "");
+      if (!isDuplicate) throw err;
+    }
 
     const updated = await connectionsRepository.setRequestStatus(requestId, "ACEITA");
     await notificationsService.notify(

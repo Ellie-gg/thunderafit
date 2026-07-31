@@ -246,8 +246,15 @@ function AlunoHubContent() {
                           programId={p.id}
                           isTemplate={false}
                           onDeleted={() =>
+                            // Fr19 (auditoria 2026-07-31): só invalidava a
+                            // chave ESTREITA desta própria tela — a lista
+                            // usada por `/personal/alunos` vive numa chave
+                            // IRMÃ (`["workout-programs","personal","instance"]`,
+                            // desde o F10 desta mesma auditoria), que
+                            // invalidação por prefixo não alcançava. Invalida
+                            // o prefixo comum, que cobre as duas.
                             queryClient.invalidateQueries({
-                              queryKey: ["workout-programs", "personal", "aluno", alunoId],
+                              queryKey: ["workout-programs", "personal"],
                             })
                           }
                         />

@@ -10,13 +10,28 @@ export interface CreateUserInput {
   googleId?: string | null;
 }
 
+// A2 (auditoria 2026-07-31): `email` é `@unique` no Postgres — comparação
+// CASE-SENSITIVE. Nada no domínio normalizava (nem register, nem login, nem
+// check-email, nem SSO Google, nem forgot-password) — só o rate limiter de
+// login já fazia `.trim().toLowerCase()`. Consequência real: `Joao@x.com` e
+// `joao@x.com` viravam 2 contas diferentes (2ª tentativa de cadastro nunca
+// via conflito), e o auto-link do SSO Google (Fase 77, "on purpose") deixava
+// de funcionar se o Google devolvesse o e-mail em uma caixa diferente da
+// gravada. Normalizado aqui — o ÚNICO ponto de leitura/escrita de e-mail do
+// domínio auth (confirmado por grep: nenhum outro arquivo chama
+// `authRepository.findByEmail`/`createUser`) — para que todo chamador atual
+// e futuro herde o comportamento sem precisar lembrar de normalizar.
+function normalizeEmail(email: string): string {
+  return email.trim().toLowerCase();
+}
+
 export const authRepository = {
   /**
-   * Busca um usuário pelo e-mail.
+   * Busca um usuário pelo e-mail (normalizado).
    */
   async findByEmail(email: string) {
     return prisma.user.findUnique({
-      where: { email },
+      where: { email: normalizeEmail(email) },
     });
   },
 
@@ -27,7 +42,7 @@ export const authRepository = {
   async createUser(data: CreateUserInput) {
     return prisma.user.create({
       data: {
-        email: data.email,
+        email: normalizeEmail(data.email),
         passwordHash: data.passwordHash,
         role: data.role,
         name: data.name ?? null,

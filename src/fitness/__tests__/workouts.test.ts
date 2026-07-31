@@ -139,6 +139,23 @@ describe("POST /api/workouts/:id/exercises", () => {
       expect(r.body.workoutExercise.id).toBeDefined();
     }
   });
+
+  // F4 (auditoria 2026-07-31): sets/restSeconds/order/repsRange nunca eram
+  // validados numericamente — negativos/zero/vazio passavam direto pro banco.
+  it.each([
+    [{ sets: -3, repsRange: "8-12", restSeconds: 60, order: 1 }, "sets"],
+    [{ sets: 0, repsRange: "8-12", restSeconds: 60, order: 1 }, "sets"],
+    [{ sets: 3, repsRange: "8-12", restSeconds: -60, order: 1 }, "restSeconds"],
+    [{ sets: 3, repsRange: "8-12", restSeconds: 60, order: -1 }, "order"],
+    [{ sets: 3, repsRange: "   ", restSeconds: 60, order: 1 }, "repsRange"],
+  ])("F4: %j é rejeitado com 400 mencionando %s", async (body, field) => {
+    const r = await supertest(server.server)
+      .post(`/api/workouts/${workoutId}/exercises`)
+      .set("Authorization", `Bearer ${accessToken}`)
+      .send({ exerciseId: exerciseIds[0], ...body });
+    expect(r.status).toBe(400);
+    expect(r.body.error).toContain(field);
+  });
 });
 
 describe("POST /api/workouts/:id/exercises/:exerciseId/move (Fase 28)", () => {

@@ -29,6 +29,29 @@ function assertOwnSelfWorkout(workout: { personalId: string | null; alunoId: str
   }
 }
 
+// F4 (auditoria 2026-07-31): nada validava `sets`/`restSeconds`/`order`
+// numericamente — só o tamanho de `notes`. Negativos/zero passavam direto
+// pro Prisma e quebravam a UI de execução de forma sutil (contador
+// "0/-3", `VoltageBar` com total negativo, `allSetsDone` nunca fica true).
+// C10 (auditoria 2026-07-31): exportada pra ser reaproveitada por
+// `admin.service.ts#addExerciseToSelfSession` — mesma validação, mesmo
+// achado (negativos/zero sem checagem), domínio diferente (templates
+// SELF/catálogo geridos pelo admin, não prescrição do Personal).
+export function assertValidExercisePrescription(sets: number, restSeconds: number, order: number, repsRange: string) {
+  if (!Number.isInteger(sets) || sets < 1) {
+    throw httpError("sets deve ser um número inteiro maior ou igual a 1.", 400);
+  }
+  if (!Number.isInteger(restSeconds) || restSeconds < 0) {
+    throw httpError("restSeconds deve ser um número inteiro maior ou igual a 0.", 400);
+  }
+  if (!Number.isInteger(order) || order < 0) {
+    throw httpError("order deve ser um número inteiro maior ou igual a 0.", 400);
+  }
+  if (!repsRange?.trim()) {
+    throw httpError("repsRange é obrigatório.", 400);
+  }
+}
+
 async function assertAlunoPremiumAccess(alunoId: string) {
   const entitlement = await alunoPremiumService.getEntitlement(alunoId);
   if (!entitlement.hasAccess) {
@@ -91,6 +114,8 @@ export const workoutsService = {
     order: number,
     notes?: string | null
   ) {
+    assertValidExercisePrescription(sets, restSeconds, order, repsRange);
+
     const workout = await workoutsRepository.findById(workoutId);
     if (!workout || workout.personalId !== personalId) {
       const err = new Error("Treino não encontrado.");
@@ -196,6 +221,8 @@ export const workoutsService = {
     order: number,
     notes?: string | null
   ) {
+    assertValidExercisePrescription(sets, restSeconds, order, repsRange);
+
     const workout = await workoutsRepository.findById(workoutId);
     assertOwnSelfWorkout(workout, alunoId);
     await assertAlunoPremiumAccess(alunoId);
@@ -255,13 +282,25 @@ export const workoutsService = {
       (err as any).statusCode = 403;
       throw err;
     }
+    // Achado real (auditoria 2026-07-31, X7): ver comentário equivalente em
+    // workout-programs.service.ts#getProgram — o Personal desvinculado
+    // perde a leitura deste treino/histórico específico; o histórico do
+    // aluno em si nunca é apagado, só a visão do ex-Personal.
+    if (workout.personalId === userId && workout.alunoId) {
+      const relation = await relationsRepository.findByPersonalAndAluno(workout.personalId, workout.alunoId);
+      if (!relation) {
+        const err = new Error("Você não tem mais vínculo com este aluno.");
+        (err as any).statusCode = 403;
+        throw err;
+      }
+    }
     // Fase 103: só bloqueia a VISÃO DO ALUNO (workout.alunoId === userId) —
     // o próprio Personal (ou admin) continua conseguindo ver o treino que
     // prescreveu mesmo acima do limite (precisa disso pra decidir quem
     // desvincular). `workout.personalId` (não `userId`) é sempre o dono
     // certo a checar, mesmo quando quem está pedindo é o aluno.
     if (workout.alunoId === userId) {
-      await assertAlunoWorkoutAccessible(workout.personalId);
+      await assertAlunoWorkoutAccessible(workout.personalId, userId);
     }
 
     // i18n: tela de execução — a de maior uso do app — mostra nome E
@@ -297,7 +336,7 @@ export const workoutsService = {
     // Fase 103: mesmo gate de getWorkout acima — aqui sempre é o aluno (a
     // checagem de posse logo acima já garante isso), então não precisa
     // repetir a condição `workout.alunoId === userId`.
-    await assertAlunoWorkoutAccessible(workout.personalId);
+    await assertAlunoWorkoutAccessible(workout.personalId, userId);
 
     const previousLastCompletedAt = workout.lastCompletedAt;
     const completedAt = new Date();

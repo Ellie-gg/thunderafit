@@ -111,6 +111,7 @@
     "connectionError": "No se pudo conectar con el servidor.",
     "continue": "Continuar",
     "orDivider": "o",
+    "googleLoadError": "No pudimos cargar el inicio de sesión con Google ahora. Recarga la página para intentarlo de nuevo.",
     "backToEmail": "← cambiar correo",
     "backToRole": "← cambiar perfil",
     "termsAcceptance": "Al crear una cuenta, aceptas nuestros <terms>Términos de Uso</terms> y nuestra <privacy>Política de Privacidad</privacy>.",
@@ -426,6 +427,7 @@
     "fullNameLabel": "Nombre completo",
     "birthDateLabel": "Fecha de nacimiento",
     "heightLabel": "Altura (cm)",
+    "invalidHeightOrWeight": "Altura y peso deben ser números (ej: 1,75 o 70,5).",
     "weightLabel": "Peso (kg)",
     "goalsHeading": "Objetivos",
     "goalsLabel": "Objetivos",
@@ -471,6 +473,7 @@
   },
   "conversationThread": {
     "loading": "Cargando mensajes...",
+    "loadError": "No se pudieron cargar los mensajes.",
     "placeholder": "Escribe un mensaje...",
     "send": "Enviar",
     "sending": "Enviando...",

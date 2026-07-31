@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useId, useRef } from "react";
+import { useEffect, useId, useRef, useState } from "react";
+import { useTranslations } from "next-intl";
 
 // Fase 77 — SSO Google via Google Identity Services (script vanilla, sem
 // dependência npm nova no client) — carrega o script uma única vez mesmo
@@ -38,10 +39,20 @@ function loadGoogleScript(): Promise<void> {
     script.onerror = () => reject(new Error("Failed to load Google Identity Services script."));
     document.head.appendChild(script);
   });
+  // A10 (auditoria 2026-07-31): sem isso, uma falha de carregamento (DNS
+  // bloqueado, bloqueador de anúncios) ficava guardada pra sempre — a
+  // promessa REJEITADA nunca era limpa, então nenhuma remontagem do
+  // componente (ex: trocar de step em /login e voltar) tentava carregar de
+  // novo, e o rejection não tratado no `.then` do efeito virava um erro
+  // silencioso no console sem nenhum aviso pro usuário.
+  scriptLoadPromise.catch(() => {
+    scriptLoadPromise = null;
+  });
   return scriptLoadPromise;
 }
 
 export function GoogleSignInButton({ onCredential }: { onCredential: (idToken: string) => void }) {
+  const t = useTranslations("login");
   const containerId = useId();
   const containerRef = useRef<HTMLDivElement>(null);
   // `initialize` só roda 1x (por client ID) — a ref garante que o callback
@@ -54,24 +65,30 @@ export function GoogleSignInButton({ onCredential }: { onCredential: (idToken: s
   // preenchido ainda), o componente simplesmente não renderiza nada em vez
   // de quebrar a tela de login inteira.
   const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
+  const [loadFailed, setLoadFailed] = useState(false);
 
   useEffect(() => {
     if (!clientId) return;
     let cancelled = false;
+    setLoadFailed(false);
 
-    loadGoogleScript().then(() => {
-      if (cancelled || !window.google || !containerRef.current) return;
-      window.google.accounts.id.initialize({
-        client_id: clientId,
-        callback: (response) => onCredentialRef.current(response.credential),
+    loadGoogleScript()
+      .then(() => {
+        if (cancelled || !window.google || !containerRef.current) return;
+        window.google.accounts.id.initialize({
+          client_id: clientId,
+          callback: (response) => onCredentialRef.current(response.credential),
+        });
+        window.google.accounts.id.renderButton(containerRef.current, {
+          theme: "outline",
+          size: "large",
+          width: 320,
+          text: "continue_with",
+        });
+      })
+      .catch(() => {
+        if (!cancelled) setLoadFailed(true);
       });
-      window.google.accounts.id.renderButton(containerRef.current, {
-        theme: "outline",
-        size: "large",
-        width: 320,
-        text: "continue_with",
-      });
-    });
 
     return () => {
       cancelled = true;
@@ -79,6 +96,10 @@ export function GoogleSignInButton({ onCredential }: { onCredential: (idToken: s
   }, [clientId]);
 
   if (!clientId) return null;
+
+  if (loadFailed) {
+    return <p className="text-center text-xs text-muted">{t("googleLoadError")}</p>;
+  }
 
   return <div id={containerId} ref={containerRef} className="flex justify-center" />;
 }

@@ -235,6 +235,31 @@ export const adminRepository = {
   },
 
   /**
+   * C5 (auditoria 2026-07-31): `updateUserRole` + `createAuditLog` eram 2
+   * escritas INDEPENDENTES no service — se a mudança de role comitasse mas o
+   * log de auditoria falhasse (timeout, indisponibilidade momentânea), o
+   * usuário já tinha sido promovido/rebaixado e o admin via um 500 achando
+   * que não tinha funcionado, sem NENHUM registro da mudança em
+   * `AdminAuditLog` — exatamente o cenário que o log deveria cobrir contra
+   * escalada de privilégio sem rastro. `$transaction` garante as duas juntas
+   * ou nenhuma.
+   */
+  async updateUserRoleWithAuditLog(
+    id: string,
+    role: "PERSONAL" | "ALUNO" | "NUTRICIONISTA" | "ADMIN",
+    adminId: string,
+    details: string
+  ) {
+    const [updated] = await prisma.$transaction([
+      prisma.user.update({ where: { id }, data: { role } }),
+      prisma.adminAuditLog.create({
+        data: { adminId, action: "ROLE_CHANGE", targetUserId: id, details },
+      }),
+    ]);
+    return updated;
+  },
+
+  /**
    * Fase 80 — remoção definitiva de usuário pelo admin. O cascade em si
    * (Fase 81: extraído pra ser reaproveitado pelo self-delete também) vive
    * em `src/lib/user-deletion.ts` — ver o comentário lá pra rationale
@@ -277,7 +302,18 @@ export const adminRepository = {
   ) {
     return prisma.user.update({
       where: { id: userId },
-      data: { planoAssinatura: plano, limiteAlunos, planoAssinaturaExpiresAt: expiresAt },
+      data: {
+        planoAssinatura: plano,
+        limiteAlunos,
+        planoAssinaturaExpiresAt: expiresAt,
+        // B7 (auditoria 2026-07-31): `billingRepository.applyFreePlan` (o
+        // downgrade via webhook) desliga isto de propósito ao cair pra
+        // FREE — este caminho (revogação manual do admin) não desligava,
+        // deixando o toggle "ligado" na tela do Personal mesmo já invisível
+        // no diretório de verdade (o filtro de `connections.repository.ts`
+        // já exclui FREE) — estado inconsistente, não vazamento.
+        ...(plano === "FREE" ? { availableForNewStudents: false } : {}),
+      },
     });
   },
 

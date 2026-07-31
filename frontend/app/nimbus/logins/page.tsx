@@ -39,7 +39,11 @@ function LoginsContent() {
                 key={l.id}
                 className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-border px-3 py-2"
               >
-                <span className="text-sm font-semibold">{l.email}</span>
+                {/* Fr11 (auditoria 2026-07-31): `flex-wrap` no container só
+                    empurra os IRMÃOS pra baixo — o span do e-mail sozinho,
+                    na própria linha, ainda estourava a largura sem
+                    `break-all`/`min-w-0`. */}
+                <span className="min-w-0 flex-1 break-all text-sm font-semibold">{l.email}</span>
                 <span className="font-mono-nums text-xs text-muted">{l.ipAddress ?? t("unknownIp")}</span>
                 <span className="text-xs text-muted">{new Date(l.createdAt).toLocaleString(intlLocale)}</span>
               </div>

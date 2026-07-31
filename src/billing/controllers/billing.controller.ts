@@ -47,7 +47,24 @@ export async function billingWebhookHandler(request: FastifyRequest, reply: Fast
     await billingService.handleWebhookEvent(event);
     return reply.status(200).send({ received: true });
   } catch (err) {
-    // Erro ao processar um evento JÁ verificado — 500 para o Stripe re-tentar.
+    // B9 (auditoria 2026-07-31): antes, QUALQUER erro virava 500 pro Stripe
+    // re-tentar — inclusive erros PERMANENTES (registro apagado, customer id
+    // já em uso por outra linha) que nunca vão se resolver com retentativa.
+    // Isso gerava ~3 dias de retries inúteis e, em falha persistente, o
+    // Stripe passa a DESABILITAR o endpoint inteiro — derrubando o
+    // processamento de plano de TODOS os usuários, não só do evento com
+    // problema. Erros permanentes (código Prisma conhecido) são reconhecidos
+    // (200) e só logados pra investigação manual; só erro transitório
+    // (timeout, indisponibilidade) continua pedindo retentativa.
+    const prismaCode = (err as { code?: string })?.code;
+    const isPermanentError = prismaCode === "P2025" || prismaCode === "P2002";
+    if (isPermanentError) {
+      request.log.warn(
+        { err: (err as Error).message, type: event.type, code: prismaCode },
+        "Evento de webhook descartado (erro permanente, não adianta re-tentar)"
+      );
+      return reply.status(200).send({ received: true });
+    }
     request.log.error({ err: (err as Error).message, type: event.type }, "Falha ao processar webhook");
     return reply.status(500).send({ error: "Falha ao processar o evento." });
   }

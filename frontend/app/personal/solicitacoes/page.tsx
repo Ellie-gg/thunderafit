@@ -39,7 +39,20 @@ function SolicitacoesContent() {
     queryClient.invalidateQueries({ queryKey: ["connection-requests"] });
     queryClient.invalidateQueries({ queryKey: ["relations"] });
   };
-  const acceptMutation = useMutation({ mutationFn: (id: string) => acceptConnectionRequest(id), onSuccess: invalidate });
+  const acceptMutation = useMutation({
+    mutationFn: (id: string) => acceptConnectionRequest(id),
+    onSuccess: () => {
+      invalidate();
+      // Fr7 (auditoria 2026-07-31): aceitar um vínculo é justamente o que
+      // pode levar o Personal acima do limite do plano — sem invalidar
+      // `billing-status` (staleTime Infinity), o banner de carência/excesso
+      // no AppHeader nunca aparecia sozinho depois de aceitar; só descobria
+      // o bloqueio no meio de uma prescrição, ou depois de um F5. A tela
+      // irmã (`/personal/alunos`) já invalida isso ao desvincular — faltava
+      // o lado inverso.
+      queryClient.invalidateQueries({ queryKey: ["billing-status"] });
+    },
+  });
   const rejectMutation = useMutation({ mutationFn: (id: string) => rejectConnectionRequest(id), onSuccess: invalidate });
 
   const requests = requestsQuery.data?.requests ?? [];
@@ -80,7 +93,10 @@ function SolicitacoesContent() {
           {pendentes.map((r) => (
             <Card key={r.id} className="flex flex-col gap-3">
               <div>
-                <p className="font-semibold">{r.counterpart.email}</p>
+                {/* Fr11 (auditoria 2026-07-31): e-mail é string sem espaço,
+                    nunca quebra sozinho — `break-all` evita vazar a largura
+                    do Card num celular estreito com e-mail longo. */}
+                <p className="font-semibold break-all">{r.counterpart.email}</p>
                 {(r.counterpart.city || r.counterpart.state) && (
                   <p className="text-xs text-muted">
                     📍 {[r.counterpart.city, r.counterpart.state].filter(Boolean).join(", ")}
@@ -122,7 +138,10 @@ function SolicitacoesContent() {
                   className="flex items-center justify-between text-left"
                   onClick={() => setExpandedRequestId((cur) => (cur === r.id ? null : r.id))}
                 >
-                  <span className="text-sm">{r.counterpart.email}</span>
+                  {/* Fr11: item de flex precisa de `min-w-0` pra `break-all`
+                      fazer efeito (senão o span nunca encolhe abaixo do
+                      conteúdo, e o e-mail empurra o badge pra fora). */}
+                  <span className="min-w-0 flex-1 break-all text-sm">{r.counterpart.email}</span>
                   <StatusBadge status={r.status} />
                 </button>
                 {expandedRequestId === r.id && (

@@ -30,7 +30,9 @@ export async function listWorkoutsHandler(
     return reply.status(200).send({ workouts });
   } catch (err: any) {
     const status = (err as any).statusCode ?? 500;
-    return reply.status(status).send({ error: err.message });
+    // F3 (auditoria 2026-07-31): propaga `code` (ex: PERSONAL_PLAN_RESTRICTED,
+    // PERSONAL_OVER_LIMIT) — antes só os 402 de Premium abaixo faziam isso.
+    return reply.status(status).send({ error: err.message, code: err.code });
   }
 }
 
@@ -57,7 +59,9 @@ export async function createWorkoutHandler(
     return reply.status(201).send({ workout });
   } catch (err: any) {
     const status = (err as any).statusCode ?? 500;
-    return reply.status(status).send({ error: err.message });
+    // F3 (auditoria 2026-07-31): propaga `code` (ex: PERSONAL_PLAN_RESTRICTED,
+    // PERSONAL_OVER_LIMIT) — antes só os 402 de Premium abaixo faziam isso.
+    return reply.status(status).send({ error: err.message, code: err.code });
   }
 }
 
@@ -133,7 +137,7 @@ export async function addExerciseHandler(
     if (err.code === "PREMIUM_REQUIRED") {
       return reply.status(402).send({ error: err.message, code: err.code });
     }
-    return reply.status(errStatus(err)).send({ error: err.message });
+    return reply.status(errStatus(err)).send({ error: err.message, code: err.code });
   }
 }
 
@@ -163,7 +167,7 @@ export async function moveExerciseHandler(
     if (err.code === "PREMIUM_REQUIRED") {
       return reply.status(402).send({ error: err.message, code: err.code });
     }
-    return reply.status(errStatus(err)).send({ error: err.message });
+    return reply.status(errStatus(err)).send({ error: err.message, code: err.code });
   }
 }
 
@@ -185,7 +189,7 @@ export async function deleteExerciseHandler(
     if (err.code === "PREMIUM_REQUIRED") {
       return reply.status(402).send({ error: err.message, code: err.code });
     }
-    return reply.status(errStatus(err)).send({ error: err.message });
+    return reply.status(errStatus(err)).send({ error: err.message, code: err.code });
   }
 }
 
@@ -202,7 +206,9 @@ export async function getWorkoutHandler(
     return reply.status(200).send({ workout });
   } catch (err: any) {
     const status = (err as any).statusCode ?? 500;
-    return reply.status(status).send({ error: err.message });
+    // F3 (auditoria 2026-07-31): propaga `code` (ex: PERSONAL_PLAN_RESTRICTED,
+    // PERSONAL_OVER_LIMIT) — antes só os 402 de Premium abaixo faziam isso.
+    return reply.status(status).send({ error: err.message, code: err.code });
   }
 }
 
@@ -218,6 +224,8 @@ export async function completeWorkoutHandler(
     return reply.status(200).send({ workout, summary });
   } catch (err: any) {
     const status = (err as any).statusCode ?? 500;
-    return reply.status(status).send({ error: err.message });
+    // F3 (auditoria 2026-07-31): propaga `code` (ex: PERSONAL_PLAN_RESTRICTED,
+    // PERSONAL_OVER_LIMIT) — antes só os 402 de Premium abaixo faziam isso.
+    return reply.status(status).send({ error: err.message, code: err.code });
   }
 }

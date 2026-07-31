@@ -1738,3 +1738,26 @@ junto, antes de virar reclamação separada. Ver STATUS.md, Fase 106.
 Login Google · camadas anti-abuso de conta · web pública vs. só app nas lojas · programa
 de indicação Personal→desconto/bônus (quando a regra de negócio fechar, é migration
 aditiva simples sobre o código de convite que já existe — não precisa de fundação hoje).
+
+### Grupo AC — Auditoria ampla e correção sequencial. ✅ Maior parte CONCLUÍDA (2026-07-31,
+registrada como "Fase 107" no STATUS.md) — itens residuais registrados no apêndice de
+`docs/AUDITORIA-2026-07-31.md`.
+
+Auditoria somente-leitura de 2026-07-29→31 (5 frentes em paralelo: auth, fitness, billing,
+connections+admin+support, frontend) cruzando o código real contra a intenção documentada nos
+`AGENTS.md` de cada domínio — 60+ achados classificados por severidade, com cenário de falha
+concreto exigido pra cada um. Corrigidos em sequência de prioridade, exceto: (a) itens que só
+existem por causa do papel **NUTRICIONISTA** (descontinuado, sem UI, sem previsão de uso) —
+avaliados explicitamente com o fundador e deixados como estão, com exceção da única brecha real
+de autorização (prescrição de treino, que o backend aceitava contra a regra documentada); (b)
+**C4** (corrida de limite de alunos em duplo-clique) — mesmo tipo de trade-off já registrado no
+Grupo Y/Z, correção robusta exige schema novo ou transação serializável, desproporcional à janela
+real; (c) um punhado de queries silenciosas de UI (parte de Fr13/C6/C7) e itens de billing/sessão
+que exigem decisão de produto ou schema novo (B4/B6/B8/B11/B13, X2/X3/X5/X6/X9-X21) — mapeados
+achado-a-achado no apêndice da auditoria, não esquecidos. **Pendência real em aberto**: a
+checagem read-only em produção por e-mails duplicados por diferença de caixa (pré-requisito
+acordado com o fundador antes de normalizar e-mail, achado A2) não foi concluída — o classificador
+de segurança do Claude Code bloqueou a re-tentativa de acesso ao banco depois de uma primeira
+consulta com erro de nome de tabela; precisa ser rodada manualmente ou com permissão explícita
+antes de considerar A2 100% fechado. Ver `docs/AUDITORIA-2026-07-31.md` (achado-a-achado + apêndice
+de resolução) e STATUS.md Fase 107 (resumo narrativo por lote).

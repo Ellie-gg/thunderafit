@@ -81,7 +81,10 @@ export function SupportThreadDetail({ threadId, backHref }: { threadId: string; 
               key={m.id}
               className={`max-w-[85%] ${isMine ? "self-end border-accent/40" : "self-start"}`}
             >
-              <p className="text-sm">{m.text}</p>
+              {/* Fr12 (auditoria 2026-07-31): `max-w-[85%]` no Card não
+                  impede uma URL/palavra única sem espaço de vazar a largura
+                  do balão — `break-words` deixa quebrar quando precisa. */}
+              <p className="break-words text-sm">{m.text}</p>
               <p className="mt-1 text-xs text-muted">
                 {new Date(m.createdAt).toLocaleString(intlLocale)}
               </p>

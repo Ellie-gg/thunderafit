@@ -111,6 +111,18 @@ function ExecucaoContent() {
   const completeMutation = useMutation({
     mutationFn: () => completeWorkout(workoutId),
     onSuccess: (data) => {
+      // Fr1/Fr4/F5 (auditoria 2026-07-31): antes, `clearWorkoutSession` +
+      // `setSession(null)` rodavam ANTES de saber se a conclusão tinha
+      // sucesso. Duas consequências reais: (1) numa falha de rede, a
+      // duração real do treino era perdida do localStorage mesmo o backend
+      // nunca tendo registrado a conclusão — recarregar a página voltava
+      // pra "Iniciar Treino" do zero; (2) no caminho manual (sucesso), a
+      // sessão continuava truthy depois do sucesso — o botão reabilitava
+      // (`disabled` só olhava `isPending`) e podia disparar uma 2ª
+      // conclusão do mesmo treino com um clique a mais. Só limpa a sessão
+      // AQUI, depois de confirmado que persistiu de verdade.
+      clearWorkoutSession(workoutId);
+      setSession(null);
       queryClient.invalidateQueries({ queryKey: ["workout", workoutId] });
       // Perf (Grupo Y, item 100): antes invalidava o prefixo ["workout-program"]
       // inteiro — refetch em cascata de TODO programa em cache no app a cada
@@ -176,8 +188,10 @@ function ExecucaoContent() {
     if (idleMs < IDLE_AUTO_FINISH_MS) return;
     autoFinishTriggeredRef.current = true;
     setDurationSeconds(Math.round((session.lastActivityAt - session.startedAt) / 1000));
-    clearWorkoutSession(workoutId);
-    setSession(null);
+    // Fr1/Fr4/F5: NÃO limpa a sessão aqui — só depois de confirmado sucesso
+    // (`completeMutation.onSuccess` acima). Se a chamada falhar, a sessão
+    // continua íntegra (localStorage + estado) em vez de perder a duração
+    // real sem o backend ter registrado nada.
     completeMutation.mutate();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [idleMs, session, summary, workoutId]);
@@ -202,9 +216,14 @@ function ExecucaoContent() {
   }
 
   function handleCompleteManually() {
-    if (!session) return;
+    // Fr1: guarda contra re-entrada — o botão só olhava `isPending` pra
+    // desabilitar (que volta a `false` assim que o sucesso chega, com a
+    // sessão ainda truthy até o próximo render), e o modal de inatividade
+    // chama esta MESMA função pelo botão "Concluir agora", um 2º ponto de
+    // entrada que não passava pelo `disabled` do botão principal.
+    if (!session || completeMutation.isPending) return;
+    autoFinishTriggeredRef.current = true;
     setDurationSeconds(Math.round((Date.now() - session.startedAt) / 1000));
-    clearWorkoutSession(workoutId);
     completeMutation.mutate();
   }
 
@@ -338,7 +357,16 @@ function ExecucaoContent() {
                 : t("startWorkoutFirst")}
         </Button>
         {completeMutation.isError && (
-          <p className="text-sm text-danger">{t("completeError")}</p>
+          <p className="text-sm text-danger">
+            {/* Fr15 (auditoria 2026-07-31): mostrava sempre o mesmo texto
+                genérico, escondendo a mensagem real do backend — ex: o
+                403 PERSONAL_PLAN_RESTRICTED da Fase 103 (carência do
+                Personal vencendo NO MEIO da sessão) nunca explicava o
+                motivo real de a conclusão ter falhado. */}
+            {completeMutation.error instanceof ApiError
+              ? completeMutation.error.message
+              : t("completeError")}
+          </p>
         )}
       </Card>
 

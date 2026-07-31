@@ -47,7 +47,7 @@ describe("workoutSummaryService.buildCompletionSummary — comparação de volum
     expect(result.setsLogged).toBe(1);
   });
 
-  it("sessão anterior com volume 0 também vira hasHistory false (não divide por zero)", async () => {
+  it("sessão anterior SEM NENHUM log (janela vazia) → hasHistory false", async () => {
     mockedRepo.findSetLogsForWorkoutInWindow
       .mockResolvedValueOnce([log({ weightKg: 50, repsDone: 10 })]) // esta sessão
       .mockResolvedValueOnce([]); // sessão anterior, sem logs
@@ -58,6 +58,27 @@ describe("workoutSummaryService.buildCompletionSummary — comparação de volum
     const result = await workoutSummaryService.buildCompletionSummary(WORKOUT, previous, completedAt);
 
     expect(result.hasHistory).toBe(false);
+    expect(result.previousVolumeKg).toBeNull();
+    expect(result.volumeChangePercent).toBeNull();
+  });
+
+  // F11 (auditoria 2026-07-31): achado real — exercício de peso corporal
+  // (`weightKg: 0` sempre) tem volume ZERO mesmo com séries de verdade
+  // registradas na sessão anterior. Antes, `previousVolumeKg <= 0` tratava
+  // isso como "sem histórico" pra sempre (ex: "Treino em Casa"). Agora o
+  // sinal de "tem histórico" é ter ENCONTRADO logs na janela, não o volume
+  // deles ser positivo — sem dividir por zero pro percentual.
+  it("sessão anterior com logs de PESO CORPORAL (volume 0, mas existem) → hasHistory true, sem % (dividiria por zero)", async () => {
+    mockedRepo.findSetLogsForWorkoutInWindow
+      .mockResolvedValueOnce([log({ weightKg: 0, repsDone: 15 })]) // esta sessão
+      .mockResolvedValueOnce([log({ weightKg: 0, repsDone: 12 })]); // sessão anterior, peso corporal
+    mockedRepo.findMaxHistoricalWeightsForExercises.mockResolvedValueOnce(new Map());
+
+    const previous = new Date("2026-07-14T12:00:00.000Z");
+    const completedAt = new Date("2026-07-21T12:30:00.000Z");
+    const result = await workoutSummaryService.buildCompletionSummary(WORKOUT, previous, completedAt);
+
+    expect(result.hasHistory).toBe(true);
     expect(result.previousVolumeKg).toBe(0);
     expect(result.volumeChangePercent).toBeNull();
   });
