@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { getWorkoutProgram, addProgramSession } from "@/lib/api/workouts";
+import { getWorkoutProgram, addProgramSession, renameWorkoutSession } from "@/lib/api/workouts";
 import { labelFor, nextKeyInSequence, firstMissingKey } from "@/lib/session-scheme";
 import { AuthGuard } from "@/components/auth-guard";
 import { AppHeader } from "@/components/app-header";
@@ -15,6 +15,7 @@ import { QueryError } from "@/components/query-error";
 import { AddExerciseForm } from "@/components/add-exercise-form";
 import { ExerciseReorderButtons } from "@/components/exercise-reorder-buttons";
 import { ExerciseDeleteButton } from "@/components/exercise-delete-button";
+import { InlineRename } from "@/components/inline-rename";
 
 /**
  * Fase 26: tela própria por sessão — substitui o acordeão inline que existia
@@ -48,6 +49,13 @@ function SessaoContent() {
       // programa — a lista de templates mostra contagem de sessões.
       queryClient.invalidateQueries({ queryKey: ["workout-programs", "personal"] });
       router.push(`/personal/programas/${programId}/sessoes/${data.session.id}${query}`);
+    },
+  });
+
+  const renameSessionMutation = useMutation({
+    mutationFn: (name: string) => renameWorkoutSession(sessionId, name),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["workout-program", programId] });
     },
   });
 
@@ -101,6 +109,12 @@ function SessaoContent() {
               <h1 className="font-display text-2xl font-bold tracking-tight">
                 {t("sessionTitle", { label: labelFor(scheme, session.letter) })}
               </h1>
+              <InlineRename
+                value={session.name}
+                onSave={(name) => renameSessionMutation.mutateAsync(name)}
+                ariaLabel={t("renameSessionAriaLabel")}
+                textClassName="text-sm font-semibold text-foreground"
+              />
               {/* Fase 65: preview somente-leitura no mesmo layout visual do
                   aluno — antes o Personal só via a lista de edição crua. */}
               <Link

@@ -133,6 +133,28 @@ export async function deleteProgramHandler(
   }
 }
 
+// Achado reportado pelo fundador: nome do programa só era definido na
+// criação, sem jeito de editar depois — nem pro aluno, nem pro Personal.
+// Mesmo padrão de ramificação por role de deleteProgramHandler acima.
+export async function renameProgramHandler(
+  request: FastifyRequest<{ Params: { id: string }; Body: { name: string } }>,
+  reply: FastifyReply
+) {
+  try {
+    const { sub, role } = (request as any).user;
+    const { name } = request.body;
+    if (role === "ALUNO") {
+      const program = await workoutProgramsService.renameSelfProgram(request.params.id, sub, name);
+      return reply.status(200).send({ program });
+    }
+    assertProfessional(request);
+    const program = await workoutProgramsService.renameProgram(request.params.id, sub, name);
+    return reply.status(200).send({ program });
+  } catch (err) {
+    return handleError(err, reply);
+  }
+}
+
 // Fase 34.5: catálogo de templates "Meu treino pessoal" — qualquer usuário
 // autenticado pode ver (a tela em si só é oferecida ao ALUNO no frontend,
 // mas não há dado sensível aqui pra restringir por role no backend).

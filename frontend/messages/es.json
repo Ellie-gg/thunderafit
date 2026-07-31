@@ -331,6 +331,7 @@
     "suggested": "Sugerida",
     "open": "Abrir →",
     "editSessionAriaLabel": "Editar rutina {label}",
+    "renameProgramAriaLabel": "Renombrar programa",
     "addingSession": "Agregando...",
     "addSessionButton": "+ Agregar rutina {label}",
     "addSessionError": "No fue posible agregar la rutina."
@@ -868,6 +869,7 @@
   "personalProgramaDetail": {
     "template": "Plantilla",
     "appliedToStudent": "Aplicado a alumno",
+    "renameProgramAriaLabel": "Renombrar programa",
     "sessionsProgress": "{current}/{max} sesión(es)",
     "exercisesCount": "{count} ejercicio(s)",
     "open": "Abrir →",
@@ -892,6 +894,7 @@
     "sessionNotFound": "Sesión no encontrada en este programa.",
     "backToProgram": "← Volver al programa",
     "sessionTitle": "Sesión {label}",
+    "renameSessionAriaLabel": "Renombrar sesión",
     "notes": "Nota: {notes}",
     "nextSession": "Siguiente: {label} →",
     "creating": "Creando...",

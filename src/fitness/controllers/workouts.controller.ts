@@ -193,6 +193,29 @@ export async function deleteExerciseHandler(
   }
 }
 
+export async function renameWorkoutHandler(
+  request: FastifyRequest<{ Params: { id: string }; Body: { name: string } }>,
+  reply: FastifyReply
+) {
+  const userId = (request as any).user.sub;
+  const role = (request as any).user.role;
+  const { id } = request.params;
+  const { name } = request.body;
+
+  try {
+    const workout =
+      role === "ALUNO"
+        ? await workoutsService.renameSelfWorkout(id, userId, name)
+        : await workoutsService.renameWorkout(id, userId, name);
+    return reply.status(200).send({ workout });
+  } catch (err: any) {
+    if (err.code === "PREMIUM_REQUIRED") {
+      return reply.status(402).send({ error: err.message, code: err.code });
+    }
+    return reply.status(errStatus(err)).send({ error: err.message, code: err.code });
+  }
+}
+
 export async function getWorkoutHandler(
   request: FastifyRequest<{ Params: { id: string } }>,
   reply: FastifyReply

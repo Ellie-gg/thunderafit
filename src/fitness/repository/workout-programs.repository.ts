@@ -66,6 +66,10 @@ export const workoutProgramsRepository = {
     return prisma.workoutProgram.findUnique({ where: { id } });
   },
 
+  async updateName(id: string, name: string) {
+    return prisma.workoutProgram.update({ where: { id }, data: { name } });
+  },
+
   /** Programa com suas sessões (+ exercícios). setLogs incluídos para a visão do aluno. */
   async findProgramWithSessions(id: string) {
     const program = await prisma.workoutProgram.findUnique({
