@@ -186,6 +186,24 @@ export const workoutProgramsService = {
     await workoutProgramsRepository.deleteProgram(programId);
   },
 
+  /**
+   * Renomear nunca existia pra ninguém (achado reportado pelo fundador: "o
+   * aluno não consegue mudar nem o nome do programa nem o treino do dia") —
+   * o nome só podia ser definido na criação. Sem gate de billing: renomear é
+   * metadado, não expande prescrição — mesma filosofia de `moveExercise`/
+   * `deleteExercise` (reorganizar/remover nunca é bloqueado), diferente de
+   * `addSession` (que EXPANDE e por isso passa por `assertPersonalCanPrescribe`).
+   */
+  async renameProgram(programId: string, personalId: string, name: string) {
+    if (!name?.trim()) throw httpError("Nome do programa é obrigatório.", 400);
+    const program = await workoutProgramsRepository.findProgramById(programId);
+    if (!program) throw httpError("Programa não encontrado.", 404);
+    if (program.origin !== "PERSONAL" || program.personalId !== personalId) {
+      throw httpError("Você não tem permissão para editar este programa.", 403);
+    }
+    return workoutProgramsRepository.updateName(programId, name.trim());
+  },
+
   async listForAluno(alunoId: string, pagination?: { skip: number; take: number }) {
     return workoutProgramsRepository.listByAluno(alunoId, pagination);
   },
@@ -407,6 +425,35 @@ export const workoutProgramsService = {
       throw httpError("Você não tem permissão para excluir este treino.", 403);
     }
     await workoutProgramsRepository.deleteProgram(programId);
+  },
+
+  /**
+   * Renomear o próprio treino pessoal — mesma checagem de posse explícita
+   * (origin + alunoId) de `addSelfSession`/`deleteSelfProgram` acima. Exige
+   * Premium vigente (diferente de `deleteSelfProgram`): renomear é EDITAR
+   * conteúdo já existente, mesma classificação de `moveSelfExercise`/
+   * `deleteSelfExercise` (que também exigem Premium) — só excluir o
+   * programa INTEIRO é a exceção documentada acima.
+   */
+  async renameSelfProgram(programId: string, alunoId: string, name: string) {
+    if (!name?.trim()) throw httpError("Nome do treino é obrigatório.", 400);
+    const program = await workoutProgramsRepository.findProgramById(programId);
+    if (!program) throw httpError("Treino não encontrado.", 404);
+    if (program.origin !== "SELF" || program.alunoId !== alunoId) {
+      throw httpError("Você não tem permissão para editar este treino.", 403);
+    }
+
+    const entitlement = await alunoPremiumService.getEntitlement(alunoId);
+    if (!entitlement.hasAccess) {
+      const err = httpError(
+        "Editar seu treino pessoal é um recurso do Aluno Premium. Assine ou inicie o teste grátis de 7 dias.",
+        402
+      ) as any;
+      err.code = "PREMIUM_REQUIRED";
+      throw err;
+    }
+
+    return workoutProgramsRepository.updateName(programId, name.trim());
   },
 
   // --- Fase 34.5: "Meu treino pessoal" ---

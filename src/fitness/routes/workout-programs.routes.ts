@@ -6,6 +6,7 @@ import {
   listProgramsHandler,
   getProgramHandler,
   deleteProgramHandler,
+  renameProgramHandler,
   listSelfTemplatesHandler,
   applySelfTemplateHandler,
   saveInstanceAsTemplateHandler,
@@ -56,4 +57,7 @@ export async function workoutProgramsRoutes(fastify: FastifyInstance) {
   fastify.post("/api/workout-programs/:id/apply-self-template", auth, applySelfTemplateHandler);
   fastify.post("/api/workout-programs/:id/save-as-template", auth, saveInstanceAsTemplateHandler);
   fastify.delete("/api/workout-programs/:id", auth, deleteProgramHandler);
+  // Renomear o programa — achado reportado pelo fundador: nome só era
+  // definido na criação, sem jeito de editar depois.
+  fastify.patch("/api/workout-programs/:id/name", auth, renameProgramHandler);
 }

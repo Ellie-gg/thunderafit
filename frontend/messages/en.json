@@ -331,6 +331,7 @@
     "suggested": "Suggested",
     "open": "Open →",
     "editSessionAriaLabel": "Edit workout {label}",
+    "renameProgramAriaLabel": "Rename program",
     "addingSession": "Adding...",
     "addSessionButton": "+ Add workout {label}",
     "addSessionError": "Couldn't add the workout."
@@ -868,6 +869,7 @@
   "personalProgramaDetail": {
     "template": "Template",
     "appliedToStudent": "Applied to student",
+    "renameProgramAriaLabel": "Rename program",
     "sessionsProgress": "{current}/{max} session(s)",
     "exercisesCount": "{count} exercise(s)",
     "open": "Open →",
@@ -892,6 +894,7 @@
     "sessionNotFound": "Session not found in this program.",
     "backToProgram": "← Back to program",
     "sessionTitle": "Session {label}",
+    "renameSessionAriaLabel": "Rename session",
     "notes": "Note: {notes}",
     "nextSession": "Next: {label} →",
     "creating": "Creating...",

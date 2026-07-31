@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { useParams, useRouter } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { getWorkoutProgram, addSelfProgramSession } from "@/lib/api/workouts";
+import { getWorkoutProgram, addSelfProgramSession, renameWorkoutSession } from "@/lib/api/workouts";
 import { ApiError } from "@/lib/api/client";
 import { labelFor, nextKeyInSequence, firstMissingKey } from "@/lib/session-scheme";
 import { AuthGuard } from "@/components/auth-guard";
@@ -16,6 +16,7 @@ import { QueryError } from "@/components/query-error";
 import { AddExerciseForm } from "@/components/add-exercise-form";
 import { ExerciseReorderButtons } from "@/components/exercise-reorder-buttons";
 import { ExerciseDeleteButton } from "@/components/exercise-delete-button";
+import { InlineRename } from "@/components/inline-rename";
 
 /**
  * Fase 85 — versão simplificada, pro ALUNO, de
@@ -48,6 +49,11 @@ function SessaoContent() {
       invalidateProgram();
       router.push(`/meu-treino-pessoal/${programId}/sessoes/${data.session.id}`);
     },
+  });
+
+  const renameSessionMutation = useMutation({
+    mutationFn: (name: string) => renameWorkoutSession(sessionId, name),
+    onSuccess: () => invalidateProgram(),
   });
 
   const program = programQuery.data?.program;
@@ -105,6 +111,12 @@ function SessaoContent() {
               <h1 className="font-display text-2xl font-bold tracking-tight">
                 {t("sessionTitle", { label: labelFor(scheme, session.letter) })}
               </h1>
+              <InlineRename
+                value={session.name}
+                onSave={(name) => renameSessionMutation.mutateAsync(name)}
+                ariaLabel={t("renameSessionAriaLabel")}
+                textClassName="text-sm font-semibold text-foreground"
+              />
             </div>
 
             <Card className="flex flex-col gap-3">

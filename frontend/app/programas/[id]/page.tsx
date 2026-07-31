@@ -4,7 +4,7 @@ import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { getWorkoutProgram, addSelfProgramSession } from "@/lib/api/workouts";
+import { getWorkoutProgram, addSelfProgramSession, renameWorkoutProgram } from "@/lib/api/workouts";
 import { getAlunoPremiumStatus } from "@/lib/api/billing";
 import { ApiError } from "@/lib/api/client";
 import type { WorkoutProgram } from "@/lib/types";
@@ -15,6 +15,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { QueryError } from "@/components/query-error";
 import { DeleteProgramButton } from "@/components/delete-program-button";
+import { InlineRename } from "@/components/inline-rename";
 import { useActiveIntlLocale } from "@/i18n/use-active-locale";
 
 function formatDate(iso: string | null, intlLocale: string, neverCompletedLabel: string): string {
@@ -74,6 +75,14 @@ function ProgramaContent() {
   const nextKey = firstMissingKey(scheme, sessions.map((s) => s.letter));
   const canAddSession = canEdit && sessions.length < maxSessionsFor(scheme) && !!nextKey;
 
+  const renameProgramMutation = useMutation({
+    mutationFn: (name: string) => renameWorkoutProgram(programId, name),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["workout-program", programId] });
+      queryClient.invalidateQueries({ queryKey: ["workout-programs", "aluno"] });
+    },
+  });
+
   const addSessionMutation = useMutation({
     mutationFn: (letter: string) => addSelfProgramSession(programId, { letter }),
     onSuccess: (data) => {
@@ -104,7 +113,15 @@ function ProgramaContent() {
               <span className="text-xs font-semibold uppercase tracking-wide text-accent-secondary">
                 {t("programLabel")}
               </span>
-              <h1 className="font-display text-2xl font-bold tracking-tight">{program.name}</h1>
+              <h1 className="font-display text-2xl font-bold tracking-tight">
+                <InlineRename
+                  value={program.name}
+                  onSave={(name) => renameProgramMutation.mutateAsync(name)}
+                  ariaLabel={t("renameProgramAriaLabel")}
+                  textClassName="font-display text-2xl font-bold tracking-tight"
+                  hidden={!canEdit}
+                />
+              </h1>
               {program.description && (
                 <p className="text-xs text-muted">{program.description}</p>
               )}
