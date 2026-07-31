@@ -152,7 +152,13 @@ export function AppHeader() {
                   onClick={() => setAvatarMenuOpen(false)}
                   aria-hidden
                 />
-                <div className="absolute right-0 top-full z-50 mt-2 w-72 rounded-md border border-border bg-surface p-3 shadow-lg">
+                {/* Mesmo bug de posicionamento achado no sino de notificações
+                    (ver comentário em notification-bell.tsx): este botão não
+                    fica na borda direita do header (hambúrguer/Sair vêm
+                    depois dele), então `absolute right-0` (relativo só a
+                    este wrapper) jogava o menu parcialmente pra fora da tela
+                    à esquerda em celulares estreitos. Mesma correção. */}
+                <div className="fixed inset-x-4 top-16 z-50 rounded-md border border-border bg-surface p-3 shadow-lg sm:absolute sm:inset-x-auto sm:right-0 sm:top-full sm:mt-2 sm:w-72">
                   <AvatarUpload />
                 </div>
               </>

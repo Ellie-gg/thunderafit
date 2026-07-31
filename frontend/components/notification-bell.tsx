@@ -152,8 +152,17 @@ export function NotificationBell() {
         )}
       </button>
 
+      {/* Achado real em produção (correção pós-lançamento): `absolute right-0`
+          é relativo a ESTE container (só o botão do sino), não à tela — e o
+          sino não fica na borda direita do header (avatar/hambúrguer/Sair
+          vêm depois dele). Num celular estreito isso jogava a lista (320px)
+          pra fora da tela pela ESQUERDA, cortando o texto. `fixed` no
+          mobile ancora no viewport (sempre visível, não depende de onde o
+          sino está no layout); a partir de `sm` volta a ser `absolute`
+          ancorado no próprio sino (funciona bem lá, telas maiores já tinham
+          espaço). */}
       {open && (
-        <div className="absolute right-0 top-11 z-10 w-80 max-w-[90vw] rounded-lg border border-border bg-surface p-2 shadow-lg">
+        <div className="fixed inset-x-4 top-16 z-20 rounded-lg border border-border bg-surface p-2 shadow-lg sm:absolute sm:inset-x-auto sm:right-0 sm:top-11 sm:z-10 sm:w-80">
           <div className="flex items-center justify-between px-2 py-1">
             <span className="text-xs font-semibold uppercase tracking-wide text-accent-secondary">
               {t("title")}
