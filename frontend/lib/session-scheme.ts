@@ -62,3 +62,18 @@ export function nextKeyInSequence(scheme: SessionScheme, currentKey: string): st
   if (index === -1 || index === order.length - 1) return null;
   return order[index + 1];
 }
+
+/**
+ * F12 (auditoria 2026-07-31): a PRIMEIRA chave da sequência ainda não usada
+ * por nenhuma sessão existente — pra decidir qual sessão criar a seguir.
+ * Achado real: `/programas/[id]` derivava isso via `nextKeyInSequence` a
+ * partir da ÚLTIMA sessão já ordenada, então um programa WEEKDAY com só
+ * SEGUNDA+DOMINGO escondia o botão de adicionar (DOMINGO é a última do
+ * esquema, `nextKeyInSequence` devolve null) mesmo o backend aceitando
+ * QUARTA, TERCA etc. sem problema. Esta função olha o CONJUNTO usado, não a
+ * posição do último — encontra a lacuna real.
+ */
+export function firstMissingKey(scheme: SessionScheme, existingKeys: string[]): string | null {
+  const used = new Set(existingKeys);
+  return orderFor(scheme).find((key) => !used.has(key)) ?? null;
+}

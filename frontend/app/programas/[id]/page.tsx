@@ -5,8 +5,9 @@ import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { getWorkoutProgram, addSelfProgramSession } from "@/lib/api/workouts";
+import { getAlunoPremiumStatus } from "@/lib/api/billing";
 import type { WorkoutProgram } from "@/lib/types";
-import { sortByScheme, labelFor, nextKeyInSequence, maxSessionsFor, orderFor } from "@/lib/session-scheme";
+import { sortByScheme, labelFor, firstMissingKey, maxSessionsFor } from "@/lib/session-scheme";
 import { AuthGuard } from "@/components/auth-guard";
 import { AppHeader } from "@/components/app-header";
 import { Card } from "@/components/ui/card";
@@ -46,6 +47,20 @@ function ProgramaContent() {
     },
   });
 
+  // F7 (auditoria 2026-07-31): editar o treino pessoal é um recurso do Aluno
+  // Premium (o backend já bloqueia com 402 em qualquer mutação) — mas esta
+  // tela mostrava os controles de edição (✏️, "Adicionar treino") pra
+  // QUALQUER aluno com um programa `origin: SELF`, mesmo sem Premium (os
+  // carrosséis GRATUITOS "Treino em Casa"/"Treinos Prontos" também aplicam
+  // instâncias `origin: SELF`). Resultado: aluno gratuito via os botões,
+  // clicava, e todos os cliques falhavam com 402 sem nenhuma explicação de
+  // que é recurso pago. A mesma tela em `/meu-treino-pessoal` já faz essa
+  // checagem — só faltava aqui.
+  const premiumStatusQuery = useQuery({
+    queryKey: ["aluno-premium-status"],
+    queryFn: getAlunoPremiumStatus,
+  });
+
   const program = programQuery.data?.program;
   const scheme = program?.sessionScheme ?? "LETTER";
   const sessions = sortByScheme(program?.workouts ?? [], scheme);
@@ -53,9 +68,9 @@ function ProgramaContent() {
   // (montado do zero OU um template aplicado — as duas origens viram o MESMO
   // tipo de registro, então a edição vale pras duas igual). O treino
   // PRESCRITO pelo Personal (origin: PERSONAL) nunca ganha estes controles.
-  const canEdit = program?.origin === "SELF";
-  const lastLetter = sessions[sessions.length - 1]?.letter;
-  const nextKey = lastLetter ? nextKeyInSequence(scheme, lastLetter) : orderFor(scheme)[0];
+  const isSelfProgram = program?.origin === "SELF";
+  const canEdit = isSelfProgram && !!premiumStatusQuery.data?.hasAccess;
+  const nextKey = firstMissingKey(scheme, sessions.map((s) => s.letter));
   const canAddSession = canEdit && sessions.length < maxSessionsFor(scheme) && !!nextKey;
 
   const addSessionMutation = useMutation({
@@ -135,8 +150,11 @@ function ProgramaContent() {
               ))}
             </div>
 
-            {canEdit && (
+            {isSelfProgram && (
               <div className="flex flex-col gap-2 border-t border-border pt-4 sm:flex-row sm:items-center">
+                {/* Remover nunca é bloqueado por Premium (mesma filosofia já
+                    usada nos gates de plano/limite — só o que EXPANDE a
+                    prescrição é gated), então fica fora de `canEdit`. */}
                 {canAddSession && (
                   <Button
                     type="button"

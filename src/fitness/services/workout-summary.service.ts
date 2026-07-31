@@ -148,14 +148,26 @@ async function buildVolumeComparison(
     prevWindowStart,
     previousLastCompletedAt
   );
-  const previousVolumeKg = sumVolumeKg(prevLogs);
-
-  if (previousVolumeKg <= 0) {
-    return { hasHistory: false, previousVolumeKg: 0, volumeChangePercent: null };
+  // F11 (auditoria 2026-07-31): "tem histórico?" era decidido por
+  // `previousVolumeKg <= 0` — mas exercícios de peso corporal (`weightKg: 0`
+  // sempre) têm volume ZERO mesmo com séries de verdade registradas. Um
+  // aluno com "Treino em Casa" (só peso corporal) concluindo a sessão pela
+  // 2ª vez sempre caía em "sem histórico pra comparar", pra sempre — o sinal
+  // certo de "existe histórico" é ter ENCONTRADO séries na janela anterior,
+  // não o volume delas ser positivo.
+  if (prevLogs.length === 0) {
+    return { hasHistory: false, previousVolumeKg: null, volumeChangePercent: null };
   }
 
+  const previousVolumeKg = sumVolumeKg(prevLogs);
   const roundedPrevious = Math.round(previousVolumeKg * 10) / 10;
-  const volumeChangePercent = Math.round(((thisVolumeKg - previousVolumeKg) / previousVolumeKg) * 10000) / 100;
+  // Sem base > 0 não dá pra calcular variação percentual (divisão por
+  // zero) — mas `hasHistory` continua `true`, já que séries anteriores
+  // existem de verdade (só não têm peso, ex: peso corporal).
+  const volumeChangePercent =
+    previousVolumeKg > 0
+      ? Math.round(((thisVolumeKg - previousVolumeKg) / previousVolumeKg) * 10000) / 100
+      : null;
   return { hasHistory: true, previousVolumeKg: roundedPrevious, volumeChangePercent };
 }
 

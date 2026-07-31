@@ -454,7 +454,18 @@ export const workoutProgramsService = {
     // o gate de verdade: sem teste grátis/assinatura vigente, nem chega a
     // tentar aplicar.
     const template = await workoutProgramsRepository.findProgramById(sourceProgramId);
-    if (template?.category === "PREMIUM") {
+    // F1 (auditoria 2026-07-31): valida que `sourceProgramId` é REALMENTE um
+    // template SELF aplicável ANTES de mexer no treino atual do aluno. Antes,
+    // essa validação só existia dentro de `applySelfTemplateToAluno` — DEPOIS
+    // do delete do treino existente (linha abaixo) já ter rodado. Um id
+    // inválido (template do catálogo do Personal, id de outro programa
+    // qualquer, ou um UUID que não existe mais) apagava o treino ativo do
+    // aluno — com histórico de séries — e só depois respondia 404 "Template
+    // não encontrado.", como se nada tivesse acontecido.
+    if (!template || template.origin !== "SELF" || !template.isTemplate) {
+      throw httpError("Template não encontrado.", 404);
+    }
+    if (template.category === "PREMIUM") {
       const entitlement = await alunoPremiumService.getEntitlement(alunoId);
       if (!entitlement.hasAccess) {
         const err = httpError(

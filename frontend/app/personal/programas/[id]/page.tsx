@@ -247,7 +247,7 @@ function ProgramaDetalheContent() {
 
 export default function ProgramaDetalhePage() {
   return (
-    <AuthGuard allowedRoles={["PERSONAL", "NUTRICIONISTA"]}>
+    <AuthGuard allowedRoles={["PERSONAL"]}>
       <Suspense fallback={null}>
         <ProgramaDetalheContent />
       </Suspense>

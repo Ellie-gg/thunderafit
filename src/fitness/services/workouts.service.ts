@@ -29,6 +29,25 @@ function assertOwnSelfWorkout(workout: { personalId: string | null; alunoId: str
   }
 }
 
+// F4 (auditoria 2026-07-31): nada validava `sets`/`restSeconds`/`order`
+// numericamente — só o tamanho de `notes`. Negativos/zero passavam direto
+// pro Prisma e quebravam a UI de execução de forma sutil (contador
+// "0/-3", `VoltageBar` com total negativo, `allSetsDone` nunca fica true).
+function assertValidExercisePrescription(sets: number, restSeconds: number, order: number, repsRange: string) {
+  if (!Number.isInteger(sets) || sets < 1) {
+    throw httpError("sets deve ser um número inteiro maior ou igual a 1.", 400);
+  }
+  if (!Number.isInteger(restSeconds) || restSeconds < 0) {
+    throw httpError("restSeconds deve ser um número inteiro maior ou igual a 0.", 400);
+  }
+  if (!Number.isInteger(order) || order < 0) {
+    throw httpError("order deve ser um número inteiro maior ou igual a 0.", 400);
+  }
+  if (!repsRange?.trim()) {
+    throw httpError("repsRange é obrigatório.", 400);
+  }
+}
+
 async function assertAlunoPremiumAccess(alunoId: string) {
   const entitlement = await alunoPremiumService.getEntitlement(alunoId);
   if (!entitlement.hasAccess) {
@@ -91,6 +110,8 @@ export const workoutsService = {
     order: number,
     notes?: string | null
   ) {
+    assertValidExercisePrescription(sets, restSeconds, order, repsRange);
+
     const workout = await workoutsRepository.findById(workoutId);
     if (!workout || workout.personalId !== personalId) {
       const err = new Error("Treino não encontrado.");
@@ -196,6 +217,8 @@ export const workoutsService = {
     order: number,
     notes?: string | null
   ) {
+    assertValidExercisePrescription(sets, restSeconds, order, repsRange);
+
     const workout = await workoutsRepository.findById(workoutId);
     assertOwnSelfWorkout(workout, alunoId);
     await assertAlunoPremiumAccess(alunoId);

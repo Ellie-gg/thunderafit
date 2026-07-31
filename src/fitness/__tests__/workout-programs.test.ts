@@ -1315,3 +1315,61 @@ describe("Auditoria 2026-07-31, X7 — desvincular revoga a LEITURA do Personal 
     expect(stillExists).not.toBeNull();
   });
 });
+
+describe("Auditoria 2026-07-31, X1 — NUTRICIONISTA não prescreve programa de treino (domínio do Personal)", () => {
+  let nutriId: string;
+  let nutriToken: string;
+  let nutriAlunoId: string;
+
+  beforeAll(async () => {
+    const regN = await supertest(server.server)
+      .post("/api/auth/register")
+      .send({ email: "wp_x1_nutri@thunderafit.test", password: pw, role: "NUTRICIONISTA" });
+    nutriId = regN.body.user.id;
+    nutriToken = (
+      await supertest(server.server)
+        .post("/api/auth/login")
+        .send({ email: "wp_x1_nutri@thunderafit.test", password: pw })
+    ).body.accessToken;
+    const regA = await supertest(server.server)
+      .post("/api/auth/register")
+      .send({ email: "wp_x1_aluno@thunderafit.test", password: pw, role: "ALUNO" });
+    nutriAlunoId = regA.body.user.id;
+    await supertest(server.server)
+      .post("/api/relations")
+      .set("Authorization", `Bearer ${nutriToken}`)
+      .send({ alunoId: nutriAlunoId });
+  });
+
+  afterAll(async () => {
+    await prisma.user.deleteMany({
+      where: { email: { in: ["wp_x1_nutri@thunderafit.test", "wp_x1_aluno@thunderafit.test"] } },
+    });
+  });
+
+  it("criar template retorna 403 (antes era permitido, junto do PERSONAL)", async () => {
+    const r = await supertest(server.server)
+      .post("/api/workout-programs")
+      .set("Authorization", `Bearer ${nutriToken}`)
+      .send({ name: "Template do nutri (não deveria)" });
+    expect(r.status).toBe(403);
+  });
+
+  it("aplicar um template a um aluno vinculado também retorna 403 (mesmo com vínculo real)", async () => {
+    // Cria o template direto no banco (bypassando o 403 acima) só pra ter
+    // um id de verdade pra tentar aplicar.
+    const template = await prisma.workoutProgram.create({
+      data: { personalId: nutriId, origin: "PERSONAL", name: "Seed", isTemplate: true },
+    });
+    await prisma.workout.create({ data: { programId: template.id, name: "Sessão A", letter: "A" } });
+
+    const r = await supertest(server.server)
+      .post(`/api/workout-programs/${template.id}/apply`)
+      .set("Authorization", `Bearer ${nutriToken}`)
+      .send({ alunoId: nutriAlunoId });
+    expect(r.status).toBe(403);
+
+    await prisma.workout.deleteMany({ where: { programId: template.id } });
+    await prisma.workoutProgram.delete({ where: { id: template.id } });
+  });
+});
