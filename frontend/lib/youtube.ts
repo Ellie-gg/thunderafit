@@ -1,5 +1,9 @@
 export function getYoutubeVideoId(url: string): string | null {
-  const match = url.match(/(?:v=|youtu\.be\/)([\w-]{11})/);
+  // Curadoria 2026-07-31 (Pilates): faltava reconhecer o formato Shorts
+  // (`youtube.com/shorts/<id>`) — não é uma restrição do YouTube, o mesmo
+  // vídeo se incorpora normalmente via `/embed/<id>`; só esta regex não
+  // cobria a URL que o admin cola quando compartilha um Short.
+  const match = url.match(/(?:v=|youtu\.be\/|shorts\/)([\w-]{11})/);
   return match ? match[1] : null;
 }
 

@@ -31,7 +31,10 @@ type AdminSessionScheme = (typeof VALID_SESSION_SCHEMES)[number];
 // do YouTube não precisa de upload, só valida e salva o link). Nunca confia
 // só no que o cliente diz que é o mediaType/formato — mesmo padrão de
 // revalidação no backend já usado no avatar de usuário (Fase 30).
-const YOUTUBE_URL_REGEX = /(?:youtube\.com\/watch\?v=|youtu\.be\/)[\w-]{11}/;
+// Curadoria 2026-07-31 (Pilates): `shorts/<id>` adicionado — faltava, e não
+// é uma restrição do YouTube (o mesmo id embeda normalmente), só a regex não
+// reconhecia a URL que aparece ao compartilhar um Short.
+const YOUTUBE_URL_REGEX = /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/shorts\/)[\w-]{11}/;
 const MAX_EXERCISE_MEDIA_DATA_URL_LENGTH = 6_000_000;
 const VIDEO_DATA_URL_REGEX = /^data:video\/(mp4|webm);base64,[A-Za-z0-9+/]+=*$/;
 const GIF_DATA_URL_REGEX = /^data:image\/gif;base64,[A-Za-z0-9+/]+=*$/;
