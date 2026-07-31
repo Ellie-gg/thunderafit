@@ -470,6 +470,17 @@ export async function loginOrRegisterWithGoogle(idToken: string, role?: Role, in
 /**
  * Rotaciona o refresh token.
  * Valida o token enviado contra o hash no banco e emite novos tokens.
+ *
+ * Achado real em produção (correção pós-lançamento): `checkAndFireDueReminders`
+ * só era chamado em `login()`/`loginOrRegisterWithGoogle()`, mas o access
+ * token dura só 15min (`ACCESS_TOKEN_EXPIRY` acima) e o cliente renova via
+ * ESTE endpoint (cookie httpOnly, transparente) sempre que leva um 401 — um
+ * aluno que continua usando o app dentro da janela de 7 dias do refresh token
+ * nunca chama `/api/auth/login` de novo depois do primeiro login. Resultado:
+ * o lembrete de pagamento nunca disparava pra quem já estava "sempre logado"
+ * (o caso mais comum). Chamado aqui também fecha essa lacuna sem precisar de
+ * scheduler — mesma filosofia "simples, checa em toda interação real" já
+ * documentada no comentário de `checkAndFireDueReminders`.
  */
 export async function refresh(token: string) {
   const jwtRefreshSecret = getEnv("JWT_REFRESH_SECRET");
@@ -515,6 +526,10 @@ export async function refresh(token: string) {
     BCRYPT_SALT_ROUNDS
   );
   await authRepository.updateRefreshTokenHash(user.id, newRefreshTokenHash);
+
+  if (user.role === "ALUNO") {
+    await relationsService.checkAndFireDueReminders(user.id);
+  }
 
   return { accessToken, refreshToken: newRefreshToken };
 }
