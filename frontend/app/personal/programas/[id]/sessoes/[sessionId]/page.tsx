@@ -6,7 +6,7 @@ import { useTranslations } from "next-intl";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { getWorkoutProgram, addProgramSession } from "@/lib/api/workouts";
-import { labelFor, nextKeyInSequence } from "@/lib/session-scheme";
+import { labelFor, nextKeyInSequence, firstMissingKey } from "@/lib/session-scheme";
 import { AuthGuard } from "@/components/auth-guard";
 import { AppHeader } from "@/components/app-header";
 import { Card } from "@/components/ui/card";
@@ -56,7 +56,15 @@ function SessaoContent() {
 
   const { session, nextKey, nextSession, sessionExercises } = useMemo(() => {
     const session = program?.workouts?.find((w) => w.id === sessionId);
-    const nextKey = session ? nextKeyInSequence(scheme, session.letter) : null;
+    // Checagem de consistência pós-auditoria (2026-07-31, F12): `nextKeyInSequence`
+    // devolve null pra sessão que está por ÚLTIMO na ordem do esquema — num
+    // WEEKDAY com só SEGUNDA+DOMINGO criados, abrir DOMINGO escondia o botão
+    // "Próximo" inteiro mesmo com TERÇA-SÁBADO ainda livres. `firstMissingKey`
+    // (já usado em `/programas/[id]` pro mesmo achado) cobre essa lacuna sem
+    // mudar o caso comum: só entra quando não há um próximo posicional.
+    const positionalNext = session ? nextKeyInSequence(scheme, session.letter) : null;
+    const existingLetters = program?.workouts?.map((w) => w.letter) ?? [];
+    const nextKey = session ? (positionalNext ?? firstMissingKey(scheme, existingLetters)) : null;
     const nextSession = nextKey ? program?.workouts?.find((w) => w.letter === nextKey) : undefined;
     const sessionExercises = [...(session?.exercises ?? [])].sort((a, b) => a.order - b.order);
     return { session, nextKey, nextSession, sessionExercises };
@@ -177,9 +185,15 @@ function SessaoContent() {
   );
 }
 
+// Checagem de consistência pós-auditoria (2026-07-31, X1): as telas irmãs
+// (`/personal/programas` e `/personal/programas/[id]`) já restringiram a
+// PERSONAL quando o backend fechou a brecha de NUTRICIONISTA prescrevendo
+// treino — esta ficou de fora. Não é brecha de segurança (o backend já
+// rejeita com 403), só deixava um Nutricionista cair aqui vindo de um link
+// direto e levar um erro cru em vez de nunca ver a tela.
 export default function SessaoPage() {
   return (
-    <AuthGuard allowedRoles={["PERSONAL", "NUTRICIONISTA"]}>
+    <AuthGuard allowedRoles={["PERSONAL"]}>
       <Suspense fallback={null}>
         <SessaoContent />
       </Suspense>
