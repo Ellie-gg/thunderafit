@@ -2,6 +2,7 @@ import prisma from "../../lib/prisma";
 import { relationsRepository } from "../repository/relations.repository";
 import { notificationsService } from "../../notifications/services/notifications.service";
 import { revertExpiredPersonalPlan } from "../../lib/plan-expiry";
+import { connectionsRepository } from "../../connections/repository/connections.repository";
 
 function addOneMonth(date: Date): Date {
   const next = new Date(date);
@@ -90,6 +91,15 @@ export const relationsService = {
       throw err;
     }
     await relationsRepository.delete(personalId, alunoId);
+    // C3 (auditoria 2026-07-31): sem isso, uma `ConnectionRequest` ACEITA
+    // desse par sobrevivia ao desvínculo — o aluno nunca mais conseguia
+    // solicitar esse profissional de novo pelo diretório (`createRequest`
+    // via `connections` sempre recusava com 409 "já vinculado", mesmo sem
+    // vínculo nenhum existir). Import direto do repository (não do
+    // service) de propósito — `connections.service.ts` já importa
+    // `relationsService` daqui, então importar o SERVICE de volta criaria
+    // um ciclo; o repository não depende de nada em `fitness`.
+    await connectionsRepository.deleteRequestByPair(alunoId, personalId);
   },
 
   async listRelations(personalId: string) {

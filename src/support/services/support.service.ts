@@ -1,6 +1,10 @@
 import prisma from "../../lib/prisma";
 import { supportRepository } from "../repository/support.repository";
 import { notificationsService } from "../../notifications/services/notifications.service";
+// X4 (auditoria 2026-07-31): admin lendo uma thread de suporte é acesso a
+// dado potencialmente de saúde (lesão, medicação, dor) — mesmo requisito de
+// auditoria já aplicado em anamnesis.service.ts#getForAdmin.
+import { adminRepository } from "../../admin/repository/admin.repository";
 
 function notFound(message: string): never {
   const err = new Error(message);
@@ -64,6 +68,14 @@ export const supportService = {
     if (!thread) notFound("Dúvida não encontrada.");
     if (role !== "ADMIN" && thread.alunoId !== userId && thread.personalId !== userId) {
       forbidden("Você não tem permissão para acessar esta dúvida.");
+    }
+    // X4 (auditoria 2026-07-31): achado real — admin lia a thread inteira
+    // (todas as mensagens) sem NENHUM registro em `AdminAccessLog`, ao
+    // contrário da anamnese, que já cumpre esse mesmo requisito. Só loga
+    // quando é de fato o ADMIN lendo (não conta o próprio participante
+    // acessando a própria thread).
+    if (role === "ADMIN") {
+      await adminRepository.createAccessLog(userId, "support_thread", thread.alunoId);
     }
     return thread;
   },

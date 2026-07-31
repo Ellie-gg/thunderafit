@@ -33,7 +33,11 @@ function assertOwnSelfWorkout(workout: { personalId: string | null; alunoId: str
 // numericamente — só o tamanho de `notes`. Negativos/zero passavam direto
 // pro Prisma e quebravam a UI de execução de forma sutil (contador
 // "0/-3", `VoltageBar` com total negativo, `allSetsDone` nunca fica true).
-function assertValidExercisePrescription(sets: number, restSeconds: number, order: number, repsRange: string) {
+// C10 (auditoria 2026-07-31): exportada pra ser reaproveitada por
+// `admin.service.ts#addExerciseToSelfSession` — mesma validação, mesmo
+// achado (negativos/zero sem checagem), domínio diferente (templates
+// SELF/catálogo geridos pelo admin, não prescrição do Personal).
+export function assertValidExercisePrescription(sets: number, restSeconds: number, order: number, repsRange: string) {
   if (!Number.isInteger(sets) || sets < 1) {
     throw httpError("sets deve ser um número inteiro maior ou igual a 1.", 400);
   }

@@ -175,6 +175,33 @@ describe("GET /api/admin/users", () => {
     const personal = r.body.users.find((u: any) => u.id === personalId);
     expect(personal.lastLoginAt).not.toBeNull();
   });
+
+  // C9 (auditoria 2026-07-31): `?page=abc`/`?pageSize=abc` viravam `NaN` e
+  // chegavam crus no Prisma — 500 com o erro do Prisma no corpo, em vez de
+  // um 400 claro. Mesmo problema com `?role=` fora do enum.
+  it("C9: ?page=abc retorna 400 (antes virava NaN e estourava 500 no Prisma)", async () => {
+    const r = await supertest(server.server)
+      .get("/api/admin/users")
+      .query({ page: "abc" })
+      .set("Authorization", `Bearer ${adminToken}`);
+    expect(r.status).toBe(400);
+  });
+
+  it("C9: ?pageSize=abc retorna 400", async () => {
+    const r = await supertest(server.server)
+      .get("/api/admin/users")
+      .query({ pageSize: "abc" })
+      .set("Authorization", `Bearer ${adminToken}`);
+    expect(r.status).toBe(400);
+  });
+
+  it("C9: ?role=FOO (fora do enum) retorna 400", async () => {
+    const r = await supertest(server.server)
+      .get("/api/admin/users")
+      .query({ role: "FOO" })
+      .set("Authorization", `Bearer ${adminToken}`);
+    expect(r.status).toBe(400);
+  });
 });
 
 describe("GET /api/admin/logins", () => {
@@ -238,6 +265,21 @@ describe("Fase 14 Bloco 1 — ADMIN com visão ampliada em endpoints hoje restri
       .set("Authorization", `Bearer ${adminToken}`);
     expect(r.status).toBe(200);
     expect(r.body.thread.id).toBe(threadId);
+  });
+
+  // X4 (auditoria 2026-07-31): achado real — admin lendo uma thread de
+  // suporte (conteúdo tipicamente de saúde: lesão, dieta, dor) nunca gerava
+  // NENHUM registro em AdminAccessLog, diferente da anamnese (testada
+  // abaixo), que já cumpre esse requisito desde a Fase 14.
+  it("o acesso acima gerou uma linha em AdminAccessLog (resourceType: support_thread)", async () => {
+    const r = await supertest(server.server)
+      .get("/api/admin/access-logs")
+      .set("Authorization", `Bearer ${adminToken}`);
+    expect(r.status).toBe(200);
+    const entry = r.body.logs.find(
+      (l: any) => l.adminId === adminId && l.alunoId === alunoIds[0] && l.resourceType === "support_thread"
+    );
+    expect(entry).toBeDefined();
   });
 
   it("sem query param, ADMIN não vê nada por engano (retorna vazio, não os dados de outro usuário)", async () => {
