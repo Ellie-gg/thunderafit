@@ -100,6 +100,15 @@ describe("Fase 32 — PUT /api/admin/exercises/:id/media", () => {
     expect(res.body.exercise.mediaUrl).toBe("https://www.youtube.com/watch?v=dQw4w9WgXcQ");
   });
 
+  it("link do YouTube Shorts é aceito (curadoria 2026-07-31, Pilates)", async () => {
+    const res = await supertest(server.server)
+      .put(`/api/admin/exercises/${exerciseId}/media`)
+      .set("Authorization", `Bearer ${adminToken}`)
+      .send({ mediaType: "YOUTUBE", youtubeUrl: "https://www.youtube.com/shorts/dQw4w9WgXcQ" });
+    expect(res.status).toBe(200);
+    expect(res.body.exercise.mediaUrl).toBe("https://www.youtube.com/shorts/dQw4w9WgXcQ");
+  });
+
   it("link do YouTube inválido recebe 400", async () => {
     const res = await supertest(server.server)
       .put(`/api/admin/exercises/${exerciseId}/media`)
