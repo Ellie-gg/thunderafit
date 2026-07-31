@@ -25,6 +25,10 @@ export const workoutsRepository = {
     return prisma.workout.findUnique({ where: { id } });
   },
 
+  async updateName(id: string, name: string) {
+    return prisma.workout.update({ where: { id }, data: { name } });
+  },
+
   async markCompleted(id: string, when: Date) {
     return prisma.workout.update({
       where: { id },

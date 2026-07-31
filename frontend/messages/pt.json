@@ -331,6 +331,7 @@
     "suggested": "Sugerida",
     "open": "Abrir →",
     "editSessionAriaLabel": "Editar treino {label}",
+    "renameProgramAriaLabel": "Renomear programa",
     "addingSession": "Adicionando...",
     "addSessionButton": "+ Adicionar treino {label}",
     "addSessionError": "Não foi possível adicionar o treino."
@@ -868,6 +869,7 @@
   "personalProgramaDetail": {
     "template": "Template",
     "appliedToStudent": "Aplicado a aluno",
+    "renameProgramAriaLabel": "Renomear programa",
     "sessionsProgress": "{current}/{max} sessão(ões)",
     "exercisesCount": "{count} exercício(s)",
     "open": "Abrir →",
@@ -892,6 +894,7 @@
     "sessionNotFound": "Sessão não encontrada neste programa.",
     "backToProgram": "← Voltar ao programa",
     "sessionTitle": "Sessão {label}",
+    "renameSessionAriaLabel": "Renomear sessão",
     "notes": "Obs: {notes}",
     "nextSession": "Próximo: {label} →",
     "creating": "Criando...",

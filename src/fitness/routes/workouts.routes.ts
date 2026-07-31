@@ -6,6 +6,7 @@ import {
   addExerciseHandler,
   moveExerciseHandler,
   deleteExerciseHandler,
+  renameWorkoutHandler,
   getWorkoutHandler,
   completeWorkoutHandler,
 } from "../controllers/workouts.controller";
@@ -61,6 +62,16 @@ export async function workoutsRoutes(fastify: FastifyInstance) {
       preHandler: [(fastify as any).authenticate],
     },
     deleteExerciseHandler
+  );
+
+  // Renomear a sessão ("treino do dia") — achado reportado pelo fundador:
+  // nome só era definido na criação, sem jeito de editar depois.
+  fastify.patch(
+    "/api/workouts/:id/name",
+    {
+      preHandler: [(fastify as any).authenticate],
+    },
+    renameWorkoutHandler
   );
 
   fastify.get(

@@ -205,6 +205,23 @@ export const workoutsService = {
     return workoutsRepository.findExercisesOrdered(workoutId);
   },
 
+  /**
+   * Renomear a sessão ("treino do dia") — nunca existia (achado reportado
+   * pelo fundador: nome só era definido na criação). Sem gate de billing:
+   * mesma classificação de `moveExercise`/`deleteExercise` (edita/reorganiza,
+   * não expande a prescrição).
+   */
+  async renameWorkout(workoutId: string, personalId: string, name: string) {
+    if (!name?.trim()) throw httpError("Nome da sessão é obrigatório.", 400);
+    const workout = await workoutsRepository.findById(workoutId);
+    if (!workout || workout.personalId !== personalId) {
+      const err = new Error("Treino não encontrado.");
+      (err as any).statusCode = 404;
+      throw err;
+    }
+    return workoutsRepository.updateName(workoutId, name.trim());
+  },
+
   // --- Fase 85: Aluno Premium edita o próprio treino (origin: SELF) ---
   // Mesmas regras de `addExercise`/`moveExercise`/`deleteExercise` acima
   // (nunca duplicadas — chamam os MESMOS métodos do repository), só trocando
@@ -267,6 +284,14 @@ export const workoutsService = {
     if (result === "not_found") throw httpError("Exercício não encontrado neste treino.", 404);
 
     return workoutsRepository.findExercisesOrdered(workoutId);
+  },
+
+  async renameSelfWorkout(workoutId: string, alunoId: string, name: string) {
+    if (!name?.trim()) throw httpError("Nome da sessão é obrigatório.", 400);
+    const workout = await workoutsRepository.findById(workoutId);
+    assertOwnSelfWorkout(workout, alunoId);
+    await assertAlunoPremiumAccess(alunoId);
+    return workoutsRepository.updateName(workoutId, name.trim());
   },
 
   async getWorkout(workoutId: string, userId: string, role: string | undefined, locale: Locale) {

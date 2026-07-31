@@ -10,6 +10,7 @@ import {
   addProgramSession,
   applyProgram,
   saveInstanceAsTemplate,
+  renameWorkoutProgram,
 } from "@/lib/api/workouts";
 import { listRelations } from "@/lib/api/relations";
 import { ApiError } from "@/lib/api/client";
@@ -22,6 +23,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { QueryError } from "@/components/query-error";
+import { InlineRename } from "@/components/inline-rename";
 
 function ProgramaDetalheContent() {
   const t = useTranslations("personalProgramaDetail");
@@ -66,6 +68,14 @@ function ProgramaDetalheContent() {
   // "usuário ainda não mexeu" (mostra o nome do programa como default) de
   // "usuário esvaziou de propósito" (string vazia, não cai mais no fallback).
   const [templateName, setTemplateName] = useState<string | null>(null);
+
+  const renameProgramMutation = useMutation({
+    mutationFn: (name: string) => renameWorkoutProgram(programId, name),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["workout-program", programId] });
+      queryClient.invalidateQueries({ queryKey: ["workout-programs", "personal"] });
+    },
+  });
 
   const addSessionMutation = useMutation({
     mutationFn: (letter: string) => addProgramSession(programId, { letter }),
@@ -120,7 +130,14 @@ function ProgramaDetalheContent() {
               <span className="text-xs font-semibold uppercase tracking-wide text-accent-secondary">
                 {program.isTemplate ? t("template") : t("appliedToStudent")}
               </span>
-              <h1 className="font-display text-2xl font-bold tracking-tight">{program.name}</h1>
+              <h1 className="font-display text-2xl font-bold tracking-tight">
+                <InlineRename
+                  value={program.name}
+                  onSave={(name) => renameProgramMutation.mutateAsync(name)}
+                  ariaLabel={t("renameProgramAriaLabel")}
+                  textClassName="font-display text-2xl font-bold tracking-tight"
+                />
+              </h1>
               <p className="text-sm text-muted">
                 {t("sessionsProgress", { current: sessions.length, max: maxSessions })}
               </p>

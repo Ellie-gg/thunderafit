@@ -198,6 +198,24 @@ export function deleteWorkoutProgram(programId: string) {
   });
 }
 
+// Achado reportado pelo fundador: o nome do programa/sessão só podia ser
+// definido na criação, sem jeito de editar depois (nem pro aluno, nem pro
+// Personal). Mesmo padrão de `deleteWorkoutProgram` acima — o backend
+// ramifica por role, então a mesma função serve os dois lados.
+export function renameWorkoutProgram(programId: string, name: string) {
+  return apiFetch<{ program: WorkoutProgram }>(`/api/workout-programs/${programId}/name`, {
+    method: "PATCH",
+    body: { name },
+  });
+}
+
+export function renameWorkoutSession(workoutId: string, name: string) {
+  return apiFetch<{ workout: Workout }>(`/api/workouts/${workoutId}/name`, {
+    method: "PATCH",
+    body: { name },
+  });
+}
+
 // Fase 85 — Aluno Premium monta o próprio treino do zero. Mesmo formato de
 // erro 409 SELF_PROGRAM_EXISTS (com existingProgramId/existingProgramName)
 // já usado em applySelfTemplate — o mesmo diálogo de confirmação de troca

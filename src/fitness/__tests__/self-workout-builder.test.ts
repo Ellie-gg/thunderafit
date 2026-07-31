@@ -322,3 +322,70 @@ describe("Fase 85 — DELETE /api/workout-programs/:id (excluir o próprio trein
     await prisma.workoutProgram.deleteMany({ where: { id: p.id } });
   });
 });
+
+describe("Renomear o próprio treino/sessão (achado reportado pelo fundador: nome só era definido na criação)", () => {
+  let ownProgramId: string;
+  let ownSessionId: string;
+
+  beforeAll(async () => {
+    const r = await supertest(server.server)
+      .post("/api/workout-programs/self")
+      .set("Authorization", `Bearer ${premiumAlunoToken}`)
+      .send({ name: "Meu treino original", replace: true });
+    ownProgramId = r.body.program.id;
+
+    const s = await supertest(server.server)
+      .post(`/api/workout-programs/${ownProgramId}/self-sessions`)
+      .set("Authorization", `Bearer ${premiumAlunoToken}`)
+      .send({ letter: "A" });
+    ownSessionId = s.body.session.id;
+  });
+
+  afterAll(async () => {
+    await prisma.workout.deleteMany({ where: { programId: ownProgramId } });
+    await prisma.workoutProgram.deleteMany({ where: { id: ownProgramId } });
+  });
+
+  it("ALUNO Premium renomeia o próprio treino", async () => {
+    const r = await supertest(server.server)
+      .patch(`/api/workout-programs/${ownProgramId}/name`)
+      .set("Authorization", `Bearer ${premiumAlunoToken}`)
+      .send({ name: "Meu treino novo nome" });
+    expect(r.status).toBe(200);
+    expect(r.body.program.name).toBe("Meu treino novo nome");
+  });
+
+  it("ALUNO Premium renomeia a própria sessão", async () => {
+    const r = await supertest(server.server)
+      .patch(`/api/workouts/${ownSessionId}/name`)
+      .set("Authorization", `Bearer ${premiumAlunoToken}`)
+      .send({ name: "Perna e Ombro" });
+    expect(r.status).toBe(200);
+    expect(r.body.workout.name).toBe("Perna e Ombro");
+  });
+
+  it("ALUNO sem Premium recebe 402 ao tentar renomear (editar é a feature paga)", async () => {
+    const semPremiumProgram = await prisma.workoutProgram.create({
+      data: { alunoId: semPremiumId, origin: "SELF", name: "Treino sem premium", isTemplate: false },
+    });
+    const r = await supertest(server.server)
+      .patch(`/api/workout-programs/${semPremiumProgram.id}/name`)
+      .set("Authorization", `Bearer ${semPremiumToken}`)
+      .send({ name: "Tentativa" });
+    expect(r.status).toBe(402);
+    expect(r.body.code).toBe("PREMIUM_REQUIRED");
+    await prisma.workoutProgram.deleteMany({ where: { id: semPremiumProgram.id } });
+  });
+
+  it("ALUNO não pode renomear o treino de OUTRO aluno (403)", async () => {
+    const outroProgram = await prisma.workoutProgram.create({
+      data: { alunoId: alunoPrescritoId, origin: "SELF", name: "Treino de outro aluno", isTemplate: false },
+    });
+    const r = await supertest(server.server)
+      .patch(`/api/workout-programs/${outroProgram.id}/name`)
+      .set("Authorization", `Bearer ${premiumAlunoToken}`)
+      .send({ name: "Tentativa indevida" });
+    expect(r.status).toBe(403);
+    await prisma.workoutProgram.deleteMany({ where: { id: outroProgram.id } });
+  });
+});

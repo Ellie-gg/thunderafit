@@ -1373,3 +1373,83 @@ describe("Auditoria 2026-07-31, X1 — NUTRICIONISTA não prescreve programa de 
     await prisma.workoutProgram.delete({ where: { id: template.id } });
   });
 });
+
+describe("Renomear programa/sessão (achado reportado pelo fundador: nome só era definido na criação)", () => {
+  let renameProgramId: string;
+  let renameSessionId: string;
+  let otherPersonalToken: string;
+  let otherPersonalProgramId: string;
+
+  beforeAll(async () => {
+    const created = await supertest(server.server)
+      .post("/api/workout-programs")
+      .set("Authorization", `Bearer ${personalToken}`)
+      .send({ name: "Nome original" });
+    renameProgramId = created.body.program.id;
+
+    const session = await supertest(server.server)
+      .post(`/api/workout-programs/${renameProgramId}/sessions`)
+      .set("Authorization", `Bearer ${personalToken}`)
+      .send({ letter: "A", name: "Sessão original" });
+    renameSessionId = session.body.session.id;
+
+    await supertest(server.server)
+      .post("/api/auth/register")
+      .send({ email: "wp_rename_outro_personal@thunderafit.test", password: pw, role: "PERSONAL" });
+    otherPersonalToken = (
+      await supertest(server.server)
+        .post("/api/auth/login")
+        .send({ email: "wp_rename_outro_personal@thunderafit.test", password: pw })
+    ).body.accessToken;
+    const otherCreated = await supertest(server.server)
+      .post("/api/workout-programs")
+      .set("Authorization", `Bearer ${otherPersonalToken}`)
+      .send({ name: "Template de outro Personal" });
+    otherPersonalProgramId = otherCreated.body.program.id;
+  });
+
+  afterAll(async () => {
+    await prisma.workout.deleteMany({ where: { programId: { in: [renameProgramId, otherPersonalProgramId] } } });
+    await prisma.workoutProgram.deleteMany({ where: { id: { in: [renameProgramId, otherPersonalProgramId] } } });
+    await prisma.user.deleteMany({ where: { email: "wp_rename_outro_personal@thunderafit.test" } });
+  });
+
+  it("PATCH /api/workout-programs/:id/name renomeia o programa do próprio Personal", async () => {
+    const r = await supertest(server.server)
+      .patch(`/api/workout-programs/${renameProgramId}/name`)
+      .set("Authorization", `Bearer ${personalToken}`)
+      .send({ name: "Nome novo" });
+    expect(r.status).toBe(200);
+    expect(r.body.program.name).toBe("Nome novo");
+
+    const check = await supertest(server.server)
+      .get(`/api/workout-programs/${renameProgramId}`)
+      .set("Authorization", `Bearer ${personalToken}`);
+    expect(check.body.program.name).toBe("Nome novo");
+  });
+
+  it("PATCH .../name com nome vazio recebe 400", async () => {
+    const r = await supertest(server.server)
+      .patch(`/api/workout-programs/${renameProgramId}/name`)
+      .set("Authorization", `Bearer ${personalToken}`)
+      .send({ name: "   " });
+    expect(r.status).toBe(400);
+  });
+
+  it("PATCH .../name num programa de OUTRO Personal recebe 403", async () => {
+    const r = await supertest(server.server)
+      .patch(`/api/workout-programs/${otherPersonalProgramId}/name`)
+      .set("Authorization", `Bearer ${personalToken}`)
+      .send({ name: "Tentativa indevida" });
+    expect(r.status).toBe(403);
+  });
+
+  it("PATCH /api/workouts/:id/name renomeia a sessão do próprio Personal", async () => {
+    const r = await supertest(server.server)
+      .patch(`/api/workouts/${renameSessionId}/name`)
+      .set("Authorization", `Bearer ${personalToken}`)
+      .send({ name: "Perna e Ombro" });
+    expect(r.status).toBe(200);
+    expect(r.body.workout.name).toBe("Perna e Ombro");
+  });
+});
