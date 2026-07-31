@@ -44,6 +44,15 @@ export function ConversationThread({
   return (
     <div className="flex flex-col gap-2 border-t border-border pt-3">
       {messagesQuery.isLoading && <p className="text-xs text-muted">{t("loading")}</p>}
+      {messagesQuery.isError && (
+        // Fr13 (auditoria 2026-07-31): sem isso, uma falha aqui renderizava
+        // uma lista VAZIA, indistinguível de "nenhuma mensagem" — quem abre
+        // pra "ler o contexto antes de decidir" (aceitar/recusar) achava que
+        // o outro lado não tinha escrito nada, e decidia às cegas.
+        <p className="text-xs text-danger">
+          {messagesQuery.error instanceof ApiError ? messagesQuery.error.message : t("loadError")}
+        </p>
+      )}
       <div className="flex max-h-64 flex-col gap-2 overflow-y-auto">
         {messages.map((m) => {
           const mine = m.senderId === myId;
@@ -52,8 +61,8 @@ export function ConversationThread({
               <p
                 className={
                   mine
-                    ? "max-w-[80%] rounded-lg bg-accent/15 px-3 py-2 text-sm text-foreground"
-                    : "max-w-[80%] rounded-lg bg-surface-raised px-3 py-2 text-sm text-foreground"
+                    ? "max-w-[80%] break-words rounded-lg bg-accent/15 px-3 py-2 text-sm text-foreground"
+                    : "max-w-[80%] break-words rounded-lg bg-surface-raised px-3 py-2 text-sm text-foreground"
                 }
               >
                 {m.body}

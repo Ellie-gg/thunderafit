@@ -59,12 +59,23 @@ function ProgramaDetalheContent() {
   const alunoIdParam = searchParams.get("alunoId") ?? "";
   const [applyAlunoId, setApplyAlunoId] = useState(alunoIdParam);
   const query = alunoIdParam ? `?alunoId=${alunoIdParam}` : "";
-  const [templateName, setTemplateName] = useState("");
+  // Fr17 (auditoria 2026-07-31): `useState("")` + `value={templateName ||
+  // program.name}` reinjetava o nome do programa a cada tecla que deixasse o
+  // campo vazio (string vazia é falsy) — apagar tudo pra digitar outro nome
+  // fazia o texto antigo reaparecer a cada backspace. `null` distingue
+  // "usuário ainda não mexeu" (mostra o nome do programa como default) de
+  // "usuário esvaziou de propósito" (string vazia, não cai mais no fallback).
+  const [templateName, setTemplateName] = useState<string | null>(null);
 
   const addSessionMutation = useMutation({
     mutationFn: (letter: string) => addProgramSession(programId, { letter }),
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["workout-program", programId] });
+      // Fr19 (auditoria 2026-07-31): a lista de templates mostra a contagem
+      // de sessões de cada programa — sem isso, ela ficava com o número
+      // antigo até o staleTime expirar (até 2min) depois de adicionar uma
+      // sessão aqui.
+      queryClient.invalidateQueries({ queryKey: ["workout-programs", "personal"] });
       router.push(`/personal/programas/${programId}/sessoes/${data.session.id}${query}`);
     },
   });
@@ -81,7 +92,7 @@ function ProgramaDetalheContent() {
   // agora exige um template (isTemplate: true); a instância precisa virar
   // um template novo primeiro.
   const saveAsTemplateMutation = useMutation({
-    mutationFn: () => saveInstanceAsTemplate(programId, templateName.trim()),
+    mutationFn: () => saveInstanceAsTemplate(programId, (templateName ?? program?.name ?? "").trim()),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["workout-programs", "personal"] });
     },
@@ -210,7 +221,7 @@ function ProgramaDetalheContent() {
                 <h2 className="font-display text-lg font-bold">{t("saveAsTemplateTitle")}</h2>
                 <p className="text-xs text-muted">{t("saveAsTemplateDescription")}</p>
                 <Input
-                  value={templateName || program.name}
+                  value={templateName ?? program.name}
                   onChange={(e) => setTemplateName(e.target.value)}
                   placeholder={t("saveAsTemplateNamePlaceholder")}
                 />
@@ -231,7 +242,7 @@ function ProgramaDetalheContent() {
                 )}
                 <Button
                   variant="secondary"
-                  disabled={saveAsTemplateMutation.isPending || !(templateName || program.name).trim()}
+                  disabled={saveAsTemplateMutation.isPending || !(templateName ?? program.name).trim()}
                   onClick={() => saveAsTemplateMutation.mutate()}
                 >
                   {saveAsTemplateMutation.isPending ? t("saving") : t("saveAsTemplateButton")}

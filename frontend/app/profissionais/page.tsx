@@ -63,7 +63,16 @@ function ProfissionaisContent() {
       }
       setHydrated(true);
     }
-  }, [profileQuery.data, hydrated]);
+    // Fr2 (auditoria 2026-07-31): se `profileQuery` falhar, `hydrated` nunca
+    // virava `true` (só o `if` acima cobria o caminho de sucesso) — como
+    // `searchQuery` abaixo é `enabled: hydrated`, a busca nunca destravava:
+    // sem loading, sem erro, sem "nada encontrado", o clique em "Buscar"
+    // literalmente não fazia nada, pra sempre. Sem cidade salva pra
+    // pré-preencher, mas ainda destrava a busca manual.
+    if (profileQuery.isError && !hydrated) {
+      setHydrated(true);
+    }
+  }, [profileQuery.data, profileQuery.isError, hydrated]);
 
   const saveCityMutation = useMutation({
     mutationFn: (vars: { city: string; state: string }) =>
@@ -144,8 +153,27 @@ function ProfissionaisContent() {
             <Button type="submit" className="self-start">
               {t("searchButton")}
             </Button>
+            {saveCityMutation.isError && (
+              // Fr13/C8 (auditoria 2026-07-31): sem `onError`/render nenhum
+              // — a busca rodava normalmente mesmo com a cidade não
+              // persistindo, e na próxima visita o campo voltava vazio sem
+              // nenhum aviso do motivo.
+              <p className="text-sm text-danger">
+                {saveCityMutation.error instanceof ApiError
+                  ? saveCityMutation.error.message
+                  : t("connectionError")}
+              </p>
+            )}
           </form>
         </Card>
+
+        {requestsQuery.isError && (
+          // Fr13 (auditoria 2026-07-31): sem isso, `statusByPro` ficava
+          // vazio em silêncio e o botão "Enviar mensagem" reaparecia pra
+          // profissionais que já têm solicitação em andamento — um 409
+          // inesperado no envio.
+          <p className="text-sm text-danger">{t("connectionError")}</p>
+        )}
 
         {searchQuery.isLoading && <p className="text-sm text-muted">{t("searching")}</p>}
         {searchQuery.isError && (

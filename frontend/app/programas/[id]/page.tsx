@@ -6,6 +6,7 @@ import { useTranslations } from "next-intl";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { getWorkoutProgram, addSelfProgramSession } from "@/lib/api/workouts";
 import { getAlunoPremiumStatus } from "@/lib/api/billing";
+import { ApiError } from "@/lib/api/client";
 import type { WorkoutProgram } from "@/lib/types";
 import { sortByScheme, labelFor, firstMissingKey, maxSessionsFor } from "@/lib/session-scheme";
 import { AuthGuard } from "@/components/auth-guard";
@@ -76,6 +77,14 @@ function ProgramaContent() {
   const addSessionMutation = useMutation({
     mutationFn: (letter: string) => addSelfProgramSession(programId, { letter }),
     onSuccess: (data) => {
+      // Fr3 (auditoria 2026-07-31): faltava invalidar ["workout-program",
+      // programId] antes do push — a página de destino usa a MESMA
+      // queryKey, e como ela fica fresh por 30s (staleTime), chegava lá sem
+      // refetch e não achava a sessão recém-criada na lista ainda velha em
+      // cache, caindo em "sessão não encontrada". A tela de destino e a
+      // tela irmã do Personal já invalidam antes do push — só esta ficou
+      // de fora.
+      queryClient.invalidateQueries({ queryKey: ["workout-program", programId] });
       router.push(`/meu-treino-pessoal/${programId}/sessoes/${data.session.id}`);
     },
   });
@@ -176,7 +185,16 @@ function ProgramaContent() {
               </div>
             )}
             {addSessionMutation.isError && (
-              <p className="text-sm text-danger">{t("addSessionError")}</p>
+              // Fr15 (auditoria 2026-07-31): texto genérico fixo escondia a
+              // mensagem real do backend — ex: 402 "Editar seu treino
+              // pessoal é um recurso do Aluno Premium..." nunca aparecia,
+              // então um aluno gratuito via só "Erro ao adicionar sessão",
+              // sem nenhuma pista de que é um recurso pago.
+              <p className="text-sm text-danger">
+                {addSessionMutation.error instanceof ApiError
+                  ? addSessionMutation.error.message
+                  : t("addSessionError")}
+              </p>
             )}
           </>
         )}

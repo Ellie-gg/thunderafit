@@ -15,6 +15,21 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { ApiError } from "@/lib/api/client";
 
+// Fr20 (auditoria 2026-07-31): campos de altura/peso são texto livre (via o
+// mesmo helper `field()` usado pra qualquer campo), sem `type="number"`.
+// `Number("1,75")` — formato pt-BR natural de digitar — é `NaN`;
+// `JSON.stringify` serializa `NaN` como `null`, então o valor sumia
+// silenciosamente e a tela ainda mostrava "salvo com sucesso". Aceita
+// vírgula OU ponto como separador decimal; `undefined` (vazio) é válido
+// (campo opcional), `NaN` sinaliza "preenchido, mas inválido" pra quem
+// chama poder avisar em vez de mandar `null` sem avisar.
+function parseDecimalInput(raw: string | number | undefined): number | undefined {
+  if (raw === undefined || raw === "") return undefined;
+  const normalized = String(raw).trim().replace(",", ".");
+  const n = Number(normalized);
+  return Number.isFinite(n) ? n : NaN;
+}
+
 function buildFormFromData(a: Anamnesis | null): AnamnesisInput {
   if (!a) {
     return {
@@ -60,27 +75,40 @@ function AnamneseForm({ initial, exists }: { initial: Anamnesis | null; exists: 
   // exigido na PRIMEIRA vez (criação); quem já tinha anamnese salva já deu
   // esse consentimento antes, não precisa reconfirmar a cada edição.
   const [healthConsent, setHealthConsent] = useState(exists);
+  // Fr20: erro de validação client-side (formato inválido de altura/peso) —
+  // separado do erro da mutation, porque este nunca deveria chegar a chamar
+  // a API (evita mandar `NaN`/`null` sem avisar).
+  const [numericFieldError, setNumericFieldError] = useState<string | null>(null);
 
   const saveMutation = useMutation({
-    mutationFn: () => {
-      const payload: AnamnesisInput = {
-        ...form,
-        heightCm: form.heightCm ? Number(form.heightCm) : undefined,
-        weightKg: form.weightKg ? Number(form.weightKg) : undefined,
-      };
-      return exists ? updateAnamnesis(payload) : createAnamnesis(payload);
-    },
+    mutationFn: (payload: AnamnesisInput) => (exists ? updateAnamnesis(payload) : createAnamnesis(payload)),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["anamnesis", "own"] });
     },
   });
 
-  function field(key: keyof AnamnesisInput, label: string, placeholder?: string) {
+  function handleSubmit() {
+    const heightCm = parseDecimalInput(form.heightCm as string | number | undefined);
+    const weightKg = parseDecimalInput(form.weightKg as string | number | undefined);
+    if (Number.isNaN(heightCm) || Number.isNaN(weightKg)) {
+      setNumericFieldError(t("invalidHeightOrWeight"));
+      return;
+    }
+    setNumericFieldError(null);
+    saveMutation.mutate({ ...form, heightCm, weightKg });
+  }
+
+  function field(key: keyof AnamnesisInput, label: string, placeholder?: string, numeric = false) {
     return (
       <div className="flex flex-col gap-1.5">
         <Label htmlFor={key}>{label}</Label>
         <Input
           id={key}
+          // Fr20: `inputMode="decimal"` só troca o teclado mobile pro
+          // numérico — continua `type="text"` de propósito, senão o
+          // navegador rejeitaria vírgula digitada (o formato que a maioria
+          // digita em pt-BR) antes mesmo de chegar no parser tolerante.
+          inputMode={numeric ? "decimal" : undefined}
           value={(form[key] as string | number | undefined) ?? ""}
           onChange={(e) => setForm((f) => ({ ...f, [key]: e.target.value }))}
           placeholder={placeholder}
@@ -94,7 +122,7 @@ function AnamneseForm({ initial, exists }: { initial: Anamnesis | null; exists: 
       className="flex flex-col gap-6"
       onSubmit={(e) => {
         e.preventDefault();
-        saveMutation.mutate();
+        handleSubmit();
       }}
     >
       <Card className="flex flex-col gap-4">
@@ -110,8 +138,8 @@ function AnamneseForm({ initial, exists }: { initial: Anamnesis | null; exists: 
               onChange={(e) => setForm((f) => ({ ...f, birthDate: e.target.value }))}
             />
           </div>
-          {field("heightCm", t("heightLabel"))}
-          {field("weightKg", t("weightLabel"))}
+          {field("heightCm", t("heightLabel"), undefined, true)}
+          {field("weightKg", t("weightLabel"), undefined, true)}
         </div>
       </Card>
 
@@ -138,6 +166,7 @@ function AnamneseForm({ initial, exists }: { initial: Anamnesis | null; exists: 
         {field("injuries", t("injuriesLabel"), t("injuriesPlaceholder"))}
       </Card>
 
+      {numericFieldError && <p className="text-sm text-danger">{numericFieldError}</p>}
       {saveMutation.isError && (
         <p className="text-sm text-danger">
           {saveMutation.error instanceof ApiError

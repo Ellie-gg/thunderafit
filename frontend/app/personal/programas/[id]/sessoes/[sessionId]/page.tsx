@@ -44,6 +44,9 @@ function SessaoContent() {
     mutationFn: (letter: string) => addProgramSession(programId, { letter }),
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["workout-program", programId] });
+      // Fr19 (auditoria 2026-07-31): mesma correção da tela de detalhe do
+      // programa — a lista de templates mostra contagem de sessões.
+      queryClient.invalidateQueries({ queryKey: ["workout-programs", "personal"] });
       router.push(`/personal/programas/${programId}/sessoes/${data.session.id}${query}`);
     },
   });
@@ -138,7 +141,10 @@ function SessaoContent() {
               />
             </Card>
 
-            <div className="flex gap-3">
+            {/* Fr10 (auditoria 2026-07-31): mesmo achado da tela irmã do
+                aluno — sem `flex-wrap`, o esquema "Dias da semana" estourava
+                a largura em qualquer celular até ~390px. */}
+            <div className="flex flex-wrap gap-3">
               <Button asChild variant="secondary" className="flex-1">
                 <Link href={`/personal/programas/${programId}${query}`}>{t("backToProgram")}</Link>
               </Button>

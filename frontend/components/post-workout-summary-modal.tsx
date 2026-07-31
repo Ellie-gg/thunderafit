@@ -136,7 +136,13 @@ export function PostWorkoutSummaryModal({
             {t("shareErrorMessage")}
           </p>
         )}
-        <div className="flex gap-2">
+        {/* Fr9 (auditoria 2026-07-31): 3 botões numa linha só (`whitespace-nowrap`
+            + `px-5` em cada, nunca encolhem) precisavam de ~375px — num
+            iPhone SE (375px) ou Android de 320px o "Fechar" saía da tela
+            (overlay `fixed`, sem como rolar até ele). `flex-wrap` deixa
+            Compartilhar/Baixar na 1ª linha e Fechar cai pra 2ª quando não
+            cabe, em vez de vazar horizontalmente. */}
+        <div className="flex flex-wrap gap-2">
           {canShare && (
             <Button onClick={handleShare} disabled={isExporting} className="flex-1">
               {t("shareButton")}
@@ -145,7 +151,7 @@ export function PostWorkoutSummaryModal({
           <Button onClick={handleDownload} disabled={isExporting} variant="secondary" className="flex-1">
             {t("downloadButton")}
           </Button>
-          <Button onClick={onClose} variant="ghost">
+          <Button onClick={onClose} variant="ghost" className="w-full">
             {t("closeButton")}
           </Button>
         </div>

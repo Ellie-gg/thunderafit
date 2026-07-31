@@ -423,14 +423,15 @@ function ProgramasPersonalContent() {
             applyCatalogMutation.mutate({ programId: previewTemplate.id, alunoId })
           }
           onCancel={() => setPreviewTemplate(null)}
+          isApplying={applyCatalogMutation.isPending}
+          errorMessage={
+            applyCatalogMutation.isError
+              ? applyCatalogMutation.error instanceof ApiError
+                ? applyCatalogMutation.error.message
+                : t("catalogApplyError")
+              : null
+          }
         />
-      )}
-      {applyCatalogMutation.isError && (
-        <p className="px-6 text-sm text-danger">
-          {applyCatalogMutation.error instanceof ApiError
-            ? applyCatalogMutation.error.message
-            : t("catalogApplyError")}
-        </p>
       )}
     </>
   );

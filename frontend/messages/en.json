@@ -427,6 +427,7 @@
     "fullNameLabel": "Full name",
     "birthDateLabel": "Date of birth",
     "heightLabel": "Height (cm)",
+    "invalidHeightOrWeight": "Height and weight must be numbers (e.g. 1.75 or 70.5).",
     "weightLabel": "Weight (kg)",
     "goalsHeading": "Goals",
     "goalsLabel": "Goals",
@@ -472,6 +473,7 @@
   },
   "conversationThread": {
     "loading": "Loading messages...",
+    "loadError": "Couldn't load the messages.",
     "placeholder": "Write a message...",
     "send": "Send",
     "sending": "Sending...",
