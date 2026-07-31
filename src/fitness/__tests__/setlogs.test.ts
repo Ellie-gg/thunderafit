@@ -126,6 +126,22 @@ describe("POST /api/workouts/:workoutId/exercises/:workoutExerciseId/logs", () =
       .send({ setNumber: 3, repsDone: 8, weightKg: 65 });
     expect(r3.status).toBe(201);
   });
+
+  // F4 (auditoria 2026-07-31): setNumber/repsDone/weightKg negativos nunca
+  // eram rejeitados — peso e reps negativos se cancelavam na multiplicação
+  // do volume da sessão, produzindo um número positivo espúrio no resumo.
+  it.each([
+    [{ setNumber: -1, repsDone: 10, weightKg: 60 }, "setNumber"],
+    [{ setNumber: 99, repsDone: -10, weightKg: 60 }, "repsDone"],
+    [{ setNumber: 99, repsDone: 10, weightKg: -200 }, "weightKg"],
+  ])("F4: %j é rejeitado com 400 mencionando %s", async (body, field) => {
+    const r = await supertest(server.server)
+      .post(`/api/workouts/${workoutId}/exercises/${workoutExerciseId}/logs`)
+      .set("Authorization", `Bearer ${tokenAluno1}`)
+      .send(body);
+    expect(r.status).toBe(400);
+    expect(r.body.error).toContain(field);
+  });
 });
 
 describe("POST .../logs — detecção de PR em tempo real (Fase 36)", () => {

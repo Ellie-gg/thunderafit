@@ -29,9 +29,13 @@ function GerenciarAlunosContent() {
   const queryClient = useQueryClient();
 
   const relationsQuery = useQuery({ queryKey: ["relations"], queryFn: listRelations });
+  // F10 (auditoria 2026-07-31): esta tela só usa INSTÂNCIAS aplicadas (pra
+  // saber quem tem treino) — pedir só `type: "instance"` no servidor evita
+  // competir pelo mesmo cap defensivo com os templates do Personal (ver
+  // comentário equivalente em app/personal/programas/page.tsx).
   const programsQuery = useQuery({
-    queryKey: ["workout-programs", "personal"],
-    queryFn: () => listWorkoutPrograms(),
+    queryKey: ["workout-programs", "personal", "instance"],
+    queryFn: () => listWorkoutPrograms("instance"),
   });
   // Fase 104: convites ainda não consumidos (inclui expirados de propósito
   // — ver comentário em client-invites.repository.ts#findActiveByPersonal).

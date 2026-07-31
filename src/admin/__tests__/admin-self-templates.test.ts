@@ -153,6 +153,37 @@ describe("Fase 34.5 — admin cura templates SELF (Meu treino pessoal)", () => {
     expect(r.body.workoutExercise.exerciseId).toBe(exerciseId);
   });
 
+  // C10 (auditoria 2026-07-31): único handler de escrita do domínio sem
+  // validação nenhuma do corpo — negativos/zero eram gravados sem reclamar,
+  // e um exerciseId inexistente só estourava a FK do Prisma (500 opaco).
+  it("C10: order negativo retorna 400 (antes era gravado como #-1)", async () => {
+    const template = await supertest(server.server)
+      .get("/api/admin/self-templates")
+      .set("Authorization", `Bearer ${adminToken}`);
+    const tpl = template.body.programs.find((p: any) => p.id === templateId);
+    const sessionId = tpl.workouts[0].id;
+
+    const r = await supertest(server.server)
+      .post(`/api/admin/self-templates/${templateId}/sessions/${sessionId}/exercises`)
+      .set("Authorization", `Bearer ${adminToken}`)
+      .send({ exerciseId, sets: 3, repsRange: "8-12", restSeconds: 60, order: -1 });
+    expect(r.status).toBe(400);
+  });
+
+  it("C10: exerciseId inexistente retorna 404 (antes era 500 por violação de FK)", async () => {
+    const template = await supertest(server.server)
+      .get("/api/admin/self-templates")
+      .set("Authorization", `Bearer ${adminToken}`);
+    const tpl = template.body.programs.find((p: any) => p.id === templateId);
+    const sessionId = tpl.workouts[0].id;
+
+    const r = await supertest(server.server)
+      .post(`/api/admin/self-templates/${templateId}/sessions/${sessionId}/exercises`)
+      .set("Authorization", `Bearer ${adminToken}`)
+      .send({ exerciseId: "id-que-nao-existe", sets: 3, repsRange: "8-12", restSeconds: 60, order: 2 });
+    expect(r.status).toBe(404);
+  });
+
   it("GET /api/workout-programs/self-templates (catálogo pro aluno) lista o template curado", async () => {
     const r = await supertest(server.server)
       .get("/api/workout-programs/self-templates")
@@ -227,6 +258,10 @@ describe("Fase 52 — categoria + banner do template SELF", () => {
       .set("Authorization", `Bearer ${adminToken}`)
       .send({ name: "Template SELF Teste — Categoria Inválida", category: "VIP" });
     expect(r.status).toBe(400);
+    // C11 (auditoria 2026-07-31): a mensagem tinha esquecido "PRONTOS" (uma
+    // 4ª categoria adicionada depois) — agora é derivada da própria lista
+    // de categorias válidas, nunca mais dessincroniza.
+    expect(r.body.error).toContain("PRONTOS");
   });
 
   it("PERSONAL não pode subir banner de template SELF (403)", async () => {

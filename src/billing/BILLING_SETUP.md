@@ -26,7 +26,13 @@ o código desse caminho já é coberto pelos testes automatizados (`billing.test
 **Webhook de teste configurado** apontando pra
 `https://thunderafit-frontend-vy6oiie6rq-uc.a.run.app/api/billing/webhook`, escutando
 `checkout.session.completed`, `checkout.session.async_payment_succeeded`,
-`customer.subscription.updated`, `customer.subscription.deleted`.
+`customer.subscription.updated`, `customer.subscription.deleted`, **e
+`invoice.payment_failed`** (adicionado na Fase 103 — o handler já existe no código desde
+essa fase, mas o checklist abaixo e a configuração real do webhook tinham ficado pra
+trás, então o aviso proativo de falha de pagamento nunca chegava a disparar de verdade
+— achado da auditoria 2026-07-31, corrigido aqui só na documentação; **confirme que o
+webhook de TESTE também escuta este evento no Dashboard do Stripe**, já que ele foi
+configurado antes da Fase 103 existir).
 
 **Armadilha real encontrada nesta fase** (documentada pra não repetir o susto): depois
 de um `terraform apply` que dá erro de permissão (IAM faltando) no meio da atualização
@@ -57,8 +63,12 @@ recriado do zero lá.
 2. Recriar os **mesmos 2 produtos, 4 preços** (Seção "Produtos/preços" acima) — agora
    em modo LIVE. Os Price IDs vão ser DIFERENTES dos de teste.
 3. Recriar o **webhook** em modo LIVE, mesma URL
-   (`https://thunderafit-frontend-vy6oiie6rq-uc.a.run.app/api/billing/webhook`), mesmos
-   4 eventos. Vai gerar um `whsec_...` novo (diferente do de teste).
+   (`https://thunderafit-frontend-vy6oiie6rq-uc.a.run.app/api/billing/webhook`), com os
+   **mesmos 5 eventos** (`checkout.session.completed`,
+   `checkout.session.async_payment_succeeded`, `customer.subscription.updated`,
+   `customer.subscription.deleted`, **`invoice.payment_failed`** — não esquecer este
+   último, ver nota na seção de status acima). Vai gerar um `whsec_...` novo (diferente
+   do de teste).
 4. Pegar a **chave secreta live** (`sk_live_...`) em Desenvolvedores → Chaves de API
    (com o toggle de modo teste DESLIGADO).
 5. Substituir os 2 secrets no Secret Manager pelos valores live:

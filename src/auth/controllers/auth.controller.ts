@@ -109,8 +109,16 @@ export async function loginHandler(
     setAuthCookies(reply, result.accessToken, result.refreshToken);
     return reply.status(200).send(result);
   } catch (err) {
-    loginRateLimiter.recordFailedAttempt(ip, email);
     const error = err as Error & { statusCode?: number };
+    // A5 (auditoria 2026-07-31): só credencial INVÁLIDA (401) conta como
+    // tentativa falha — antes, qualquer erro (inclusive um 500 de causa
+    // alheia à senha, ex: falha ao checar lembrete de pagamento) também
+    // contava, então alguém digitando a senha CERTA repetidamente durante
+    // uma instabilidade podia se auto-bloquear por 15min sem nunca ter
+    // errado a senha.
+    if (error.statusCode === 401) {
+      loginRateLimiter.recordFailedAttempt(ip, email);
+    }
     return reply.status(error.statusCode ?? 500).send({ error: error.message });
   }
 }

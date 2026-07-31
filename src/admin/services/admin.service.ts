@@ -13,6 +13,9 @@ import { exerciseTranslationsRepository } from "../../fitness/repository/exercis
 // Fase 55.2: mesmo motivo de exception ao desacoplamento acima — a tela de
 // admin agora edita a tradução de nome de programa/sessão diretamente.
 import { programTranslationsRepository } from "../../fitness/repository/program-translations.repository";
+// C10 (auditoria 2026-07-31): mesma validação numérica já usada na
+// prescrição do Personal — reaproveitada aqui em vez de duplicada.
+import { assertValidExercisePrescription } from "../../fitness/services/workouts.service";
 // Fase 58: toggle manual de Premium — reaproveita os mesmos limites de
 // alunos por degrau já usados pelo billing real (PLUS = topo da escada).
 // Fase 90: BASE_LIMITE_ALUNOS entra pra concessão manual poder escolher
@@ -167,6 +170,22 @@ export const adminService = {
   },
 
   async listUsers(params: { role?: string; page: number; pageSize: number }) {
+    // C9 (auditoria 2026-07-31): `?page=abc`/`?pageSize=abc` chegavam como
+    // `NaN` (o controller já faz `parseInt`, que devolve `NaN` pra entrada
+    // inválida) — `Math.max(1, NaN)` também é `NaN`, e `skip: NaN` chegava
+    // ao Prisma sem nenhuma validação antes, estourando 500 com o erro cru
+    // do Prisma no corpo em vez de um 400 claro. `role` tinha o mesmo
+    // problema: qualquer string virava `as any` direto no `where`.
+    if (!Number.isFinite(params.page) || !Number.isFinite(params.pageSize)) {
+      const err = new Error("page e pageSize devem ser números válidos.") as any;
+      err.statusCode = 400;
+      throw err;
+    }
+    if (params.role !== undefined && !VALID_ROLES.includes(params.role as UserRole)) {
+      const err = new Error("role deve ser PERSONAL, ALUNO, NUTRICIONISTA ou ADMIN.") as any;
+      err.statusCode = 400;
+      throw err;
+    }
     const page = Math.max(1, params.page);
     const pageSize = Math.min(Math.max(1, params.pageSize), 100);
     const { users, total } = await adminRepository.findUsersPage({
@@ -532,11 +551,10 @@ export const adminService = {
     }
 
     const oldRole = target.role;
-    const updated = await adminRepository.updateUserRole(targetUserId, newRole as UserRole);
-    await adminRepository.createAuditLog(
-      adminId,
-      "ROLE_CHANGE",
+    const updated = await adminRepository.updateUserRoleWithAuditLog(
       targetUserId,
+      newRole as UserRole,
+      adminId,
       `${oldRole} -> ${newRole}`
     );
     // Fase 90: `updateUserRole` no repositório devolve a linha inteira do
@@ -832,7 +850,10 @@ export const adminService = {
     const o = origin === "PERSONAL_CATALOG" ? "PERSONAL_CATALOG" : "SELF";
     const cat = (category ?? "GERAL") as AdminSelfTemplateCategory;
     if (o === "SELF" && !VALID_SELF_TEMPLATE_CATEGORIES.includes(cat)) {
-      const err = new Error("category deve ser GERAL, HOME ou PREMIUM.");
+      // C11 (auditoria 2026-07-31): a mensagem listava só 3 das 4 categorias
+      // válidas (esqueceu PRONTOS, adicionada depois) — derivada da própria
+      // constante agora, pra nunca mais dessincronizar quando a lista mudar.
+      const err = new Error(`category deve ser ${VALID_SELF_TEMPLATE_CATEGORIES.join(", ")}.`);
       (err as any).statusCode = 400;
       throw err;
     }
@@ -947,6 +968,18 @@ export const adminService = {
     sessionId: string,
     input: { exerciseId: string; sets: number; repsRange: string; restSeconds: number; order: number; notes?: string }
   ) {
+    // C10 (auditoria 2026-07-31): único handler de escrita neste domínio sem
+    // validação nenhuma do corpo — `order: -1`/`sets: 0` eram gravados sem
+    // reclamar, e um `exerciseId` malformado só estourava na violação de FK
+    // do Prisma (500 opaco). A validação numérica é a mesma já usada na
+    // prescrição do Personal.
+    assertValidExercisePrescription(input.sets, input.restSeconds, input.order, input.repsRange);
+    if (!input.exerciseId?.trim()) {
+      const err = new Error("exerciseId é obrigatório.") as any;
+      err.statusCode = 400;
+      throw err;
+    }
+
     const template = await adminRepository.findSelfTemplateWithSessions(programId);
     if (!template) {
       const err = new Error("Template não encontrado.");
@@ -957,6 +990,12 @@ export const adminService = {
     if (!session) {
       const err = new Error("Sessão não encontrada neste template.");
       (err as any).statusCode = 404;
+      throw err;
+    }
+    const exercise = await exercisesRepository.findById(input.exerciseId);
+    if (!exercise) {
+      const err = new Error("Exercício não encontrado.") as any;
+      err.statusCode = 404;
       throw err;
     }
     return adminRepository.addExerciseToSelfSession(

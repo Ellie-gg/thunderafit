@@ -94,6 +94,10 @@ describe("Fase 103 — prescrição do Personal bloqueada quando acima do limite
       .send({ alunoId: alunoIds[2], name: "Novo treino", letter: "B" });
     expect(r.status).toBe(403);
     expect(r.body.error).toMatch(/limite|regulariz|desvincul/i);
+    // F3 (auditoria 2026-07-31): o `code` precisa chegar no corpo pro
+    // frontend diferenciar este 403 de qualquer outro (tratamento visual
+    // neutro em vez de vermelho de alarme).
+    expect(r.body.code).toBe("PERSONAL_OVER_LIMIT");
   });
 
   it("aplicar um template a um aluno vinculado também retorna 403", async () => {
@@ -147,6 +151,7 @@ describe("Fase 103 — acesso do ALUNO bloqueado quando o Personal DELE está ac
       .set("Authorization", `Bearer ${alunoTokens[1]}`);
     expect(r.status).toBe(403);
     expect(r.body.error).toMatch(/regulariz/i);
+    expect(r.body.code).toBe("PERSONAL_PLAN_RESTRICTED");
   });
 
   it("aluno tenta concluir a sessão → 403", async () => {

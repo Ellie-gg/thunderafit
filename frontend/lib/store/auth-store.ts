@@ -44,9 +44,22 @@ export const useAuthStore = create<AuthState>((set) => ({
   hydrate: () => {
     if (typeof window === "undefined") return;
     const raw = localStorage.getItem(STORAGE_KEY);
-    set({
-      user: raw ? (JSON.parse(raw) as User) : null,
-      isHydrated: true,
-    });
+    // A7 (auditoria 2026-07-31): `JSON.parse` sem try/catch — se o valor
+    // salvo estiver corrompido (quota estourada no meio de uma escrita,
+    // extensão do navegador mexendo no storage), essa exceção escapava e
+    // `isHydrated` nunca virava `true`. Resultado: o `AuthGuard` (que só
+    // libera a tela protegida depois de `isHydrated`) mostrava "carregando…"
+    // pra sempre, sem nenhuma saída pela UI (o botão de sair vive dentro da
+    // própria árvore protegida). Corrigido: um valor ilegível é tratado como
+    // "sem sessão" (limpa a entrada quebrada) em vez de travar o hydrate.
+    let user: User | null = null;
+    if (raw) {
+      try {
+        user = JSON.parse(raw) as User;
+      } catch {
+        localStorage.removeItem(STORAGE_KEY);
+      }
+    }
+    set({ user, isHydrated: true });
   },
 }));

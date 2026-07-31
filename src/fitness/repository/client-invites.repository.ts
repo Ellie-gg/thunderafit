@@ -49,4 +49,23 @@ export const clientInvitesRepository = {
     });
     return result.count === 1;
   },
+
+  /**
+   * F2 (auditoria 2026-07-31): desfaz `tryConsume` — usado quando o vínculo
+   * (`relationsService.createRelation`) falha DEPOIS do convite já ter sido
+   * marcado como consumido (ex: limite de alunos mudou nesse meio-tempo,
+   * duplicata). Sem isso, o convite ficava permanentemente inutilizável —
+   * `revokeInvite` recusa convite já consumido, e ele desaparece da lista
+   * de pendentes (`findActiveByPersonal` filtra `consumedAt: null`) — o
+   * aluno tinha conta criada mas NENHUM vínculo, e nem o Personal nem o
+   * aluno tinham como tentar de novo com o mesmo link. Condicional em
+   * `alunoId` (não só `id`) por segurança: nunca desfaz o consumo de OUTRO
+   * aluno por engano.
+   */
+  async unconsume(id: string, alunoId: string): Promise<void> {
+    await prisma.clientInvite.updateMany({
+      where: { id, consumedByAlunoId: alunoId },
+      data: { consumedAt: null, consumedByAlunoId: null },
+    });
+  },
 };

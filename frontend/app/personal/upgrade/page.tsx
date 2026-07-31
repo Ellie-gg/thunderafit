@@ -213,7 +213,13 @@ function UpgradeContent() {
           <QueryError error={statusQuery.error} onRetry={() => statusQuery.refetch()} />
         )}
 
-        {isPago ? (
+        {/* Achado real (auditoria 2026-07-31, B10): quando `statusQuery` falha,
+            `tier` fica `undefined` e `isPago` cai (por acidente) em `false` —
+            antes disso mostrava os botões de assinar JUNTO com o erro, e um
+            clique nesse estado podia criar uma 2ª assinatura pra quem já
+            tinha uma ativa. Sem saber o plano real, não mostra nenhum dos 2
+            blocos — só o erro acima, com retry. */}
+        {!statusQuery.isError && (isPago ? (
           <Card className="flex flex-col gap-3">
             <h2 className="font-display text-lg font-bold">{t("gerenciarAssinatura")}</h2>
             <p className="text-sm text-muted">{t("gerenciarAssinaturaDescricao")}</p>
@@ -245,7 +251,7 @@ function UpgradeContent() {
               isPending={checkoutMutation.isPending && checkoutMutation.variables?.tier === "PLUS"}
             />
           </div>
-        )}
+        ))}
 
         {checkoutMutation.isError && (
           <p className="text-sm text-danger">

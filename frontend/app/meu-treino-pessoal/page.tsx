@@ -74,6 +74,12 @@ function MeuTreinoPessoalContent() {
   const applyMutation = useMutation({
     mutationFn: (programId: string) => applySelfTemplate(programId),
     onSuccess: (data) => {
+      // Fr6 (auditoria 2026-07-31): nenhuma invalidação aqui — o dashboard
+      // (bloco "Meus treinos") e `/programas` continuavam mostrando "sem
+      // treino pessoal" por até 2min (staleTime) depois de aplicar um
+      // template, mesmo o backend já tendo criado o programa.
+      queryClient.invalidateQueries({ queryKey: ["aluno-dashboard-summary"] });
+      queryClient.invalidateQueries({ queryKey: ["workout-programs", "aluno"] });
       router.push(`/programas/${data.program.id}`);
     },
   });
@@ -98,6 +104,13 @@ function MeuTreinoPessoalContent() {
 
   function onApplySuccess(data: { program: WorkoutProgram }) {
     queryClient.invalidateQueries({ queryKey: ["self-templates"] });
+    // Fr6 (auditoria 2026-07-31): mesmo achado do `applyMutation` acima —
+    // usado pelos carrosséis "Treino em Casa"/"Treinos Prontos"/Premium E
+    // pela substituição (`replaceMutation`, que ainda por cima DELETA o
+    // programa antigo no backend — sem isso, o card antigo no dashboard
+    // apontava pra um programa já apagado).
+    queryClient.invalidateQueries({ queryKey: ["aluno-dashboard-summary"] });
+    queryClient.invalidateQueries({ queryKey: ["workout-programs", "aluno"] });
     router.push(`/programas/${data.program.id}`);
   }
 
@@ -186,17 +199,33 @@ function MeuTreinoPessoalContent() {
     .filter((tpl) => premiumTagFilter === "TODOS" || tpl.tags?.includes(premiumTagFilter))
     .filter((tpl) => premiumLevelFilter === "TODOS" || tpl.tags?.includes(premiumLevelFilter));
 
+  // Fr14 (auditoria 2026-07-31): o `TemplatePreviewDialog` fecha no clique de
+  // "Aplicar" ANTES de saber se a mutation deu certo, e nem o carrossel nem
+  // os banners recebiam `isPending` — em conexão lenta, nada na tela mudava
+  // entre o clique e a resposta, e um 2º clique (achando que travou)
+  // disparava uma 2ª aplicação concorrente. Trava simples: nenhuma seleção
+  // nova enquanto qualquer aplicação/substituição já estiver em andamento.
+  const anyApplyPending =
+    applyMutation.isPending ||
+    homeApplyMutation.isPending ||
+    prontosApplyMutation.isPending ||
+    premiumApplyMutation.isPending ||
+    replaceMutation.isPending;
+
   function handleSelectProntos(template: WorkoutProgram) {
+    if (anyApplyPending) return;
     setPremiumNotice(false);
     setPreviewTemplate({ template, apply: () => prontosApplyMutation.mutate(template.id) });
   }
 
   function handleSelectHome(template: WorkoutProgram) {
+    if (anyApplyPending) return;
     setPremiumNotice(false);
     setPreviewTemplate({ template, apply: () => homeApplyMutation.mutate(template.id) });
   }
 
   function handleSelectPremium(template: WorkoutProgram) {
+    if (anyApplyPending) return;
     if (premiumStatusQuery.data?.hasAccess) {
       setPreviewTemplate({ template, apply: () => premiumApplyMutation.mutate(template.id) });
       return;

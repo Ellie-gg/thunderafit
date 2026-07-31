@@ -110,8 +110,18 @@ export async function previewInviteHandler(
       error: `Muitas tentativas. Tente novamente em ${blockStatus.retryAfterSeconds}s.`,
     });
   }
-  loginRateLimiter.recordFailedAttempt(ip, token);
 
   const result = await clientInvitesService.previewInvite(token);
+  // F9 (auditoria 2026-07-31): antes, TODA chamada contava como "tentativa
+  // falha" incondicionalmente — mesmo um token válido. Quem abre o link do
+  // convite, sai da tela e volta (recarregando `/login?invite=`) algumas
+  // vezes levava 429 na 5ª abertura, sem nenhum token errado ter sido
+  // tentado. Só um token de fato inválido/expirado conta como tentativa —
+  // um convite válido sendo visualizado repetidas vezes não é abuso.
+  if (result.valid) {
+    loginRateLimiter.recordSuccessfulAttempt(ip, token);
+  } else {
+    loginRateLimiter.recordFailedAttempt(ip, token);
+  }
   return reply.status(200).send(result);
 }

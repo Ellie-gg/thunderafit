@@ -6,13 +6,29 @@ import { parsePaginationQuery } from "../../lib/pagination";
 
 function handleError(err: any, reply: FastifyReply) {
   const status = err?.statusCode ?? 500;
-  return reply.status(status).send({ error: err?.message ?? "Erro interno." });
+  // F3 (auditoria 2026-07-31): `code` (ex: PERSONAL_PLAN_RESTRICTED,
+  // PERSONAL_OVER_LIMIT — ver src/lib/plan-expiry.ts) nunca chegava ao
+  // frontend por este caminho genérico, só nos 4 handlers que já
+  // cherry-picavam `code` manualmente pro 402 de Premium. Sem isso, a UI não
+  // tinha como diferenciar esse erro de qualquer outro 403 — mostrava o
+  // texto em vermelho de alarme em vez do tom neutro que a Fase 103 escolheu
+  // deliberadamente. `code: undefined` é omitido pelo JSON.stringify, então
+  // isso não muda em nada a resposta de erros que não setam `code`.
+  return reply.status(status).send({ error: err?.message ?? "Erro interno.", code: err?.code });
 }
 
 function assertProfessional(request: FastifyRequest): void {
   const role = (request as any).user.role;
-  if (role !== "PERSONAL" && role !== "NUTRICIONISTA") {
-    const err = new Error("Apenas profissionais podem gerenciar programas.") as any;
+  // X1 (auditoria 2026-07-31): só PERSONAL gerencia programas `origin:
+  // PERSONAL` — NUTRICIONISTA é deliberadamente excluído (ver AGENTS.md e
+  // src/fitness/AGENTS.md §3: "Only PERSONAL creates/edits Workouts and
+  // programs with origin: PERSONAL"). A Fase 17 já tinha fechado essa mesma
+  // brecha em `POST /api/workouts` (workouts.controller.ts) — nunca tinha
+  // sido replicada aqui, no fluxo de PROGRAMAS (criar/editar sessão/aplicar/
+  // salvar como template/aplicar do catálogo), então um Nutricionista
+  // vinculado a um aluno conseguia prescrever um programa completo.
+  if (role !== "PERSONAL") {
+    const err = new Error("Apenas Personal Trainers podem gerenciar programas.") as any;
     err.statusCode = 403;
     throw err;
   }

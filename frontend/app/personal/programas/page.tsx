@@ -122,9 +122,18 @@ function ProgramasPersonalContent() {
   // visível no topo da tela.
   const [showCreateForm, setShowCreateForm] = useState(searchParams.get("criar") === "1");
   const [generatorOpen, setGeneratorOpen] = useState(false);
+  // F10 (auditoria 2026-07-31): esta tela só precisa de TEMPLATES — antes
+  // buscava a lista MISTA (templates + instâncias aplicadas) e filtrava no
+  // cliente. Um Personal Plus (limite de alunos até 1.000.000 — deixou de
+  // ser hipotético) com muitas instâncias aplicadas podia empurrar os
+  // templates pra fora do cap defensivo do backend (`DEFAULT_PAGE_SIZE`,
+  // ver src/lib/pagination.ts), fazendo "Meus Templates (0/50)" aparecer
+  // vazio mesmo com templates de verdade cadastrados. Pedir só `type:
+  // "template"` no servidor evita a contaminação — templates são no máximo
+  // 50 por Personal (`MAX_PERSONAL_TEMPLATES`), nunca perto do cap.
   const programsQuery = useQuery({
-    queryKey: ["workout-programs", "personal"],
-    queryFn: () => listWorkoutPrograms(),
+    queryKey: ["workout-programs", "personal", "template"],
+    queryFn: () => listWorkoutPrograms("template"),
   });
   // Fase 25: alvo é só um atalho de UI — pré-preenche o select de "Aplicar a
   // um aluno" na tela do programa recém-criado. O programa em si sempre nasce
@@ -414,14 +423,15 @@ function ProgramasPersonalContent() {
             applyCatalogMutation.mutate({ programId: previewTemplate.id, alunoId })
           }
           onCancel={() => setPreviewTemplate(null)}
+          isApplying={applyCatalogMutation.isPending}
+          errorMessage={
+            applyCatalogMutation.isError
+              ? applyCatalogMutation.error instanceof ApiError
+                ? applyCatalogMutation.error.message
+                : t("catalogApplyError")
+              : null
+          }
         />
-      )}
-      {applyCatalogMutation.isError && (
-        <p className="px-6 text-sm text-danger">
-          {applyCatalogMutation.error instanceof ApiError
-            ? applyCatalogMutation.error.message
-            : t("catalogApplyError")}
-        </p>
       )}
     </>
   );
@@ -429,7 +439,7 @@ function ProgramasPersonalContent() {
 
 export default function ProgramasPersonalPage() {
   return (
-    <AuthGuard allowedRoles={["PERSONAL", "NUTRICIONISTA"]}>
+    <AuthGuard allowedRoles={["PERSONAL"]}>
       <Suspense fallback={null}>
         <ProgramasPersonalContent />
       </Suspense>

@@ -112,9 +112,21 @@ function SelfTemplateSlide({
 }) {
   if (!template.bannerImageUrl) {
     return (
+      // Fr18 (auditoria 2026-07-31): era uma `<div>` (via `Card`) com só
+      // `onClick` — sem `role`/`tabIndex`/tecla, um template SEM banner era
+      // inalcançável por teclado/leitor de tela (a variante COM banner,
+      // abaixo, já usa `<button>` corretamente).
       <Card
         onClick={onSelect}
-        className="relative flex aspect-video w-full cursor-pointer flex-col items-center justify-center gap-1 text-center hover:border-accent-secondary"
+        role="button"
+        tabIndex={0}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            onSelect();
+          }
+        }}
+        className="relative flex aspect-video w-full cursor-pointer flex-col items-center justify-center gap-1 text-center hover:border-accent-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-secondary"
       >
         {locked && <LockBadge />}
         <h3 className="font-display text-base font-bold">{template.name}</h3>

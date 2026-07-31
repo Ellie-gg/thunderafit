@@ -1244,3 +1244,132 @@ describe("Perf (Grupo Y, item 102 — pedido do fundador) — teto de 50 templat
     expect(r.body.error).toContain("50");
   });
 });
+
+describe("Auditoria 2026-07-31, X7 — desvincular revoga a LEITURA do Personal ao programa daquele aluno", () => {
+  let exPersonalId: string;
+  let exPersonalToken: string;
+  let exAlunoId: string;
+  let programId: string;
+
+  beforeAll(async () => {
+    const regP = await supertest(server.server)
+      .post("/api/auth/register")
+      .send({ email: "wp_x7_personal@thunderafit.test", password: pw, role: "PERSONAL" });
+    exPersonalId = regP.body.user.id;
+    exPersonalToken = (
+      await supertest(server.server)
+        .post("/api/auth/login")
+        .send({ email: "wp_x7_personal@thunderafit.test", password: pw })
+    ).body.accessToken;
+    const regA = await supertest(server.server)
+      .post("/api/auth/register")
+      .send({ email: "wp_x7_aluno@thunderafit.test", password: pw, role: "ALUNO" });
+    exAlunoId = regA.body.user.id;
+
+    await supertest(server.server)
+      .post("/api/relations")
+      .set("Authorization", `Bearer ${exPersonalToken}`)
+      .send({ alunoId: exAlunoId });
+
+    const template = await supertest(server.server)
+      .post("/api/workout-programs")
+      .set("Authorization", `Bearer ${exPersonalToken}`)
+      .send({ name: "Template X7" });
+    await supertest(server.server)
+      .post(`/api/workout-programs/${template.body.program.id}/sessions`)
+      .set("Authorization", `Bearer ${exPersonalToken}`)
+      .send({ name: "Sessão A", letter: "A" });
+    const applied = await supertest(server.server)
+      .post(`/api/workout-programs/${template.body.program.id}/apply`)
+      .set("Authorization", `Bearer ${exPersonalToken}`)
+      .send({ alunoId: exAlunoId });
+    programId = applied.body.program.id;
+  });
+
+  afterAll(async () => {
+    await prisma.user.deleteMany({
+      where: { email: { in: ["wp_x7_personal@thunderafit.test", "wp_x7_aluno@thunderafit.test"] } },
+    });
+  });
+
+  it("ANTES de desvincular, o Personal lê o programa normalmente", async () => {
+    const r = await supertest(server.server)
+      .get(`/api/workout-programs/${programId}`)
+      .set("Authorization", `Bearer ${exPersonalToken}`);
+    expect(r.status).toBe(200);
+  });
+
+  it("DEPOIS de desvincular, o mesmo Personal recebe 403 ao tentar reabrir o programa do ex-aluno", async () => {
+    const del = await supertest(server.server)
+      .delete(`/api/relations/${exAlunoId}`)
+      .set("Authorization", `Bearer ${exPersonalToken}`);
+    expect(del.status).toBe(204);
+
+    const r = await supertest(server.server)
+      .get(`/api/workout-programs/${programId}`)
+      .set("Authorization", `Bearer ${exPersonalToken}`);
+    expect(r.status).toBe(403);
+
+    // O histórico do ALUNO em si continua intacto — só o ex-Personal perde a leitura.
+    const stillExists = await prisma.workoutProgram.findUnique({ where: { id: programId } });
+    expect(stillExists).not.toBeNull();
+  });
+});
+
+describe("Auditoria 2026-07-31, X1 — NUTRICIONISTA não prescreve programa de treino (domínio do Personal)", () => {
+  let nutriId: string;
+  let nutriToken: string;
+  let nutriAlunoId: string;
+
+  beforeAll(async () => {
+    const regN = await supertest(server.server)
+      .post("/api/auth/register")
+      .send({ email: "wp_x1_nutri@thunderafit.test", password: pw, role: "NUTRICIONISTA" });
+    nutriId = regN.body.user.id;
+    nutriToken = (
+      await supertest(server.server)
+        .post("/api/auth/login")
+        .send({ email: "wp_x1_nutri@thunderafit.test", password: pw })
+    ).body.accessToken;
+    const regA = await supertest(server.server)
+      .post("/api/auth/register")
+      .send({ email: "wp_x1_aluno@thunderafit.test", password: pw, role: "ALUNO" });
+    nutriAlunoId = regA.body.user.id;
+    await supertest(server.server)
+      .post("/api/relations")
+      .set("Authorization", `Bearer ${nutriToken}`)
+      .send({ alunoId: nutriAlunoId });
+  });
+
+  afterAll(async () => {
+    await prisma.user.deleteMany({
+      where: { email: { in: ["wp_x1_nutri@thunderafit.test", "wp_x1_aluno@thunderafit.test"] } },
+    });
+  });
+
+  it("criar template retorna 403 (antes era permitido, junto do PERSONAL)", async () => {
+    const r = await supertest(server.server)
+      .post("/api/workout-programs")
+      .set("Authorization", `Bearer ${nutriToken}`)
+      .send({ name: "Template do nutri (não deveria)" });
+    expect(r.status).toBe(403);
+  });
+
+  it("aplicar um template a um aluno vinculado também retorna 403 (mesmo com vínculo real)", async () => {
+    // Cria o template direto no banco (bypassando o 403 acima) só pra ter
+    // um id de verdade pra tentar aplicar.
+    const template = await prisma.workoutProgram.create({
+      data: { personalId: nutriId, origin: "PERSONAL", name: "Seed", isTemplate: true },
+    });
+    await prisma.workout.create({ data: { programId: template.id, name: "Sessão A", letter: "A" } });
+
+    const r = await supertest(server.server)
+      .post(`/api/workout-programs/${template.id}/apply`)
+      .set("Authorization", `Bearer ${nutriToken}`)
+      .send({ alunoId: nutriAlunoId });
+    expect(r.status).toBe(403);
+
+    await prisma.workout.deleteMany({ where: { programId: template.id } });
+    await prisma.workoutProgram.delete({ where: { id: template.id } });
+  });
+});

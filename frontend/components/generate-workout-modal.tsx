@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   listExercises,
   generateWorkoutDraft,
@@ -44,6 +44,7 @@ export function GenerateWorkoutModal({ onClose }: { onClose: () => void }) {
   const t = useTranslations("generateWorkoutModal");
   const tCommon = useTranslations("common");
   const router = useRouter();
+  const queryClient = useQueryClient();
   const [step, setStep] = useState<"setup" | "session">("setup");
 
   // --- Setup: nome, esquema, objetivo — fixos pro programa inteiro. ---
@@ -121,6 +122,12 @@ export function GenerateWorkoutModal({ onClose }: { onClose: () => void }) {
       return program;
     },
     onSuccess: (program) => {
+      // Fr19 (auditoria 2026-07-31): faltava invalidar a lista de templates
+      // do Personal — o template criado pela Montagem Inteligente não
+      // aparecia em `/personal/programas` (nem o contador "X/50" atualizava)
+      // por até 2min. O `createMutation` manual da mesma tela já invalidava
+      // corretamente; só este fluxo tinha ficado de fora.
+      queryClient.invalidateQueries({ queryKey: ["workout-programs", "personal"] });
       onClose();
       router.push(`/personal/programas/${program.id}`);
     },

@@ -24,7 +24,8 @@ export async function createSetLogHandler(
     return reply.status(201).send({ setLog, isPersonalRecord, previousBest });
   } catch (err: any) {
     const status = (err as any).statusCode ?? 500;
-    return reply.status(status).send({ error: err.message });
+    // F3 (auditoria 2026-07-31): propaga `code` (ex: PERSONAL_PLAN_RESTRICTED).
+    return reply.status(status).send({ error: err.message, code: err.code });
   }
 }
 
@@ -43,6 +44,7 @@ export async function listSetLogsHandler(
     return reply.status(200).send({ setLogs });
   } catch (err: any) {
     const status = (err as any).statusCode ?? 500;
-    return reply.status(status).send({ error: err.message });
+    // F3 (auditoria 2026-07-31): propaga `code` (ex: PERSONAL_PLAN_RESTRICTED).
+    return reply.status(status).send({ error: err.message, code: err.code });
   }
 }

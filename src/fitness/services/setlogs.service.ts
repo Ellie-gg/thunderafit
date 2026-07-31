@@ -25,7 +25,7 @@ async function assertOwnerAluno(
   // de workouts.service.ts#getWorkout. Admin (papel exigido acima pra ler
   // sem ser o próprio dono) não é bloqueado, mesma exceção já feita ali.
   if (role !== "ADMIN") {
-    await assertAlunoWorkoutAccessible(workout.personalId);
+    await assertAlunoWorkoutAccessible(workout.personalId, alunoId);
   }
 
   const workoutExercise = await setlogsRepository.findWorkoutExerciseById(workoutExerciseId);
@@ -36,6 +36,27 @@ async function assertOwnerAluno(
   }
 
   return workoutExercise;
+}
+
+// F4 (auditoria 2026-07-31): nada validava esses 3 números — negativos
+// passavam direto pro Prisma. Pior caso concreto: peso E reps negativos se
+// cancelam na multiplicação (`sumVolumeKg`), produzindo um volume POSITIVO
+// espúrio no resumo pós-treino e contaminando a comparação de PR.
+function assertValidSetLog(setNumber: number, repsDone: number, weightKg: number) {
+  const err = (message: string) => {
+    const e = new Error(message) as Error & { statusCode: number };
+    e.statusCode = 400;
+    return e;
+  };
+  if (!Number.isInteger(setNumber) || setNumber < 1) {
+    throw err("setNumber deve ser um número inteiro maior ou igual a 1.");
+  }
+  if (!Number.isInteger(repsDone) || repsDone < 0) {
+    throw err("repsDone deve ser um número inteiro maior ou igual a 0.");
+  }
+  if (typeof weightKg !== "number" || !Number.isFinite(weightKg) || weightKg < 0) {
+    throw err("weightKg deve ser um número maior ou igual a 0.");
+  }
 }
 
 export const setlogsService = {
@@ -52,6 +73,7 @@ export const setlogsService = {
     repsDone: number,
     weightKg: number
   ) {
+    assertValidSetLog(setNumber, repsDone, weightKg);
     const workoutExercise = await assertOwnerAluno(workoutId, workoutExerciseId, alunoId);
 
     const { isPersonalRecord, previousBest } = await workoutSummaryService.detectPersonalRecord(

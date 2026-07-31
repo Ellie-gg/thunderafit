@@ -373,3 +373,73 @@ describe("Fase 76 — mensagens (conversa aluno↔profissional)", () => {
     expect(r.status).toBe(409);
   });
 });
+
+describe("Auditoria 2026-07-31, C1 — aceitar quando o vínculo JÁ existe (criado por outro caminho)", () => {
+  beforeAll(async () => {
+    await reg("c1_pro", "conn_c1_pro@thunderafit.test", "PERSONAL");
+    await reg("c1_aluno", "conn_c1_aluno@thunderafit.test", "ALUNO");
+    await prisma.user.update({ where: { id: ids.c1_pro }, data: { planoAssinatura: "BASE" } });
+    await supertest(server.server)
+      .put("/api/professionals/me")
+      .set(auth("c1_pro"))
+      .send({ availableForNewStudents: true, city: "Palhoça", state: "SC" });
+  });
+
+  it("solicitação pendente + vínculo criado por fora → aceitar tem sucesso (ACEITA), não fica preso", async () => {
+    const created = await supertest(server.server)
+      .post("/api/connection-requests")
+      .set(auth("c1_aluno"))
+      .send({ professionalId: ids.c1_pro, message: "Oi, quero treinar." });
+    expect(created.status).toBe(201);
+    const reqId = created.body.request.id;
+
+    // Vínculo criado por FORA do fluxo de conexões (ex: link direto/convite)
+    // enquanto a solicitação ainda está PENDENTE.
+    const direct = await supertest(server.server)
+      .post("/api/relations")
+      .set(auth("c1_pro"))
+      .send({ alunoId: ids.c1_aluno });
+    expect(direct.status).toBe(201);
+
+    const r = await supertest(server.server)
+      .post(`/api/connection-requests/${reqId}/accept`)
+      .set(auth("c1_pro"));
+    expect(r.status).toBe(200);
+    expect(r.body.request.status).toBe("ACEITA");
+  });
+});
+
+describe("Auditoria 2026-07-31, C3 — desvincular libera re-solicitação pelo diretório", () => {
+  beforeAll(async () => {
+    await reg("c3_pro", "conn_c3_pro@thunderafit.test", "PERSONAL");
+    await reg("c3_aluno", "conn_c3_aluno@thunderafit.test", "ALUNO");
+    await prisma.user.update({ where: { id: ids.c3_pro }, data: { planoAssinatura: "BASE" } });
+    await supertest(server.server)
+      .put("/api/professionals/me")
+      .set(auth("c3_pro"))
+      .send({ availableForNewStudents: true, city: "Palhoça", state: "SC" });
+  });
+
+  it("aluno conecta, é desvinculado, e consegue solicitar de novo (antes dava 409 'já vinculado' pra sempre)", async () => {
+    const created = await supertest(server.server)
+      .post("/api/connection-requests")
+      .set(auth("c3_aluno"))
+      .send({ professionalId: ids.c3_pro, message: "Oi, quero treinar." });
+    const accept = await supertest(server.server)
+      .post(`/api/connection-requests/${created.body.request.id}/accept`)
+      .set(auth("c3_pro"));
+    expect(accept.status).toBe(200);
+
+    const unlink = await supertest(server.server)
+      .delete(`/api/relations/${ids.c3_aluno}`)
+      .set(auth("c3_pro"));
+    expect(unlink.status).toBe(204);
+
+    const retry = await supertest(server.server)
+      .post("/api/connection-requests")
+      .set(auth("c3_aluno"))
+      .send({ professionalId: ids.c3_pro, message: "Oi de novo, posso voltar a treinar?" });
+    expect(retry.status).toBe(201);
+    expect(retry.body.request.status).toBe("PENDENTE");
+  });
+});

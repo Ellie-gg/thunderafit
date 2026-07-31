@@ -110,7 +110,18 @@ export const clientInvitesService = {
         return { consumed: false, reason: "Este convite já foi usado." };
       }
 
-      await relationsService.createRelation(invite.personalId, alunoId, invite.professionalType);
+      try {
+        await relationsService.createRelation(invite.personalId, alunoId, invite.professionalType);
+      } catch (err) {
+        // F2 (auditoria 2026-07-31): sem isso, uma falha AQUI (limite de
+        // alunos mudou nesse meio-tempo, duplicata) deixava o convite
+        // permanentemente queimado — marcado consumido, mas sem nenhum
+        // vínculo criado. Desfaz o consumo pra o Personal poder revogar (ou
+        // o aluno tentar de novo com o mesmo link) em vez de ficar com um
+        // link morto e um cadastro órfão.
+        await clientInvitesRepository.unconsume(invite.id, alunoId);
+        throw err;
+      }
       return { consumed: true };
     } catch (err) {
       // Fase 20 já rejeita duplicata (409) e limite (403) aqui dentro — a

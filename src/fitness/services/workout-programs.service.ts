@@ -454,7 +454,18 @@ export const workoutProgramsService = {
     // o gate de verdade: sem teste grátis/assinatura vigente, nem chega a
     // tentar aplicar.
     const template = await workoutProgramsRepository.findProgramById(sourceProgramId);
-    if (template?.category === "PREMIUM") {
+    // F1 (auditoria 2026-07-31): valida que `sourceProgramId` é REALMENTE um
+    // template SELF aplicável ANTES de mexer no treino atual do aluno. Antes,
+    // essa validação só existia dentro de `applySelfTemplateToAluno` — DEPOIS
+    // do delete do treino existente (linha abaixo) já ter rodado. Um id
+    // inválido (template do catálogo do Personal, id de outro programa
+    // qualquer, ou um UUID que não existe mais) apagava o treino ativo do
+    // aluno — com histórico de séries — e só depois respondia 404 "Template
+    // não encontrado.", como se nada tivesse acontecido.
+    if (!template || template.origin !== "SELF" || !template.isTemplate) {
+      throw httpError("Template não encontrado.", 404);
+    }
+    if (template.category === "PREMIUM") {
       const entitlement = await alunoPremiumService.getEntitlement(alunoId);
       if (!entitlement.hasAccess) {
         const err = httpError(
@@ -523,11 +534,24 @@ export const workoutProgramsService = {
     if (role !== "ADMIN" && !isOwnerPersonal && !isOwnerAluno) {
       throw httpError("Você não tem permissão para acessar este programa.", 403);
     }
+    // Achado real (auditoria 2026-07-31, X7): o Personal mantinha acesso de
+    // LEITURA ao programa/histórico de um aluno pra sempre, mesmo depois de
+    // desvinculado (a posse era só `program.personalId`, nunca revalidada
+    // contra o vínculo atual) — decisão tomada: desvincular revoga esse
+    // acesso (o histórico do ALUNO continua intacto, só o profissional perde
+    // a visão). Só se aplica a uma instância aplicada (`alunoId` presente) —
+    // um TEMPLATE nunca tem aluno associado, não há vínculo pra checar.
+    if (isOwnerPersonal && program.alunoId) {
+      const relation = await relationsRepository.findByPersonalAndAluno(program.personalId!, program.alunoId);
+      if (!relation) {
+        throw httpError("Você não tem mais vínculo com este aluno.", 403);
+      }
+    }
     // Fase 103: mesmo gate de workouts.service.ts#getWorkout — só bloqueia a
     // visão do ALUNO, nunca a do próprio Personal (precisa continuar vendo o
     // que prescreveu pra decidir quem desvincular) nem a do admin.
     if (isOwnerAluno) {
-      await assertAlunoWorkoutAccessible(program.personalId);
+      await assertAlunoWorkoutAccessible(program.personalId, userId);
     }
 
     const sessions = sortByScheme(program.workouts, program.sessionScheme);
