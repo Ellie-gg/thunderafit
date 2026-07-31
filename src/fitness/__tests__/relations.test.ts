@@ -351,6 +351,54 @@ describe("Lembrete de pagamento (ClientRelation)", () => {
     expect(reminders).toHaveLength(0);
   });
 
+  it("achado real em produção: sessão renovada via /api/auth/refresh (sem login de novo) também dispara o lembrete vencido", async () => {
+    // Reproduz o caso real: aluno já logado há dias, sessão só se renova via
+    // refresh token (access token dura 15min) — nunca chama /api/auth/login
+    // de novo. Sem a correção, o lembrete nunca dispararia pra esse padrão de
+    // uso (o mais comum), mesmo com a data de vencimento no passado.
+    // Aluno dedicado (não reaproveita studentIds[0..3]) — evita contaminar a
+    // contagem cumulativa de notificações de testes vizinhos deste describe.
+    const reg = await supertest(server.server)
+      .post("/api/auth/register")
+      .send({ email: "test_aluno_refresh_reminder@thunderafit.test", password: "SenhaSegura@123", role: "ALUNO" });
+    const alunoId = reg.body.user.id;
+    // Vínculo criado direto no banco (não via POST /api/relations) — o
+    // Personal já está no limite (3/3, FREE) neste ponto do arquivo; o que
+    // este teste cobre é o disparo do lembrete no refresh, não o limite.
+    await prisma.clientRelation.create({
+      data: {
+        personalId,
+        alunoId,
+        paymentReminderDueDate: new Date(Date.now() - 24 * 60 * 60 * 1000),
+        paymentReminderRecurring: false,
+      },
+    });
+
+    const login = await supertest(server.server)
+      .post("/api/auth/login")
+      .send({ email: "test_aluno_refresh_reminder@thunderafit.test", password: "SenhaSegura@123" });
+
+    const refresh = await supertest(server.server)
+      .post("/api/auth/refresh")
+      .send({ refreshToken: login.body.refreshToken });
+    expect(refresh.status).toBe(200);
+
+    const notifs = await supertest(server.server)
+      .get("/api/notifications")
+      .set("Authorization", `Bearer ${refresh.body.accessToken}`);
+    const reminders = notifs.body.notifications.filter((n: any) => n.type === "payment_reminder");
+    expect(reminders).toHaveLength(1);
+
+    const relations = await supertest(server.server)
+      .get("/api/relations")
+      .set("Authorization", `Bearer ${accessToken}`);
+    const relation = relations.body.relations.find((r: any) => r.id === alunoId);
+    expect(relation.paymentReminderDueDate).toBeNull();
+
+    await prisma.clientRelation.deleteMany({ where: { alunoId } });
+    await prisma.user.delete({ where: { id: alunoId } });
+  });
+
   it("ALUNO não pode configurar lembrete de pagamento (403)", async () => {
     const loginAluno = await supertest(server.server)
       .post("/api/auth/login")

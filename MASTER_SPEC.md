@@ -301,7 +301,14 @@ nesta seção — registrados como **Fase 43** e **Fase 44** no STATUS.md:
   por vínculo (`ClientRelation.paymentReminderDueDate/Recurring`); checagem simples no
   login do aluno (sem cron/scheduler — este projeto não tem essa infra) dispara UMA
   notificação in-app via o domínio `notifications` já existente. Sem processamento de
-  pagamento real.
+  pagamento real. **Correção pós-lançamento (Fase 106, 2026-07-31)**: achado real em
+  produção — a checagem só rodava em `login()`/SSO, mas o access token dura 15min e o
+  cliente renova a sessão via `POST /api/auth/refresh` (cookie httpOnly, transparente)
+  sempre que leva 401; um aluno que já estava "sempre logado" (sessão viva dentro da
+  janela de 7 dias do refresh token — o padrão de uso mais comum) nunca chamava
+  `/api/auth/login` de novo, então o lembrete nunca disparava pra ele. Corrigido
+  chamando a mesma checagem também dentro de `refresh()` — mesma filosofia "sem
+  scheduler, checa em toda interação real", só fechando o caminho que faltava.
 - ✅ **Billing de 3 degraus (Free/Base/Plus).** `PlanoAssinatura` evolui de 2 estados
   (`FREE/PAGO`) pra 3 (`FREE/BASE/PLUS`): Free 3 alunos (como hoje), Base 20 alunos +
   acesso ao diretório de descoberta, Plus alunos ilimitados + destaque/prioridade no
@@ -1713,6 +1720,19 @@ clique, sem repetir senha); outro papel vê explicação + "Sair e continuar". V
 STATUS.md, Fase 105, para os detalhes completos (inclusive a nota de transparência sobre
 `gcloud` CLI indisponível neste ambiente — a causa raiz foi confirmada por leitura de
 código, não por inspeção dos logs de produção).
+
+**Achado: a Fase 105 corrigiu o banner errado (Fase 106, 2026-07-31)**. O bug de
+"notificação não responsiva" relatado originalmente pelo fundador era o dropdown do
+sino (`NotificationBell`), não o banner de contexto do convite em `/login` — só ficou
+claro com um print de tela mostrando o dropdown cortado à esquerda da tela. Causa raiz:
+`absolute right-0` no dropdown é relativo só ao próprio botão do sino, que não fica na
+borda direita do header (avatar/hambúrguer/Sair vêm depois dele) — num celular estreito
+isso jogava a lista (320px) pra fora da tela pela esquerda. Corrigido com `fixed`
+ancorado no viewport abaixo de `sm`, voltando a `absolute` ancorado no próprio botão a
+partir de `sm` (onde já funcionava, por isso nunca tinha sido notado em desktop). Dupla
+checagem no mesmo arquivo (`app-header.tsx`) encontrou o mesmo bug, um pouco menos
+grave, no menu de trocar foto de perfil (`AvatarUpload`) — corrigido preventivamente
+junto, antes de virar reclamação separada. Ver STATUS.md, Fase 106.
 
 ### Adiado de propósito (decisão de produto, não bloqueio)
 Login Google · camadas anti-abuso de conta · web pública vs. só app nas lojas · programa
