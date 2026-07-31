@@ -60,6 +60,24 @@ function GerenciarAlunosContent() {
           <QueryError error={relationsQuery.error} onRetry={() => relationsQuery.refetch()} />
         )}
 
+        {/* Fr13 (auditoria 2026-07-31): sem isto, `programsQuery` falhando
+            fazia TODOS os alunos ganharem o selo "sem treino" indevidamente
+            — o Personal achava que tinha perdido as prescrições e corria o
+            risco de refazer treino em cima de aluno que já tinha um. */}
+        {programsQuery.isError && (
+          <QueryError error={programsQuery.error} onRetry={() => programsQuery.refetch()} />
+        )}
+
+        {/* Fr13: sem isto, a listagem de convites falhando fazia a seção
+            inteira sumir — indistinguível de "nenhum convite pendente". O
+            Personal cria um SEGUNDO convite achando que não tinha nenhum em
+            aberto, e não tem como revogar o primeiro (também escondido pelo
+            mesmo erro) — dois links de vínculo automático válidos ao mesmo
+            tempo. */}
+        {invitesQuery.isError && (
+          <QueryError error={invitesQuery.error} onRetry={() => invitesQuery.refetch()} />
+        )}
+
         {/* Fase 104 — convites pendentes: só aparece a seção se houver
             algum, pra não poluir a tela de quem não tem nenhum convite em
             aberto. */}

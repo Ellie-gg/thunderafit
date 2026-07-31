@@ -401,6 +401,7 @@
     "replaceDialogMessage": "You already have \"{name}\" active. Applying this new workout erases the current one's set history — this can't be undone.",
     "replaceDialogConfirm": "Yes, replace it",
     "replacing": "Replacing...",
+    "replaceError": "Couldn't replace the workout. Try again.",
     "previewSessionsLabel": "{count} session(s)",
     "previewApplyButton": "Apply this workout",
     "previewSelectStudent": "Select a student"
@@ -599,6 +600,7 @@
     "myStudentsDescription": "Manage who trains with you.",
     "duvidasAlunos": "Student questions",
     "duvidasAlunosPendentes": "{count, plural, one {Student questions (1 pending)} other {Student questions (# pending)}}",
+    "duvidasCountError": "Couldn't load the pending questions count.",
     "alunosVinculados": "Linked students",
     "alunosIlimitados": "Unlimited students — no cap on how many you can link.",
     "limiteAtingido": "Student limit reached.",
@@ -1205,7 +1207,10 @@
     "descriptionLabel": "Description (Focus)",
     "descriptionPlaceholder": "E.g.: Maximum glute hypertrophy, with thigh shaping...",
     "descriptionEnLabel": "Description (EN)",
-    "descriptionEsLabel": "Description (ES)"
+    "descriptionEsLabel": "Description (ES)",
+    "detailLoadError": "Error loading this template's sessions.",
+    "addSessionError": "Error adding session.",
+    "deleteError": "Error deleting the template."
   },
   "nimbusUsuarios": {
     "title": "Users",
@@ -1283,7 +1288,9 @@
   "notificationBell": {
     "title": "Notifications",
     "markAllRead": "Mark all as read",
-    "empty": "No notifications yet."
+    "empty": "No notifications yet.",
+    "loadError": "Couldn't load notifications.",
+    "actionError": "Couldn't complete the action. Try again."
   },
   "postWorkoutSummaryCard": {
     "workoutHeader": "Workout {workoutLetter} · {workoutName}",

@@ -160,6 +160,13 @@ function PersonalDashboardContent() {
               ? t("duvidasAlunosPendentes", { count: pendingThreads })
               : t("duvidasAlunos")}
           </Link>
+          {/* Fr13 (auditoria 2026-07-31): sem isto, uma falha aqui só fazia
+              o atalho assumir silenciosamente "0 pendentes" — o Personal
+              interpretava como "nenhuma dúvida em aberto" quando na
+              verdade a contagem não carregou. */}
+          {threadsQuery.isError && (
+            <p className="text-xs text-danger">{t("duvidasCountError")}</p>
+          )}
         </Card>
       </main>
     </>

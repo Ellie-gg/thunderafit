@@ -60,6 +60,13 @@ function NovaDuvidaForm({ onCreated }: { onCreated: () => void }) {
         <p className="text-sm text-muted">{t("form.noPersonals")}</p>
       )}
 
+      {/* Fr13 (auditoria 2026-07-31): sem isto, uma falha aqui deixava o
+          card renderizar só o título, sem select nem erro nem retry — o
+          aluno via um card em branco sem entender por quê. */}
+      {personalsQuery.isError && (
+        <QueryError error={personalsQuery.error} onRetry={() => personalsQuery.refetch()} />
+      )}
+
       {personals.length === 1 && (
         <p className="text-xs text-muted">
           {t("form.recipientFor", {

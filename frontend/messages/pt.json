@@ -401,6 +401,7 @@
     "replaceDialogMessage": "Você já tem \"{name}\" ativo. Aplicar este novo treino apaga o histórico de séries do atual — essa ação não pode ser desfeita.",
     "replaceDialogConfirm": "Sim, trocar",
     "replacing": "Trocando...",
+    "replaceError": "Erro ao trocar de treino. Tente de novo.",
     "previewSessionsLabel": "{count} sessão(ões)",
     "previewApplyButton": "Aplicar este treino",
     "previewSelectStudent": "Selecione um aluno"
@@ -599,6 +600,7 @@
     "myStudentsDescription": "Gerencie quem treina com você.",
     "duvidasAlunos": "Dúvidas de alunos",
     "duvidasAlunosPendentes": "{count, plural, one {Dúvidas de alunos (1 pendente)} other {Dúvidas de alunos (# pendentes)}}",
+    "duvidasCountError": "Não foi possível carregar a contagem de dúvidas pendentes.",
     "alunosVinculados": "Alunos vinculados",
     "alunosIlimitados": "Alunos ilimitados — sem limite pra vincular.",
     "limiteAtingido": "Limite de alunos atingido.",
@@ -1205,7 +1207,10 @@
     "descriptionLabel": "Descrição (Foco)",
     "descriptionPlaceholder": "Ex: Hipertrofia máxima do glúteo, com modelagem de coxas...",
     "descriptionEnLabel": "Descrição (EN)",
-    "descriptionEsLabel": "Descrição (ES)"
+    "descriptionEsLabel": "Descrição (ES)",
+    "detailLoadError": "Erro ao carregar as sessões deste template.",
+    "addSessionError": "Erro ao adicionar sessão.",
+    "deleteError": "Erro ao excluir o template."
   },
   "nimbusUsuarios": {
     "title": "Usuários",
@@ -1283,7 +1288,9 @@
   "notificationBell": {
     "title": "Notificações",
     "markAllRead": "Marcar todas como lidas",
-    "empty": "Nenhuma notificação ainda."
+    "empty": "Nenhuma notificação ainda.",
+    "loadError": "Não foi possível carregar as notificações.",
+    "actionError": "Não foi possível concluir a ação. Tente de novo."
   },
   "postWorkoutSummaryCard": {
     "workoutHeader": "Treino {workoutLetter} · {workoutName}",
