@@ -92,4 +92,18 @@ export const progressRepository = {
       distinct: ["exerciseId"],
     });
   },
+
+  // Fase 112 (plano de captura de dados pro dashboard histórico): lê
+  // `WorkoutSessionLog` (tabela do domínio fitness) direto via Prisma, mesmo
+  // padrão já usado no resto deste arquivo pra `SetLog`/`WorkoutExercise` —
+  // evita importar o repository de fitness aqui, mantendo os domínios
+  // desacoplados (nenhum dos dois módulos precisa saber do outro).
+  async findRecentSessionLogs(alunoId: string, limit: number) {
+    return prisma.workoutSessionLog.findMany({
+      where: { alunoId },
+      select: { completedAt: true, durationSeconds: true, volumeKg: true, rpe: true },
+      orderBy: { completedAt: "desc" },
+      take: limit,
+    });
+  },
 };

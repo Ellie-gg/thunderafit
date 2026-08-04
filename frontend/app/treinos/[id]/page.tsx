@@ -109,7 +109,10 @@ function ExecucaoContent() {
   }, [workoutQuery.data]);
 
   const completeMutation = useMutation({
-    mutationFn: () => completeWorkout(workoutId),
+    // Fase 112: manda a duração real (já calculada no cronômetro client-side
+    // desde a Fase 89, nunca era enviada) — persistida agora no backend,
+    // fundação de dado pro dashboard histórico.
+    mutationFn: (duration: number | null) => completeWorkout(workoutId, duration),
     onSuccess: (data) => {
       // Fr1/Fr4/F5 (auditoria 2026-07-31): antes, `clearWorkoutSession` +
       // `setSession(null)` rodavam ANTES de saber se a conclusão tinha
@@ -187,12 +190,13 @@ function ExecucaoContent() {
     if (!session || summary || autoFinishTriggeredRef.current) return;
     if (idleMs < IDLE_AUTO_FINISH_MS) return;
     autoFinishTriggeredRef.current = true;
-    setDurationSeconds(Math.round((session.lastActivityAt - session.startedAt) / 1000));
+    const duration = Math.round((session.lastActivityAt - session.startedAt) / 1000);
+    setDurationSeconds(duration);
     // Fr1/Fr4/F5: NÃO limpa a sessão aqui — só depois de confirmado sucesso
     // (`completeMutation.onSuccess` acima). Se a chamada falhar, a sessão
     // continua íntegra (localStorage + estado) em vez de perder a duração
     // real sem o backend ter registrado nada.
-    completeMutation.mutate();
+    completeMutation.mutate(duration);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [idleMs, session, summary, workoutId]);
 
@@ -223,8 +227,9 @@ function ExecucaoContent() {
     // entrada que não passava pelo `disabled` do botão principal.
     if (!session || completeMutation.isPending) return;
     autoFinishTriggeredRef.current = true;
-    setDurationSeconds(Math.round((Date.now() - session.startedAt) / 1000));
-    completeMutation.mutate();
+    const duration = Math.round((Date.now() - session.startedAt) / 1000);
+    setDurationSeconds(duration);
+    completeMutation.mutate(duration);
   }
 
   if (workoutQuery.isLoading) {

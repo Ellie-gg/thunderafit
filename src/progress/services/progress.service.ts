@@ -146,4 +146,50 @@ export const progressService = {
 
     return { days, volumeKg: Math.round(volumeKg * 10) / 10, setsThisWeek, streakDays };
   },
+
+  /**
+   * Fase 112 (plano de captura de dados pro dashboard histórico) — fundação:
+   * `WorkoutSessionLog` (1 linha por conclusão real, ver schema.prisma) no
+   * lugar da heurística de janela de 6h que o resumo pós-treino usava antes.
+   *
+   * `trainingLoad` = RPE × duração em minutos (método de Foster, "carga de
+   * treino subjetiva") — substituto sem NENHUM sensor pra "intensidade do
+   * treino": só existe quando a sessão tem os dois dados (duração real +
+   * RPE respondido), já que RPE é uma pergunta OPCIONAL pós-treino.
+   *
+   * `effortDistribution` agrupa as sessões com RPE respondido em 3 faixas
+   * (leve/moderado/intenso) — distribuição ENTRE sessões, não zona-a-zona
+   * DENTRO de 1 sessão (não temos amostragem contínua pra isso — ver plano
+   * de dados, seção "crítica de design").
+   */
+  async getSessionHistory(alunoId: string, limit = 20) {
+    const rows = await progressRepository.findRecentSessionLogs(alunoId, limit);
+
+    const sessions = rows
+      .slice()
+      .reverse() // mais antiga → mais recente, ordem natural de um gráfico de tendência
+      .map((r) => {
+        const durationMinutes =
+          r.durationSeconds !== null ? Math.round((r.durationSeconds / 60) * 10) / 10 : null;
+        const trainingLoad =
+          r.rpe !== null && durationMinutes !== null ? Math.round(r.rpe * durationMinutes) : null;
+        return {
+          date: dayKey(r.completedAt),
+          durationMinutes,
+          volumeKg: Math.round(r.volumeKg * 10) / 10,
+          rpe: r.rpe,
+          trainingLoad,
+        };
+      });
+
+    const effortDistribution = { leve: 0, moderado: 0, intenso: 0 };
+    for (const r of rows) {
+      if (r.rpe === null) continue;
+      if (r.rpe <= 3) effortDistribution.leve++;
+      else if (r.rpe <= 6) effortDistribution.moderado++;
+      else effortDistribution.intenso++;
+    }
+
+    return { sessions, effortDistribution };
+  },
 };

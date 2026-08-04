@@ -421,7 +421,12 @@
     "dateColumn": "Fecha",
     "maxLoadColumn": "Carga máxima",
     "workoutFrequency": "Frecuencia de entrenamientos (últimos 6 meses)",
-    "workoutsInPeriod": "{count} entrenamiento(s) en el período"
+    "workoutsInPeriod": "{count} entrenamiento(s) en el período",
+    "sessionTrendTitle": "Tendencia de las sesiones",
+    "durationTrendLabel": "Duración (min)",
+    "trainingLoadTrendLabel": "Carga de entrenamiento (RPE × duración)",
+    "noSessionHistory": "Completa algunos entrenamientos con el cronómetro activo para ver tu tendencia aquí.",
+    "effortDistributionTitle": "Distribución de esfuerzo (sesiones recientes)"
   },
   "anamneseAluno": {
     "healthDataConsent": "Acepto el tratamiento de estos datos de salud según nuestra <privacy>Política de Privacidad</privacy>.",
@@ -575,6 +580,18 @@
   "loadHistoryChart": {
     "tooltipLabel": "Carga máxima"
   },
+  "sessionTrendChart": {
+    "durationTooltip": "Duración",
+    "durationUnit": "min",
+    "trainingLoadTooltip": "Carga de entrenamiento",
+    "noAnswer": "sin respuesta"
+  },
+  "effortDistributionBar": {
+    "noData": "Responde \"qué tan difícil fue\" después de algunos entrenamientos para ver tu distribución de esfuerzo aquí.",
+    "leve": "Leve",
+    "moderado": "Moderado",
+    "intenso": "Intenso"
+  },
   "weeklyStats": {
     "setsThisWeek": "Series esta semana",
     "streak": "Racha",
@@ -657,7 +674,12 @@
     "semSeriesRegistradas": "Este alumno aún no registró ninguna serie de entrenamiento.",
     "carregandoHistorico": "Cargando historial...",
     "semSeriesParaExercicio": "Todavía no hay series registradas para este ejercicio.",
-    "treinosUltimos6Meses": "{count} entrenamiento(s) en los últimos 6 meses"
+    "treinosUltimos6Meses": "{count} entrenamiento(s) en los últimos 6 meses",
+    "sessionTrendTitle": "Tendencia de las sesiones",
+    "durationTrendLabel": "Duración (min)",
+    "trainingLoadTrendLabel": "Carga de entrenamiento (RPE × duración)",
+    "noSessionHistory": "Este alumno todavía no completó ningún entrenamiento con el cronómetro activo.",
+    "effortDistributionTitle": "Distribución de esfuerzo (sesiones recientes)"
   },
   "personalAnamneseView": {
     "titulo": "Anamnesis del alumno",
@@ -1321,5 +1343,15 @@
   },
   "personalVincularAluno": {
     "professionalLabel": "Entrenador Personal"
+  },
+  "rpeQuickPicker": {
+    "title": "¿Qué tan difícil fue ese entrenamiento?",
+    "levelVeryLight": "Muy leve",
+    "levelLight": "Leve",
+    "levelModerate": "Moderado",
+    "levelHard": "Difícil",
+    "levelVeryHard": "Muy difícil",
+    "confirmed": "¡Registrado, gracias! 💪",
+    "error": "No se pudo registrar. Intenta de nuevo."
   }
 }

@@ -9,6 +9,7 @@ import type { WorkoutCompletionSummary } from "@/lib/types";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { PostWorkoutSummaryCard } from "@/components/post-workout-summary-card";
+import { RpeQuickPicker } from "@/components/rpe-quick-picker";
 
 function dataUrlToBase64(dataUrl: string): string {
   return dataUrl.slice(dataUrl.indexOf(",") + 1);
@@ -131,6 +132,11 @@ export function PostWorkoutSummaryModal({
           alunoName={alunoName}
           durationSeconds={durationSeconds}
         />
+        {/* Fase 112: fora do `cardRef` de propósito — não deve entrar na
+            imagem exportada/compartilhada. `sessionLogId` só existe quando o
+            backend já persistiu o WorkoutSessionLog (sempre, num client
+            atualizado); sem ele, simplesmente não oferece a pergunta. */}
+        {summary.sessionLogId && <RpeQuickPicker sessionLogId={summary.sessionLogId} />}
         {shareError && (
           <p className="text-sm text-danger">
             {t("shareErrorMessage")}

@@ -1761,3 +1761,23 @@ de segurança do Claude Code bloqueou a re-tentativa de acesso ao banco depois d
 consulta com erro de nome de tabela; precisa ser rodada manualmente ou com permissão explícita
 antes de considerar A2 100% fechado. Ver `docs/AUDITORIA-2026-07-31.md` (achado-a-achado + apêndice
 de resolução) e STATUS.md Fase 107 (resumo narrativo por lote).
+
+### Grupo AD — Fundação de dados pro dashboard de treino (resumo + histórico). ✅ Fases A/B/C
+(captura sem wearable) CONCLUÍDAS (registradas como "Fase 112" no STATUS.md) — wearable/FC/calorias
+reais deliberadamente FORA de escopo desta rodada.
+
+Pedido do fundador: dashboards visuais no estilo SmartGym (cards de métrica, série temporal,
+barra de zona — já desenhado na skill `thunderafit-dashboard-design`), mas com o pedido explícito
+de planejar a captura de DADO antes de qualquer tela, já que o app não tinha nenhuma métrica de
+esforço/duração real persistida. Entregue: tabela nova `WorkoutSessionLog` (1 linha por conclusão
+real de sessão, fundação que faltava — antes só existia uma heurística de janela de 6h, sem
+histórico durável); duração real (já calculada no cliente desde a Fase 89, nunca chegava no
+backend) e RPE (Percepção Subjetiva de Esforço, opcional, nunca bloqueia a conclusão) capturados
+sem depender de nenhum wearable; dashboard histórico novo em `/evolucao` (tendência de
+duração/carga de treino + distribuição de esforço) reaproveitado quase de graça pelo Personal via
+`/personal/alunos/[alunoId]` (mesmo endpoint, mesmo componente, `alunoId` já era aceito desde a
+Fase 29). **Deliberadamente fora**: Health Connect (Android) e Apple HealthKit (iOS, ainda
+deferred) — nenhum plugin Capacitor de saúde existe no projeto hoje; ficou registrado como
+iniciativa separada, não pré-requisito de nada do que foi entregue. Ver STATUS.md Fase 112 pro
+resumo completo, incluindo a crítica de design sobre quais padrões da skill de referência não têm
+dado de sustento sem wearable (curva contínua intra-sessão, zona de FC intra-sessão).
