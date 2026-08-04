@@ -1,11 +1,13 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { NextIntlClientProvider } from "next-intl";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { toPng } from "html-to-image";
 import { Capacitor } from "@capacitor/core";
 import { Filesystem } from "@capacitor/filesystem";
 import { Share } from "@capacitor/share";
 import { PostWorkoutSummaryModal } from "@/components/post-workout-summary-modal";
+import { setSessionRpe } from "@/lib/api/workouts";
 import ptMessages from "@/messages/pt.json";
 import type { WorkoutCompletionSummary } from "@/lib/types";
 
@@ -26,10 +28,17 @@ jest.mock("@capacitor/share", () => ({
   Share: { share: jest.fn() },
 }));
 
+// Fase 112: RpeQuickPicker (renderizado dentro do modal quando `sessionLogId`
+// existe) chama isto via useMutation — mockado pra não bater na rede real.
+jest.mock("@/lib/api/workouts", () => ({
+  setSessionRpe: jest.fn(),
+}));
+
 const mockedToPng = toPng as jest.Mock;
 const mockedIsNativePlatform = Capacitor.isNativePlatform as jest.Mock;
 const mockedWriteFile = Filesystem.writeFile as jest.Mock;
 const mockedShare = Share.share as jest.Mock;
+const mockedSetSessionRpe = setSessionRpe as jest.Mock;
 
 const summary: WorkoutCompletionSummary = {
   workoutId: "w-1",
@@ -45,11 +54,19 @@ const summary: WorkoutCompletionSummary = {
   personalRecords: [],
 };
 
-function renderModal(onClose: () => void) {
+function renderModal(onClose: () => void, summaryOverride: WorkoutCompletionSummary = summary) {
+  const queryClient = new QueryClient();
   return render(
-    <NextIntlClientProvider locale="pt" messages={ptMessages}>
-      <PostWorkoutSummaryModal summary={summary} alunoName="João" durationSeconds={754} onClose={onClose} />
-    </NextIntlClientProvider>
+    <QueryClientProvider client={queryClient}>
+      <NextIntlClientProvider locale="pt" messages={ptMessages}>
+        <PostWorkoutSummaryModal
+          summary={summaryOverride}
+          alunoName="João"
+          durationSeconds={754}
+          onClose={onClose}
+        />
+      </NextIntlClientProvider>
+    </QueryClientProvider>
   );
 }
 
@@ -65,6 +82,8 @@ beforeEach(() => {
   mockedWriteFile.mockResolvedValue({ uri: "file:///cache/thunderafit-treino-B.png" });
   mockedShare.mockReset();
   mockedShare.mockResolvedValue({});
+  mockedSetSessionRpe.mockReset();
+  mockedSetSessionRpe.mockResolvedValue({ sessionLog: { id: "log-1", rpe: 6 } });
   // jsdom não implementa fetch para data: URLs — mock global só pra este
   // teste, já que o handler real usa fetch(dataUrl).blob() pra converter a
   // PNG data URL do html-to-image num Blob (caminho web/download).
@@ -148,5 +167,23 @@ describe("PostWorkoutSummaryModal — dentro do Capacitor (nativo)", () => {
     );
     // handleDownload também roda toPng — soma 2 chamadas (a original + o fallback).
     expect(mockedToPng).toHaveBeenCalledTimes(2);
+  });
+});
+
+describe("PostWorkoutSummaryModal — RPE opcional (Fase 112)", () => {
+  it("não mostra a pergunta de RPE quando o summary não tem sessionLogId (client antigo)", () => {
+    renderModal(jest.fn());
+    expect(screen.queryByText(/Quão difícil foi esse treino/i)).not.toBeInTheDocument();
+  });
+
+  it("mostra a pergunta de RPE e grava a resposta ao clicar num nível", async () => {
+    const user = userEvent.setup();
+    renderModal(jest.fn(), { ...summary, sessionLogId: "log-1" });
+
+    expect(screen.getByText(/Quão difícil foi esse treino/i)).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: /Moderado/i }));
+
+    await waitFor(() => expect(mockedSetSessionRpe).toHaveBeenCalledWith("log-1", 6));
+    expect(await screen.findByText(/Registrado, obrigado/i)).toBeInTheDocument();
   });
 });

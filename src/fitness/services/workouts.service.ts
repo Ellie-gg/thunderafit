@@ -3,9 +3,16 @@ import { workoutsRepository } from "../repository/workouts.repository";
 import { relationsRepository } from "../repository/relations.repository";
 import { exercisesRepository } from "../repository/exercises.repository";
 import { workoutSummaryService } from "./workout-summary.service";
+import { workoutSessionLogRepository } from "../repository/workout-session-log.repository";
 import { exerciseTranslationService } from "./exercise-translation.service";
 import { alunoPremiumService } from "../../billing/services/aluno-premium.service";
 import { assertPersonalCanPrescribe, assertAlunoWorkoutAccessible } from "../../lib/plan-expiry";
+
+// Fase 112: RPE (Percepção Subjetiva de Esforço), escala Borg 0-10 —
+// pergunta única e opcional depois do resumo pós-treino (ver
+// WorkoutSessionLog.rpe no schema pro racional completo).
+const RPE_MIN = 0;
+const RPE_MAX = 10;
 
 // Fase 27: observação do Personal sobre a prescrição de um exercício.
 const MAX_NOTES_LENGTH = 500;
@@ -346,7 +353,13 @@ export const workoutsService = {
   // antes de sobrescrevê-lo, já que ele é a única fronteira disponível pra
   // separar "séries desta sessão" das de sessões passadas (não existe uma
   // entidade de sessão/conclusão própria no banco).
-  async completeWorkout(workoutId: string, userId: string) {
+  // Fase 112: `durationSeconds` opcional — já era calculado 100% no cliente
+  // (cronômetro real desde a Fase 89) e nunca chegava aqui; agora é
+  // persistido em WorkoutSessionLog junto do resto do resumo, fundação de
+  // dado pro dashboard histórico. Continua opcional (nunca 400 sem ele) —
+  // um client mais antigo, ou uma sessão sem cronômetro por algum motivo,
+  // ainda consegue concluir normalmente, só sem duração real registrada.
+  async completeWorkout(workoutId: string, userId: string, durationSeconds?: number | null) {
     const workout = await workoutsRepository.findById(workoutId);
     if (!workout) {
       const err = new Error("Treino não encontrado.");
@@ -363,6 +376,12 @@ export const workoutsService = {
     // repetir a condição `workout.alunoId === userId`.
     await assertAlunoWorkoutAccessible(workout.personalId, userId);
 
+    if (durationSeconds !== undefined && durationSeconds !== null) {
+      if (!Number.isFinite(durationSeconds) || durationSeconds < 0) {
+        throw httpError("durationSeconds deve ser um número maior ou igual a 0.", 400);
+      }
+    }
+
     const previousLastCompletedAt = workout.lastCompletedAt;
     const completedAt = new Date();
 
@@ -373,6 +392,34 @@ export const workoutsService = {
     );
     const updatedWorkout = await workoutsRepository.markCompleted(workoutId, completedAt);
 
-    return { workout: updatedWorkout, summary };
+    const normalizedDuration =
+      durationSeconds !== undefined && durationSeconds !== null ? Math.round(durationSeconds) : null;
+    const sessionLog = await workoutSessionLogRepository.create({
+      workoutId,
+      alunoId: userId,
+      startedAt: normalizedDuration !== null ? new Date(completedAt.getTime() - normalizedDuration * 1000) : null,
+      completedAt,
+      durationSeconds: normalizedDuration,
+      volumeKg: summary.volumeKg,
+      setsCompleted: summary.setsLogged,
+    });
+
+    return { workout: updatedWorkout, summary: { ...summary, sessionLogId: sessionLog.id } };
+  },
+
+  // Fase 112: preenchimento OPCIONAL do RPE (Percepção Subjetiva de Esforço,
+  // 0-10) depois do resumo pós-treino — nunca bloqueia a conclusão em si
+  // (`completeWorkout` acima já terminou antes desta chamada existir), pensado
+  // especificamente pro caminho de auto-encerramento por inatividade (onde
+  // não há ninguém presente pra responder na hora).
+  async setSessionRpe(sessionLogId: string, alunoId: string, rpe: number) {
+    if (!Number.isInteger(rpe) || rpe < RPE_MIN || rpe > RPE_MAX) {
+      throw httpError(`rpe deve ser um número inteiro entre ${RPE_MIN} e ${RPE_MAX}.`, 400);
+    }
+    const sessionLog = await workoutSessionLogRepository.findById(sessionLogId);
+    if (!sessionLog || sessionLog.alunoId !== alunoId) {
+      throw httpError("Sessão não encontrada.", 404);
+    }
+    return workoutSessionLogRepository.setRpe(sessionLogId, rpe);
   },
 };

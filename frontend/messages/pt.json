@@ -421,7 +421,12 @@
     "dateColumn": "Data",
     "maxLoadColumn": "Carga máxima",
     "workoutFrequency": "Frequência de treinos (últimos 6 meses)",
-    "workoutsInPeriod": "{count} treino(s) no período"
+    "workoutsInPeriod": "{count} treino(s) no período",
+    "sessionTrendTitle": "Tendência das sessões",
+    "durationTrendLabel": "Duração (min)",
+    "trainingLoadTrendLabel": "Carga de treino (RPE × duração)",
+    "noSessionHistory": "Conclua alguns treinos com o cronômetro ativo para ver sua tendência aqui.",
+    "effortDistributionTitle": "Distribuição de esforço (últimas sessões)"
   },
   "anamneseAluno": {
     "healthDataConsent": "Concordo com o tratamento destes dados de saúde conforme nossa <privacy>Política de Privacidade</privacy>.",
@@ -575,6 +580,18 @@
   "loadHistoryChart": {
     "tooltipLabel": "Carga máxima"
   },
+  "sessionTrendChart": {
+    "durationTooltip": "Duração",
+    "durationUnit": "min",
+    "trainingLoadTooltip": "Carga de treino",
+    "noAnswer": "sem resposta"
+  },
+  "effortDistributionBar": {
+    "noData": "Responda \"quão difícil foi\" depois de alguns treinos para ver sua distribuição de esforço aqui.",
+    "leve": "Leve",
+    "moderado": "Moderado",
+    "intenso": "Intenso"
+  },
   "weeklyStats": {
     "setsThisWeek": "Séries na semana",
     "streak": "Sequência",
@@ -657,7 +674,12 @@
     "semSeriesRegistradas": "Este aluno ainda não registrou nenhuma série de treino.",
     "carregandoHistorico": "Carregando histórico...",
     "semSeriesParaExercicio": "Ainda não há séries registradas para este exercício.",
-    "treinosUltimos6Meses": "{count} treino(s) nos últimos 6 meses"
+    "treinosUltimos6Meses": "{count} treino(s) nos últimos 6 meses",
+    "sessionTrendTitle": "Tendência das sessões",
+    "durationTrendLabel": "Duração (min)",
+    "trainingLoadTrendLabel": "Carga de treino (RPE × duração)",
+    "noSessionHistory": "Este aluno ainda não concluiu nenhum treino com o cronômetro ativo.",
+    "effortDistributionTitle": "Distribuição de esforço (últimas sessões)"
   },
   "personalAnamneseView": {
     "titulo": "Anamnese do aluno",
@@ -1321,5 +1343,15 @@
   },
   "personalVincularAluno": {
     "professionalLabel": "Personal Trainer"
+  },
+  "rpeQuickPicker": {
+    "title": "Quão difícil foi esse treino?",
+    "levelVeryLight": "Muito leve",
+    "levelLight": "Leve",
+    "levelModerate": "Moderado",
+    "levelHard": "Difícil",
+    "levelVeryHard": "Muito difícil",
+    "confirmed": "Registrado, obrigado! 💪",
+    "error": "Não foi possível registrar. Tente de novo."
   }
 }

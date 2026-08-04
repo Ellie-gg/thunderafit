@@ -116,6 +116,8 @@ export interface WorkoutCompletionSummary {
   volumeChangePercent: number | null;
   streakDays: number;
   personalRecords: WorkoutSummaryPR[];
+  /** Fase 112: id do WorkoutSessionLog recém-criado — usado só pra mandar o RPE opcional depois. */
+  sessionLogId?: string;
 }
 
 export type SessionScheme = "LETTER" | "WEEKDAY";
@@ -210,6 +212,30 @@ export interface WeeklySummaryResponse {
   // Fase 39: usado na tela inicial no lugar do volume ("Séries na semana").
   setsThisWeek: number;
   streakDays: number;
+}
+
+// Fase 112 (plano de captura de dados pro dashboard histórico): 1 ponto por
+// sessão CONCLUÍDA de verdade (ver WorkoutSessionLog no schema) — ordem
+// cronológica (mais antiga primeiro), pronta pro gráfico de tendência.
+export interface SessionHistoryPoint {
+  date: string;
+  durationMinutes: number | null;
+  volumeKg: number;
+  /** Percepção Subjetiva de Esforço (Borg 0-10) — null quando o aluno pulou a pergunta pós-treino. */
+  rpe: number | null;
+  /** RPE × duração (minutos) — método de Foster de "carga de treino"; null se faltar duração OU RPE. */
+  trainingLoad: number | null;
+}
+
+export interface EffortDistribution {
+  leve: number;
+  moderado: number;
+  intenso: number;
+}
+
+export interface SessionHistoryResponse {
+  sessions: SessionHistoryPoint[];
+  effortDistribution: EffortDistribution;
 }
 
 export interface Anamnesis {

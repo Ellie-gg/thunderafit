@@ -4,6 +4,7 @@ import {
   frequencyHandler,
   listLoggedExercisesHandler,
   weeklySummaryHandler,
+  sessionHistoryHandler,
 } from "../controllers/progress.controller";
 
 export async function progressRoutes(fastify: FastifyInstance) {
@@ -29,5 +30,13 @@ export async function progressRoutes(fastify: FastifyInstance) {
     "/api/progress/weekly-summary",
     { preHandler: [(fastify as any).authenticate] },
     weeklySummaryHandler
+  );
+
+  // Fase 112: tendência de sessões (duração/volume/carga de treino) +
+  // distribuição de esforço (RPE) — fundação do dashboard histórico.
+  fastify.get(
+    "/api/progress/session-history",
+    { preHandler: [(fastify as any).authenticate] },
+    sessionHistoryHandler
   );
 }

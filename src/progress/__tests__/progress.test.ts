@@ -297,3 +297,92 @@ describe("GET /api/progress/weekly-summary (Fase 33.4)", () => {
     expect(r.status).toBe(400);
   });
 });
+
+describe("Fase 112 — GET /api/progress/session-history (tendência + distribuição de esforço)", () => {
+  let sessionLogIds: string[] = [];
+
+  beforeAll(async () => {
+    // 3 sessões: 1 leve (rpe 2), 1 moderada (rpe 5), 1 intensa (rpe 9, sem
+    // duração — trainingLoad deve vir null mesmo com rpe presente) — cobre
+    // as 3 faixas de effortDistribution e o caso "rpe sem duração".
+    const logs = await Promise.all([
+      prisma.workoutSessionLog.create({
+        data: {
+          workoutId,
+          alunoId,
+          completedAt: daysAgo(2),
+          durationSeconds: 1800,
+          volumeKg: 500,
+          setsCompleted: 10,
+          rpe: 2,
+        },
+      }),
+      prisma.workoutSessionLog.create({
+        data: {
+          workoutId,
+          alunoId,
+          completedAt: daysAgo(1),
+          durationSeconds: 2400,
+          volumeKg: 800,
+          setsCompleted: 15,
+          rpe: 5,
+        },
+      }),
+      prisma.workoutSessionLog.create({
+        data: {
+          workoutId,
+          alunoId,
+          completedAt: daysAgo(0),
+          durationSeconds: null,
+          volumeKg: 1000,
+          setsCompleted: 20,
+          rpe: 9,
+        },
+      }),
+    ]);
+    sessionLogIds = logs.map((l) => l.id);
+  });
+
+  afterAll(async () => {
+    await prisma.workoutSessionLog.deleteMany({ where: { id: { in: sessionLogIds } } });
+  });
+
+  it("ALUNO vê a própria tendência + distribuição de esforço", async () => {
+    const r = await supertest(server.server)
+      .get("/api/progress/session-history")
+      .set("Authorization", `Bearer ${tokenAluno}`);
+    expect(r.status).toBe(200);
+    expect(r.body.sessions).toHaveLength(3);
+    // Ordem cronológica (mais antiga primeiro), não a ordem de criação reversa.
+    expect(r.body.sessions[0].volumeKg).toBe(500);
+    expect(r.body.sessions[2].volumeKg).toBe(1000);
+    // trainingLoad = rpe × minutos, só quando os dois existem.
+    expect(r.body.sessions[0].trainingLoad).toBe(2 * 30);
+    expect(r.body.sessions[2].trainingLoad).toBeNull(); // rpe presente, duração ausente
+    expect(r.body.effortDistribution).toEqual({ leve: 1, moderado: 1, intenso: 1 });
+  });
+
+  it("PERSONAL vinculado vê o histórico do aluno passando alunoId", async () => {
+    const r = await supertest(server.server)
+      .get(`/api/progress/session-history?alunoId=${alunoId}`)
+      .set("Authorization", `Bearer ${tokenPersonal}`);
+    expect(r.status).toBe(200);
+    expect(r.body.sessions).toHaveLength(3);
+  });
+
+  it("PERSONAL sem vínculo com o aluno recebe 403", async () => {
+    const regOutro = await supertest(server.server)
+      .post("/api/auth/register")
+      .send({ email: "test_progress_personal_sem_vinculo@thunderafit.test", password: "SenhaSegura@123", role: "PERSONAL" });
+    const loginOutro = await supertest(server.server)
+      .post("/api/auth/login")
+      .send({ email: "test_progress_personal_sem_vinculo@thunderafit.test", password: "SenhaSegura@123" });
+
+    const r = await supertest(server.server)
+      .get(`/api/progress/session-history?alunoId=${alunoId}`)
+      .set("Authorization", `Bearer ${loginOutro.body.accessToken}`);
+    expect(r.status).toBe(403);
+
+    await prisma.user.deleteMany({ where: { email: "test_progress_personal_sem_vinculo@thunderafit.test" } });
+  });
+});

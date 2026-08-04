@@ -612,6 +612,12 @@ model Workout {
   updatedAt       DateTime          @updatedAt
   // Fase 55: i18n do nome da sessão — ver WorkoutTranslation.
   translations    WorkoutTranslation[]
+  // Fase 112: 1 linha por conclusão real (ver WorkoutSessionLog abaixo) —
+  // fundação de dado pro dashboard histórico, no lugar da heurística de
+  // janela de 6h que `workout-summary.service.ts` usava antes (não existia
+  // nenhum registro durável de sessão até aqui, só este timestamp único
+  // sobrescrito a cada conclusão).
+  sessionLogs     WorkoutSessionLog[]
 
   // Perf (triagem 2026-07-24): findAllByAluno/findAllByPersonal filtram por
   // uma dessas colunas + orderBy createdAt; programId é usado em vários
@@ -619,6 +625,55 @@ model Workout {
   @@index([alunoId, createdAt])
   @@index([personalId, createdAt])
   @@index([programId])
+}
+
+// Fase 112 (plano de captura de dados pro dashboard histórico): 1 linha por
+// CONCLUSÃO real de sessão — antes não existia nenhuma entidade assim, e o
+// resumo pós-treino (workout-summary.service.ts) inferia "os sets desta
+// sessão" por uma janela heurística de 6h contra SetLog.loggedAt. Persistir
+// isso aqui abre espaço pra qualquer gráfico histórico (tendência de volume/
+// duração/carga de treino, distribuição de RPE entre sessões) sem precisar
+// de outra migration estrutural — RPE já entra nesta MESMA tabela, nullable,
+// preenchido num passo opcional separado (depois do resumo pós-treino, pra
+// não travar a conclusão em si).
+model WorkoutSessionLog {
+  id              String   @id @default(uuid())
+  workoutId       String
+  // `onDelete: Cascade` (mesmo padrão de WorkoutTranslation acima) — um log
+  // de sessão sem o Workout que ele descreve não tem nenhum significado
+  // independente, igual uma tradução; sem isso, apagar um Workout (Personal/
+  // aluno excluindo um programa, ou o cascade de remoção de usuário em
+  // `user-deletion.ts`) violaria a FK assim que existisse pelo menos 1
+  // sessão concluída.
+  workout         Workout  @relation(fields: [workoutId], references: [id], onDelete: Cascade)
+  // Denormalizado (igual Workout.alunoId já é denormalizado em relação ao
+  // program) — esta tabela existe justamente pra consulta histórica
+  // agregada por aluno, então evita 1 join a mais em toda query de gráfico.
+  alunoId         String
+  // Nullable: o auto-encerramento por inatividade (workout-session-timer.ts)
+  // sempre tem os dois timestamps: `startedAt` é quando o aluno clicou
+  // "Iniciar Treino" (client-only, mesma fonte que já formatava a duração
+  // exibida — nunca era persistida até esta fase).
+  startedAt       DateTime?
+  completedAt     DateTime @default(now())
+  // Segundos entre início e conclusão (calculado no cliente, cronômetro real
+  // desde a Fase 89) — nullable só por segurança de schema; a UI sempre
+  // manda este valor quando existe uma sessão em andamento.
+  durationSeconds Int?
+  volumeKg        Float
+  setsCompleted   Int
+  // RPE (Percepção Subjetiva de Esforço, escala Borg 0-10) — pergunta única
+  // e OPCIONAL depois do resumo pós-treino, nunca bloqueia a conclusão em
+  // si (importante pro caminho de auto-encerramento por inatividade, onde
+  // não há ninguém presente pra responder). Null = aluno pulou a pergunta.
+  rpe             Int?
+  createdAt       DateTime @default(now())
+
+  // Consultado sempre por aluno (gráficos de tendência/distribuição) ou por
+  // workout (histórico específico de 1 sessão) — mesmo padrão de índice
+  // duplo já usado em Workout acima.
+  @@index([alunoId, completedAt])
+  @@index([workoutId, completedAt])
 }
 
 // Fase 55: i18n do nome de SESSÃO (ex: "Peito, Ombro e Tríceps") — mesmo

@@ -45,6 +45,12 @@ export interface WorkoutCompletionSummary {
   volumeChangePercent: number | null;
   streakDays: number;
   personalRecords: WorkoutSummaryPR[];
+  // Fase 112: id do WorkoutSessionLog recém-criado — permite ao frontend
+  // mandar o RPE opcional depois, num passo separado que nunca bloqueia a
+  // conclusão em si. Preenchido por workouts.service.ts#completeWorkout
+  // (depois que este summary já foi computado, ver lá o racional completo);
+  // nunca populado por buildCompletionSummary diretamente.
+  sessionLogId?: string;
 }
 
 function sumVolumeKg(logs: Array<{ weightKg: number; repsDone: number }>): number {

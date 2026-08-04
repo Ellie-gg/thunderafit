@@ -1,5 +1,11 @@
 import { apiFetch } from "./client";
-import type { LoggedExercise, LoadHistoryResponse, FrequencyResponse, WeeklySummaryResponse } from "../types";
+import type {
+  LoggedExercise,
+  LoadHistoryResponse,
+  FrequencyResponse,
+  WeeklySummaryResponse,
+  SessionHistoryResponse,
+} from "../types";
 
 // Fase 29: as 3 funções abaixo ganham `alunoId` opcional — usado pelo hub do
 // Personal (`/personal/alunos/[alunoId]`) pra ver a evolução de um aluno
@@ -35,4 +41,12 @@ export function getFrequency(period: string = "6m", alunoId?: string) {
 export function getWeeklySummary(alunoId?: string) {
   const qs = alunoId ? `?alunoId=${encodeURIComponent(alunoId)}` : "";
   return apiFetch<WeeklySummaryResponse>(`/api/progress/weekly-summary${qs}`);
+}
+
+// Fase 112: tendência de sessões (duração/volume/carga de treino) +
+// distribuição de esforço (RPE) — mesmo padrão de `alunoId` opcional das
+// funções acima (Personal vendo a evolução de um aluno vinculado).
+export function getSessionHistory(alunoId?: string) {
+  const qs = alunoId ? `?alunoId=${encodeURIComponent(alunoId)}` : "";
+  return apiFetch<SessionHistoryResponse>(`/api/progress/session-history${qs}`);
 }
