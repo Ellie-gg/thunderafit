@@ -7,7 +7,7 @@ import { useParams } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { listRelations, setPaymentReminder, type RelationAluno } from "@/lib/api/relations";
 import { listWorkoutPrograms } from "@/lib/api/workouts";
-import { listLoggedExercises, getLoadHistory, getFrequency } from "@/lib/api/progress";
+import { listLoggedExercises, getLoadHistory, getFrequency, getSessionHistory } from "@/lib/api/progress";
 import { ApiError } from "@/lib/api/client";
 import { AuthGuard } from "@/components/auth-guard";
 import { AppHeader } from "@/components/app-header";
@@ -18,6 +18,7 @@ import { Label } from "@/components/ui/label";
 import { QueryError } from "@/components/query-error";
 import { DeleteProgramButton } from "@/components/delete-program-button";
 import { UserAvatar } from "@/components/user-avatar";
+import { EffortDistributionBar } from "@/components/effort-distribution-bar";
 import { useActiveIntlLocale } from "@/i18n/use-active-locale";
 import { useTranslations } from "next-intl";
 
@@ -29,6 +30,14 @@ const LoadHistoryChart = dynamic(
 );
 const FrequencyChart = dynamic(
   () => import("@/components/frequency-chart").then((m) => m.FrequencyChart),
+  { ssr: false }
+);
+// Fase 112: extensão leve pro Personal (plano de dados pro dashboard
+// histórico) — MESMO componente/endpoint já usado em `/evolucao` do aluno,
+// só passando `alunoId` (o backend já aceita isso desde a Fase 29, mesmo
+// padrão de `getLoadHistory`/`getFrequency` acima). Nenhuma tela nova.
+const SessionTrendChart = dynamic(
+  () => import("@/components/session-trend-chart").then((m) => m.SessionTrendChart),
   { ssr: false }
 );
 
@@ -177,6 +186,13 @@ function AlunoHubContent() {
     queryFn: () => getFrequency("6m", alunoId),
   });
 
+  // Fase 112: mesma extensão leve — tendência de duração/carga de treino +
+  // distribuição de esforço deste aluno específico.
+  const sessionHistoryQuery = useQuery({
+    queryKey: ["session-history", alunoId],
+    queryFn: () => getSessionHistory(alunoId),
+  });
+
   return (
     <>
       <AppHeader />
@@ -319,6 +335,35 @@ function AlunoHubContent() {
                 </>
               )}
             </Card>
+
+            {/* Fase 112: extensão leve pro Personal — mesmos 2 gráficos de
+                `/evolucao` do aluno, só que pra ESTE aluno específico. */}
+            <Card className="flex flex-col gap-4">
+              <h2 className="font-display text-lg font-bold">{t("sessionTrendTitle")}</h2>
+
+              {sessionHistoryQuery.isLoading && <p className="text-sm text-muted">{tc("loading")}</p>}
+              {sessionHistoryQuery.isError && (
+                <QueryError error={sessionHistoryQuery.error} onRetry={() => sessionHistoryQuery.refetch()} />
+              )}
+              {sessionHistoryQuery.isSuccess && sessionHistoryQuery.data.sessions.length === 0 && (
+                <p className="text-sm text-muted">{t("noSessionHistory")}</p>
+              )}
+              {sessionHistoryQuery.isSuccess && sessionHistoryQuery.data.sessions.length > 0 && (
+                <>
+                  <p className="text-xs text-muted">{t("durationTrendLabel")}</p>
+                  <SessionTrendChart sessions={sessionHistoryQuery.data.sessions} metric="durationMinutes" />
+                  <p className="text-xs text-muted">{t("trainingLoadTrendLabel")}</p>
+                  <SessionTrendChart sessions={sessionHistoryQuery.data.sessions} metric="trainingLoad" />
+                </>
+              )}
+            </Card>
+
+            {sessionHistoryQuery.isSuccess && sessionHistoryQuery.data.sessions.length > 0 && (
+              <Card className="flex flex-col gap-3">
+                <h2 className="font-display text-lg font-bold">{t("effortDistributionTitle")}</h2>
+                <EffortDistributionBar distribution={sessionHistoryQuery.data.effortDistribution} />
+              </Card>
+            )}
           </>
         )}
       </main>

@@ -385,6 +385,126 @@ describe("POST /api/workouts/:id/complete (Fase 35 — resumo pós-treino)", () 
   });
 });
 
+describe("Fase 112 — WorkoutSessionLog (duração real + RPE opcional)", () => {
+  let sessionWorkoutId: string;
+
+  beforeAll(async () => {
+    const w = await supertest(server.server)
+      .post("/api/workouts")
+      .set("Authorization", `Bearer ${accessToken}`)
+      .send({ alunoId: vinculadoAlunoId, name: "Sessão fase 112", letter: "B" });
+    sessionWorkoutId = w.body.workout.id;
+  });
+
+  afterAll(async () => {
+    // WorkoutSessionLog tem onDelete: Cascade em Workout — apagar o Workout
+    // já basta, sem precisar limpar a tabela nova separadamente.
+    await prisma.workout.deleteMany({ where: { id: sessionWorkoutId } });
+  });
+
+  it("concluir com durationSeconds persiste o WorkoutSessionLog e devolve sessionLogId", async () => {
+    const r = await supertest(server.server)
+      .post(`/api/workouts/${sessionWorkoutId}/complete`)
+      .set("Authorization", `Bearer ${alunoAccessToken}`)
+      .send({ durationSeconds: 1800 });
+
+    expect(r.status).toBe(200);
+    expect(typeof r.body.summary.sessionLogId).toBe("string");
+
+    const log = await prisma.workoutSessionLog.findUnique({
+      where: { id: r.body.summary.sessionLogId },
+    });
+    expect(log).not.toBeNull();
+    expect(log?.durationSeconds).toBe(1800);
+    expect(log?.alunoId).toBe(vinculadoAlunoId);
+    expect(log?.startedAt).not.toBeNull();
+  });
+
+  it("concluir sem durationSeconds ainda funciona (client mais antigo), sem duração persistida", async () => {
+    const w = await supertest(server.server)
+      .post("/api/workouts")
+      .set("Authorization", `Bearer ${accessToken}`)
+      .send({ alunoId: vinculadoAlunoId, name: "Sessão fase 112 sem duração", letter: "C" });
+    const noDurationWorkoutId = w.body.workout.id;
+
+    const r = await supertest(server.server)
+      .post(`/api/workouts/${noDurationWorkoutId}/complete`)
+      .set("Authorization", `Bearer ${alunoAccessToken}`);
+    expect(r.status).toBe(200);
+
+    const log = await prisma.workoutSessionLog.findUnique({
+      where: { id: r.body.summary.sessionLogId },
+    });
+    expect(log?.durationSeconds).toBeNull();
+    expect(log?.startedAt).toBeNull();
+
+    await prisma.workout.deleteMany({ where: { id: noDurationWorkoutId } });
+  });
+
+  it("durationSeconds negativo recebe 400", async () => {
+    const w = await supertest(server.server)
+      .post("/api/workouts")
+      .set("Authorization", `Bearer ${accessToken}`)
+      .send({ alunoId: vinculadoAlunoId, name: "Sessão fase 112 negativa", letter: "D" });
+    const badWorkoutId = w.body.workout.id;
+
+    const r = await supertest(server.server)
+      .post(`/api/workouts/${badWorkoutId}/complete`)
+      .set("Authorization", `Bearer ${alunoAccessToken}`)
+      .send({ durationSeconds: -5 });
+    expect(r.status).toBe(400);
+
+    await prisma.workout.deleteMany({ where: { id: badWorkoutId } });
+  });
+
+  it("PATCH /api/workout-sessions/:sessionLogId/rpe grava o RPE do dono", async () => {
+    const complete = await supertest(server.server)
+      .post(`/api/workouts/${sessionWorkoutId}/complete`)
+      .set("Authorization", `Bearer ${alunoAccessToken}`)
+      .send({ durationSeconds: 2400 });
+    const sessionLogId = complete.body.summary.sessionLogId;
+
+    const r = await supertest(server.server)
+      .patch(`/api/workout-sessions/${sessionLogId}/rpe`)
+      .set("Authorization", `Bearer ${alunoAccessToken}`)
+      .send({ rpe: 7 });
+    expect(r.status).toBe(200);
+    expect(r.body.sessionLog.rpe).toBe(7);
+  });
+
+  it("RPE fora de 0-10 recebe 400", async () => {
+    const complete = await supertest(server.server)
+      .post(`/api/workouts/${sessionWorkoutId}/complete`)
+      .set("Authorization", `Bearer ${alunoAccessToken}`)
+      .send({ durationSeconds: 1200 });
+    const sessionLogId = complete.body.summary.sessionLogId;
+
+    const r = await supertest(server.server)
+      .patch(`/api/workout-sessions/${sessionLogId}/rpe`)
+      .set("Authorization", `Bearer ${alunoAccessToken}`)
+      .send({ rpe: 11 });
+    expect(r.status).toBe(400);
+  });
+
+  it("outro aluno não consegue gravar RPE numa sessão que não é dele (404, não vaza existência)", async () => {
+    const complete = await supertest(server.server)
+      .post(`/api/workouts/${sessionWorkoutId}/complete`)
+      .set("Authorization", `Bearer ${alunoAccessToken}`)
+      .send({ durationSeconds: 1500 });
+    const sessionLogId = complete.body.summary.sessionLogId;
+
+    const loginRes2 = await supertest(server.server)
+      .post("/api/auth/login")
+      .send({ email: "test_workout_aluno2@thunderafit.test", password: "SenhaSegura@123" });
+
+    const r = await supertest(server.server)
+      .patch(`/api/workout-sessions/${sessionLogId}/rpe`)
+      .set("Authorization", `Bearer ${loginRes2.body.accessToken}`)
+      .send({ rpe: 5 });
+    expect(r.status).toBe(404);
+  });
+});
+
 describe("DELETE /api/workouts/:id/exercises/:exerciseId (Fase 65)", () => {
   // Treino próprio, isolado do `workoutId` compartilhado do resto do
   // arquivo — evita quebrar as asserções de contagem fixa (ex: "toHaveLength(3)")

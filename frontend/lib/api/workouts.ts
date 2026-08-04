@@ -74,11 +74,26 @@ export function deleteWorkoutExercise(workoutId: string, workoutExerciseId: stri
 // Fase 16 — Programas de Treino
 // Fase 35: a resposta agora também traz o resumo pós-treino (volume,
 // comparação com a sessão anterior, PRs).
-export function completeWorkout(workoutId: string) {
+// Fase 112: `durationSeconds` opcional — já era calculado 100% no cliente
+// (cronômetro real) e nunca era enviado; agora persiste no backend, fundação
+// de dado pro dashboard histórico.
+export function completeWorkout(workoutId: string, durationSeconds?: number | null) {
   return apiFetch<{ workout: Workout; summary: WorkoutCompletionSummary }>(
     `/api/workouts/${workoutId}/complete`,
-    { method: "POST" }
+    {
+      method: "POST",
+      body: durationSeconds != null ? { durationSeconds } : undefined,
+    }
   );
+}
+
+// Fase 112: RPE opcional, mandado num passo SEPARADO depois do resumo
+// pós-treino — nunca bloqueia `completeWorkout` acima.
+export function setSessionRpe(sessionLogId: string, rpe: number) {
+  return apiFetch<{ sessionLog: unknown }>(`/api/workout-sessions/${sessionLogId}/rpe`, {
+    method: "PATCH",
+    body: { rpe },
+  });
 }
 
 // Fase 29: `alunoId` opcional — filtra pra só as instâncias aplicadas a um

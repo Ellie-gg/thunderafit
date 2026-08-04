@@ -9,6 +9,7 @@ import {
   renameWorkoutHandler,
   getWorkoutHandler,
   completeWorkoutHandler,
+  setSessionRpeHandler,
 } from "../controllers/workouts.controller";
 import { workoutDetailSchema } from "./workout-response-schemas";
 
@@ -99,5 +100,16 @@ export async function workoutsRoutes(fastify: FastifyInstance) {
       preHandler: [(fastify as any).authenticate],
     },
     completeWorkoutHandler
+  );
+
+  // Fase 112: RPE opcional, preenchido depois do resumo pós-treino — rota
+  // própria (não aninhada em /workouts/:id) porque o recurso é o
+  // WorkoutSessionLog, identificado pelo próprio id retornado por /complete.
+  fastify.patch(
+    "/api/workout-sessions/:sessionLogId/rpe",
+    {
+      preHandler: [(fastify as any).authenticate],
+    },
+    setSessionRpeHandler
   );
 }

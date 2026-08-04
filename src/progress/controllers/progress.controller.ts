@@ -121,3 +121,22 @@ export async function weeklySummaryHandler(
     return reply.status(status).send({ error: err.message });
   }
 }
+
+// Fase 112: mesmo `assertAluno` acima já cobre o Personal ver o histórico de
+// um aluno vinculado (extensão leve pro hub `/personal/alunos/[alunoId]`) —
+// nenhuma lógica de posse nova precisou ser escrita pra isso.
+export async function sessionHistoryHandler(
+  request: FastifyRequest<{ Querystring: { alunoId?: string; limit?: string } }>,
+  reply: FastifyReply
+) {
+  try {
+    const alunoId = await assertAluno(request);
+    const limitParam = Number(request.query.limit);
+    const limit = Number.isFinite(limitParam) && limitParam > 0 ? Math.min(limitParam, 100) : 20;
+    const result = await progressService.getSessionHistory(alunoId, limit);
+    return reply.status(200).send(result);
+  } catch (err: any) {
+    const status = (err as any).statusCode ?? 500;
+    return reply.status(status).send({ error: err.message });
+  }
+}

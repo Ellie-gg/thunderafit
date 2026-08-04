@@ -236,19 +236,41 @@ export async function getWorkoutHandler(
 }
 
 export async function completeWorkoutHandler(
-  request: FastifyRequest<{ Params: { id: string } }>,
+  request: FastifyRequest<{ Params: { id: string }; Body: { durationSeconds?: number } }>,
   reply: FastifyReply
 ) {
   const userId = (request as any).user.sub;
   const { id } = request.params;
+  // Fase 112: opcional — corpo vazio (client mais antigo) continua
+  // funcionando exatamente como antes, só sem duração real persistida.
+  const durationSeconds = request.body?.durationSeconds;
 
   try {
-    const { workout, summary } = await workoutsService.completeWorkout(id, userId);
+    const { workout, summary } = await workoutsService.completeWorkout(id, userId, durationSeconds);
     return reply.status(200).send({ workout, summary });
   } catch (err: any) {
     const status = (err as any).statusCode ?? 500;
     // F3 (auditoria 2026-07-31): propaga `code` (ex: PERSONAL_PLAN_RESTRICTED,
     // PERSONAL_OVER_LIMIT) — antes só os 402 de Premium abaixo faziam isso.
     return reply.status(status).send({ error: err.message, code: err.code });
+  }
+}
+
+// Fase 112: preenchimento opcional do RPE, num passo SEPARADO depois do
+// resumo pós-treino — nunca bloqueia `completeWorkoutHandler` acima.
+export async function setSessionRpeHandler(
+  request: FastifyRequest<{ Params: { sessionLogId: string }; Body: { rpe: number } }>,
+  reply: FastifyReply
+) {
+  const userId = (request as any).user.sub;
+  const { sessionLogId } = request.params;
+  const { rpe } = request.body;
+
+  try {
+    const sessionLog = await workoutsService.setSessionRpe(sessionLogId, userId, rpe);
+    return reply.status(200).send({ sessionLog });
+  } catch (err: any) {
+    const status = (err as any).statusCode ?? 500;
+    return reply.status(status).send({ error: err.message });
   }
 }

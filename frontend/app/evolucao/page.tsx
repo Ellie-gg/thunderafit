@@ -4,11 +4,12 @@ import { useState } from "react";
 import dynamic from "next/dynamic";
 import { useTranslations } from "next-intl";
 import { useQuery } from "@tanstack/react-query";
-import { listLoggedExercises, getLoadHistory, getFrequency } from "@/lib/api/progress";
+import { listLoggedExercises, getLoadHistory, getFrequency, getSessionHistory } from "@/lib/api/progress";
 import { AuthGuard } from "@/components/auth-guard";
 import { AppHeader } from "@/components/app-header";
 import { Card } from "@/components/ui/card";
 import { QueryError } from "@/components/query-error";
+import { EffortDistributionBar } from "@/components/effort-distribution-bar";
 
 // Perf (Grupo Y, item 103): `recharts` só é necessário quando o histórico
 // realmente chegou (`loadHistoryQuery.data`/`frequencyQuery.data`) — carregar
@@ -19,6 +20,11 @@ const LoadHistoryChart = dynamic(
 );
 const FrequencyChart = dynamic(
   () => import("@/components/frequency-chart").then((m) => m.FrequencyChart),
+  { ssr: false }
+);
+// Fase 112: mesmo motivo de dynamic import acima.
+const SessionTrendChart = dynamic(
+  () => import("@/components/session-trend-chart").then((m) => m.SessionTrendChart),
   { ssr: false }
 );
 
@@ -66,6 +72,14 @@ function EvolucaoContent() {
   const frequencyQuery = useQuery({
     queryKey: ["frequency"],
     queryFn: () => getFrequency("6m"),
+  });
+
+  // Fase 112 (plano de captura de dados pro dashboard histórico): tendência
+  // de duração real/carga de treino + distribuição de esforço — fundação
+  // nova (WorkoutSessionLog), sem depender de wearable nenhum.
+  const sessionHistoryQuery = useQuery({
+    queryKey: ["session-history"],
+    queryFn: () => getSessionHistory(),
   });
 
   return (
@@ -170,6 +184,43 @@ function EvolucaoContent() {
             </>
           )}
         </Card>
+
+        {/* Fase 112: tendência de duração real + carga de treino (RPE ×
+            duração) — 2 gráficos de 1 métrica cada, nunca um só com 2 eixos
+            (escalas incompatíveis demais pra compartilhar eixo). */}
+        <Card className="flex flex-col gap-4">
+          <span className="text-xs font-semibold uppercase tracking-wide text-accent-secondary">
+            {t("sessionTrendTitle")}
+          </span>
+
+          {sessionHistoryQuery.isLoading && <p className="text-sm text-muted">{tCommon("loading")}</p>}
+
+          {sessionHistoryQuery.isError && (
+            <QueryError error={sessionHistoryQuery.error} onRetry={() => sessionHistoryQuery.refetch()} />
+          )}
+
+          {sessionHistoryQuery.isSuccess && sessionHistoryQuery.data.sessions.length === 0 && (
+            <p className="text-sm text-muted">{t("noSessionHistory")}</p>
+          )}
+
+          {sessionHistoryQuery.isSuccess && sessionHistoryQuery.data.sessions.length > 0 && (
+            <>
+              <p className="text-xs text-muted">{t("durationTrendLabel")}</p>
+              <SessionTrendChart sessions={sessionHistoryQuery.data.sessions} metric="durationMinutes" />
+              <p className="text-xs text-muted">{t("trainingLoadTrendLabel")}</p>
+              <SessionTrendChart sessions={sessionHistoryQuery.data.sessions} metric="trainingLoad" />
+            </>
+          )}
+        </Card>
+
+        {sessionHistoryQuery.isSuccess && sessionHistoryQuery.data.sessions.length > 0 && (
+          <Card className="flex flex-col gap-3">
+            <span className="text-xs font-semibold uppercase tracking-wide text-accent-secondary">
+              {t("effortDistributionTitle")}
+            </span>
+            <EffortDistributionBar distribution={sessionHistoryQuery.data.effortDistribution} />
+          </Card>
+        )}
       </main>
     </>
   );

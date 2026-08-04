@@ -421,7 +421,12 @@
     "dateColumn": "Date",
     "maxLoadColumn": "Max load",
     "workoutFrequency": "Workout frequency (last 6 months)",
-    "workoutsInPeriod": "{count} workout(s) in this period"
+    "workoutsInPeriod": "{count} workout(s) in this period",
+    "sessionTrendTitle": "Session trend",
+    "durationTrendLabel": "Duration (min)",
+    "trainingLoadTrendLabel": "Training load (RPE × duration)",
+    "noSessionHistory": "Complete a few workouts with the timer running to see your trend here.",
+    "effortDistributionTitle": "Effort distribution (recent sessions)"
   },
   "anamneseAluno": {
     "healthDataConsent": "I agree to the processing of this health data under our <privacy>Privacy Policy</privacy>.",
@@ -575,6 +580,18 @@
   "loadHistoryChart": {
     "tooltipLabel": "Max load"
   },
+  "sessionTrendChart": {
+    "durationTooltip": "Duration",
+    "durationUnit": "min",
+    "trainingLoadTooltip": "Training load",
+    "noAnswer": "no answer"
+  },
+  "effortDistributionBar": {
+    "noData": "Answer \"how hard was it\" after a few workouts to see your effort distribution here.",
+    "leve": "Light",
+    "moderado": "Moderate",
+    "intenso": "Hard"
+  },
   "weeklyStats": {
     "setsThisWeek": "Sets this week",
     "streak": "Streak",
@@ -657,7 +674,12 @@
     "semSeriesRegistradas": "This student hasn't logged any workout sets yet.",
     "carregandoHistorico": "Loading history...",
     "semSeriesParaExercicio": "No sets logged for this exercise yet.",
-    "treinosUltimos6Meses": "{count} workout(s) in the last 6 months"
+    "treinosUltimos6Meses": "{count} workout(s) in the last 6 months",
+    "sessionTrendTitle": "Session trend",
+    "durationTrendLabel": "Duration (min)",
+    "trainingLoadTrendLabel": "Training load (RPE × duration)",
+    "noSessionHistory": "This student hasn't completed any workout with the timer running yet.",
+    "effortDistributionTitle": "Effort distribution (recent sessions)"
   },
   "personalAnamneseView": {
     "titulo": "Student's health profile",
@@ -1321,5 +1343,15 @@
   },
   "personalVincularAluno": {
     "professionalLabel": "Personal Trainer"
+  },
+  "rpeQuickPicker": {
+    "title": "How hard was that workout?",
+    "levelVeryLight": "Very light",
+    "levelLight": "Light",
+    "levelModerate": "Moderate",
+    "levelHard": "Hard",
+    "levelVeryHard": "Very hard",
+    "confirmed": "Logged, thanks! 💪",
+    "error": "Couldn't log it. Try again."
   }
 }
