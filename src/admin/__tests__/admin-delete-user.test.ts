@@ -235,3 +235,72 @@ describe("Fase 80 — DELETE /api/admin/users/:id", () => {
     await prisma.user.deleteMany({ where: { id: { in: [alunoId] } } });
   }, 20000);
 });
+
+// M4 (auditoria 2026-08-06): `ClientInvite` (Fase 104) tinha ficado FORA do
+// cascade de `src/lib/user-deletion.ts`, quebrando a regra escrita em
+// `src/admin/AGENTS.md`. Como o modelo não tem FK, a deleção não falhava — as
+// linhas só sobreviviam: link de convite válido apontando pra profissional
+// inexistente, e **PII persistindo** (`label` é texto livre, tipicamente o
+// nome de quem foi convidado).
+describe("Auditoria 2026-08-06, M4 — excluir usuário limpa os convites de vínculo", () => {
+  const emailPersonal = "admin_del_m4_personal@thunderafit.test";
+  const emailAluno = "admin_del_m4_aluno@thunderafit.test";
+
+  afterAll(async () => {
+    const users = await prisma.user.findMany({ where: { email: { in: [emailPersonal, emailAluno] } } });
+    await prisma.clientInvite.deleteMany({
+      where: { OR: users.flatMap((u) => [{ personalId: u.id }, { consumedByAlunoId: u.id }]) },
+    });
+    await prisma.user.deleteMany({ where: { email: { in: [emailPersonal, emailAluno] } } });
+  }, 20000);
+
+  it("apaga os convites pendentes criados pelo profissional excluído", async () => {
+    await supertest(server.server)
+      .post("/api/auth/register")
+      .send({ email: emailPersonal, password: "SenhaSegura@123", role: "PERSONAL" });
+    const login = await supertest(server.server)
+      .post("/api/auth/login")
+      .send({ email: emailPersonal, password: "SenhaSegura@123" });
+    const personal = await prisma.user.findUnique({ where: { email: emailPersonal } });
+
+    const criado = await supertest(server.server)
+      .post("/api/client-invites")
+      .set("Authorization", `Bearer ${login.body.accessToken}`)
+      .send({ label: "Cliente João da Silva" });
+    expect(criado.status).toBe(201);
+    expect(await prisma.clientInvite.count({ where: { personalId: personal!.id } })).toBe(1);
+
+    const r = await supertest(server.server)
+      .delete(`/api/admin/users/${personal!.id}`)
+      .set("Authorization", `Bearer ${adminToken}`);
+    expect(r.status).toBe(200);
+
+    // O convite (com o `label`, que é PII) não pode sobreviver ao dono.
+    expect(await prisma.clientInvite.count({ where: { personalId: personal!.id } })).toBe(0);
+  }, 30000);
+
+  it("limpa também o outro lado: aluno excluído não fica preso em convite consumido", async () => {
+    await supertest(server.server)
+      .post("/api/auth/register")
+      .send({ email: emailAluno, password: "SenhaSegura@123", role: "ALUNO" });
+    const aluno = await prisma.user.findUnique({ where: { email: emailAluno } });
+
+    // Convite já consumido por este aluno, com o profissional ainda vivo.
+    await prisma.clientInvite.create({
+      data: {
+        personalId: adminId, // qualquer id serve: não há FK
+        label: "Convite consumido",
+        tokenHash: `m4-hash-${Date.now()}`,
+        expiresAt: new Date(Date.now() + 86400000),
+        consumedAt: new Date(),
+        consumedByAlunoId: aluno!.id,
+      },
+    });
+
+    const r = await supertest(server.server)
+      .delete(`/api/admin/users/${aluno!.id}`)
+      .set("Authorization", `Bearer ${adminToken}`);
+    expect(r.status).toBe(200);
+    expect(await prisma.clientInvite.count({ where: { consumedByAlunoId: aluno!.id } })).toBe(0);
+  }, 30000);
+});

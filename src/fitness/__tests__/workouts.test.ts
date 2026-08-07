@@ -543,6 +543,110 @@ describe("Fase 112 — WorkoutSessionLog (duração real + RPE opcional)", () =>
   });
 });
 
+// A4 (auditoria 2026-08-06): o `/complete` virou escritor de linha durável na
+// Fase 112 sem guard de reentrega — uma 2ª chamada gravava uma SESSÃO FANTASMA
+// (`volumeKg: 0`, `setsCompleted: 0`), porque a janela do resumo passava a
+// excluir todas as séries reais depois que `lastCompletedAt` já havia sido
+// movido. Essa linha entrava nos gráficos de tendência de /evolucao. Nenhum
+// teste cobria duas chamadas seguidas — foi essa ausência que deixou passar.
+describe("Auditoria 2026-08-06, A4 — /complete é idempotente dentro da janela de dedupe", () => {
+  let workoutId: string;
+  let exercicioId: string;
+
+  beforeAll(async () => {
+    const w = await supertest(server.server)
+      .post("/api/workouts")
+      .set("Authorization", `Bearer ${accessToken}`)
+      .send({ alunoId: vinculadoAlunoId, name: "Sessão A4 dedupe", letter: "C" });
+    workoutId = w.body.workout.id;
+
+    const ex = await prisma.exercise.findFirst({ orderBy: { name: "asc" } });
+    const we = await supertest(server.server)
+      .post(`/api/workouts/${workoutId}/exercises`)
+      .set("Authorization", `Bearer ${accessToken}`)
+      .send({ exerciseId: ex!.id, sets: 3, repsRange: "8-12", restSeconds: 60, order: 1 });
+    exercicioId = we.body.workoutExercise.id;
+
+    // Séries reais, pra o resumo ter volume > 0 e o fantasma ser detectável.
+    for (const setNumber of [1, 2, 3]) {
+      await supertest(server.server)
+        .post(`/api/workouts/${workoutId}/exercises/${exercicioId}/logs`)
+        .set("Authorization", `Bearer ${alunoAccessToken}`)
+        .send({ setNumber, repsDone: 10, weightKg: 50 });
+    }
+  });
+
+  afterAll(async () => {
+    await prisma.setLog.deleteMany({ where: { workoutExerciseId: exercicioId } });
+    await prisma.workoutExercise.deleteMany({ where: { workoutId } });
+    await prisma.workout.deleteMany({ where: { id: workoutId } });
+  });
+
+  it("duas chamadas seguidas gravam UMA linha só, e a 2ª devolve o mesmo sessionLogId", async () => {
+    const primeira = await supertest(server.server)
+      .post(`/api/workouts/${workoutId}/complete`)
+      .set("Authorization", `Bearer ${alunoAccessToken}`)
+      .send({ durationSeconds: 1800 });
+    expect(primeira.status).toBe(200);
+    expect(primeira.body.summary.volumeKg).toBeGreaterThan(0);
+
+    const segunda = await supertest(server.server)
+      .post(`/api/workouts/${workoutId}/complete`)
+      .set("Authorization", `Bearer ${alunoAccessToken}`)
+      .send({ durationSeconds: 1800 });
+    expect(segunda.status).toBe(200);
+
+    // O ponto central: nenhuma linha fantasma.
+    const logs = await prisma.workoutSessionLog.findMany({ where: { workoutId } });
+    expect(logs).toHaveLength(1);
+    expect(logs[0].volumeKg).toBeGreaterThan(0);
+    expect(logs[0].setsCompleted).toBe(3);
+
+    // E a reentrega aponta pro MESMO log, não pra um novo.
+    expect(segunda.body.summary.sessionLogId).toBe(primeira.body.summary.sessionLogId);
+  });
+
+  it("a reentrega devolve o volume REAL, não uma sessão vazia", async () => {
+    // Regressão do efeito colateral: sem reconstruir a janela original, o
+    // retry (caminho deliberado do fix do Fr1/Fr4 em falha de rede) devolvia
+    // volume 0 depois de um treino de verdade.
+    const r = await supertest(server.server)
+      .post(`/api/workouts/${workoutId}/complete`)
+      .set("Authorization", `Bearer ${alunoAccessToken}`)
+      .send({ durationSeconds: 1800 });
+    expect(r.status).toBe(200);
+    expect(r.body.summary.volumeKg).toBeGreaterThan(0);
+    expect(r.body.summary.setsLogged).toBe(3);
+  });
+
+  it("não move lastCompletedAt de novo na reentrega", async () => {
+    const antes = await prisma.workout.findUnique({ where: { id: workoutId } });
+    await supertest(server.server)
+      .post(`/api/workouts/${workoutId}/complete`)
+      .set("Authorization", `Bearer ${alunoAccessToken}`)
+      .send({ durationSeconds: 1800 });
+    const depois = await prisma.workout.findUnique({ where: { id: workoutId } });
+    expect(depois!.lastCompletedAt!.getTime()).toBe(antes!.lastCompletedAt!.getTime());
+  });
+
+  it("fora da janela de dedupe, uma conclusão nova é tratada como sessão de verdade", async () => {
+    // Envelhece a única conclusão pra além da janela (2 min), simulando duas
+    // sessões legítimas do mesmo treino em dias diferentes.
+    const antiga = new Date(Date.now() - 10 * 60 * 1000);
+    await prisma.workoutSessionLog.updateMany({ where: { workoutId }, data: { completedAt: antiga } });
+    await prisma.workout.update({ where: { id: workoutId }, data: { lastCompletedAt: antiga } });
+
+    const r = await supertest(server.server)
+      .post(`/api/workouts/${workoutId}/complete`)
+      .set("Authorization", `Bearer ${alunoAccessToken}`)
+      .send({ durationSeconds: 900 });
+    expect(r.status).toBe(200);
+
+    const logs = await prisma.workoutSessionLog.findMany({ where: { workoutId } });
+    expect(logs).toHaveLength(2);
+  });
+});
+
 describe("DELETE /api/workouts/:id/exercises/:exerciseId (Fase 65)", () => {
   // Treino próprio, isolado do `workoutId` compartilhado do resto do
   // arquivo — evita quebrar as asserções de contagem fixa (ex: "toHaveLength(3)")

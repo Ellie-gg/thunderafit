@@ -21,6 +21,27 @@ export const workoutSessionLogRepository = {
     return prisma.workoutSessionLog.findUnique({ where: { id } });
   },
 
+  /**
+   * A4 (auditoria 2026-08-06): as DUAS conclusões mais recentes desta sessão,
+   * usadas pelo guard de reentrega em `workoutsService.completeWorkout`.
+   *
+   * São duas, não uma, porque numa reentrega o guard precisa reconstruir a
+   * janela que a chamada ORIGINAL usou: `[completedAt da penúltima, completedAt
+   * da última]`. Com só a última, o resumo devolvido no retry sairia vazio
+   * (volume 0) — que é exatamente o defeito que este guard existe pra evitar,
+   * só deslocado da tabela pra resposta.
+   *
+   * Escopado por `workoutId` + `alunoId`: checar os dois é a mesma defesa
+   * explícita usada no resto do domínio, e cabe no índice que já existe.
+   */
+  async findTwoMostRecentForWorkout(workoutId: string, alunoId: string) {
+    return prisma.workoutSessionLog.findMany({
+      where: { workoutId, alunoId },
+      orderBy: { completedAt: "desc" },
+      take: 2,
+    });
+  },
+
   async setRpe(id: string, rpe: number) {
     return prisma.workoutSessionLog.update({ where: { id }, data: { rpe } });
   },

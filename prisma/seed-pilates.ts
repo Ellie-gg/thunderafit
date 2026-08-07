@@ -1,3 +1,16 @@
+// ⚠️ HISTÓRICO (desde a Fase 119): os 12 exercícios abaixo já fazem parte do
+// catálogo-base em `data/exercises_seed.json`, então `npm run db:seed` sozinho
+// já os cria num ambiente novo. Rodar este script continua sendo inofensivo
+// (idempotente por nome), mas não é mais necessário.
+//
+// Motivo da mudança: este script inseria os exercícios DIRETO no banco sem
+// entrar no JSON, então um ambiente recém-criado ficava com 255 exercícios
+// enquanto produção tinha 267. Isso (a) fazia o teste de contagem do catálogo
+// em `src/fitness/__tests__/workouts.test.ts` falhar desde a Fase 110,
+// mascarando qualquer regressão real ali, e (b) fazia os programas curados das
+// Fases 115/116 — que resolvem exercício POR NOME e pulam com aviso quando não
+// acham — perderem silenciosamente as linhas de Pilates em dev/CI.
+//
 // Nova leva de curadoria (2026-07-31) — categoria "Pilates" (mesmo padrão de
 // seed-cardio-alongamento.ts/seed-antebraco-trapezio-quadril.ts): pedido do
 // fundador foi especificamente PILATES SOLO/EM CASA (mat work, sem aparelho
