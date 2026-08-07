@@ -982,6 +982,14 @@
     "deleting": "Excluindo...",
     "confirmDelete": "Sim, excluir"
   },
+  "deleteSessionButton": {
+    "delete": "Excluir",
+    "deleteAriaLabel": "Excluir a sessão {session}",
+    "confirmDelete": "Excluir a sessão {session}? Os exercícios prescritos e o histórico de séries registradas nela serão perdidos. Essa ação não pode ser desfeita.",
+    "deleteError": "Erro ao excluir a sessão.",
+    "deleting": "Excluindo...",
+    "confirmButton": "Sim, excluir"
+  },
   "removeAlunoButton": {
     "remove": "Remover",
     "confirmRemove": "Desvincular este aluno? O histórico de treino dele é preservado — só o vínculo é removido. Você pode vinculá-lo de novo depois.",

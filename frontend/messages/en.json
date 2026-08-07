@@ -982,6 +982,14 @@
     "deleting": "Deleting...",
     "confirmDelete": "Yes, delete"
   },
+  "deleteSessionButton": {
+    "delete": "Delete",
+    "deleteAriaLabel": "Delete session {session}",
+    "confirmDelete": "Delete session {session}? Its prescribed exercises and the logged set history will be lost. This can't be undone.",
+    "deleteError": "Error deleting the session.",
+    "deleting": "Deleting...",
+    "confirmButton": "Yes, delete"
+  },
   "removeAlunoButton": {
     "remove": "Remove",
     "confirmRemove": "Unlink this student? Their workout history is preserved — only the link itself is removed. You can link them again later.",

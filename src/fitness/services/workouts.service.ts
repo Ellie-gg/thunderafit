@@ -286,6 +286,27 @@ export const workoutsService = {
     return workoutsRepository.updateName(workoutId, cleanName);
   },
 
+  /**
+   * Fase 120 (pedido do fundador): excluir uma SESSÃO do programa. Antes só
+   * dava pra excluir um exercício da sessão, ou o programa inteiro — tirar um
+   * "treino B" ou um dia da semana obrigava a apagar e remontar tudo.
+   *
+   * Mesma posse de `renameWorkout` acima (`personalId` da própria sessão, que é
+   * campo dela e não herdado do programa). **Sem gate de
+   * `assertPersonalCanPrescribe`**, de propósito e pelo mesmo critério já
+   * aplicado a `moveExercise`/`deleteExercise` (Fase 103): o bloqueio por
+   * excesso de alunos existe pra impedir EXPANDIR a prescrição, e remover nunca
+   * expande — um Personal bloqueado precisa justamente poder reduzir.
+   */
+  async deleteWorkout(workoutId: string, personalId: string) {
+    const workout = await workoutsRepository.findById(workoutId);
+    if (!workout || workout.personalId !== personalId) {
+      throw httpError("Treino não encontrado.", 404);
+    }
+    await workoutsRepository.deleteWorkout(workoutId);
+    return { ok: true as const };
+  },
+
   // --- Fase 85: Aluno Premium edita o próprio treino (origin: SELF) ---
   // Mesmas regras de `addExercise`/`moveExercise`/`deleteExercise` acima
   // (nunca duplicadas — chamam os MESMOS métodos do repository), só trocando
@@ -356,6 +377,26 @@ export const workoutsService = {
     assertOwnSelfWorkout(workout, alunoId);
     await assertAlunoPremiumAccess(alunoId);
     return workoutsRepository.updateName(workoutId, cleanName);
+  },
+
+  /**
+   * Fase 120: o par SELF de `deleteWorkout`. O aluno podia ADICIONAR sessão ao
+   * próprio treino (`addSelfSession`, Fase 85) mas não remover — a mesma lacuna
+   * do lado do Personal, então corrigida junto (mesmo critério da Fase 111, que
+   * fez renomear pros dois lados de uma vez porque a causa era a mesma).
+   *
+   * **Tem** gate de Aluno Premium, ao contrário do lado do Personal: aqui
+   * editar o treino próprio É a feature paga (mesma regra de
+   * `deleteSelfExercise`). A exceção documentada segue sendo excluir o
+   * programa INTEIRO, que fica liberado pra o aluno nunca ficar preso a um
+   * treino que não consegue mais editar.
+   */
+  async deleteSelfWorkout(workoutId: string, alunoId: string) {
+    const workout = await workoutsRepository.findById(workoutId);
+    assertOwnSelfWorkout(workout, alunoId);
+    await assertAlunoPremiumAccess(alunoId);
+    await workoutsRepository.deleteWorkout(workoutId);
+    return { ok: true as const };
   },
 
   async getWorkout(workoutId: string, userId: string, role: string | undefined, locale: Locale) {

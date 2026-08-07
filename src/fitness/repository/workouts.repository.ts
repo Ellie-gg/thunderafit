@@ -162,4 +162,26 @@ export const workoutsRepository = {
       return "deleted";
     });
   },
+
+  /**
+   * Fase 120: exclui a SESSÃO inteira (o "treino do dia" / dia da semana) de um
+   * programa — antes só existia excluir um EXERCÍCIO da sessão, ou o programa
+   * INTEIRO; não havia meio-termo, então tirar uma sessão errada obrigava a
+   * apagar e remontar o programa todo.
+   *
+   * Mesma ordem de cascade de `workout-programs.repository.ts#deleteProgram`:
+   * `SetLog` → `WorkoutExercise` → `Workout`. `WorkoutTranslation` e
+   * `WorkoutSessionLog` NÃO aparecem aqui de propósito — os dois têm
+   * `onDelete: Cascade` no schema, então o banco resolve.
+   *
+   * Numa transação porque apagar as séries e deixar a sessão de pé (ou o
+   * inverso) é um estado pior do que não ter apagado nada.
+   */
+  async deleteWorkout(workoutId: string) {
+    return prisma.$transaction(async (tx) => {
+      await tx.setLog.deleteMany({ where: { workoutExercise: { workoutId } } });
+      await tx.workoutExercise.deleteMany({ where: { workoutId } });
+      await tx.workout.delete({ where: { id: workoutId } });
+    });
+  },
 };

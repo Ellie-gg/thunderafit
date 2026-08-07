@@ -24,6 +24,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { QueryError } from "@/components/query-error";
 import { InlineRename } from "@/components/inline-rename";
+import { DeleteSessionButton } from "@/components/delete-session-button";
 
 function ProgramaDetalheContent() {
   const t = useTranslations("personalProgramaDetail");
@@ -147,8 +148,8 @@ function ProgramaDetalheContent() {
             <section className="flex flex-col gap-3">
               {sessions.map((s) => (
                 <Link key={s.id} href={`/personal/programas/${programId}/sessoes/${s.id}${query}`}>
-                  <Card className="flex items-center justify-between transition-colors hover:border-accent">
-                    <div>
+                  <Card className="flex items-center justify-between gap-2 transition-colors hover:border-accent">
+                    <div className="min-w-0">
                       <span className="font-display text-lg font-bold text-accent">
                         {labelFor(scheme, s.letter)}
                       </span>{" "}
@@ -157,7 +158,20 @@ function ProgramaDetalheContent() {
                         {t("exercisesCount", { count: s.exercises?.length ?? 0 })}
                       </p>
                     </div>
-                    <span className="text-sm text-muted">{t("open")}</span>
+                    {/* Fase 120: excluir a sessão. Fica DENTRO do card-link, por
+                        isso o componente para a propagação do clique — senão
+                        confirmar navegaria pra tela de prescrição. */}
+                    <div className="flex shrink-0 items-center gap-2">
+                      <span className="text-sm text-muted">{t("open")}</span>
+                      <DeleteSessionButton
+                        workoutId={s.id}
+                        sessionLabel={labelFor(scheme, s.letter)}
+                        onDeleted={() => {
+                          queryClient.invalidateQueries({ queryKey: ["workout-program", programId] });
+                          queryClient.invalidateQueries({ queryKey: ["workout-programs", "personal"] });
+                        }}
+                      />
+                    </div>
                   </Card>
                 </Link>
               ))}
