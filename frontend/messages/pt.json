@@ -75,7 +75,7 @@
     "changeBanner": "Trocar banner",
     "remove": "Remover banner",
     "noBanner": "Sem banner",
-"sizeHint": "Ideal: imagem já na proporção 16:9 (ex: 1200×675, 1280×720 ou 1920×1080) — preenche o quadro por completo. Fora dessa proporção, a imagem inteira é mantida (nunca cortada), com fundo desfocado preenchendo o espaço sobrando.",
+    "sizeHint": "Ideal: imagem já na proporção 16:9 (ex: 1200×675, 1280×720 ou 1920×1080) — preenche o quadro por completo. Fora dessa proporção, a imagem inteira é mantida (nunca cortada), com fundo desfocado preenchendo o espaço sobrando.",
     "errors": {
       "invalidType": "Escolha um arquivo de imagem (PNG, JPEG ou WebP).",
       "loadFailed": "Não foi possível ler a imagem.",
@@ -976,6 +976,7 @@
   },
   "deleteProgramButton": {
     "delete": "Excluir",
+    "confirmTitle": "Excluir este programa?",
     "confirmDeleteTemplate": "Excluir este template? As sessões e exercícios dele somem — instâncias já aplicadas a alunos não são afetadas.",
     "confirmDeleteApplied": "Excluir este programa aplicado? O histórico de séries registradas pelo aluno nele será perdido. Essa ação não pode ser desfeita.",
     "deleteError": "Erro ao excluir.",
@@ -1032,6 +1033,7 @@
   "deleteSessionButton": {
     "delete": "Excluir",
     "deleteAriaLabel": "Excluir a sessão {session}",
+    "confirmTitle": "Excluir esta sessão?",
     "confirmDelete": "Excluir a sessão {session}? Os exercícios prescritos e o histórico de séries registradas nela serão perdidos. Essa ação não pode ser desfeita.",
     "deleteError": "Erro ao excluir a sessão.",
     "deleting": "Excluindo...",

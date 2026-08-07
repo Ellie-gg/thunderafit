@@ -20,6 +20,17 @@ import { Button } from "@/components/ui/button";
  * O aviso é mais forte que o de excluir exercício de propósito: a sessão leva
  * com ela os exercícios prescritos E o histórico de séries registradas
  * (`SetLog`), que é dado do aluno e não tem como recuperar.
+ *
+ * Fase 123 (bug reportado pelo fundador: "a mensagem de exclusão trunca a
+ * tela") — a confirmação virou DIÁLOGO em overlay, no lugar de um box inline.
+ * A causa era de layout, não de texto: o box vivia dentro de um item
+ * `shrink-0` de uma linha flex (ver as duas telas de programa), e o
+ * `confirmDelete` tem 150+ caracteres. Sem poder encolher, o box empurrava a
+ * linha pra além da viewport e a página inteira ganhava scroll horizontal.
+ * Aumentar o texto ou pôr `max-w` só trocaria de sintoma — em overlay a
+ * confirmação simplesmente não participa mais do fluxo da linha, então não tem
+ * como truncar nada, em nenhuma largura. Mesmo padrão zero-dependência de
+ * `replace-self-template-dialog.tsx`/`post-workout-summary-modal.tsx`.
  */
 export function DeleteSessionButton({
   workoutId,
@@ -48,8 +59,8 @@ export function DeleteSessionButton({
     e.stopPropagation();
   }
 
-  if (!confirming) {
-    return (
+  return (
+    <>
       <Button
         type="button"
         variant="ghost"
@@ -62,44 +73,59 @@ export function DeleteSessionButton({
       >
         {t("delete")}
       </Button>
-    );
-  }
 
-  return (
-    <div
-      onClick={stop}
-      className="flex flex-col items-end gap-1.5 rounded-md border border-danger/40 bg-danger/10 p-2"
-    >
-      <p className="text-xs text-danger">{t("confirmDelete", { session: sessionLabel })}</p>
-      {mutation.isError && (
-        <p className="text-xs text-danger">
-          {mutation.error instanceof ApiError ? mutation.error.message : t("deleteError")}
-        </p>
+      {/* O gatilho continua renderizado enquanto o diálogo está aberto: ele é
+          quem reserva o espaço na linha. Antes o box de confirmação SUBSTITUÍA
+          o botão, e era essa troca que remexia o layout da linha inteira. */}
+      {confirming && (
+        <div
+          onClick={stop}
+          role="dialog"
+          aria-modal="true"
+          aria-label={t("confirmTitle")}
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4"
+        >
+          <div className="flex w-full max-w-sm flex-col gap-4 rounded-xl border border-danger/40 bg-surface p-5">
+            <h2 className="font-display text-lg font-bold text-danger">{t("confirmTitle")}</h2>
+            {/* `break-words` porque o rótulo da sessão é livre (nome digitado
+                pelo Personal pode ser uma palavra longa sem espaço). */}
+            <p className="break-words text-sm text-muted">
+              {t("confirmDelete", { session: sessionLabel })}
+            </p>
+            {mutation.isError && (
+              <p className="break-words text-sm text-danger">
+                {mutation.error instanceof ApiError ? mutation.error.message : t("deleteError")}
+              </p>
+            )}
+            {/* `flex-wrap` + `justify-end`: em 320px com textos longos em ES/EN
+                os dois botões descem em vez de estourar a largura do diálogo. */}
+            <div className="flex flex-wrap justify-end gap-2">
+              <Button
+                type="button"
+                variant="ghost"
+                disabled={mutation.isPending}
+                onClick={(e) => {
+                  stop(e);
+                  setConfirming(false);
+                }}
+              >
+                {tCommon("cancel")}
+              </Button>
+              <Button
+                type="button"
+                variant="secondary"
+                disabled={mutation.isPending}
+                onClick={(e) => {
+                  stop(e);
+                  mutation.mutate();
+                }}
+              >
+                {mutation.isPending ? t("deleting") : t("confirmButton")}
+              </Button>
+            </div>
+          </div>
+        </div>
       )}
-      <div className="flex gap-2">
-        <Button
-          type="button"
-          size="sm"
-          onClick={(e) => {
-            stop(e);
-            setConfirming(false);
-          }}
-        >
-          {tCommon("cancel")}
-        </Button>
-        <Button
-          type="button"
-          variant="secondary"
-          size="sm"
-          disabled={mutation.isPending}
-          onClick={(e) => {
-            stop(e);
-            mutation.mutate();
-          }}
-        >
-          {mutation.isPending ? t("deleting") : t("confirmButton")}
-        </Button>
-      </div>
-    </div>
+    </>
   );
 }
