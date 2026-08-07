@@ -647,6 +647,79 @@ describe("Auditoria 2026-08-06, A4 — /complete é idempotente dentro da janela
   });
 });
 
+// Fase 120 (pedido do fundador): "quando o Personal edita um treino do aluno ou
+// template, ele não consegue excluir o treino do programa ou o dia da semana".
+// Confirmado: existia excluir EXERCÍCIO da sessão e excluir o PROGRAMA inteiro,
+// mas nada no meio — tirar uma sessão obrigava a remontar o programa todo.
+describe("Fase 120 — DELETE /api/workouts/:id (excluir a sessão do programa)", () => {
+  let sessaoId: string;
+  let workoutExerciseId: string;
+
+  beforeEach(async () => {
+    const w = await supertest(server.server)
+      .post("/api/workouts")
+      .set("Authorization", `Bearer ${accessToken}`)
+      .send({ alunoId: vinculadoAlunoId, name: "Sessão a excluir", letter: "E" });
+    sessaoId = w.body.workout.id;
+
+    const ex = await prisma.exercise.findFirst({ orderBy: { name: "asc" } });
+    const we = await supertest(server.server)
+      .post(`/api/workouts/${sessaoId}/exercises`)
+      .set("Authorization", `Bearer ${accessToken}`)
+      .send({ exerciseId: ex!.id, sets: 3, repsRange: "8-12", restSeconds: 60, order: 1 });
+    workoutExerciseId = we.body.workoutExercise.id;
+
+    await supertest(server.server)
+      .post(`/api/workouts/${sessaoId}/exercises/${workoutExerciseId}/logs`)
+      .set("Authorization", `Bearer ${alunoAccessToken}`)
+      .send({ setNumber: 1, repsDone: 10, weightKg: 40 });
+  });
+
+  afterEach(async () => {
+    await prisma.setLog.deleteMany({ where: { workoutExercise: { workoutId: sessaoId } } });
+    await prisma.workoutExercise.deleteMany({ where: { workoutId: sessaoId } });
+    await prisma.workout.deleteMany({ where: { id: sessaoId } });
+  });
+
+  it("Personal dono exclui a sessão, e leva exercícios e séries com ela", async () => {
+    const r = await supertest(server.server)
+      .delete(`/api/workouts/${sessaoId}`)
+      .set("Authorization", `Bearer ${accessToken}`);
+    expect(r.status).toBe(200);
+
+    expect(await prisma.workout.count({ where: { id: sessaoId } })).toBe(0);
+    // O cascade tem que levar os filhos — sobrar exercício/série órfã seria
+    // pior que não ter apagado.
+    expect(await prisma.workoutExercise.count({ where: { workoutId: sessaoId } })).toBe(0);
+    expect(await prisma.setLog.count({ where: { workoutExerciseId } })).toBe(0);
+  });
+
+  it("o PROGRAMA sobrevive — excluir sessão não é excluir o programa", async () => {
+    const antes = await prisma.workout.findUnique({ where: { id: sessaoId } });
+    await supertest(server.server)
+      .delete(`/api/workouts/${sessaoId}`)
+      .set("Authorization", `Bearer ${accessToken}`);
+    expect(await prisma.workoutProgram.count({ where: { id: antes!.programId } })).toBe(1);
+  });
+
+  it("o ALUNO da sessão prescrita NÃO pode excluí-la (404, sem enumerar)", async () => {
+    // A sessão é `origin: PERSONAL`; o aluno cai em `assertOwnSelfWorkout` e
+    // recebe 404 genérico — nunca 403, pra não confirmar que o id existe.
+    const r = await supertest(server.server)
+      .delete(`/api/workouts/${sessaoId}`)
+      .set("Authorization", `Bearer ${alunoAccessToken}`);
+    expect(r.status).toBe(404);
+    expect(await prisma.workout.count({ where: { id: sessaoId } })).toBe(1);
+  });
+
+  it("id inexistente devolve 404", async () => {
+    const r = await supertest(server.server)
+      .delete("/api/workouts/00000000-0000-0000-0000-000000000000")
+      .set("Authorization", `Bearer ${accessToken}`);
+    expect(r.status).toBe(404);
+  });
+});
+
 describe("DELETE /api/workouts/:id/exercises/:exerciseId (Fase 65)", () => {
   // Treino próprio, isolado do `workoutId` compartilhado do resto do
   // arquivo — evita quebrar as asserções de contagem fixa (ex: "toHaveLength(3)")

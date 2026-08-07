@@ -231,6 +231,15 @@ export function renameWorkoutSession(workoutId: string, name: string) {
   });
 }
 
+/**
+ * Fase 120: exclui a SESSÃO do programa (o "treino do dia" / dia da semana).
+ * Mesmo padrão de `deleteWorkoutProgram` — o backend ramifica por role, então
+ * a mesma função serve pro Personal e pro aluno (que precisa de Premium).
+ */
+export function deleteWorkoutSession(workoutId: string) {
+  return apiFetch<{ ok: true }>(`/api/workouts/${workoutId}`, { method: "DELETE" });
+}
+
 // Fase 85 — Aluno Premium monta o próprio treino do zero. Mesmo formato de
 // erro 409 SELF_PROGRAM_EXISTS (com existingProgramId/existingProgramName)
 // já usado em applySelfTemplate — o mesmo diálogo de confirmação de troca

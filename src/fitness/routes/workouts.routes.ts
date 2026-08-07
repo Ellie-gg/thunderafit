@@ -7,6 +7,7 @@ import {
   moveExerciseHandler,
   deleteExerciseHandler,
   renameWorkoutHandler,
+  deleteWorkoutHandler,
   getWorkoutHandler,
   completeWorkoutHandler,
   setSessionRpeHandler,
@@ -73,6 +74,19 @@ export async function workoutsRoutes(fastify: FastifyInstance) {
       preHandler: [(fastify as any).authenticate],
     },
     renameWorkoutHandler
+  );
+
+  // Fase 120 (pedido do fundador): excluir a SESSÃO inteira do programa — o
+  // "treino do dia" / dia da semana. Antes só existia excluir um EXERCÍCIO da
+  // sessão (rota acima) ou o programa INTEIRO
+  // (`DELETE /api/workout-programs/:id`), sem meio-termo: tirar uma sessão
+  // errada obrigava a apagar e remontar o programa todo.
+  fastify.delete(
+    "/api/workouts/:id",
+    {
+      preHandler: [(fastify as any).authenticate],
+    },
+    deleteWorkoutHandler
   );
 
   fastify.get(
