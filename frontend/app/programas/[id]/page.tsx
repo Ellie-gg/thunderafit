@@ -109,6 +109,23 @@ function ProgramaContent() {
 
         {program && (
           <>
+            {/* M3 (auditoria 2026-08-06): sem isto, uma falha no status de
+                Premium fazia `canEdit` virar false e a tela simplesmente
+                APAGAVA os controles de edição — em silêncio, sem erro e sem
+                retry. Um aluno COM Premium ativo concluía que tinha perdido o
+                acesso (ou que a feature de renomear havia sumido). Mesma
+                classe do Fr13: a tela não pode afirmar algo falso quando na
+                verdade não sabe. Os controles seguem escondidos (o backend é
+                quem decide de fato), mas agora o motivo fica visível e
+                recuperável. Só para programas SELF — em treino prescrito pelo
+                Personal o status de Premium é irrelevante e o aviso seria
+                ruído. */}
+            {isSelfProgram && premiumStatusQuery.isError && (
+              <QueryError
+                error={premiumStatusQuery.error}
+                onRetry={() => premiumStatusQuery.refetch()}
+              />
+            )}
             <div>
               <span className="text-xs font-semibold uppercase tracking-wide text-accent-secondary">
                 {t("programLabel")}

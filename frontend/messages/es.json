@@ -420,11 +420,13 @@
     "viewAsTable": "Ver como tabla",
     "dateColumn": "Fecha",
     "maxLoadColumn": "Carga máxima",
+    "maxLoadValue": "{weight}kg",
     "workoutFrequency": "Frecuencia de entrenamientos (últimos 6 meses)",
     "workoutsInPeriod": "{count} entrenamiento(s) en el período",
     "sessionTrendTitle": "Tendencia de las sesiones",
     "durationTrendLabel": "Duración (min)",
     "trainingLoadTrendLabel": "Carga de entrenamiento (RPE × duración)",
+    "noTrainingLoadYet": "Responde \"qué tan difícil fue\" después de tus entrenamientos para ver tu carga de entrenamiento aquí.",
     "noSessionHistory": "Completa algunos entrenamientos con el cronómetro activo para ver tu tendencia aquí.",
     "effortDistributionTitle": "Distribución de esfuerzo (sesiones recientes)"
   },
@@ -678,6 +680,7 @@
     "sessionTrendTitle": "Tendencia de las sesiones",
     "durationTrendLabel": "Duración (min)",
     "trainingLoadTrendLabel": "Carga de entrenamiento (RPE × duración)",
+    "noTrainingLoadYet": "Responde \"qué tan difícil fue\" después de tus entrenamientos para ver tu carga de entrenamiento aquí.",
     "noSessionHistory": "Este alumno todavía no completó ningún entrenamiento con el cronómetro activo.",
     "effortDistributionTitle": "Distribución de esfuerzo (sesiones recientes)"
   },
@@ -1260,6 +1263,12 @@
     "next": "Siguiente",
     "roleEditor": {
       "edit": "Editar rol",
+      "roleLabels": {
+        "PERSONAL": "Personal Trainer",
+        "ALUNO": "Alumno",
+        "NUTRICIONISTA": "Nutricionista",
+        "ADMIN": "Admin"
+      },
       "confirmMessage": "¿Confirmas cambiar {email} de {currentRole} a {newRole}?",
       "genericError": "Error al cambiar el rol.",
       "saving": "Guardando...",
@@ -1336,6 +1345,7 @@
     "shareErrorMessage": "No pudimos compartirlo directamente — descargamos la imagen para que la adjuntes manualmente.",
     "shareButton": "Compartir",
     "downloadButton": "Descargar imagen",
+    "downloadErrorMessage": "No se pudo generar la imagen. Inténtalo de nuevo.",
     "closeButton": "Cerrar"
   },
   "prBadgePill": {

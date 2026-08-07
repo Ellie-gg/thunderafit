@@ -305,6 +305,15 @@ describe("Fase 112 — GET /api/progress/session-history (tendência + distribui
     // 3 sessões: 1 leve (rpe 2), 1 moderada (rpe 5), 1 intensa (rpe 9, sem
     // duração — trainingLoad deve vir null mesmo com rpe presente) — cobre
     // as 3 faixas de effortDistribution e o caso "rpe sem duração".
+    //
+    // A3 (auditoria 2026-08-06): estes 3 valores são PRODUZÍVEIS pelo
+    // RpeQuickPicker (2/3/5/7/9). Antes da correção o picker emitia
+    // 2/4/6/8/10, então `rpe: 5` era um valor que nenhum usuário conseguia
+    // gerar — e foi justamente isso que fez este teste passar enquanto o
+    // "Leve" real (4) caía em "moderado" no gráfico. Ao mexer nos limiares
+    // de `effortDistribution`, ajuste o picker e
+    // `frontend/__tests__/components/rpe-quick-picker.test.tsx` juntos: eles
+    // são acoplados de propósito, e o teste do picker trava esse contrato.
     const logs = await Promise.all([
       prisma.workoutSessionLog.create({
         data: {

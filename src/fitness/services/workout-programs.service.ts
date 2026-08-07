@@ -4,6 +4,7 @@ import { relationsRepository } from "../repository/relations.repository";
 import { exerciseTranslationService } from "./exercise-translation.service";
 import { programTranslationService } from "./program-translation.service";
 import { alunoPremiumService } from "../../billing/services/aluno-premium.service";
+import { assertValidName } from "../../lib/validate-name";
 import { billingService } from "../../billing/services/billing.service";
 import { assertPersonalCanPrescribe, assertAlunoWorkoutAccessible } from "../../lib/plan-expiry";
 
@@ -37,13 +38,13 @@ async function assertUnderTemplateLimit(personalId: string) {
 
 export const workoutProgramsService = {
   async createTemplate(personalId: string, name: string, sessionScheme?: SessionScheme) {
-    if (!name?.trim()) throw httpError("Nome do programa é obrigatório.", 400);
+    const cleanName = assertValidName(name, "Nome do programa");
     const scheme = sessionScheme ?? "LETTER";
     if (!VALID_SCHEMES.includes(scheme)) {
       throw httpError("sessionScheme deve ser LETTER ou WEEKDAY.", 400);
     }
     await assertUnderTemplateLimit(personalId);
-    return workoutProgramsRepository.createProgram(personalId, name.trim(), true, null, scheme);
+    return workoutProgramsRepository.createProgram(personalId, cleanName, true, null, scheme);
   },
 
   async addSession(programId: string, personalId: string, name: string, letter: string) {
@@ -195,13 +196,13 @@ export const workoutProgramsService = {
    * `addSession` (que EXPANDE e por isso passa por `assertPersonalCanPrescribe`).
    */
   async renameProgram(programId: string, personalId: string, name: string) {
-    if (!name?.trim()) throw httpError("Nome do programa é obrigatório.", 400);
+    const cleanName = assertValidName(name, "Nome do programa");
     const program = await workoutProgramsRepository.findProgramById(programId);
     if (!program) throw httpError("Programa não encontrado.", 404);
     if (program.origin !== "PERSONAL" || program.personalId !== personalId) {
       throw httpError("Você não tem permissão para editar este programa.", 403);
     }
-    return workoutProgramsRepository.updateName(programId, name.trim());
+    return workoutProgramsRepository.updateName(programId, cleanName);
   },
 
   async listForAluno(alunoId: string, pagination?: { skip: number; take: number }) {
@@ -214,7 +215,7 @@ export const workoutProgramsService = {
    * um aluno pra outro, agora que `apply()` acima rejeita instâncias.
    */
   async saveInstanceAsTemplate(programId: string, personalId: string, name: string) {
-    if (!name?.trim()) throw httpError("Nome do template é obrigatório.", 400);
+    const cleanName = assertValidName(name, "Nome do template");
     const program = await workoutProgramsRepository.findProgramById(programId);
     if (!program) throw httpError("Programa não encontrado.", 404);
     if (program.origin !== "PERSONAL" || program.personalId !== personalId) {
@@ -224,7 +225,7 @@ export const workoutProgramsService = {
       throw httpError("Este programa já é um template.", 400);
     }
     await assertUnderTemplateLimit(personalId);
-    const template = await workoutProgramsRepository.saveAsTemplate(programId, personalId, name.trim());
+    const template = await workoutProgramsRepository.saveAsTemplate(programId, personalId, cleanName);
     if (!template) throw httpError("Falha ao salvar como template.", 500);
     return template;
   },
@@ -322,7 +323,7 @@ export const workoutProgramsService = {
    * origin SELF, isTemplate false, alunoId preenchido).
    */
   async createSelfProgram(alunoId: string, name: string, sessionScheme?: SessionScheme, replace = false) {
-    if (!name?.trim()) throw httpError("Nome do treino é obrigatório.", 400);
+    const cleanName = assertValidName(name, "Nome do treino");
     const scheme = sessionScheme ?? "LETTER";
     if (!VALID_SCHEMES.includes(scheme)) {
       throw httpError("sessionScheme deve ser LETTER ou WEEKDAY.", 400);
@@ -353,7 +354,7 @@ export const workoutProgramsService = {
       await workoutProgramsRepository.deleteProgram(existing.id);
     }
 
-    return workoutProgramsRepository.createSelfProgram(alunoId, name.trim(), scheme);
+    return workoutProgramsRepository.createSelfProgram(alunoId, cleanName, scheme);
   },
 
   /**
@@ -436,7 +437,7 @@ export const workoutProgramsService = {
    * programa INTEIRO é a exceção documentada acima.
    */
   async renameSelfProgram(programId: string, alunoId: string, name: string) {
-    if (!name?.trim()) throw httpError("Nome do treino é obrigatório.", 400);
+    const cleanName = assertValidName(name, "Nome do treino");
     const program = await workoutProgramsRepository.findProgramById(programId);
     if (!program) throw httpError("Treino não encontrado.", 404);
     if (program.origin !== "SELF" || program.alunoId !== alunoId) {
@@ -453,7 +454,7 @@ export const workoutProgramsService = {
       throw err;
     }
 
-    return workoutProgramsRepository.updateName(programId, name.trim());
+    return workoutProgramsRepository.updateName(programId, cleanName);
   },
 
   // --- Fase 34.5: "Meu treino pessoal" ---
@@ -522,6 +523,21 @@ export const workoutProgramsService = {
         err.code = "PREMIUM_REQUIRED";
         throw err;
       }
+    }
+    // A2 (auditoria 2026-08-06): 2ª camada da mesma defesa do filtro em
+    // `listSelfTemplates` — aqui pra fechar a chamada DIRETA de API (o filtro
+    // da listagem só esconde o card). Um template sem sessão nenhuma não é
+    // aplicável: aplicar substitui o treino pessoal ativo, apagando séries e
+    // exercícios, e devolveria um programa vazio sem desfazer.
+    //
+    // Ordem proposital: DEPOIS do gate de PREMIUM e ANTES do delete. Depois do
+    // gate porque, pra um aluno sem assinatura, "assine pra usar" é o erro
+    // acionável — responder "sem sessões" atrasaria a informação útil e
+    // revelaria o estado do template a quem não tem direito a ele. Antes do
+    // delete pelo mesmo motivo do F1 acima: nada destrutivo antes de toda
+    // validação passar.
+    if ((await workoutProgramsRepository.countSessions(template.id)) === 0) {
+      throw httpError("Este treino ainda não tem sessões cadastradas.", 409);
     }
 
     // Nota: `existing` (se houver) é sempre uma INSTÂNCIA aplicada

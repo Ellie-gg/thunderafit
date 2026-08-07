@@ -79,7 +79,9 @@ delivery is entirely pull-based from the client.
 
 - **Delivery is polling-only**, confirmed in
   `frontend/components/notification-bell.tsx`: the unread-count query polls
-  every 30s (`refetchInterval: 30_000` via TanStack Query); the list query
+  every **6 hours** (`PASSIVE_REFETCH_INTERVAL_MS = 6 * 60 * 60 * 1000`) — it
+  was `30_000` until Fase 102 cut it to reduce Neon compute-hours; this doc
+  still said 30s until the 2026-08-06 audit. The list query
   only fetches when the bell dropdown is opened (`enabled: open`). There is
   no WebSocket, SSE, or real push (APNs/FCM) — this was a deliberate choice
   documented in both the frontend component and `notifications.service.ts`

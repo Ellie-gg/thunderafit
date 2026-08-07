@@ -607,6 +607,17 @@ describe("Fase 63 — tags de filtro rápido (chips) em templates SELF", () => {
     taggedTemplateId = created.body.program.id;
     expect(created.body.program.tags).toEqual([]);
 
+    // A2 (auditoria 2026-08-06): `listSelfTemplates` (catálogo do aluno) passou
+    // a filtrar templates SEM nenhuma sessão — eles apareciam como cards
+    // aplicáveis durante toda a curadoria do admin, e aplicar um deles
+    // substituía o treino real do aluno por um programa vazio. Este fixture
+    // precisa de 1 sessão pra representar um template curado de verdade e
+    // continuar visível no catálogo.
+    await supertest(server.server)
+      .post(`/api/admin/self-templates/${taggedTemplateId}/sessions`)
+      .set("Authorization", `Bearer ${adminToken}`)
+      .send({ name: "Sessão A", letter: "A" });
+
     const r = await supertest(server.server)
       .put(`/api/admin/self-templates/${taggedTemplateId}/tags`)
       .set("Authorization", `Bearer ${adminToken}`)
@@ -660,5 +671,64 @@ describe("Fase 63 — tags de filtro rápido (chips) em templates SELF", () => {
       .set("Authorization", `Bearer ${personalToken}`)
       .send({ tags: ["EXPRESS"] });
     expect(r.status).toBe(403);
+  });
+});
+
+// A2 (auditoria 2026-08-06): template SELF sem nenhuma sessão era um card
+// aplicável no catálogo do aluno. `createSelfTemplate` cria o programa e as
+// sessões vêm depois, em chamadas separadas — durante toda a curadoria o
+// template já estava exposto. Aplicar um deles SUBSTITUI o treino pessoal
+// ativo, apagando séries/exercícios/sessões, devolvendo um programa vazio sem
+// desfazer. Defesa em 2 camadas: filtro na listagem + recusa no apply (pra
+// fechar a chamada direta de API, que o filtro não cobre).
+describe("Auditoria 2026-08-06, A2 — template SELF vazio não é ofertado nem aplicável", () => {
+  let vazioId: string;
+
+  beforeAll(async () => {
+    const created = await supertest(server.server)
+      .post("/api/admin/self-templates")
+      .set("Authorization", `Bearer ${adminToken}`)
+      .send({ name: "A2 — template recém-criado sem sessões" });
+    vazioId = created.body.program.id;
+  });
+
+  afterAll(async () => {
+    // `Workout.programId` NÃO tem cascade — o 3º teste adiciona uma sessão,
+    // então apagar o programa direto viola a FK. Mesma ordem usada por
+    // `cleanupTestPrograms` no topo do arquivo.
+    await prisma.workout.deleteMany({ where: { programId: vazioId } });
+    await prisma.workoutProgram.deleteMany({ where: { id: vazioId } });
+  });
+
+  it("não aparece no catálogo do aluno enquanto não tiver sessão", async () => {
+    const r = await supertest(server.server)
+      .get("/api/workout-programs/self-templates")
+      .set("Authorization", `Bearer ${alunoToken}`);
+    expect(r.status).toBe(200);
+    expect(r.body.programs.find((p: any) => p.id === vazioId)).toBeUndefined();
+  });
+
+  it("recusa o apply direto por API com 409, sem tocar no treino do aluno", async () => {
+    const r = await supertest(server.server)
+      .post(`/api/workout-programs/${vazioId}/apply-self-template`)
+      .set("Authorization", `Bearer ${alunoToken}`);
+    expect(r.status).toBe(409);
+    // Nada foi copiado pro aluno.
+    const copias = await prisma.workoutProgram.count({
+      where: { alunoId: alunoId, origin: "SELF", isTemplate: false, name: "A2 — template recém-criado sem sessões" },
+    });
+    expect(copias).toBe(0);
+  });
+
+  it("passa a aparecer no catálogo depois de ganhar a 1ª sessão", async () => {
+    await supertest(server.server)
+      .post(`/api/admin/self-templates/${vazioId}/sessions`)
+      .set("Authorization", `Bearer ${adminToken}`)
+      .send({ name: "Sessão A", letter: "A" });
+
+    const r = await supertest(server.server)
+      .get("/api/workout-programs/self-templates")
+      .set("Authorization", `Bearer ${alunoToken}`);
+    expect(r.body.programs.find((p: any) => p.id === vazioId)).toBeDefined();
   });
 });

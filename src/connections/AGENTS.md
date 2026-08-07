@@ -76,8 +76,13 @@ approval request flow that gates the creation of the real `ClientRelation`
 ## Handle with care
 
 - `searchProfessionals` and `listRequests` return only the public-profile
-  shape (`id`, `email`, `role`, `location`, `bio`, `planoAssinatura`) —
-  never leak other `User` fields through these endpoints.
+  shape defined by `PUBLIC_PROFILE_SELECT` (`connections.repository.ts`) —
+  today `id`, `email`, `role`, `bio`, `city`, `state`, `specialties`,
+  `avatarUrl`, `planoAssinatura` — and never leak other `User` fields
+  through these endpoints. Audit against that constant, not this prose: the
+  list here used to name `location` (a dead column) and omit `city`/`state`/
+  `specialties`/`avatarUrl`, which ARE exposed (fixed in the 2026-08-06
+  audit).
 - `listRequests` enriches each request with the counterpart's public info
   looked up in bulk; if the counterpart user was deleted, it falls back to a
   placeholder (`"(usuário removido)"`) rather than failing — don't assume

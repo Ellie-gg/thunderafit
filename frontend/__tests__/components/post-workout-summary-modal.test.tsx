@@ -183,7 +183,12 @@ describe("PostWorkoutSummaryModal — RPE opcional (Fase 112)", () => {
     expect(screen.getByText(/Quão difícil foi esse treino/i)).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: /Moderado/i }));
 
-    await waitFor(() => expect(mockedSetSessionRpe).toHaveBeenCalledWith("log-1", 6));
+    // A3 (auditoria 2026-08-06): "Moderado" passou a gravar 5, não 6. Os
+    // valores emitidos foram realinhados às faixas Borg do backend (`<= 3`
+    // leve, `<= 6` moderado, senão intenso) porque "Leve" gravava 4 e caía em
+    // "moderado" na barra de /evolucao — contradizendo o rótulo tocado. O
+    // mapeamento completo é travado por `rpe-quick-picker.test.tsx`.
+    await waitFor(() => expect(mockedSetSessionRpe).toHaveBeenCalledWith("log-1", 5));
     expect(await screen.findByText(/Registrado, obrigado/i)).toBeInTheDocument();
   });
 });
