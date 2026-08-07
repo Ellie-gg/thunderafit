@@ -43,20 +43,36 @@ export const exerciseTranslationsRepository = {
     });
   },
 
-  /** Upsert usado só pelo script de população de traduções (nunca via HTTP). */
+  /**
+   * Upsert usado só pelo script de população de traduções (nunca via HTTP).
+   *
+   * Fase 119: passou a INVALIDAR o cache. Antes não invalidava, e o
+   * `invalidateCache()` abaixo existia sem nenhum chamador — ou seja, o único
+   * caminho de escrita do módulo não derrubava o próprio cache. Num processo
+   * que escreve E lê traduções, a leitura seguinte servia dado obsoleto por até
+   * `CACHE_TTL_MS` (5 min). Nos seeds isso é inofensivo (processo separado, sai
+   * logo depois), mas o defeito é do módulo, não do chamador — e apareceu de
+   * verdade na suíte de testes: `exercise-translation.test.ts` criava a
+   * tradução e lia de volta a versão em cache, sem ela. Ficava latente porque
+   * dependia da ORDEM das suítes (uma anterior precisava ter aquecido o cache
+   * daquele locale primeiro), então passava ou falhava conforme o Jest
+   * reordenava os arquivos.
+   */
   async upsert(
     exerciseId: string,
     locale: Locale,
     data: { name: string; muscleGroup: string; description: string }
   ) {
-    return prisma.exerciseTranslation.upsert({
+    const row = await prisma.exerciseTranslation.upsert({
       where: { exerciseId_locale: { exerciseId, locale } },
       create: { exerciseId, locale, ...data },
       update: data,
     });
+    cache.delete(locale);
+    return row;
   },
 
-  /** Defensivo: nada escreve traduções via HTTP hoje, mas fica pronto caso passe a escrever. */
+  /** Limpa o cache dos dois locales — ver o comentário do `upsert` acima. */
   invalidateCache() {
     cache.clear();
   },

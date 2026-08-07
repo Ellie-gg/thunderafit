@@ -8,6 +8,24 @@ let personalToken: string;
 let exerciseId: string;
 let exerciseName: string;
 
+// Fase 119: a suíte usa um exercício PRÓPRIO, criado aqui, em vez do 1º do
+// catálogo real. Antes ela sequestrava `catalog.body.exercises[0]`, e isso
+// tinha dois defeitos:
+//
+// 1. **Destruía dado semeado**: o `afterAll` fazia
+//    `deleteMany({ exerciseId })`, apagando as traduções DE VERDADE daquele
+//    exercício. A cobertura de tradução do banco local regredia a cada
+//    `npm test` (observado: voltava de 0 pra 1 exercício sem tradução).
+// 2. **Assumia que aquele exercício NÃO tinha tradução** — premissa que só
+//    valia enquanto a cobertura do catálogo era incompleta. Ao fechar a última
+//    lacuna (20 exercícios sem tradução em produção → 0), a premissa virou
+//    falsa e 4 testes passaram a falhar: o de fallback recebia a tradução real
+//    em vez do PT, e o `create()` batia na unique constraint.
+//
+// Com exercício próprio, a suíte controla 100% do estado de tradução, não
+// depende da cobertura do catálogo e não mexe em nada real.
+const EXERCICIO_TESTE = "ZZZ i18n Test Exercise (descartável)";
+
 const pw = "SenhaSegura@123";
 
 beforeAll(async () => {
@@ -24,15 +42,34 @@ beforeAll(async () => {
       .send({ email: "i18n_ex_personal@thunderafit.test", password: pw })
   ).body.accessToken;
 
-  const catalog = await supertest(server.server)
-    .get("/api/exercises")
-    .set("Authorization", `Bearer ${personalToken}`);
-  exerciseId = catalog.body.exercises[0].id;
-  exerciseName = catalog.body.exercises[0].name;
+  // Exercício descartável e SEM tradução, sob controle total da suíte.
+  await prisma.exerciseTranslation.deleteMany({
+    where: { exercise: { name: EXERCICIO_TESTE } },
+  });
+  await prisma.exercise.deleteMany({ where: { name: EXERCICIO_TESTE } });
+  const criado = await prisma.exercise.create({
+    data: {
+      name: EXERCICIO_TESTE,
+      muscleGroup: "Peito",
+      equipment: "Peso Corporal",
+      mediaUrl: "https://www.youtube.com/watch?v=IODxDxX7oi4",
+      mediaType: "YOUTUBE",
+      description: "Exercício criado por teste automatizado. Não deve aparecer em produção.",
+      difficultyLevel: "INICIANTE",
+    },
+  });
+  exerciseId = criado.id;
+  exerciseName = criado.name;
+  // O catálogo tem cache próprio (`exercises.repository.ts`) — sem isto, o
+  // exercício recém-criado pode não aparecer em `GET /api/exercises`.
+  exerciseTranslationsRepository.invalidateCache();
 });
 
 afterAll(async () => {
   await prisma.exerciseTranslation.deleteMany({ where: { exerciseId } });
+  await prisma.workoutExercise.deleteMany({ where: { exerciseId } });
+  await prisma.exercise.deleteMany({ where: { id: exerciseId } });
+  exerciseTranslationsRepository.invalidateCache();
   await prisma.user.deleteMany({ where: { email: { contains: "i18n_ex_" } } });
   await prisma.$disconnect();
   await server.close();
