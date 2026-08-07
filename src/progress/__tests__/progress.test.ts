@@ -395,3 +395,80 @@ describe("Fase 112 — GET /api/progress/session-history (tendência + distribui
     await prisma.user.deleteMany({ where: { email: "test_progress_personal_sem_vinculo@thunderafit.test" } });
   });
 });
+
+// Fase 121 ("meus recordes"): os PRs eram calculados no resumo pós-treino e
+// DESCARTADOS — não havia tela nem endpoint. A informação sempre esteve no
+// SetLog; faltava a leitura. Derivado, não armazenado: uma tabela de PR
+// dessincronizaria se uma série (ou uma sessão, via Fase 120) fosse excluída.
+describe("Fase 121 — GET /api/progress/personal-records", () => {
+  it("devolve o maior peso por exercício, com reps e data daquela série", async () => {
+    const r = await supertest(server.server)
+      .get("/api/progress/personal-records")
+      .set("Authorization", `Bearer ${tokenAluno}`);
+    expect(r.status).toBe(200);
+
+    const doExercicioA = r.body.records.find((x: any) => x.exerciseId === exerciseAId);
+    // O fixture do arquivo tem 55/60/62/65kg no exercício A — o PR é 65.
+    expect(doExercicioA.weightKg).toBe(65);
+    expect(doExercicioA.repsDone).toBe(7); // reps DAQUELA série, não o máximo de reps
+    expect(doExercicioA.achievedAt).toBeTruthy();
+    expect(doExercicioA.exerciseName).toBeTruthy();
+    expect(doExercicioA.muscleGroup).toBeTruthy();
+  });
+
+  it("um exercício por linha — não repete o mesmo exercício", async () => {
+    const r = await supertest(server.server)
+      .get("/api/progress/personal-records")
+      .set("Authorization", `Bearer ${tokenAluno}`);
+    const ids = r.body.records.map((x: any) => x.exerciseId);
+    expect(new Set(ids).size).toBe(ids.length);
+  });
+
+  it("empate no peso resolve pela série MAIS ANTIGA (recorde é de quando caiu)", async () => {
+    // Repete o PR de 65kg hoje: a data do recorde deve continuar sendo a
+    // primeira vez que 65kg foi atingido, não a mais recente.
+    const antes = await supertest(server.server)
+      .get("/api/progress/personal-records")
+      .set("Authorization", `Bearer ${tokenAluno}`);
+    const dataOriginal = antes.body.records.find((x: any) => x.exerciseId === exerciseAId).achievedAt;
+
+    const repetido = await prisma.setLog.create({
+      data: { workoutExerciseId: workoutExerciseAId, setNumber: 9, repsDone: 5, weightKg: 65, loggedAt: new Date() },
+    });
+
+    const depois = await supertest(server.server)
+      .get("/api/progress/personal-records")
+      .set("Authorization", `Bearer ${tokenAluno}`);
+    const rec = depois.body.records.find((x: any) => x.exerciseId === exerciseAId);
+    expect(rec.weightKg).toBe(65);
+    expect(rec.achievedAt).toBe(dataOriginal);
+
+    await prisma.setLog.delete({ where: { id: repetido.id } });
+  });
+
+  it("aluno sem nenhuma série registrada recebe lista vazia (não erro)", async () => {
+    const r = await supertest(server.server)
+      .get("/api/progress/personal-records")
+      .set("Authorization", `Bearer ${tokenAluno2}`);
+    expect(r.status).toBe(200);
+    expect(r.body.records).toEqual([]);
+  });
+
+  it("PERSONAL vinculado lê os recordes do aluno via ?alunoId", async () => {
+    const r = await supertest(server.server)
+      .get(`/api/progress/personal-records?alunoId=${alunoId}`)
+      .set("Authorization", `Bearer ${tokenPersonal}`);
+    expect(r.status).toBe(200);
+    expect(r.body.records.length).toBeGreaterThan(0);
+  });
+
+  it("ALUNO ignora ?alunoId de outra pessoa (nunca lê recorde alheio)", async () => {
+    const r = await supertest(server.server)
+      .get(`/api/progress/personal-records?alunoId=${alunoId}`)
+      .set("Authorization", `Bearer ${tokenAluno2}`);
+    expect(r.status).toBe(200);
+    // tokenAluno2 não tem séries: se o `alunoId` da query fosse respeitado,
+    // viria a lista do outro aluno.
+    expect(r.body.records).toEqual([]);
+  });
+});

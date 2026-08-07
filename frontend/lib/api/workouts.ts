@@ -232,6 +232,18 @@ export function renameWorkoutSession(workoutId: string, name: string) {
 }
 
 /**
+ * Fase 121: troca a letra (A-E) ou o dia da semana da sessão. Endpoint separado
+ * do rename porque nome e chave são atributos independentes — o backend
+ * ramifica por role, então a mesma função serve pro Personal e pro aluno.
+ */
+export function changeWorkoutSessionLetter(workoutId: string, letter: string) {
+  return apiFetch<{ workout: Workout }>(`/api/workouts/${workoutId}/letter`, {
+    method: "PATCH",
+    body: { letter },
+  });
+}
+
+/**
  * Fase 120: exclui a SESSÃO do programa (o "treino do dia" / dia da semana).
  * Mesmo padrão de `deleteWorkoutProgram` — o backend ramifica por role, então
  * a mesma função serve pro Personal e pro aluno (que precisa de Premium).

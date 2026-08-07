@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { QueryError } from "@/components/query-error";
 import { DifficultyBadge } from "@/components/difficulty-badge";
 import { AdminExerciseForm } from "@/components/admin-exercise-form";
+import { AdminExerciseTranslations } from "@/components/admin-exercise-translations";
 import { DeleteExerciseButton } from "@/components/delete-exercise-button";
 import type { Exercise } from "@/lib/types";
 
@@ -72,6 +73,12 @@ const ExerciseRow = memo(function ExerciseRow({
             onSaved={onSaved}
             onCancel={() => onToggleEdit(exercise)}
           />
+          {/* Fase 121: traduções EN/ES no MESMO painel de edição — antes só
+              script de seed populava `ExerciseTranslation`, então todo
+              exercício cadastrado por esta tela nascia sem tradução. */}
+          <div className="mt-4 border-t border-border pt-4">
+            <AdminExerciseTranslations exerciseId={exercise.id} />
+          </div>
         </div>
       )}
     </div>

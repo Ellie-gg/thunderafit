@@ -5,6 +5,7 @@ import type {
   FrequencyResponse,
   WeeklySummaryResponse,
   SessionHistoryResponse,
+  PersonalRecordsResponse,
 } from "../types";
 
 // Fase 29: as 3 funções abaixo ganham `alunoId` opcional — usado pelo hub do
@@ -49,4 +50,12 @@ export function getWeeklySummary(alunoId?: string) {
 export function getSessionHistory(alunoId?: string) {
   const qs = alunoId ? `?alunoId=${encodeURIComponent(alunoId)}` : "";
   return apiFetch<SessionHistoryResponse>(`/api/progress/session-history${qs}`);
+}
+
+// Fase 121 ("meus recordes"): maior carga já levantada por exercício. Derivado
+// do SetLog no backend (não há tabela de PR), mesmo padrão de `alunoId`
+// opcional das funções acima.
+export function getPersonalRecords(alunoId?: string) {
+  const qs = alunoId ? `?alunoId=${encodeURIComponent(alunoId)}` : "";
+  return apiFetch<PersonalRecordsResponse>(`/api/progress/personal-records${qs}`);
 }

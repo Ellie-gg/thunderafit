@@ -982,6 +982,53 @@
     "deleting": "Eliminando...",
     "confirmDelete": "Sí, eliminar"
   },
+  "bodyMeasurementsCard": {
+    "title": "Medidas corporales",
+    "subtitle": "Registra tu peso a lo largo del tiempo para seguir la evolución del cuerpo, no solo de la carga.",
+    "subtitlePersonal": "Registra aquí la evaluación física que hiciste con este alumno.",
+    "weightLabel": "Peso (kg)",
+    "weightPlaceholder": "Ej: 82,4",
+    "dateLabel": "Fecha de la medición",
+    "waistLabel": "Cintura (cm)",
+    "bodyFatLabel": "Grasa (%)",
+    "optionalPlaceholder": "Opcional",
+    "save": "Registrar medición",
+    "saving": "Registrando...",
+    "saveError": "No se pudo registrar la medición.",
+    "empty": "Aún no hay mediciones registradas.",
+    "dateColumn": "Fecha",
+    "weightColumn": "Peso",
+    "waistColumn": "Cintura",
+    "bodyFatColumn": "Grasa",
+    "weightValue": "{value}kg",
+    "waistValue": "{value}cm",
+    "bodyFatValue": "{value}%",
+    "byProfessional": "(profesional)",
+    "delete": "Eliminar",
+    "deleteAriaLabel": "Eliminar esta medición",
+    "deleteError": "No se pudo eliminar la medición."
+  },
+  "adminExerciseTranslations": {
+    "title": "Traducciones (EN / ES)",
+    "hint": "Deja un idioma completamente vacío para no modificarlo. Si lo completas, el nombre, el grupo muscular y la descripción son todos obligatorios.",
+    "nameLabel": "Nombre",
+    "muscleGroupLabel": "Grupo muscular",
+    "descriptionLabel": "Descripción",
+    "save": "Guardar traducciones",
+    "saving": "Guardando...",
+    "saved": "Traducciones guardadas.",
+    "saveError": "Error al guardar las traducciones."
+  },
+  "personalRecordsCard": {
+    "title": "Mis récords",
+    "subtitle": "La mayor carga que has levantado en cada ejercicio.",
+    "empty": "Registra series en tus entrenamientos para empezar a ver tus récords aquí.",
+    "weightWithReps": "{weight}kg × {reps}"
+  },
+  "sessionKeyPicker": {
+    "ariaLabel": "Cambiar la letra o el día de la semana de esta sesión",
+    "changeError": "No se pudo cambiar la sesión."
+  },
   "deleteSessionButton": {
     "delete": "Eliminar",
     "deleteAriaLabel": "Eliminar la sesión {session}",

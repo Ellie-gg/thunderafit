@@ -982,6 +982,53 @@
     "deleting": "Deleting...",
     "confirmDelete": "Yes, delete"
   },
+  "bodyMeasurementsCard": {
+    "title": "Body measurements",
+    "subtitle": "Log your weight over time to track how your body is changing, not just the load you lift.",
+    "subtitlePersonal": "Record the physical assessment you did with this student here.",
+    "weightLabel": "Weight (kg)",
+    "weightPlaceholder": "e.g. 82.4",
+    "dateLabel": "Measurement date",
+    "waistLabel": "Waist (cm)",
+    "bodyFatLabel": "Body fat (%)",
+    "optionalPlaceholder": "Optional",
+    "save": "Log measurement",
+    "saving": "Saving...",
+    "saveError": "Couldn't save the measurement.",
+    "empty": "No measurements logged yet.",
+    "dateColumn": "Date",
+    "weightColumn": "Weight",
+    "waistColumn": "Waist",
+    "bodyFatColumn": "Body fat",
+    "weightValue": "{value}kg",
+    "waistValue": "{value}cm",
+    "bodyFatValue": "{value}%",
+    "byProfessional": "(professional)",
+    "delete": "Delete",
+    "deleteAriaLabel": "Delete this measurement",
+    "deleteError": "Couldn't delete the measurement."
+  },
+  "adminExerciseTranslations": {
+    "title": "Translations (EN / ES)",
+    "hint": "Leave a whole language blank to keep it unchanged. If you fill one in, name, muscle group and description are all required.",
+    "nameLabel": "Name",
+    "muscleGroupLabel": "Muscle group",
+    "descriptionLabel": "Description",
+    "save": "Save translations",
+    "saving": "Saving...",
+    "saved": "Translations saved.",
+    "saveError": "Error saving the translations."
+  },
+  "personalRecordsCard": {
+    "title": "My records",
+    "subtitle": "The heaviest load you've ever lifted on each exercise.",
+    "empty": "Log sets in your workouts to start seeing your records here.",
+    "weightWithReps": "{weight}kg × {reps}"
+  },
+  "sessionKeyPicker": {
+    "ariaLabel": "Change this session's letter or weekday",
+    "changeError": "Couldn't change the session."
+  },
   "deleteSessionButton": {
     "delete": "Delete",
     "deleteAriaLabel": "Delete session {session}",

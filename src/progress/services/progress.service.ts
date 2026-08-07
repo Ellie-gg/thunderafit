@@ -1,4 +1,6 @@
+import { Locale } from "@prisma/client";
 import { progressRepository } from "../repository/progress.repository";
+import { exerciseTranslationService } from "../../fitness/services/exercise-translation.service";
 
 function dayKey(date: Date): string {
   return date.toISOString().slice(0, 10); // YYYY-MM-DD (UTC)
@@ -83,6 +85,47 @@ export const progressService = {
       // inteiro — não é a soma das colunas mensais, já que (na teoria) um
       // mesmo treino poderia ter séries registradas em meses diferentes.
       totalWorkouts: allWorkoutIds.size,
+    };
+  },
+
+  /**
+   * Fase 121 ("meus recordes"): maior carga já levantada por exercício.
+   *
+   * Antes os PRs eram calculados e **descartados** — apareciam no resumo
+   * pós-treino (`workout-summary.service.ts#buildPersonalRecords`) e nunca mais,
+   * então não existia "meus recordes" nem histórico de quando cada um caiu. A
+   * informação sempre esteve no `SetLog`; faltava a leitura.
+   *
+   * Traduz o nome/grupo do exercício pelo locale ativo, como todo lugar que
+   * exibe exercício — sem isso, um aluno em EN veria a tela toda traduzida com
+   * nomes de exercício em português.
+   */
+  async getPersonalRecords(alunoId: string, locale: Locale) {
+    const rows = await progressRepository.findPersonalRecordsForAluno(alunoId);
+
+    // Reaproveita o mesmo tradutor do catálogo: monta objetos com a forma que
+    // `translateMany` espera (`name`/`muscleGroup`/`description`) e devolve o
+    // que a tela precisa. PT não passa por lookup nenhum (ver o service).
+    const traduzidos = await exerciseTranslationService.translateMany(
+      rows.map((r) => ({
+        id: r.exerciseId,
+        name: r.exerciseName,
+        muscleGroup: r.muscleGroup,
+        description: "",
+      })),
+      locale
+    );
+    const porId = new Map(traduzidos.map((t) => [t.id, t]));
+
+    return {
+      records: rows.map((r) => ({
+        exerciseId: r.exerciseId,
+        exerciseName: porId.get(r.exerciseId)?.name ?? r.exerciseName,
+        muscleGroup: porId.get(r.exerciseId)?.muscleGroup ?? r.muscleGroup,
+        weightKg: r.weightKg,
+        repsDone: r.repsDone,
+        achievedAt: r.achievedAt.toISOString(),
+      })),
     };
   },
 

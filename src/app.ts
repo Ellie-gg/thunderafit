@@ -10,6 +10,7 @@ import { workoutProgramsRoutes } from "./fitness/routes/workout-programs.routes"
 import { setlogsRoutes } from "./fitness/routes/setlogs.routes";
 import { usersRoutes } from "./fitness/routes/users.routes";
 import { progressRoutes } from "./progress/routes/progress.routes";
+import { bodyRoutes } from "./body/routes/body.routes";
 import { billingRoutes } from "./billing/routes/billing.routes";
 import { anamnesisRoutes } from "./anamnesis/routes/anamnesis.routes";
 import { supportRoutes } from "./support/routes/support.routes";
@@ -87,6 +88,8 @@ export async function buildApp(): Promise<FastifyInstance> {
   await fastify.register(setlogsRoutes);
   await fastify.register(usersRoutes);
   await fastify.register(progressRoutes);
+  // Fase 121: histórico de medições corporais (domínio próprio — ver as rotas).
+  await fastify.register(bodyRoutes);
   await fastify.register(billingRoutes);
   await fastify.register(anamnesisRoutes);
   await fastify.register(supportRoutes);

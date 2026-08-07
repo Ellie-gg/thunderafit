@@ -146,6 +146,18 @@ export async function deleteUserCascade(userId: string) {
       where: { OR: [{ personalId: userId }, { consumedByAlunoId: userId }] },
     });
 
+    // --- Medições corporais (Fase 121), os DOIS lados ---
+    // `alunoId`: as medições DO usuário excluído. `recordedByUserId`: o
+    // profissional que LANÇOU a medição de outra pessoa — a medição do aluno
+    // permanece (é dado dele), só perde a atribuição de quem registrou.
+    // Adicionado aqui junto com a tabela, cumprindo a regra de
+    // `src/admin/AGENTS.md` que o `ClientInvite` quebrou (M4).
+    await tx.bodyMeasurement.deleteMany({ where: { alunoId: userId } });
+    await tx.bodyMeasurement.updateMany({
+      where: { recordedByUserId: userId },
+      data: { recordedByUserId: null },
+    });
+
     // --- Dados só do próprio usuário ---
     await tx.notification.deleteMany({ where: { userId } });
     await tx.loginLog.deleteMany({ where: { userId } });

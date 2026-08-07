@@ -746,6 +746,49 @@ model SetLog {
 // Questionário de saúde/histórico do aluno, 1:1 com o aluno.
 // ============================================================
 
+// Fase 121: histórico de medições corporais — 1 linha por medição, N por aluno.
+//
+// Existe porque `Anamnesis` é `alunoId @unique`: um SNAPSHOT único, sobrescrito
+// a cada edição. O app acompanhava a progressão de CARGA com riqueza (SetLog,
+// /evolucao, recordes) e não tinha nada da progressão CORPORAL — que é
+// justamente o que o aluno associa a "está funcionando". `Anamnesis` continua
+// sendo o questionário de entrada (altura, condições de saúde, objetivos); esta
+// tabela é a série temporal.
+//
+// Campos escolhidos com o fundador: peso obrigatório, cintura e % de gordura
+// opcionais. Peso isolado engana (ganho de músculo mascara perda de gordura) e
+// cintura é o único perímetro com valor clínico real isolado — por isso os dois
+// juntos, sem cair numa avaliação de 7 campos que ninguém preenche duas vezes.
+//
+// `recordedByRole` guarda QUEM lançou (o aluno em casa, ou o Personal na
+// avaliação presencial) — os dois podem registrar, e a origem muda como o
+// número deve ser lido (balança de casa vs. fita métrica do profissional).
+//
+model BodyMeasurement {
+  id               String   @id @default(uuid())
+  // Sem @relation com User de propósito: o model User não declara relação
+  // nenhuma neste schema, e a limpeza é manual em `src/lib/user-deletion.ts`
+  // (mesma convenção de `WorkoutSessionLog.alunoId`). Ver a regra escrita em
+  // `src/admin/AGENTS.md`: tabela nova com coluna estilo userId PRECISA ser
+  // adicionada àquele cascade à mão — foi exatamente essa regra que o
+  // ClientInvite quebrou (M4 da auditoria 2026-08-06).
+  alunoId          String
+  /// Data da medição (não do cadastro) — o aluno pode lançar retroativo.
+  measuredAt       DateTime
+  weightKg         Float
+  waistCm          Float?
+  bodyFatPercent   Float?
+  /// ALUNO (auto-registro) ou PERSONAL/NUTRICIONISTA (avaliação presencial).
+  recordedByRole   Role
+  /// Quem lançou. Sem FK de propósito: se o profissional sair, a medição do aluno permanece.
+  recordedByUserId String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  // Toda leitura é "as medições deste aluno, mais recentes primeiro".
+  @@index([alunoId, measuredAt])
+}
+
 model Anamnesis {
   id                  String    @id @default(uuid())
   alunoId             String    @unique

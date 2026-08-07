@@ -97,15 +97,18 @@ checks inside each service function, not a generic guard.
 | Domain | Owns (Prisma models) | See |
 |---|---|---|
 | `auth` | `User`, `LoginLog` | [src/auth/AGENTS.md](src/auth/AGENTS.md) |
-| `fitness` | `Exercise`(+Translation), `WorkoutProgram`, `Workout`, `WorkoutExercise`, `SetLog`, `ClientRelation` | [src/fitness/AGENTS.md](src/fitness/AGENTS.md) |
+| `fitness` | `Exercise`(+Translation), `WorkoutProgram`, `Workout`, `WorkoutSessionLog`, `WorkoutExercise`, `SetLog`, `ClientRelation`, `ClientInvite` | [src/fitness/AGENTS.md](src/fitness/AGENTS.md) |
 | `connections` | `ConnectionRequest` | [src/connections/AGENTS.md](src/connections/AGENTS.md) |
 | `billing` | *(none — state lives on `User`)* | [src/billing/AGENTS.md](src/billing/AGENTS.md), `src/billing/BILLING_SETUP.md` |
 | `progress` | *(none — aggregates `fitness` data)* | [src/progress/AGENTS.md](src/progress/AGENTS.md) |
-| `anamnesis` | `Anamnesis` | [src/anamnesis/AGENTS.md](src/anamnesis/AGENTS.md) |
+| `anamnesis` | `Anamnesis` (snapshot 1:1, sobrescrito — o HISTÓRICO corporal é do `body`) | [src/anamnesis/AGENTS.md](src/anamnesis/AGENTS.md) |
+| `body` | `BodyMeasurement` (Fase 121 — série temporal de peso/cintura/%gordura) | [src/body/AGENTS.md](src/body/AGENTS.md) |
 | `support` | `SupportThread`, `SupportMessage` | [src/support/AGENTS.md](src/support/AGENTS.md) |
 | `notifications` | `Notification` | [src/notifications/AGENTS.md](src/notifications/AGENTS.md) |
 | `admin` | `AdminAccessLog`, `AdminAuditLog` (+ reads across domains) | [src/admin/AGENTS.md](src/admin/AGENTS.md) |
 | `nutrition` | `Food`, `DietPlan`, `DietMeal`, `DietFood` — **dormant, no frontend UI** | [src/nutrition/AGENTS.md](src/nutrition/AGENTS.md) |
+| `contact` | `ContactMessage` (rota única `POST /api/contact`, dispara e-mail via Resend) | — |
+| `dashboard` | *(none — compõe outros services; `GET /api/dashboard/aluno-summary`)* | — |
 
 Cross-domain relationships (who calls/depends on whom): see
 [`docs/architecture.mermaid`](docs/architecture.mermaid).

@@ -8,6 +8,7 @@ import { exerciseTranslationService } from "./exercise-translation.service";
 import { alunoPremiumService } from "../../billing/services/aluno-premium.service";
 import { assertPersonalCanPrescribe, assertAlunoWorkoutAccessible } from "../../lib/plan-expiry";
 import { assertValidName } from "../../lib/validate-name";
+import { workoutProgramsRepository, orderFor } from "../repository/workout-programs.repository";
 
 // Fase 112: RPE (Percepção Subjetiva de Esforço), escala Borg 0-10 —
 // pergunta única e opcional depois do resumo pós-treino (ver
@@ -114,6 +115,44 @@ export function assertValidExercisePrescription(sets: number, restSeconds: numbe
   if (!repsRange?.trim()) {
     throw httpError("repsRange é obrigatório.", 400);
   }
+}
+
+/**
+ * Fase 121: valida a chave nova ao trocar a letra/dia de uma sessão. Mesmas
+ * duas regras de `workoutProgramsService.addSession` (chave tem que pertencer ao
+ * esquema do programa, e não pode colidir com outra sessão dele) — a intenção é
+ * que mover uma sessão nunca deixe o programa num estado que `addSession` não
+ * teria permitido criar.
+ *
+ * Trocar pela MESMA chave é no-op silencioso (200), não erro: o cliente pode
+ * reenviar sem consequência, e o usuário que escolhe "B" estando em "B" não
+ * merece uma mensagem de erro.
+ */
+async function assertLetterAvailable(
+  workout: { id: string; programId: string; letter: string },
+  novaLetra: string
+): Promise<{ noop: boolean }> {
+  const program = await workoutProgramsRepository.findProgramById(workout.programId);
+  if (!program) throw httpError("Programa não encontrado.", 404);
+
+  const validKeys = orderFor(program.sessionScheme);
+  if (!validKeys.includes(novaLetra)) {
+    throw httpError(
+      program.sessionScheme === "WEEKDAY"
+        ? "Sessão deve ser um dia da semana válido (SEGUNDA a DOMINGO)."
+        : "Sessão deve ser uma letra de A a E.",
+      400
+    );
+  }
+  if (novaLetra === workout.letter) return { noop: true };
+
+  const irmas = await workoutsRepository.findSiblings(workout.programId);
+  if (irmas.some((s) => s.id !== workout.id && s.letter === novaLetra)) {
+    // 409 (não 400): o pedido é válido, o estado atual é que impede — mesmo
+    // status e mesma mensagem que `addSession` usa pra colisão de chave.
+    throw httpError(`A sessão ${novaLetra} já existe neste programa.`, 409);
+  }
+  return { noop: false };
 }
 
 async function assertAlunoPremiumAccess(alunoId: string) {
@@ -298,6 +337,23 @@ export const workoutsService = {
    * excesso de alunos existe pra impedir EXPANDIR a prescrição, e remover nunca
    * expande — um Personal bloqueado precisa justamente poder reduzir.
    */
+  /**
+   * Fase 121 (levantamento do roadmap): trocar a letra/dia da sessão. Mesma
+   * posse de `renameWorkout`/`deleteWorkout`, e **sem** gate de
+   * `assertPersonalCanPrescribe` pelo mesmo critério da Fase 103 — reposicionar
+   * uma sessão não expande a prescrição (o programa continua com as mesmas
+   * sessões e os mesmos exercícios).
+   */
+  async changeWorkoutLetter(workoutId: string, personalId: string, letter: string) {
+    const workout = await workoutsRepository.findById(workoutId);
+    if (!workout || workout.personalId !== personalId) {
+      throw httpError("Treino não encontrado.", 404);
+    }
+    const { noop } = await assertLetterAvailable(workout, letter);
+    if (noop) return workout;
+    return workoutsRepository.updateLetter(workoutId, letter);
+  },
+
   async deleteWorkout(workoutId: string, personalId: string) {
     const workout = await workoutsRepository.findById(workoutId);
     if (!workout || workout.personalId !== personalId) {
@@ -391,6 +447,16 @@ export const workoutsService = {
    * programa INTEIRO, que fica liberado pra o aluno nunca ficar preso a um
    * treino que não consegue mais editar.
    */
+  /** Fase 121: par SELF de `changeWorkoutLetter` (com gate de Aluno Premium). */
+  async changeSelfWorkoutLetter(workoutId: string, alunoId: string, letter: string) {
+    const workout = await workoutsRepository.findById(workoutId);
+    assertOwnSelfWorkout(workout, alunoId);
+    await assertAlunoPremiumAccess(alunoId);
+    const { noop } = await assertLetterAvailable(workout!, letter);
+    if (noop) return workout!;
+    return workoutsRepository.updateLetter(workoutId, letter);
+  },
+
   async deleteSelfWorkout(workoutId: string, alunoId: string) {
     const workout = await workoutsRepository.findById(workoutId);
     assertOwnSelfWorkout(workout, alunoId);
