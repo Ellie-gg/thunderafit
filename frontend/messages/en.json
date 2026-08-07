@@ -75,7 +75,7 @@
     "changeBanner": "Change banner",
     "remove": "Remove banner",
     "noBanner": "No banner",
-"sizeHint": "Ideal: an image already in 16:9 (e.g. 1200×675, 1280×720, or 1920×1080) — fills the frame completely. Outside that ratio, the whole image is kept (never cropped), with a blurred backdrop filling any leftover space.",
+    "sizeHint": "Ideal: an image already in 16:9 (e.g. 1200×675, 1280×720, or 1920×1080) — fills the frame completely. Outside that ratio, the whole image is kept (never cropped), with a blurred backdrop filling any leftover space.",
     "errors": {
       "invalidType": "Choose an image file (PNG, JPEG, or WebP).",
       "loadFailed": "Could not read the image.",
@@ -976,6 +976,7 @@
   },
   "deleteProgramButton": {
     "delete": "Delete",
+    "confirmTitle": "Delete this program?",
     "confirmDeleteTemplate": "Delete this template? Its sessions and exercises will be gone — instances already applied to students aren't affected.",
     "confirmDeleteApplied": "Delete this applied program? The set history logged by the student on it will be lost. This action cannot be undone.",
     "deleteError": "Error deleting.",
@@ -1032,6 +1033,7 @@
   "deleteSessionButton": {
     "delete": "Delete",
     "deleteAriaLabel": "Delete session {session}",
+    "confirmTitle": "Delete this session?",
     "confirmDelete": "Delete session {session}? Its prescribed exercises and the logged set history will be lost. This can't be undone.",
     "deleteError": "Error deleting the session.",
     "deleting": "Deleting...",

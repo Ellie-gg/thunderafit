@@ -148,44 +148,62 @@ function ProgramaDetalheContent() {
             {/* Sessões — cada uma abre sua própria tela de prescrição (Fase 26) */}
             <section className="flex flex-col gap-3">
               {sessions.map((s) => (
-                <Link key={s.id} href={`/personal/programas/${programId}/sessoes/${s.id}${query}`}>
-                  <Card className="flex items-center justify-between gap-2 transition-colors hover:border-accent">
-                    <div className="min-w-0">
-                      <span className="font-display text-lg font-bold text-accent">
-                        {labelFor(scheme, s.letter)}
-                      </span>{" "}
-                      <span className="font-semibold">{s.name}</span>
-                      <p className="text-xs text-muted">
-                        {t("exercisesCount", { count: s.exercises?.length ?? 0 })}
-                      </p>
-                    </div>
-                    {/* Fase 120: excluir a sessão. Fica DENTRO do card-link, por
-                        isso o componente para a propagação do clique — senão
-                        confirmar navegaria pra tela de prescrição. */}
-                    <div className="flex shrink-0 items-center gap-2">
-                      {/* Fase 121: trocar letra/dia sem excluir e recriar. */}
-                      <SessionKeyPicker
-                        workoutId={s.id}
-                        currentKey={s.letter}
-                        availableKeys={availableKeys}
-                        scheme={scheme}
-                        onChanged={() => {
-                          queryClient.invalidateQueries({ queryKey: ["workout-program", programId] });
-                          queryClient.invalidateQueries({ queryKey: ["workout-programs", "personal"] });
-                        }}
-                      />
-                      <span className="text-sm text-muted">{t("open")}</span>
-                      <DeleteSessionButton
-                        workoutId={s.id}
-                        sessionLabel={labelFor(scheme, s.letter)}
-                        onDeleted={() => {
-                          queryClient.invalidateQueries({ queryKey: ["workout-program", programId] });
-                          queryClient.invalidateQueries({ queryKey: ["workout-programs", "personal"] });
-                        }}
-                      />
-                    </div>
-                  </Card>
-                </Link>
+                /* Fase 123 (bug reportado pelo fundador: "ao clicar pra trocar
+                   de letra ele entra direto no treino"). Antes o `<Link>`
+                   envolvia o card INTEIRO, com o picker e o excluir dentro
+                   dele. Navegar é a AÇÃO DEFAULT da âncora, não um handler de
+                   clique, então o `stopPropagation()` do picker não impedia
+                   nada — só `preventDefault()` impediria, e chamar isso num
+                   `<select>` é arriscado (o dropdown abre no mousedown). Além
+                   disso, `<select>`/`<button>` dentro de `<a>` é HTML inválido
+                   e quebra navegação por teclado.
+                   Corrigido do jeito que a tela do ALUNO já fazia desde a Fase
+                   85: o `<Link>` envolve só o conteúdo do card, e os controles
+                   são IRMÃOS dele. Sem hack de evento, e o problema não pode
+                   voltar por descuido em outro controle. */
+                <div key={s.id} className="flex items-center gap-2">
+                  <Link
+                    href={`/personal/programas/${programId}/sessoes/${s.id}${query}`}
+                    className="min-w-0 flex-1"
+                  >
+                    <Card className="flex items-center justify-between gap-2 transition-colors hover:border-accent">
+                      <div className="min-w-0">
+                        <span className="font-display text-lg font-bold text-accent">
+                          {labelFor(scheme, s.letter)}
+                        </span>{" "}
+                        <span className="font-semibold">{s.name}</span>
+                        <p className="text-xs text-muted">
+                          {t("exercisesCount", { count: s.exercises?.length ?? 0 })}
+                        </p>
+                      </div>
+                      <span className="shrink-0 text-sm text-muted">{t("open")}</span>
+                    </Card>
+                  </Link>
+                  {/* Fase 121: trocar letra/dia sem excluir e recriar. */}
+                  <div className="shrink-0">
+                    <SessionKeyPicker
+                      workoutId={s.id}
+                      currentKey={s.letter}
+                      availableKeys={availableKeys}
+                      scheme={scheme}
+                      onChanged={() => {
+                        queryClient.invalidateQueries({ queryKey: ["workout-program", programId] });
+                        queryClient.invalidateQueries({ queryKey: ["workout-programs", "personal"] });
+                      }}
+                    />
+                  </div>
+                  {/* Fase 120: excluir a sessão. */}
+                  <div className="shrink-0">
+                    <DeleteSessionButton
+                      workoutId={s.id}
+                      sessionLabel={labelFor(scheme, s.letter)}
+                      onDeleted={() => {
+                        queryClient.invalidateQueries({ queryKey: ["workout-program", programId] });
+                        queryClient.invalidateQueries({ queryKey: ["workout-programs", "personal"] });
+                      }}
+                    />
+                  </div>
+                </div>
               ))}
             </section>
 

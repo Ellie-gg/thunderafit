@@ -75,7 +75,7 @@
     "changeBanner": "Cambiar banner",
     "remove": "Quitar banner",
     "noBanner": "Sin banner",
-"sizeHint": "Ideal: una imagen ya en proporción 16:9 (ej: 1200×675, 1280×720 o 1920×1080) — llena el cuadro por completo. Fuera de esa proporción, la imagen se mantiene completa (nunca se recorta), con un fondo desenfocado llenando el espacio restante.",
+    "sizeHint": "Ideal: una imagen ya en proporción 16:9 (ej: 1200×675, 1280×720 o 1920×1080) — llena el cuadro por completo. Fuera de esa proporción, la imagen se mantiene completa (nunca se recorta), con un fondo desenfocado llenando el espacio restante.",
     "errors": {
       "invalidType": "Elige un archivo de imagen (PNG, JPEG o WebP).",
       "loadFailed": "No se pudo leer la imagen.",
@@ -976,6 +976,7 @@
   },
   "deleteProgramButton": {
     "delete": "Eliminar",
+    "confirmTitle": "¿Eliminar este programa?",
     "confirmDeleteTemplate": "¿Eliminar esta plantilla? Sus sesiones y ejercicios desaparecerán — las instancias ya aplicadas a alumnos no se ven afectadas.",
     "confirmDeleteApplied": "¿Eliminar este programa aplicado? Se perderá el historial de series registradas por el alumno en él. Esta acción no se puede deshacer.",
     "deleteError": "Error al eliminar.",
@@ -1032,6 +1033,7 @@
   "deleteSessionButton": {
     "delete": "Eliminar",
     "deleteAriaLabel": "Eliminar la sesión {session}",
+    "confirmTitle": "¿Eliminar esta sesión?",
     "confirmDelete": "¿Eliminar la sesión {session}? Se perderán los ejercicios prescritos y el historial de series registradas. Esta acción no se puede deshacer.",
     "deleteError": "Error al eliminar la sesión.",
     "deleting": "Eliminando...",

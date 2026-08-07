@@ -22,6 +22,17 @@ import type { SessionScheme } from "@/lib/types";
  * `<select>` nativo de propósito: é o controle que o Android e o iOS já
  * renderizam como picker rolável, e o projeto não tem biblioteca de dropdown
  * (mesma razão pela qual o resto do app usa `<select>` cru).
+ *
+ * **NÃO aninhe este componente dentro de um `<Link>`/`<a>`.** Foi o bug da Fase
+ * 123 ("ao clicar pra trocar de letra ele entra direto no treino"): a tela do
+ * Personal envolvia o card inteiro numa âncora, e o `stopPropagation()` abaixo
+ * não salva desse caso — navegar é a AÇÃO DEFAULT da âncora, não um handler de
+ * clique, e só `preventDefault()` cancelaria. Aqui isso não é uma opção: num
+ * `<select>` o dropdown abre no `mousedown`, então cancelar o default do clique
+ * é remédio arriscado pra doença errada. `<select>` dentro de `<a>` também é
+ * HTML inválido. A regra é estrutural: o componente vive como IRMÃO do link,
+ * nunca dentro. O `stopPropagation()` fica para o caso legítimo de um container
+ * com `onClick` próprio.
  */
 export function SessionKeyPicker({
   workoutId,
