@@ -80,6 +80,19 @@ resource "google_cloud_run_v2_service" "backend" {
           }
         }
       }
+      # Fase 122: usada só pelo `prisma migrate deploy` que roda no boot
+      # (docker/start-backend.sh) — o Prisma Client em runtime continua na
+      # DATABASE_URL pooled. Ver `directUrl` em prisma/schema.prisma pro
+      # porquê (advisory lock vaza através do PgBouncer).
+      env {
+        name = "DIRECT_DATABASE_URL"
+        value_source {
+          secret_key_ref {
+            secret  = google_secret_manager_secret.direct_database_url.secret_id
+            version = "latest"
+          }
+        }
+      }
       # Fase 32: bucket de mídia de exercícios (infra/storage.tf) — o
       # service account do backend já tem roles/storage.objectAdmin nele.
       env {
