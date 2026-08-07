@@ -103,6 +103,20 @@ a maior chance de virar reclamação.
 
 ## Nível 4 — Operação, confiança e conformidade
 
+0. **Tradução do catálogo de programas — medido na Fase 124, não feito** (entra aqui em
+   vez de virar dívida silenciosa). A curadoria da Fase 124 mediu o catálogo real em
+   produção: dos **60 templates de catálogo**, **32 não têm tradução EN e/ou ES** de
+   nome/descrição, e **90 das 194 sessões** não têm nome traduzido. O aluno em EN/ES vê
+   português nesses casos — o fallback pro PT canônico funciona, então não quebra nada,
+   mas é o contrário da regra de paridade PT/EN/ES que o projeto adotou.
+   Ficou **fora** da Fase 124 por tamanho, e a medição é o motivo: são **161 nomes de
+   sessão distintos** em 194 sessões (repetição baixa — "Costas e Bíceps" aparece 6x,
+   "Peito e Tríceps" 5x, e o resto é quase todo 1x), então dicionário resolve pouco.
+   Somando nome + descrição de programa e nome de sessão, dá da ordem de **270 strings
+   novas** de conteúdo — é fase própria, não apêndice de outra.
+   A Fase 124 fechou o subconjunto que dava pra fechar: os 6 programas de catálogo que
+   não tinham descrição nenhuma saíram com PT + EN + ES completos.
+
 12. **Rate limit — parcial, não ausente** (correção ao seu item da lista, e a uma
     afirmação errada que eu mesmo escrevi na primeira versão deste levantamento).
     **Já existe** um limitador em `src/auth/services/login-rate-limiter.ts` (Fase 14): 5
