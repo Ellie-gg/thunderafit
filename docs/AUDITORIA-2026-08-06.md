@@ -1,15 +1,24 @@
 # Auditoria — 2026-08-06
 
-> **Situação (atualizado na Fase 118):** a maior parte desta auditoria **já foi
-> corrigida**. Corrigidos na Fase 118: **A1, A2, A3, M1, M2, M3, M5**, os baixos
-> **B1, B2, B3, B4, B5, B8**, os dois de i18n (**I1, I2**) e **todo o drift de
-> documentação** (D1-D4 + menores + `infra/README.md`).
+> **Situação (atualizado na Fase 119):** **todos os achados de risco ALTO e MÉDIO estão
+> fechados.**
 >
-> **Ainda abertos**, cada um com fase própria planejada (motivo e escopo em
-> [`PROXIMAS-FASES-AUDITORIA.md`](PROXIMAS-FASES-AUDITORIA.md)): **A4** (idempotência do
-> `/complete`), **M4** (`ClientInvite` fora do cascade), **M6** (só a parte de
-> Terraform), **B6** (`startedAt` derivado), **B7** (`dayKey` UTC), **B9** (criação em 2
-> chamadas), **B10** (limpeza de fixture de teste), **B11** (retenção de `LoginLog`).
+> - **Fase 118**: A1, A2, A3, M1, M2, M3, M5, os baixos B1, B2, B3, B4, B5, B8, os dois
+>   de i18n (I1, I2) e **todo o drift de documentação** (D1-D4 + menores + `infra/README.md`).
+> - **Fase 119**: **A4** (idempotência do `/complete`, com janela de dedupe de 2 min) e
+>   **M4** (`ClientInvite` no cascade de deleção, fechando PII que sobrevivia à exclusão
+>   de conta). Verificado em produção: **0 convites órfãos**, então o M4 é preventivo.
+>
+> **Ainda abertos, todos de risco BAIXO** (escopo em
+> [`PROXIMAS-FASES-AUDITORIA.md`](PROXIMAS-FASES-AUDITORIA.md)): **B6** (`startedAt`
+> derivado), **B7** (`dayKey` UTC), **B9** (criação em 2 chamadas), **B10** (limpeza de
+> fixture de teste), **B11** (retenção de `LoginLog`), e **M6-Terraform** (avisar quando
+> um secret existe sem versão).
+>
+> A Fase 119 também corrigiu a **inconsistência de catálogo** que este documento apontou
+> de passagem (o teste de contagem falhando desde a Fase 110) e fechou uma lacuna de
+> tradução **descoberta só ao auditar o banco de produção**: 20 exercícios sem nenhuma
+> tradução EN/ES, agora 0. Ver `STATUS.md` (Fase 119).
 >
 > O texto abaixo é o **laudo original**, preservado como estava — os cenários de falha
 > descrevem o comportamento de ANTES da correção. Não edite os achados para refletir o

@@ -126,6 +126,26 @@ export async function deleteUserCascade(userId: string) {
       where: { OR: [{ personalId: userId }, { alunoId: userId }] },
     });
 
+    // --- Convites de vínculo (Fase 104), os DOIS lados ---
+    // M4 (auditoria 2026-08-06): `ClientInvite` tinha ficado FORA deste
+    // cascade, quebrando a regra escrita em `src/admin/AGENTS.md` ("toda
+    // tabela nova com coluna estilo userId precisa ser adicionada aqui à
+    // mão — nada garante isso automaticamente"). O modelo não tem FK
+    // (`personalId` é String puro), então a deleção não falhava: as linhas
+    // simplesmente sobreviviam. Dois problemas concretos: (1) os links de
+    // convite continuavam VÁLIDOS apontando pra um profissional que não
+    // existe mais — quem clicasse recebia erro (`assertUnderAlunoLimit`
+    // valida `if (!user) throw`), então não gerava vínculo corrompido, mas
+    // ficava um link morto pra sempre; (2) **PII sobrevivia à exclusão de
+    // conta** — `label` é texto livre escrito pelo profissional, tipicamente
+    // o nome de quem foi convidado.
+    //
+    // `consumedByAlunoId` cobre o outro lado: um ALUNO excluído não deve
+    // deixar seu id preso no histórico de convite de terceiros.
+    await tx.clientInvite.deleteMany({
+      where: { OR: [{ personalId: userId }, { consumedByAlunoId: userId }] },
+    });
+
     // --- Dados só do próprio usuário ---
     await tx.notification.deleteMany({ where: { userId } });
     await tx.loginLog.deleteMany({ where: { userId } });

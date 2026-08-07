@@ -2038,5 +2038,101 @@
     "mediaUrl": "https://www.youtube.com/watch?v=1hB5LlY1OpM",
     "description": "A partir de quatro apoios, traga um joelho à frente entre as mãos com a canela cruzada no chão e estenda a outra perna pra trás, alongando profundamente o glúteo e o piriforme.",
     "difficultyLevel": "INTERMEDIARIO"
+  },
+  {
+    "name": "A Serra",
+    "muscleGroup": "Pilates",
+    "equipment": "Peso Corporal",
+    "mediaUrl": "https://www.youtube.com/watch?v=hxvWihO3ocg",
+    "description": "Sentado com as pernas estendidas e afastadas, braços abertos na altura dos ombros, gire o tronco pra um lado e incline-se pra frente em direção ao pé oposto, como se estivesse serrando o dedinho do pé, e retorne — combina rotação de tronco com alongamento da cadeia posterior.",
+    "difficultyLevel": "INTERMEDIARIO"
+  },
+  {
+    "name": "Alongamento das Duas Pernas",
+    "muscleGroup": "Pilates",
+    "equipment": "Peso Corporal",
+    "mediaUrl": "https://www.youtube.com/watch?v=SbAzXngP480",
+    "description": "Com joelhos no peito e mãos nos tornozelos, estenda pernas e braços ao mesmo tempo em direções opostas (pernas a 45°, braços atrás da cabeça) e retorne à posição compacta — exige controle total do core pra manter a lombar estável durante a extensão.",
+    "difficultyLevel": "INTERMEDIARIO"
+  },
+  {
+    "name": "Alongamento de Coluna à Frente",
+    "muscleGroup": "Pilates",
+    "equipment": "Peso Corporal",
+    "mediaUrl": "https://www.youtube.com/watch?v=yso-Y3Ik2BM",
+    "description": "Sentado com as pernas estendidas à frente e afastadas na largura do mat, incline o tronco pra frente arredondando a coluna vértebra por vértebra, como se passasse por cima de uma bola, e retorne à posição ereta — melhora a flexibilidade da coluna e da parte posterior das pernas.",
+    "difficultyLevel": "INICIANTE"
+  },
+  {
+    "name": "Alongamento de Uma Perna",
+    "muscleGroup": "Pilates",
+    "equipment": "Peso Corporal",
+    "mediaUrl": "https://www.youtube.com/watch?v=7x-5-QHT1_Q",
+    "description": "Deitado com cabeça e ombros elevados, puxe um joelho em direção ao peito enquanto estende a outra perna, alternando os lados num ritmo constante — exercício fundamental da série abdominal do Pilates, trabalha o core em movimento alternado.",
+    "difficultyLevel": "INICIANTE"
+  },
+  {
+    "name": "Chute Lateral",
+    "muscleGroup": "Pilates",
+    "equipment": "Peso Corporal",
+    "mediaUrl": "https://www.youtube.com/watch?v=ELwtXrhRbgI",
+    "description": "Deitado de lado, com o corpo alinhado numa única linha reta e apoiado no antebraço (ou cabeça na mão), eleve a perna de cima e execute chutes controlados pra frente e pra trás, mantendo o quadril estável — trabalha o glúteo médio e a estabilidade lateral do core.",
+    "difficultyLevel": "INTERMEDIARIO"
+  },
+  {
+    "name": "Círculo com Uma Perna",
+    "muscleGroup": "Pilates",
+    "equipment": "Peso Corporal",
+    "mediaUrl": "https://www.youtube.com/watch?v=pg4WRNkbnjA",
+    "description": "Deitado de costas com uma perna estendida ao teto, desenhe círculos amplos e controlados com essa perna, mantendo o quadril e a lombar estáveis no chão — exige e desenvolve a estabilidade do core enquanto a perna se move livremente.",
+    "difficultyLevel": "INICIANTE"
+  },
+  {
+    "name": "Enrolamento de Coluna (Roll Up)",
+    "muscleGroup": "Pilates",
+    "equipment": "Peso Corporal",
+    "mediaUrl": "https://www.youtube.com/watch?v=FZNwIJ03fhQ",
+    "description": "Deitado de costas com os braços estendidos atrás da cabeça, role a coluna pra cima vértebra por vértebra até sentar com a coluna arredondada sobre as pernas estendidas, e desça na mesma sequência controlada — trabalha o abdômen profundo e a articulação da coluna.",
+    "difficultyLevel": "INTERMEDIARIO"
+  },
+  {
+    "name": "Nadando",
+    "muscleGroup": "Pilates",
+    "equipment": "Peso Corporal",
+    "mediaUrl": "https://www.youtube.com/watch?v=bY6ZyiO_7ek",
+    "description": "Deitado de bruços, eleve braços e pernas opostos do chão simultaneamente (braço direito com perna esquerda e vice-versa) num movimento alternado e contínuo, como se estivesse nadando — fortalece toda a cadeia posterior e a extensão da coluna.",
+    "difficultyLevel": "INTERMEDIARIO"
+  },
+  {
+    "name": "O Cem",
+    "muscleGroup": "Pilates",
+    "equipment": "Peso Corporal",
+    "mediaUrl": "https://www.youtube.com/watch?v=UaqpuUzs1i8",
+    "description": "Deitado de costas, eleve as pernas a 45° (ou com joelhos dobrados a 90° pra variação mais leve) e a cabeça/ombros do chão. Bombeie os braços estendidos ao lado do corpo em pulsos curtos, inspirando em 5 pulsos e expirando em 5, até completar 100 — aquecimento clássico de ativação do core e do padrão respiratório do Pilates.",
+    "difficultyLevel": "INICIANTE"
+  },
+  {
+    "name": "Ponte de Ombro",
+    "muscleGroup": "Pilates",
+    "equipment": "Peso Corporal",
+    "mediaUrl": "https://www.youtube.com/watch?v=proSciSIAtU",
+    "description": "Deitado de costas com os joelhos dobrados e pés apoiados no chão, eleve o quadril vértebra por vértebra até formar uma linha reta dos ombros aos joelhos, contraindo glúteos e abdômen, e desça controladamente na mesma sequência — fortalece glúteos, posterior de coxa e a região lombar.",
+    "difficultyLevel": "INICIANTE"
+  },
+  {
+    "name": "Rolando Como uma Bola",
+    "muscleGroup": "Pilates",
+    "equipment": "Peso Corporal",
+    "mediaUrl": "https://www.youtube.com/watch?v=EfVURwxctv8",
+    "description": "Sentado, abrace as canelas formando uma bola compacta com o corpo e role pra trás até as omoplatas (nunca até o pescoço), voltando à posição sentada num movimento fluido e controlado — trabalha equilíbrio, controle abdominal e massageia a coluna.",
+    "difficultyLevel": "INTERMEDIARIO"
+  },
+  {
+    "name": "Tesoura Cruzada (Criss Cross)",
+    "muscleGroup": "Pilates",
+    "equipment": "Peso Corporal",
+    "mediaUrl": "https://www.youtube.com/watch?v=UDXfEmHyxJw",
+    "description": "Com as mãos atrás da cabeça e joelhos no peito, gire o tronco levando o cotovelo em direção ao joelho oposto enquanto estende a outra perna, alternando os lados num ritmo de pedalada — exige controle abdominal, rotação de tronco e coordenação ao mesmo tempo.",
+    "difficultyLevel": "AVANCADO"
   }
 ]

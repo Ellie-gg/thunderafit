@@ -1,18 +1,23 @@
 # Próximas fases — achados da auditoria 2026-08-06 ainda abertos
 
+> **Atualizado na Fase 119: as duas primeiras fases desta lista foram executadas.**
+> **A4** (idempotência do `/complete`) e **M4** (`ClientInvite` no cascade) estão
+> fechadas — com isso **não sobra nenhum achado de risco ALTO ou MÉDIO** da auditoria.
+> As seções A e B abaixo ficam como registro do que foi decidido e por quê; as demais
+> (C a H) seguem abertas, todas de risco BAIXO.
+
 A Fase 118 corrigiu tudo que dava pra agrupar com segurança num lote só: os achados com
 **correção clara, sem decisão de produto pendente e sem migration**. Os 8 abaixo ficaram
 de fora **de propósito** — cada um precisa de uma decisão, de uma migration, ou de
 trabalho de infraestrutura que não cabe num lote de correções pontuais.
 
-Ordem sugerida: **A4 → M4 → B10 → B9 → B6 → B7 → B11 → M6**. A4 primeiro porque é o
-único que ainda grava dado errado em produção; M4 em seguida porque envolve PII.
+Ordem restante sugerida: **B10 → B9 → B6 → B7 → B11 → M6**.
 
 Laudo completo de cada item em [`AUDITORIA-2026-08-06.md`](AUDITORIA-2026-08-06.md).
 
 ---
 
-## Fase A — A4: idempotência do `POST /api/workouts/:id/complete` (risco ALTO)
+## ~~Fase A~~ — A4: idempotência do `POST /complete` ✅ **FEITO na Fase 119**
 
 **O que está errado.** Cada chamada cria uma linha nova em `WorkoutSessionLog`, sem guard
 de reentrega e sem unique constraint (`src/fitness/services/workouts.service.ts`). Numa
@@ -37,7 +42,18 @@ caso: **teste cobrindo duas chamadas seguidas de `/complete`** — hoje não exi
 ausência dele que deixou isso passar. Corrigir também o comentário já marcado com ⚠️ no
 próprio `completeWorkout`.
 
-## Fase B — M4: `ClientInvite` fora do cascade de deleção (risco MÉDIO, envolve PII)
+**Decisão tomada (Fase 119)**: a **janela de dedupe** foi a escolhida, com
+`COMPLETE_DEDUPE_MS = 2 min`. Duas nuances que só apareceram na implementação e valem
+registro: (1) o guard também **não move `lastCompletedAt` de novo** — mover a fronteira é
+o que destrói a janela do resumo, então só bloquear o `create` deixaria o defeito de pé
+pela metade; (2) numa reentrega o resumo é **reconstruído com a janela da chamada
+original** (usando as duas conclusões mais recentes do próprio `WorkoutSessionLog`), pois
+sem isso o retry — que é o caminho deliberado do fix do `Fr1`/`Fr4` em falha de rede —
+devolvia volume 0 depois de um treino real: o mesmo defeito, deslocado da tabela pra
+resposta. A chave de idempotência de verdade segue valendo como evolução se o caminho de
+retry crescer em importância.
+
+## ~~Fase B~~ — M4: `ClientInvite` fora do cascade ✅ **FEITO na Fase 119**
 
 **O que está errado.** `src/lib/user-deletion.ts` apaga 16 tabelas e **não** inclui
 `clientInvite`. O modelo não tem FK (`personalId` é `String` puro), então a deleção não

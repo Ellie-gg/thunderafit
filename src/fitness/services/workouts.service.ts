@@ -27,6 +27,31 @@ const MAX_NOTES_LENGTH = 500;
 const MAX_DURATION_SECONDS = 24 * 60 * 60;
 
 /**
+ * A4 (auditoria 2026-08-06): janela de deduplicação do `POST /complete`.
+ *
+ * O endpoint passou a ser escritor de linha durável na Fase 112
+ * (`WorkoutSessionLog`) sem nenhum guard de reentrega, então uma 2ª chamada
+ * gravava uma **sessão fantasma**: `previousLastCompletedAt` já era o instante
+ * da 1ª conclusão, a janela do resumo passava a excluir todas as séries reais,
+ * e sobrava uma linha com `volumeKg: 0`/`setsCompleted: 0` — que entra nos
+ * gráficos de tendência de `/evolucao` e na distribuição de esforço.
+ *
+ * Dois caminhos reais levam a isso com o cliente atual: (a) duas abas no mesmo
+ * treino — a aba B ainda tem `session` truthy e passa o guard do botão; (b)
+ * retry depois de resposta perdida, que é **deliberado** (o fix do Fr1/Fr4
+ * preserva a sessão em erro de rede justamente pra não perder a duração).
+ *
+ * Por que 2 minutos: precisa cobrir com folga um retry humano ou de rede
+ * (segundos), e ficar MUITO abaixo do intervalo plausível entre duas sessões
+ * legítimas do mesmo treino (o app sugere a próxima LETRA, não repetir a mesma
+ * sessão; repetir a mesma no mesmo dia já é incomum, e em menos de 2 min não
+ * existe treino real no meio). Não é uma chave de idempotência de verdade —
+ * essa exigiria migration e mudança de contrato com o cliente, e está escopada
+ * como evolução em `docs/PROXIMAS-FASES-AUDITORIA.md`.
+ */
+const COMPLETE_DEDUPE_MS = 2 * 60 * 1000;
+
+/**
  * M5 (auditoria 2026-08-06): `durationSeconds` é telemetria OPCIONAL e por
  * isso NUNCA pode derrubar a conclusão do treino — que é a ação central do
  * produto. Antes, um valor negativo respondia 400: se o relógio do aparelho
@@ -380,16 +405,13 @@ export const workoutsService = {
   // sessão pode concluir (nem Personal, nem admin — concluir é um ato de
   // execução do aluno).
   //
-  // ⚠️ NÃO é idempotente (A4, auditoria 2026-08-06 — corrigir numa fase
-  // própria). O comentário aqui afirmava "Idempotente: só atualiza
-  // lastCompletedAt", verdadeiro até a Fase 111 e FALSO desde a 112: cada
-  // chamada cria uma linha nova em `WorkoutSessionLog` (abaixo), sem guard de
-  // reentrega e sem unique constraint. Numa 2ª chamada,
-  // `previousLastCompletedAt` já é o instante da 1ª conclusão, então a janela
-  // do resumo exclui TODAS as séries reais e grava uma sessão fantasma com
-  // `volumeKg: 0`/`setsCompleted: 0` — que entra nos gráficos de /evolucao.
-  // Alcançável por 2 abas no mesmo treino ou por retry após resposta perdida
-  // (a sessão é preservada de propósito em erro de rede, fix do Fr1/Fr4).
+  // Idempotente dentro de `COMPLETE_DEDUPE_MS` (A4, corrigido na Fase 119).
+  // Uma reentrega devolve o `sessionLogId` já existente e o resumo
+  // reconstruído com a janela da chamada original, sem criar linha nova em
+  // `WorkoutSessionLog` e sem mover `lastCompletedAt` de novo. Fora da janela,
+  // duas conclusões são tratadas como duas sessões de verdade — de propósito.
+  // Ver o comentário da constante pro racional dos 2 minutos e pra por que
+  // isto não é uma chave de idempotência completa.
   //
   // Fase 35: além de concluir, monta o resumo pós-treino (volume, comparação
   // com a sessão anterior, PRs) — precisa capturar o `lastCompletedAt` ANTIGO
@@ -424,6 +446,25 @@ export const workoutsService = {
 
     // M5: sanitiza em vez de rejeitar — ver `sanitizeDurationSeconds`.
     const normalizedDuration = sanitizeDurationSeconds(durationSeconds);
+
+    // A4 (auditoria 2026-08-06): guard de reentrega. Ver `COMPLETE_DEDUPE_MS`.
+    const [ultimaConclusao, penultimaConclusao] =
+      await workoutSessionLogRepository.findTwoMostRecentForWorkout(workoutId, userId);
+    if (ultimaConclusao && Date.now() - ultimaConclusao.completedAt.getTime() < COMPLETE_DEDUPE_MS) {
+      // Reentrega: NÃO cria linha nova e NÃO move `lastCompletedAt` de novo (é
+      // mover a fronteira que destrói a janela do resumo). Reconstrói o resumo
+      // com a janela que a chamada ORIGINAL usou, pra o cliente ver os números
+      // reais em vez de uma sessão vazia.
+      const summary = await workoutSummaryService.buildCompletionSummary(
+        workout,
+        penultimaConclusao?.completedAt ?? null,
+        ultimaConclusao.completedAt
+      );
+      return {
+        workout,
+        summary: { ...summary, sessionLogId: ultimaConclusao.id },
+      };
+    }
 
     const previousLastCompletedAt = workout.lastCompletedAt;
     const completedAt = new Date();
