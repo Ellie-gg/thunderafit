@@ -221,6 +221,34 @@ export async function renameWorkoutHandler(
   }
 }
 
+/**
+ * Fase 120: excluir a SESSÃO inteira do programa. Ramifica por role no
+ * controller, mesmo padrão de `renameWorkoutHandler` acima e de
+ * `deleteProgramHandler` (desde a Fase 85) — o ALUNO só mexe no próprio treino
+ * `origin: SELF` (com gate de Premium), o PERSONAL no que é dele.
+ */
+export async function deleteWorkoutHandler(
+  request: FastifyRequest<{ Params: { id: string } }>,
+  reply: FastifyReply
+) {
+  const userId = (request as any).user.sub;
+  const role = (request as any).user.role;
+  const { id } = request.params;
+
+  try {
+    const result =
+      role === "ALUNO"
+        ? await workoutsService.deleteSelfWorkout(id, userId)
+        : await workoutsService.deleteWorkout(id, userId);
+    return reply.status(200).send(result);
+  } catch (err: any) {
+    if (err.code === "PREMIUM_REQUIRED") {
+      return reply.status(402).send({ error: err.message, code: err.code });
+    }
+    return reply.status(errStatus(err)).send({ error: err.message, code: err.code });
+  }
+}
+
 export async function getWorkoutHandler(
   request: FastifyRequest<{ Params: { id: string } }>,
   reply: FastifyReply

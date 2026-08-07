@@ -16,6 +16,7 @@ import { Button } from "@/components/ui/button";
 import { QueryError } from "@/components/query-error";
 import { DeleteProgramButton } from "@/components/delete-program-button";
 import { InlineRename } from "@/components/inline-rename";
+import { DeleteSessionButton } from "@/components/delete-session-button";
 import { useActiveIntlLocale } from "@/i18n/use-active-locale";
 
 function formatDate(iso: string | null, intlLocale: string, neverCompletedLabel: string): string {
@@ -188,6 +189,23 @@ function ProgramaContent() {
                     >
                       ✏️
                     </Link>
+                  )}
+                  {/* Fase 120: excluir a sessão. Mesmo gate `canEdit` do lápis
+                      acima — só treino `origin: SELF` do próprio aluno, e o
+                      backend exige Premium (402 se faltar), igual às outras
+                      edições do treino próprio. Irmão do card, não aninhado. */}
+                  {canEdit && (
+                    <div className="shrink-0">
+                      <DeleteSessionButton
+                        workoutId={s.id}
+                        sessionLabel={labelFor(scheme, s.letter)}
+                        onDeleted={() => {
+                          queryClient.invalidateQueries({ queryKey: ["workout-program", programId] });
+                          queryClient.invalidateQueries({ queryKey: ["workout-programs", "aluno"] });
+                          queryClient.invalidateQueries({ queryKey: ["aluno-dashboard-summary"] });
+                        }}
+                      />
+                    </div>
                   )}
                 </div>
               ))}

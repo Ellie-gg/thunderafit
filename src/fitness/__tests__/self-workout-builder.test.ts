@@ -389,3 +389,80 @@ describe("Renomear o próprio treino/sessão (achado reportado pelo fundador: no
     await prisma.workoutProgram.deleteMany({ where: { id: outroProgram.id } });
   });
 });
+
+// Fase 120: o par SELF do `DELETE /api/workouts/:id`. O aluno Premium podia
+// ADICIONAR sessão ao próprio treino desde a Fase 85, mas não remover — mesma
+// lacuna do lado do Personal, corrigida junto.
+describe("Fase 120 — ALUNO exclui sessão do próprio treino (DELETE /api/workouts/:id)", () => {
+  let programaId: string;
+
+  beforeEach(async () => {
+    const p = await supertest(server.server)
+      .post("/api/workout-programs/self")
+      .set("Authorization", `Bearer ${premiumAlunoToken}`)
+      .send({ name: "Treino Fase 120", sessionScheme: "LETTER", replace: true });
+    programaId = p.body.program.id;
+  });
+
+  afterEach(async () => {
+    const sessoes = await prisma.workout.findMany({ where: { programId: programaId }, select: { id: true } });
+    const ids = sessoes.map((s) => s.id);
+    await prisma.setLog.deleteMany({ where: { workoutExercise: { workoutId: { in: ids } } } });
+    await prisma.workoutExercise.deleteMany({ where: { workoutId: { in: ids } } });
+    await prisma.workout.deleteMany({ where: { programId: programaId } });
+    await prisma.workoutProgram.deleteMany({ where: { id: programaId } });
+  });
+
+  it("ALUNO Premium exclui uma sessão do próprio treino, e o programa sobrevive", async () => {
+    const s = await supertest(server.server)
+      .post(`/api/workout-programs/${programaId}/self-sessions`)
+      .set("Authorization", `Bearer ${premiumAlunoToken}`)
+      .send({ letter: "B", name: "Sessão B" });
+    const sessaoId = s.body.session.id;
+
+    const r = await supertest(server.server)
+      .delete(`/api/workouts/${sessaoId}`)
+      .set("Authorization", `Bearer ${premiumAlunoToken}`);
+    expect(r.status).toBe(200);
+    expect(await prisma.workout.count({ where: { id: sessaoId } })).toBe(0);
+    expect(await prisma.workoutProgram.count({ where: { id: programaId } })).toBe(1);
+  });
+
+  it("ALUNO sem Premium recebe 402 (editar o próprio treino é a feature paga)", async () => {
+    const semPremiumProgram = await prisma.workoutProgram.create({
+      data: { alunoId: semPremiumId, origin: "SELF", name: "Treino sem premium F120", isTemplate: false },
+    });
+    const sessao = await prisma.workout.create({
+      data: { programId: semPremiumProgram.id, alunoId: semPremiumId, name: "Sessão A", letter: "A" },
+    });
+
+    const r = await supertest(server.server)
+      .delete(`/api/workouts/${sessao.id}`)
+      .set("Authorization", `Bearer ${semPremiumToken}`);
+    expect(r.status).toBe(402);
+    expect(r.body.code).toBe("PREMIUM_REQUIRED");
+    // Nada apagado no caminho bloqueado.
+    expect(await prisma.workout.count({ where: { id: sessao.id } })).toBe(1);
+
+    await prisma.workout.deleteMany({ where: { programId: semPremiumProgram.id } });
+    await prisma.workoutProgram.deleteMany({ where: { id: semPremiumProgram.id } });
+  });
+
+  it("ALUNO não exclui sessão de OUTRO aluno (404, sem enumerar)", async () => {
+    const outroProgram = await prisma.workoutProgram.create({
+      data: { alunoId: alunoPrescritoId, origin: "SELF", name: "Treino de outro F120", isTemplate: false },
+    });
+    const sessao = await prisma.workout.create({
+      data: { programId: outroProgram.id, alunoId: alunoPrescritoId, name: "Sessão A", letter: "A" },
+    });
+
+    const r = await supertest(server.server)
+      .delete(`/api/workouts/${sessao.id}`)
+      .set("Authorization", `Bearer ${premiumAlunoToken}`);
+    expect(r.status).toBe(404);
+    expect(await prisma.workout.count({ where: { id: sessao.id } })).toBe(1);
+
+    await prisma.workout.deleteMany({ where: { programId: outroProgram.id } });
+    await prisma.workoutProgram.deleteMany({ where: { id: outroProgram.id } });
+  });
+});
