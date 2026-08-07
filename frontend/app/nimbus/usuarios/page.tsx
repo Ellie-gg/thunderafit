@@ -12,6 +12,7 @@ import {
   deleteAdminUser,
 } from "@/lib/api/admin";
 import { ApiError } from "@/lib/api/client";
+import { hasActivePremium } from "@/lib/premium";
 import { useAuthStore } from "@/lib/store/auth-store";
 import { AuthGuard } from "@/components/auth-guard";
 import { AppHeader } from "@/components/app-header";
@@ -110,10 +111,14 @@ function daysUntil(dateStr: string | null | undefined): number | null {
 
 /**
  * Fase 58: liga/desliga Premium manualmente — mesmo padrão inline de
- * confirmação do `RoleEditor` acima. "Premium" atual é derivado por role
- * (ALUNO: `alunoPremiumStatus !== "NONE"`; PERSONAL/NUTRICIONISTA:
- * `planoAssinatura !== "FREE"`); ADMIN não tem esse controle (backend
- * rejeita com 400, então nem mostramos o botão).
+ * confirmação do `RoleEditor` acima. "Premium" atual é derivado por role;
+ * ADMIN não tem esse controle (backend rejeita com 400, então nem mostramos
+ * o botão).
+ *
+ * O "tem Premium agora?" mora em `lib/premium.ts` (`hasActivePremium`), com
+ * teste próprio — as regras de ALUNO e PERSONAL são diferentes de propósito, e
+ * a do ALUNO precisa checar o PRAZO, não só o status (ver o comentário lá pro
+ * porquê e pro bug que isso corrigiu).
  *
  * Fase 90: ao CONCEDER, ganha 2 campos opcionais — `tier` (só
  * PERSONAL/NUTRICIONISTA: Base ou Plus, antes só dava Plus) e "dias até
@@ -130,10 +135,7 @@ function PremiumEditor({ user, onChanged }: { user: AdminUser; onChanged: () => 
   const [pendingDays, setPendingDays] = useState("");
 
   const isPersonalLike = user.role === "PERSONAL" || user.role === "NUTRICIONISTA";
-  const isPremium =
-    user.role === "ALUNO"
-      ? user.alunoPremiumStatus != null && user.alunoPremiumStatus !== "NONE"
-      : user.planoAssinatura !== "FREE";
+  const isPremium = hasActivePremium(user);
 
   const expiresInDays = daysUntil(user.role === "ALUNO" ? user.alunoPremiumExpiresAt : user.planoAssinaturaExpiresAt);
 
