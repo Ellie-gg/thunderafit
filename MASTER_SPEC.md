@@ -42,8 +42,12 @@ convidados) e passa a operar em **modelo híbrido**:
   de 2026-07-17: custo zero de manutenção, reversível se o modelo de negócio voltar.
 - **Split de pagamento aluno→profissional:** continua explicitamente fora (complexidade
   regulatória/KYC).
-- **Verificação de e-mail / recuperação de senha:** pendente; o mecanismo de auth já
-  suporta adicionar sem retrabalho estrutural.
+- ~~**Verificação de e-mail / recuperação de senha:** pendente~~ — **ENTREGUE na Fase
+  81** (`POST /api/auth/verify-email`, `/forgot-password`, `/reset-password`,
+  `/resend-verification`; expiração de 24h/1h em `auth.service.ts`). Ficou listado aqui
+  como "fora do escopo" até a auditoria 2026-08-06 — e esta é justamente a seção que se
+  usa pra decidir o que NÃO construir, então o texto convidava a reimplementar um fluxo
+  de auth vivo e sensível a segurança.
 
 ---
 
@@ -55,7 +59,7 @@ convidados) e passa a operar em **modelo híbrido**:
 |---|---|
 | Backend | Node.js + TypeScript + **Fastify** (`trustProxy`, rate limit de login em memória) |
 | Banco | **PostgreSQL** — produção no **Neon** (pooled/PgBouncer), local via docker-compose |
-| ORM | **Prisma** (schema único `prisma/schema.prisma` seccionado por domínio; 14 migrations aplicadas) |
+| ORM | **Prisma** (schema único `prisma/schema.prisma` seccionado por domínio; 45 migrations aplicadas) |
 | Auth | JWT access (15min) + refresh (7d) em **cookies httpOnly** (`Secure`, `SameSite=Lax`); rotação de refresh com detecção de reuso; cookie tem prioridade sobre header `Authorization` (o proxy de produção injeta ID token do Google nesse header) |
 | Frontend | **Next.js App Router** (`output: standalone`; `export` gated por `CAPACITOR_EXPORT`) + Tailwind + shadcn/ui + Zustand (perfil não-sensível em `localStorage`) + TanStack Query |
 | Design system | **"Voltagem"**: storm + dourado/ciano/violeta/azul-admin, Unbounded/Manrope/IBM Plex Mono, `VoltageBar` como assinatura; acento por papel |
@@ -69,7 +73,7 @@ convidados) e passa a operar em **modelo híbrido**:
 ```
 /src
   /auth          registro, login, JWT/refresh, rate limit  [não tocar sem gate]
-  /fitness       exercícios (~232, incl. categoria "treino em casa"), programas
+  /fitness       exercícios (~267, incl. "treino em casa", cardio/alongamento, antebraço/trapézio/quadril e Pilates), programas
                  (templates A–E, cópia-ao-aplicar), treinos, séries/SetLog,
                  relations (vínculo + limite Freemium)
   /connections   descoberta de profissionais (perfil público opt-in, busca por
@@ -91,7 +95,8 @@ confiados sob `role === ADMIN` (visão ampliada, leitura). Roles: `PERSONAL`, `A
 
 ### 2.3 Modelo de dados vigente (essencial)
 
-- `users`: role, planoAssinatura (`FREE`/`PAGO`), limiteAlunos (3/50), lastLoginAt,
+- `users`: role, planoAssinatura (`FREE`/`BASE`/`PLUS` — `PAGO` não existe desde a Fase
+  44), limiteAlunos (3/20/1.000.000), lastLoginAt,
   stripeCustomerId/@unique + stripeSubscriptionId, availableForNewStudents/location/bio.
 - `ClientRelation` (personalId, alunoId, professionalType) — vínculo + limite por profissional.
 - `ConnectionRequest` (aluno→profissional, PENDENTE/ACEITA/RECUSADA; aceite cria a relation).
@@ -143,8 +148,10 @@ confiados sob `role === ADMIN` (visão ampliada, leitura). Roles: `PERSONAL`, `A
   sem `result`). O benchmarking usado até aqui (Gym WP como referência principal) veio
   de busca direta em conversa, não de pesquisa formal. Sem matriz de preço fechada —
   ver Fase 38 no roadmap. **Atualização Fase 56:** o fundador definiu o preço inicial do
-  "Aluno Premium" diretamente (sem pesquisa formal) — R$ 9,90/mês, teste grátis de 7
-  dias (uma vez por conta), 30% off no compromisso trimestral. Desbloqueia hoje o
+  "Aluno Premium" diretamente (sem pesquisa formal) — **R$ 9,99/mês**, teste grátis de
+  7 dias (uma vez por conta), **20% off** no compromisso trimestral (a Fase 87 subiu o
+  preço de 9,90 e unificou o desconto trimestral com os planos do Personal, antes 30%;
+  este trecho dizia 9,90/30% até a auditoria 2026-08-06). Desbloqueia hoje o
   carrossel PREMIUM de "Meu Treino Pessoal"; criar/editar o próprio treino é um degrau
   futuro do mesmo plano, ainda não implementado. Só os *guardrails* (entitlement +
   gate de aplicação) existem por enquanto — o checkout/Stripe real desta assinatura é
@@ -759,9 +766,9 @@ decisão/priorização futura):
     `code: "PREMIUM_REQUIRED"`. Checado só no momento de aplicar (mesma
     convenção do `limiteAlunos` — não revoga retroativamente o que já foi
     aplicado se o acesso expirar depois).
-60. ✅ **Preço documentado, não wireado**: R$ 9,90/mês
-    (`ALUNO_PREMIUM_MONTHLY_PRICE_CENTS`) + 30% off no compromisso trimestral
-    (`ALUNO_PREMIUM_QUARTERLY_DISCOUNT_PCT`) em `src/billing/stripe.ts` — só
+60. ✅ **Preço documentado, não wireado**: R$ 9,99/mês
+    (`ALUNO_PREMIUM_MONTHLY_PRICE_CENTS = 999`) + 20% off no compromisso trimestral
+    (`ALUNO_PREMIUM_QUARTERLY_DISCOUNT_PCT = 20`, valores da Fase 87) em `src/billing/stripe.ts` — só
     constantes, sem nenhum `STRIPE_PRICE_ID_ALUNO_PREMIUM_*` real nem endpoint
     de checkout ainda (explicitamente adiado pelo fundador: "vamos refinar
     isso quando colocarmos o pagamento em produção").
@@ -1400,7 +1407,7 @@ allowlist de serialização:
     disso: `page`/`pageSize` OPCIONAIS na querystring (mesmo padrão já usado em
     `GET /api/admin/users` — único precedente de paginação no backend, nenhum padrão
     de cursor existe em lugar nenhum), com um default generoso
-    (`DEFAULT_PAGE_SIZE = 300` em `src/lib/pagination.ts`, teto de 500 mesmo se
+    (`DEFAULT_PAGE_SIZE = 1000` em `src/lib/pagination.ts`, teto de 2000 mesmo se
     pedido explicitamente) — cobre confortavelmente qualquer ceiling real mapeado,
     então nenhum consumidor atual (via HTTP ou chamada direta de service, como o
     dashboard) muda de comportamento; só protege contra um crescimento fora do
@@ -1735,7 +1742,9 @@ grave, no menu de trocar foto de perfil (`AvatarUpload`) — corrigido preventiv
 junto, antes de virar reclamação separada. Ver STATUS.md, Fase 106.
 
 ### Adiado de propósito (decisão de produto, não bloqueio)
-Login Google · camadas anti-abuso de conta · web pública vs. só app nas lojas · programa
+**Login Google saiu desta lista: foi ENTREGUE na Fase 77** (`POST /api/auth/google`,
+`auth.service.ts#loginOrRegisterWithGoogle`, `google-sign-in-button.tsx`) — constava
+aqui como adiado até a auditoria 2026-08-06. Segue adiado: camadas anti-abuso de conta · web pública vs. só app nas lojas · programa
 de indicação Personal→desconto/bônus (quando a regra de negócio fechar, é migration
 aditiva simples sobre o código de convite que já existe — não precisa de fundação hoje).
 

@@ -140,6 +140,12 @@ function ExecucaoContent() {
       // prefixo ["workout-program"], então a sugestão de "próxima sessão" no
       // dashboard ficaria desatualizada depois de concluir um treino.
       queryClient.invalidateQueries({ queryKey: ["aluno-dashboard-summary"] });
+      // B1 (auditoria 2026-08-06): a conclusão grava um WorkoutSessionLog
+      // novo (Fase 112), que é a fonte dos 2 gráficos de tendência e da barra
+      // de esforço em `/evolucao` e na tela do Personal. Sem isto, quem
+      // conclui e navega pra lá em menos de 30s (staleTime global) não vê a
+      // sessão que acabou de fazer.
+      queryClient.invalidateQueries({ queryKey: ["session-history"] });
       setSummary(data.summary);
     },
   });

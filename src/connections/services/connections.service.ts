@@ -3,6 +3,7 @@ import { connectionsRepository } from "../repository/connections.repository";
 import { relationsService } from "../../fitness/services/relations.service";
 import { notificationsService } from "../../notifications/services/notifications.service";
 import { isValidBrState, isValidSpecialty } from "../constants";
+import { revertExpiredPersonalPlan } from "../../lib/plan-expiry";
 
 type ProfessionalRole = "PERSONAL" | "NUTRICIONISTA";
 
@@ -73,7 +74,18 @@ export const connectionsService = {
       // (Base+ ganhou esse acesso nesta fase). Desligar continua sempre
       // permitido em qualquer degrau.
       if (data.availableForNewStudents) {
-        const user = await connectionsRepository.findUserById(userId);
+        // M2 (auditoria 2026-08-06): passa por `revertExpiredPersonalPlan`
+        // ANTES de decidir. Este era o único ponto de decisão de autorização
+        // do backend que lia `planoAssinatura` cru do banco — e como nada
+        // reescreve a linha quando uma cortesia do admin vence (a reversão é
+        // materializada sob demanda, por design), um Personal com BASE/PLUS
+        // vencido conseguia RELIGAR a presença no diretório público e ainda
+        // ser rankeado acima dos FREE por `searchProfessionals`. O B7/C2 da
+        // auditoria anterior fechou só a direção "desligar"; esta é a
+        // direção "religar". Mesma classe do bug da Fase 117 (derivar acesso
+        // do estado armazenado em vez da data de expiração).
+        const raw = await connectionsRepository.findUserById(userId);
+        const user = raw ? await revertExpiredPersonalPlan(raw) : null;
         if (user?.planoAssinatura === "FREE") {
           throw httpError(
             "Disponibilidade no diretório é um recurso dos planos Base e Plus. Faça upgrade para ativar.",

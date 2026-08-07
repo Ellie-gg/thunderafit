@@ -9,6 +9,7 @@ import { listRelations, setPaymentReminder, type RelationAluno } from "@/lib/api
 import { listWorkoutPrograms } from "@/lib/api/workouts";
 import { listLoggedExercises, getLoadHistory, getFrequency, getSessionHistory } from "@/lib/api/progress";
 import { ApiError } from "@/lib/api/client";
+import { dateInputToIso, isoToDateInput } from "@/lib/date-input";
 import { AuthGuard } from "@/components/auth-guard";
 import { AppHeader } from "@/components/app-header";
 import { Card } from "@/components/ui/card";
@@ -52,7 +53,11 @@ function PaymentReminderCard({ alunoId, aluno }: { alunoId: string; aluno: Relat
   const intlLocale = useActiveIntlLocale();
   const queryClient = useQueryClient();
   const hasActiveReminder = !!aluno.paymentReminderDueDate;
-  const [dueDate, setDueDate] = useState(aluno.paymentReminderDueDate?.slice(0, 10) ?? "");
+  // M1 (auditoria 2026-08-06): converte pelo fuso LOCAL, não por `slice(0,10)`
+  // (que lê a data em UTC) — ver `lib/date-input.ts`.
+  const [dueDate, setDueDate] = useState(
+    aluno.paymentReminderDueDate ? isoToDateInput(aluno.paymentReminderDueDate) : ""
+  );
   const [recurring, setRecurring] = useState(aluno.paymentReminderRecurring);
 
   const mutation = useMutation({
@@ -82,7 +87,7 @@ function PaymentReminderCard({ alunoId, aluno }: { alunoId: string; aluno: Relat
         onSubmit={(e) => {
           e.preventDefault();
           if (!dueDate) return;
-          mutation.mutate({ dueDate: new Date(dueDate).toISOString(), recurring });
+          mutation.mutate({ dueDate: dateInputToIso(dueDate), recurring });
         }}
       >
         <div className="flex flex-col gap-1.5">
@@ -353,7 +358,16 @@ function AlunoHubContent() {
                   <p className="text-xs text-muted">{t("durationTrendLabel")}</p>
                   <SessionTrendChart sessions={sessionHistoryQuery.data.sessions} metric="durationMinutes" />
                   <p className="text-xs text-muted">{t("trainingLoadTrendLabel")}</p>
-                  <SessionTrendChart sessions={sessionHistoryQuery.data.sessions} metric="trainingLoad" />
+                  {/* B2 (auditoria 2026-08-06): mesma correção de /evolucao —
+                      sem RPE respondido, `trainingLoad` é null e o gráfico
+                      renderizava uma área vazia sem explicação. Aqui é o
+                      Personal olhando: pior ainda deixá-lo achar que é falta
+                      de treino, e não falta de resposta do aluno. */}
+                  {sessionHistoryQuery.data.sessions.some((s) => s.trainingLoad !== null) ? (
+                    <SessionTrendChart sessions={sessionHistoryQuery.data.sessions} metric="trainingLoad" />
+                  ) : (
+                    <p className="text-sm text-muted">{t("noTrainingLoadYet")}</p>
+                  )}
                 </>
               )}
             </Card>

@@ -19,8 +19,12 @@ Owned by this domain (`prisma/schema.prisma`):
   health data (today: anamnesis only). Written by *other* domains (see below),
   read here via `GET /api/admin/access-logs`.
 - `AdminAuditLog` — generic audit trail of sensitive admin *write* actions.
-  Today the only action logged is `ROLE_CHANGE`, with `details` as a plain
-  string summary (e.g. `"PERSONAL -> ADMIN"`).
+  Four actions are logged today: `ROLE_CHANGE` (`admin.repository.ts`), plus
+  `USER_DELETE`, `PREMIUM_TOGGLE` and `EMAIL_VERIFIED_BY_ADMIN`
+  (`admin.service.ts`). `details` is a plain string summary (e.g.
+  `"PERSONAL -> ADMIN"`). This doc claimed `ROLE_CHANGE` was the ONLY one
+  until the 2026-08-06 audit — filtering the trail on that assumption
+  silently drops 3 of the 4 sensitive-action types.
 
 Read/written but owned by other domains:
 - `User` (auth domain) — list/paginate all users, read `lastLoginAt`,

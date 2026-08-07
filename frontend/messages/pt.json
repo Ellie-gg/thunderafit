@@ -420,11 +420,13 @@
     "viewAsTable": "Ver como tabela",
     "dateColumn": "Data",
     "maxLoadColumn": "Carga máxima",
+    "maxLoadValue": "{weight}kg",
     "workoutFrequency": "Frequência de treinos (últimos 6 meses)",
     "workoutsInPeriod": "{count} treino(s) no período",
     "sessionTrendTitle": "Tendência das sessões",
     "durationTrendLabel": "Duração (min)",
     "trainingLoadTrendLabel": "Carga de treino (RPE × duração)",
+    "noTrainingLoadYet": "Responda \"quão difícil foi\" depois dos treinos para ver sua carga de treino aqui.",
     "noSessionHistory": "Conclua alguns treinos com o cronômetro ativo para ver sua tendência aqui.",
     "effortDistributionTitle": "Distribuição de esforço (últimas sessões)"
   },
@@ -678,6 +680,7 @@
     "sessionTrendTitle": "Tendência das sessões",
     "durationTrendLabel": "Duração (min)",
     "trainingLoadTrendLabel": "Carga de treino (RPE × duração)",
+    "noTrainingLoadYet": "Responda \"quão difícil foi\" depois dos treinos para ver sua carga de treino aqui.",
     "noSessionHistory": "Este aluno ainda não concluiu nenhum treino com o cronômetro ativo.",
     "effortDistributionTitle": "Distribuição de esforço (últimas sessões)"
   },
@@ -1260,6 +1263,12 @@
     "next": "Próxima",
     "roleEditor": {
       "edit": "Editar role",
+      "roleLabels": {
+        "PERSONAL": "Personal Trainer",
+        "ALUNO": "Aluno",
+        "NUTRICIONISTA": "Nutricionista",
+        "ADMIN": "Admin"
+      },
       "confirmMessage": "Confirma alterar {email} de {currentRole} para {newRole}?",
       "genericError": "Erro ao alterar role.",
       "saving": "Salvando...",
@@ -1336,6 +1345,7 @@
     "shareErrorMessage": "Não foi possível compartilhar direto — baixamos a imagem pra você anexar manualmente.",
     "shareButton": "Compartilhar",
     "downloadButton": "Baixar imagem",
+    "downloadErrorMessage": "Não foi possível gerar a imagem. Tente novamente.",
     "closeButton": "Fechar"
   },
   "prBadgePill": {

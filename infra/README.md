@@ -6,9 +6,16 @@ frontend), Artifact Registry, Cloud Build (deploy automático no push em
 **fora** do Terraform de propósito — ver [Contexto](#contexto-e-decisões)
 abaixo.
 
-Ferramentas necessárias: `gcloud` CLI e `terraform` (>= 1.5). Nenhum dos
-dois exige WSL — rodam igual em Git Bash/PowerShell no Windows; use o que
-for mais conveniente. WSL só importaria se algum dia for rodar o próprio
+Ferramentas necessárias: `gcloud` CLI e `terraform` (>= 1.5).
+
+⚠️ **Nesta máquina o `gcloud` só existe dentro do WSL** — ver a seção
+"Ambiente local (Windows)" do `AGENTS.md` da raiz, que é a fonte da verdade.
+Todo bloco `gcloud` deste arquivo precisa ser invocado como
+`wsl -d Ubuntu -- bash -lic "gcloud <comando>"`; rodar direto no Git Bash
+falha com "command not found". O `terraform`, sim, roda nativo no Windows.
+Este README afirmava que "nenhum dos dois exige WSL" até a auditoria
+2026-08-06 — era exatamente a contradição que fazia sessões concluírem
+erradamente que logs de produção estavam indisponíveis. WSL só importaria se algum dia for rodar o próprio
 app Node dentro dele, e isso já está resolvido como não-suportado (ver
 `dev.sh`, que detecta e bloqueia WSL por causa de módulos nativos
 compilados para Windows).
@@ -99,9 +106,18 @@ terraform apply
 
 Isso cria: APIs habilitadas, Artifact Registry, os dois Cloud Run services
 (com uma imagem placeholder até o primeiro build real do Cloud Build
-rodar), os service accounts, os bindings de IAM, e os 3 secrets vazios.
+rodar), os service accounts, os bindings de IAM, o bucket GCS de mídia de
+exercícios (`storage.tf`), e os **6** secrets vazios (`secrets.tf`):
+`jwt-secret`, `jwt-refresh-secret`, `database-url`, `resend-api-key`,
+`stripe-secret-key`, `stripe-webhook-secret`.
 
 ### 5. Preencher os secrets de verdade
+
+São **6**, não 3. Até a auditoria 2026-08-06 este passo listava só os três
+primeiros — seguir o setup à risca subia produção com `resend-api-key`,
+`stripe-secret-key` e `stripe-webhook-secret` **vazios**, o que quebra
+silenciosamente todo o e-mail transacional (verificação de e-mail e reset de
+senha) e todo o billing/webhook, sem nenhum aviso no caminho.
 
 ```bash
 openssl rand -base64 48 | gcloud secrets versions add jwt-secret --data-file=-
@@ -110,6 +126,25 @@ openssl rand -base64 48 | gcloud secrets versions add jwt-refresh-secret --data-
 # Connection string POOLED do Neon (painel do Neon → Connection Details →
 # "Pooled connection" — NÃO a direct connection):
 echo -n "postgresql://...pooler.../..." | gcloud secrets versions add database-url --data-file=-
+
+# Resend (e-mail transacional — Fase 83). Sem isto, verificação de e-mail e
+# reset de senha falham em produção:
+echo -n "re_..." | gcloud secrets versions add resend-api-key --data-file=-
+
+# Stripe (Fase 87). Sem os dois, checkout e webhook ficam inoperantes — ver
+# src/billing/BILLING_SETUP.md pra obter os valores (test ou live mode):
+echo -n "sk_..."    | gcloud secrets versions add stripe-secret-key --data-file=-
+echo -n "whsec_..." | gcloud secrets versions add stripe-webhook-secret --data-file=-
+```
+
+Confira que nenhum ficou sem versão antes de seguir:
+
+```bash
+for s in jwt-secret jwt-refresh-secret database-url resend-api-key \
+         stripe-secret-key stripe-webhook-secret; do
+  echo -n "$s: "
+  gcloud secrets versions list "$s" --format='value(name)' | head -1
+done
 ```
 
 ### 6. Primeiro deploy real

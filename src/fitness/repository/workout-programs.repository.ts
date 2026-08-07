@@ -279,10 +279,22 @@ export const workoutProgramsRepository = {
    */
   // --- Fase 34.5: "Meu treino pessoal" (templates origin: SELF) ---
 
-  /** Catálogo de templates SELF disponíveis pro aluno escolher e aplicar. */
+  /**
+   * Catálogo de templates SELF disponíveis pro aluno escolher e aplicar.
+   *
+   * A2 (auditoria 2026-08-06): filtra templates SEM nenhuma sessão. Um
+   * template vazio não é "aplicável" em nenhum sentido útil — e aparecia no
+   * catálogo do aluno porque `createSelfTemplate` (admin) cria o programa
+   * primeiro e as sessões depois, em chamadas separadas: durante toda a
+   * curadoria o card já estava visível e aplicável. Aplicar um deles
+   * SUBSTITUI o treino pessoal ativo (apagando séries/exercícios/sessões),
+   * então o aluno trocava um treino real por um programa vazio, sem desfazer.
+   * O mesmo filtro esconde de quebra os templates de fixture de teste (Jest e
+   * E2E criam vários e nunca limpam), que também nascem sem sessão.
+   */
   async listSelfTemplates() {
     return prisma.workoutProgram.findMany({
-      where: { origin: "SELF", isTemplate: true },
+      where: { origin: "SELF", isTemplate: true, workouts: { some: {} } },
       orderBy: { createdAt: "desc" },
       include: { workouts: { select: { id: true, letter: true, name: true } } },
     });
