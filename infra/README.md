@@ -107,25 +107,40 @@ terraform apply
 Isso cria: APIs habilitadas, Artifact Registry, os dois Cloud Run services
 (com uma imagem placeholder até o primeiro build real do Cloud Build
 rodar), os service accounts, os bindings de IAM, o bucket GCS de mídia de
-exercícios (`storage.tf`), e os **6** secrets vazios (`secrets.tf`):
-`jwt-secret`, `jwt-refresh-secret`, `database-url`, `resend-api-key`,
-`stripe-secret-key`, `stripe-webhook-secret`.
+exercícios (`storage.tf`), e os **7** secrets vazios (`secrets.tf`):
+`jwt-secret`, `jwt-refresh-secret`, `database-url`, `direct-database-url`,
+`resend-api-key`, `stripe-secret-key`, `stripe-webhook-secret`.
 
 ### 5. Preencher os secrets de verdade
 
-São **6**, não 3. Até a auditoria 2026-08-06 este passo listava só os três
+São **7**, não 3. Até a auditoria 2026-08-06 este passo listava só os três
 primeiros — seguir o setup à risca subia produção com `resend-api-key`,
 `stripe-secret-key` e `stripe-webhook-secret` **vazios**, o que quebra
 silenciosamente todo o e-mail transacional (verificação de e-mail e reset de
 senha) e todo o billing/webhook, sem nenhum aviso no caminho.
+
+O sétimo (`direct-database-url`) entrou na Fase 122 e é o mais implacável dos
+sete: os outros falham em silêncio, esse **impede o container de subir**.
+`prisma migrate deploy` roda no boot (`docker/start-backend.sh`) e o `directUrl`
+do schema exige a variável — sem ela o Prisma CLI aborta com erro de validação,
+o boot morre e o deploy inteiro falha.
 
 ```bash
 openssl rand -base64 48 | gcloud secrets versions add jwt-secret --data-file=-
 openssl rand -base64 48 | gcloud secrets versions add jwt-refresh-secret --data-file=-
 
 # Connection string POOLED do Neon (painel do Neon → Connection Details →
-# "Pooled connection" — NÃO a direct connection):
+# "Pooled connection"). É a que a APLICAÇÃO usa em runtime:
 echo -n "postgresql://...pooler.../..." | gcloud secrets versions add database-url --data-file=-
+
+# Fase 122 — a MESMA string, mas direta: o mesmo host SEM o sufixo `-pooler`.
+# Usada só pelo `prisma migrate deploy` do boot (`directUrl` em
+# prisma/schema.prisma), nunca pelo Prisma Client em runtime. Existe porque o
+# advisory lock do migrate é escopado por SESSÃO, e o PgBouncer em modo transação
+# não fixa a sessão — o `pg_advisory_unlock` pode cair num backend diferente do
+# que adquiriu o lock, deixando-o preso e derrubando o deploy seguinte com
+# `P1002`. Foi exatamente o que matou o deploy da Fase 119 (build 316b3fe5).
+echo -n "postgresql://...(sem -pooler).../..." | gcloud secrets versions add direct-database-url --data-file=-
 
 # Resend (e-mail transacional — Fase 83). Sem isto, verificação de e-mail e
 # reset de senha falham em produção:
@@ -140,8 +155,8 @@ echo -n "whsec_..." | gcloud secrets versions add stripe-webhook-secret --data-f
 Confira que nenhum ficou sem versão antes de seguir:
 
 ```bash
-for s in jwt-secret jwt-refresh-secret database-url resend-api-key \
-         stripe-secret-key stripe-webhook-secret; do
+for s in jwt-secret jwt-refresh-secret database-url direct-database-url \
+         resend-api-key stripe-secret-key stripe-webhook-secret; do
   echo -n "$s: "
   gcloud secrets versions list "$s" --format='value(name)' | head -1
 done
