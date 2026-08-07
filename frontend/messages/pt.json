@@ -982,6 +982,53 @@
     "deleting": "Excluindo...",
     "confirmDelete": "Sim, excluir"
   },
+  "bodyMeasurementsCard": {
+    "title": "Medidas corporais",
+    "subtitle": "Registre seu peso ao longo do tempo para acompanhar a evolução do corpo, não só da carga.",
+    "subtitlePersonal": "Lance aqui a avaliação física que você fez com este aluno.",
+    "weightLabel": "Peso (kg)",
+    "weightPlaceholder": "Ex: 82,4",
+    "dateLabel": "Data da medição",
+    "waistLabel": "Cintura (cm)",
+    "bodyFatLabel": "Gordura (%)",
+    "optionalPlaceholder": "Opcional",
+    "save": "Registrar medição",
+    "saving": "Registrando...",
+    "saveError": "Não foi possível registrar a medição.",
+    "empty": "Nenhuma medição registrada ainda.",
+    "dateColumn": "Data",
+    "weightColumn": "Peso",
+    "waistColumn": "Cintura",
+    "bodyFatColumn": "Gordura",
+    "weightValue": "{value}kg",
+    "waistValue": "{value}cm",
+    "bodyFatValue": "{value}%",
+    "byProfessional": "(profissional)",
+    "delete": "Excluir",
+    "deleteAriaLabel": "Excluir esta medição",
+    "deleteError": "Não foi possível excluir a medição."
+  },
+  "adminExerciseTranslations": {
+    "title": "Traduções (EN / ES)",
+    "hint": "Deixe um idioma inteiro em branco para não alterá-lo. Ao preencher, nome, grupo muscular e descrição são todos obrigatórios.",
+    "nameLabel": "Nome",
+    "muscleGroupLabel": "Grupo muscular",
+    "descriptionLabel": "Descrição",
+    "save": "Salvar traduções",
+    "saving": "Salvando...",
+    "saved": "Traduções salvas.",
+    "saveError": "Erro ao salvar as traduções."
+  },
+  "personalRecordsCard": {
+    "title": "Meus recordes",
+    "subtitle": "Maior carga que você já levantou em cada exercício.",
+    "empty": "Registre séries nos seus treinos para começar a ver seus recordes aqui.",
+    "weightWithReps": "{weight}kg × {reps}"
+  },
+  "sessionKeyPicker": {
+    "ariaLabel": "Mudar a letra ou o dia da semana desta sessão",
+    "changeError": "Não foi possível mudar a sessão."
+  },
   "deleteSessionButton": {
     "delete": "Excluir",
     "deleteAriaLabel": "Excluir a sessão {session}",

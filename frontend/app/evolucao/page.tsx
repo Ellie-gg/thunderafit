@@ -10,6 +10,8 @@ import { AppHeader } from "@/components/app-header";
 import { Card } from "@/components/ui/card";
 import { QueryError } from "@/components/query-error";
 import { EffortDistributionBar } from "@/components/effort-distribution-bar";
+import { PersonalRecordsCard } from "@/components/personal-records-card";
+import { BodyMeasurementsCard } from "@/components/body-measurements-card";
 
 // Perf (Grupo Y, item 103): `recharts` só é necessário quando o histórico
 // realmente chegou (`loadHistoryQuery.data`/`frequencyQuery.data`) — carregar
@@ -233,6 +235,14 @@ function EvolucaoContent() {
             <EffortDistributionBar distribution={sessionHistoryQuery.data.effortDistribution} />
           </Card>
         )}
+
+        {/* Fase 121: "meus recordes" — antes os PRs eram calculados no resumo
+            pós-treino e descartados, sem lugar nenhum pra consultar depois. */}
+        <PersonalRecordsCard />
+
+        {/* Fase 121: progressão CORPORAL — o app media carga com riqueza e não
+            tinha nada disso (`Anamnesis` é snapshot único, sobrescrito). */}
+        <BodyMeasurementsCard />
       </main>
     </>
   );

@@ -431,6 +431,81 @@ export const adminService = {
     return { exercise };
   },
 
+  /**
+   * Fase 121 (levantamento do roadmap): lê as traduções EN/ES de um exercício
+   * pro admin editar. Antes `ExerciseTranslation` só era populada por **script
+   * de seed rodado à mão** — a tela `/nimbus/exercicios` não tinha nenhum campo
+   * de tradução, então todo exercício novo cadastrado pela UI nascia sem
+   * tradução e só um dev conseguia traduzi-lo.
+   */
+  async getExerciseTranslations(exerciseId: string) {
+    const exercise = await adminRepository.findExerciseById(exerciseId);
+    if (!exercise) {
+      const err = new Error("Exercício não encontrado.");
+      (err as any).statusCode = 404;
+      throw err;
+    }
+    const [en, es] = await Promise.all([
+      exerciseTranslationsRepository.findByExerciseAndLocale(exerciseId, "EN"),
+      exerciseTranslationsRepository.findByExerciseAndLocale(exerciseId, "ES"),
+    ]);
+    return {
+      // O PT canônico vem do próprio Exercise — nunca tem linha de tradução
+      // (contrato do domínio), então a tela usa isto como referência ao lado
+      // dos campos de EN/ES.
+      pt: { name: exercise.name, muscleGroup: exercise.muscleGroup, description: exercise.description },
+      EN: en ? { name: en.name, muscleGroup: en.muscleGroup, description: en.description } : null,
+      ES: es ? { name: es.name, muscleGroup: es.muscleGroup, description: es.description } : null,
+    };
+  },
+
+  /**
+   * Fase 121: grava as traduções EN/ES de um exercício.
+   *
+   * Contrato de omissão igual ao de `updateSelfTemplateNames` (Fase 55.2): um
+   * locale **ausente ou vazio** significa "não mandei", e NÃO apaga tradução já
+   * salva. Pra um locale enviado, os três campos são obrigatórios (a coluna é
+   * `String` não-nula no schema) — não existe tradução "meio feita".
+   *
+   * Usa o `upsert` do repository do fitness de propósito: ele invalida o cache
+   * de traduções (corrigido na Fase 119), então a tela pública reflete a edição
+   * na hora em vez de esperar até 5min.
+   */
+  async updateExerciseTranslations(
+    exerciseId: string,
+    input: {
+      EN?: { name?: string; muscleGroup?: string; description?: string } | null;
+      ES?: { name?: string; muscleGroup?: string; description?: string } | null;
+    }
+  ) {
+    const exercise = await adminRepository.findExerciseById(exerciseId);
+    if (!exercise) {
+      const err = new Error("Exercício não encontrado.");
+      (err as any).statusCode = 404;
+      throw err;
+    }
+
+    for (const locale of ["EN", "ES"] as const) {
+      const t = input[locale];
+      if (!t) continue;
+      const name = t.name?.trim();
+      const muscleGroup = t.muscleGroup?.trim();
+      const description = t.description?.trim();
+      // Nada enviado nesse locale → omissão, segue em frente sem apagar.
+      if (!name && !muscleGroup && !description) continue;
+      if (!name || !muscleGroup || !description) {
+        const err = new Error(
+          `Tradução ${locale} incompleta: nome, grupo muscular e descrição são todos obrigatórios.`
+        );
+        (err as any).statusCode = 400;
+        throw err;
+      }
+      await exerciseTranslationsRepository.upsert(exerciseId, locale, { name, muscleGroup, description });
+    }
+
+    return this.getExerciseTranslations(exerciseId);
+  },
+
   async updateExercise(
     exerciseId: string,
     input: {

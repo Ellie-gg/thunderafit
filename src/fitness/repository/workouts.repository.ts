@@ -25,6 +25,28 @@ export const workoutsRepository = {
     return prisma.workout.findUnique({ where: { id } });
   },
 
+  /**
+   * Fase 121: troca a CHAVE da sessão (letra A-E ou dia da semana). Antes só o
+   * `name` era editável (Fase 111), então mover um treino de "B" pra "C", ou de
+   * Segunda pra Quarta, exigia excluir e recriar — perdendo os exercícios
+   * prescritos e o histórico de séries.
+   *
+   * Só troca a chave; `name` fica intocado de propósito. Os dois são
+   * independentes: o nome é livre ("Peito e Tríceps") e a chave é a posição na
+   * sequência. Quem quiser mudar os dois usa os dois endpoints.
+   */
+  async updateLetter(id: string, letter: string) {
+    return prisma.workout.update({ where: { id }, data: { letter } });
+  },
+
+  /** Sessões irmãs (mesmo programa), pra validar colisão de chave. */
+  async findSiblings(programId: string) {
+    return prisma.workout.findMany({
+      where: { programId },
+      select: { id: true, letter: true },
+    });
+  },
+
   async updateName(id: string, name: string) {
     return prisma.workout.update({ where: { id }, data: { name } });
   },

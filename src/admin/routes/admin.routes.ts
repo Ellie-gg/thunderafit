@@ -10,6 +10,8 @@ import {
   createExerciseHandler,
   updateExerciseHandler,
   deleteExerciseHandler,
+  getExerciseTranslationsHandler,
+  updateExerciseTranslationsHandler,
   updateUserRoleHandler,
   deleteUserHandler,
   listSelfTemplatesHandler,
@@ -50,6 +52,12 @@ export async function adminRoutes(fastify: FastifyInstance) {
   fastify.post("/api/admin/exercises", auth, createExerciseHandler);
   fastify.put("/api/admin/exercises/:id", auth, updateExerciseHandler);
   fastify.delete("/api/admin/exercises/:id", auth, deleteExerciseHandler);
+
+  // Fase 121: traduções EN/ES do exercício pela UI de admin — antes só via
+  // script de seed rodado à mão, o que fazia todo exercício cadastrado pela
+  // tela nascer sem tradução até um dev rodar um script.
+  fastify.get("/api/admin/exercises/:id/translations", auth, getExerciseTranslationsHandler);
+  fastify.put("/api/admin/exercises/:id/translations", auth, updateExerciseTranslationsHandler);
 
   fastify.put("/api/admin/users/:id/role", auth, updateUserRoleHandler);
   // Fase 80: remoção definitiva de usuário (cascade manual, ver adminRepository.deleteUser).

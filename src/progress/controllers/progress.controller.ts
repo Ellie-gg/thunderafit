@@ -1,5 +1,6 @@
 import { FastifyRequest, FastifyReply } from "fastify";
 import { progressService } from "../services/progress.service";
+import { resolveRequestLocale } from "../../lib/locale";
 import { progressRepository } from "../repository/progress.repository";
 
 /**
@@ -134,6 +135,26 @@ export async function sessionHistoryHandler(
     const limitParam = Number(request.query.limit);
     const limit = Number.isFinite(limitParam) && limitParam > 0 ? Math.min(limitParam, 100) : 20;
     const result = await progressService.getSessionHistory(alunoId, limit);
+    return reply.status(200).send(result);
+  } catch (err: any) {
+    const status = (err as any).statusCode ?? 500;
+    return reply.status(status).send({ error: err.message });
+  }
+}
+
+/**
+ * Fase 121 ("meus recordes"): maior carga já levantada por exercício. Mesmo
+ * `assertAluno` dos outros endpoints do domínio (o Personal/Nutricionista lê os
+ * recordes de um aluno VINCULADO passando `?alunoId=`; o ADMIN precisa de
+ * `alunoId` explícito) — nenhuma autorização nova foi escrita aqui.
+ */
+export async function personalRecordsHandler(
+  request: FastifyRequest<{ Querystring: { alunoId?: string } }>,
+  reply: FastifyReply
+) {
+  try {
+    const alunoId = await assertAluno(request);
+    const result = await progressService.getPersonalRecords(alunoId, resolveRequestLocale(request));
     return reply.status(200).send(result);
   } catch (err: any) {
     const status = (err as any).statusCode ?? 500;

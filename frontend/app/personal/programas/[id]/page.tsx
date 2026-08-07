@@ -25,6 +25,7 @@ import { Input } from "@/components/ui/input";
 import { QueryError } from "@/components/query-error";
 import { InlineRename } from "@/components/inline-rename";
 import { DeleteSessionButton } from "@/components/delete-session-button";
+import { SessionKeyPicker } from "@/components/session-key-picker";
 
 function ProgramaDetalheContent() {
   const t = useTranslations("personalProgramaDetail");
@@ -162,6 +163,17 @@ function ProgramaDetalheContent() {
                         isso o componente para a propagação do clique — senão
                         confirmar navegaria pra tela de prescrição. */}
                     <div className="flex shrink-0 items-center gap-2">
+                      {/* Fase 121: trocar letra/dia sem excluir e recriar. */}
+                      <SessionKeyPicker
+                        workoutId={s.id}
+                        currentKey={s.letter}
+                        availableKeys={availableKeys}
+                        scheme={scheme}
+                        onChanged={() => {
+                          queryClient.invalidateQueries({ queryKey: ["workout-program", programId] });
+                          queryClient.invalidateQueries({ queryKey: ["workout-programs", "personal"] });
+                        }}
+                      />
                       <span className="text-sm text-muted">{t("open")}</span>
                       <DeleteSessionButton
                         workoutId={s.id}
