@@ -55,12 +55,51 @@ qualquer um que a descobrisse. Só o service account do frontend tem
   # cole o token retornado como header: Authorization: Bearer <token>
   ```
 
-## Neon: connection string pooled, não a direta
+## Neon: duas connection strings, cada uma com um dono (Fase 122)
 
-`DATABASE_URL` em produção **precisa** ser a connection string em modo
-pooled (PgBouncer) do Neon, não a direta — o Cloud Run escala de zero em
-rajadas, e a conexão direta do Neon tem um teto de conexões simultâneas
-baixo o bastante pra estourar rápido nesse padrão de tráfego.
+Produção usa as **duas** strings do Neon, de propósito, e trocar uma pela outra
+quebra coisas diferentes:
+
+| Secret | Quem usa | Por quê |
+|---|---|---|
+| `database-url` (**pooled**, host com `-pooler`) | Prisma **Client**, em runtime | O Cloud Run escala de zero em rajadas (`maxScale=20`), e a conexão direta do Neon tem teto de conexões simultâneas baixo o bastante pra estourar rápido nesse padrão de tráfego. |
+| `direct-database-url` (**direta**, mesmo host sem `-pooler`) | Prisma **CLI** (`migrate deploy` no boot) | `migrate deploy` toma um advisory lock do Postgres, que é escopado por **sessão**. Pelo PgBouncer em modo transação a sessão não é fixada. |
+
+O acoplamento é feito por `directUrl` em `prisma/schema.prisma` — o Prisma CLI
+usa `DIRECT_DATABASE_URL`, o Prisma Client segue em `DATABASE_URL`. Nenhuma
+mudança de código de aplicação está envolvida.
+
+### O que acontecia antes (e por que isso não é teórico)
+
+Com o `migrate deploy` passando pelo PgBouncer, o `pg_advisory_unlock` pode cair
+num backend **diferente** do que adquiriu o lock — e o lock fica preso. O
+`migrate deploy` seguinte falha com `P1002 — Timed out trying to acquire a
+postgres advisory lock`, o container **não sobe** e o deploy inteiro falha. Foi
+exatamente o que derrubou o deploy do merge da Fase 119 (build `316b3fe5`,
+commit `7269846`).
+
+Isso foi **reproduzido contra o banco de produção** antes da correção: pela
+pooled o lock era adquirido e vazava na liberação; pela direta era adquirido e
+liberado na mesma sessão.
+
+### Se um lock vazar de novo (diagnóstico)
+
+Sintoma: deploy falhando com `P1002` em sequência. Para inspecionar, junte
+`pg_locks` com `pg_stat_activity` e procure `locktype = 'advisory'` numa sessão
+`state = 'idle'` com `application_name = 'pgbouncer'` — é a assinatura do lock
+órfão. A limpeza é `pg_terminate_backend` **só** nessas sessões (idle + pgbouncer
++ segurando advisory lock); nunca em backend ativo.
+
+**Não** troque isso por `PRISMA_SCHEMA_DISABLE_ADVISORY_LOCK` (a única env var de
+advisory lock que o schema engine expõe — ela desliga o lock, não estende o
+timeout). O lock é justamente o que torna seguros os cold starts concorrentes do
+Cloud Run rodando `migrate deploy` ao mesmo tempo: desligar trocaria um deploy
+instável por corrupção silenciosa de migration.
+
+`docker/start-backend.sh` ainda tem um retry **limitado** (3 tentativas, backoff
+crescente) como segunda camada, pra latência de cold start do Neon acordando do
+autosuspend. É limitado de propósito: migration realmente quebrada continua
+falhando o boot, e o Cloud Run mantém a revisão anterior no ar.
 
 ## Cold start duplo (Cloud Run + Neon)
 

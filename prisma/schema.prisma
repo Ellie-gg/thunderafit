@@ -22,7 +22,28 @@ generator client {
 
 datasource db {
   provider = "postgresql"
+  // Conexão da APLICAÇÃO em runtime. Em produção é a string POOLED (PgBouncer)
+  // do Neon — obrigatório, porque o Cloud Run escala de zero em rajadas e a
+  // conexão direta tem teto baixo de conexões simultâneas (ver infra/RUNBOOK.md).
   url      = env("DATABASE_URL")
+  // Fase 122: conexão usada SÓ pelo Prisma CLI (`migrate deploy`, `migrate dev`,
+  // `db push`, introspect) — nunca pelo Prisma Client em runtime.
+  //
+  // Existe porque `migrate deploy` toma um ADVISORY LOCK do Postgres, e advisory
+  // lock é escopado por SESSÃO. Através do PgBouncer em modo transação a sessão
+  // não é fixada: o `pg_advisory_unlock` pode cair num backend DIFERENTE do que
+  // adquiriu o lock, deixando-o preso. O próximo `migrate deploy` então falha com
+  // `P1002 — Timed out trying to acquire a postgres advisory lock`, e o container
+  // não sobe. Foi exatamente o que derrubou o deploy do merge da Fase 119
+  // (build 316b3fe5, commit 7269846), e foi reproduzido de propósito contra o
+  // banco de produção antes desta correção: na POOLED o lock vaza; na DIRECT ele
+  // é adquirido e liberado na mesma sessão.
+  //
+  // NÃO trocamos isso por `PRISMA_SCHEMA_DISABLE_ADVISORY_LOCK` (a única env var
+  // que o schema engine expõe): o lock é o que torna seguros os cold starts
+  // concorrentes do Cloud Run rodando `migrate deploy` ao mesmo tempo. Desligar
+  // trocaria um deploy instável por corrupção silenciosa de migration.
+  directUrl = env("DIRECT_DATABASE_URL")
 }
 
 // ============================================================

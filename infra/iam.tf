@@ -43,6 +43,14 @@ resource "google_secret_manager_secret_iam_member" "backend_database_url" {
   member    = "serviceAccount:${google_service_account.backend.email}"
 }
 
+# Fase 122: a connection string DIRETA, usada só pelo `migrate deploy` no boot.
+resource "google_secret_manager_secret_iam_member" "backend_direct_database_url" {
+  project   = var.project_id
+  secret_id = google_secret_manager_secret.direct_database_url.secret_id
+  role      = "roles/secretmanager.secretAccessor"
+  member    = "serviceAccount:${google_service_account.backend.email}"
+}
+
 resource "google_secret_manager_secret_iam_member" "backend_resend_api_key" {
   project   = var.project_id
   secret_id = google_secret_manager_secret.resend_api_key.secret_id
