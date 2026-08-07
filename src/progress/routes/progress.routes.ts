@@ -5,6 +5,7 @@ import {
   listLoggedExercisesHandler,
   weeklySummaryHandler,
   sessionHistoryHandler,
+  personalRecordsHandler,
 } from "../controllers/progress.controller";
 
 export async function progressRoutes(fastify: FastifyInstance) {
@@ -38,5 +39,13 @@ export async function progressRoutes(fastify: FastifyInstance) {
     "/api/progress/session-history",
     { preHandler: [(fastify as any).authenticate] },
     sessionHistoryHandler
+  );
+
+  // Fase 121 ("meus recordes"): maior carga por exercício. Derivado do SetLog
+  // na leitura — não existe tabela de PR, de propósito (ver o repository).
+  fastify.get(
+    "/api/progress/personal-records",
+    { preHandler: [(fastify as any).authenticate] },
+    personalRecordsHandler
   );
 }

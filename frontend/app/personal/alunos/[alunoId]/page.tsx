@@ -20,6 +20,8 @@ import { QueryError } from "@/components/query-error";
 import { DeleteProgramButton } from "@/components/delete-program-button";
 import { UserAvatar } from "@/components/user-avatar";
 import { EffortDistributionBar } from "@/components/effort-distribution-bar";
+import { PersonalRecordsCard } from "@/components/personal-records-card";
+import { BodyMeasurementsCard } from "@/components/body-measurements-card";
 import { useActiveIntlLocale } from "@/i18n/use-active-locale";
 import { useTranslations } from "next-intl";
 
@@ -378,6 +380,14 @@ function AlunoHubContent() {
                 <EffortDistributionBar distribution={sessionHistoryQuery.data.effortDistribution} />
               </Card>
             )}
+
+            {/* Fase 121: os recordes do aluno, pro Personal usar na prescrição
+                (mesmo componente da tela do aluno, com `alunoId`). */}
+            <PersonalRecordsCard alunoId={alunoId} />
+
+            {/* Fase 121: o Personal lança aqui a avaliação física presencial —
+                decisão desta fase (fita métrica/adipômetro é ele que usa). */}
+            <BodyMeasurementsCard alunoId={alunoId} />
           </>
         )}
       </main>

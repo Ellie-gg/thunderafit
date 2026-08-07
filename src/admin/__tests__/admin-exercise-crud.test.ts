@@ -261,3 +261,103 @@ describe("Fase 33 — DELETE /api/admin/exercises/:id", () => {
     await prisma.workoutProgram.delete({ where: { id: program.id } });
   });
 });
+
+// Fase 121 (levantamento do roadmap): `ExerciseTranslation` só era populada por
+// SCRIPT DE SEED rodado à mão — a tela de admin não tinha campo de tradução
+// nenhum, então todo exercício cadastrado pela UI nascia sem tradução e só um
+// dev conseguia traduzi-lo.
+describe("Fase 121 — traduções EN/ES do exercício pela UI de admin", () => {
+  let exercicioId: string;
+
+  beforeAll(async () => {
+    const r = await supertest(server.server)
+      .post("/api/admin/exercises")
+      .set("Authorization", `Bearer ${adminToken}`)
+      .send(validPayload({ name: `${TEST_NAME_PREFIX} — Traduções` }));
+    exercicioId = r.body.exercise.id;
+  });
+
+  afterAll(async () => {
+    await prisma.exerciseTranslation.deleteMany({ where: { exerciseId: exercicioId } });
+    await prisma.exercise.deleteMany({ where: { id: exercicioId } });
+  });
+
+  it("PERSONAL (não-admin) recebe 403", async () => {
+    const r = await supertest(server.server)
+      .put(`/api/admin/exercises/${exercicioId}/translations`)
+      .set("Authorization", `Bearer ${personalToken}`)
+      .send({ EN: { name: "x", muscleGroup: "y", description: "z" } });
+    expect(r.status).toBe(403);
+  });
+
+  it("exercício novo começa sem tradução, e o PT vem do próprio Exercise", async () => {
+    const r = await supertest(server.server)
+      .get(`/api/admin/exercises/${exercicioId}/translations`)
+      .set("Authorization", `Bearer ${adminToken}`);
+    expect(r.status).toBe(200);
+    expect(r.body.EN).toBeNull();
+    expect(r.body.ES).toBeNull();
+    expect(r.body.pt.name).toBe(`${TEST_NAME_PREFIX} — Traduções`);
+    expect(r.body.pt.muscleGroup).toBe("Peito");
+  });
+
+  it("grava EN e ES, e devolve o estado atualizado", async () => {
+    const r = await supertest(server.server)
+      .put(`/api/admin/exercises/${exercicioId}/translations`)
+      .set("Authorization", `Bearer ${adminToken}`)
+      .send({
+        EN: { name: "Test Bench Press", muscleGroup: "Chest", description: "English description." },
+        ES: { name: "Press de Banca Test", muscleGroup: "Pecho", description: "Descripción en español." },
+      });
+    expect(r.status).toBe(200);
+    expect(r.body.EN.name).toBe("Test Bench Press");
+    expect(r.body.ES.muscleGroup).toBe("Pecho");
+
+    const noBanco = await prisma.exerciseTranslation.count({ where: { exerciseId: exercicioId } });
+    expect(noBanco).toBe(2);
+  });
+
+  it("locale OMITIDO não apaga tradução já salva (mesmo contrato da Fase 55.2)", async () => {
+    const r = await supertest(server.server)
+      .put(`/api/admin/exercises/${exercicioId}/translations`)
+      .set("Authorization", `Bearer ${adminToken}`)
+      .send({ EN: { name: "Updated EN", muscleGroup: "Chest", description: "Updated." } });
+    expect(r.status).toBe(200);
+    expect(r.body.EN.name).toBe("Updated EN");
+    // ES não foi enviado — tem que continuar lá.
+    expect(r.body.ES.name).toBe("Press de Banca Test");
+  });
+
+  it("tradução INCOMPLETA recebe 400 (as 3 colunas são não-nulas no schema)", async () => {
+    const r = await supertest(server.server)
+      .put(`/api/admin/exercises/${exercicioId}/translations`)
+      .set("Authorization", `Bearer ${adminToken}`)
+      .send({ EN: { name: "Só o nome" } });
+    expect(r.status).toBe(400);
+    // Nada foi sobrescrito no caminho recusado.
+    const en = await prisma.exerciseTranslation.findFirst({
+      where: { exerciseId: exercicioId, locale: "EN" },
+    });
+    expect(en!.name).toBe("Updated EN");
+  });
+
+  it("o catálogo público reflete a edição na hora (cache invalidado no upsert)", async () => {
+    // Fase 119 fez o `upsert` invalidar o cache de traduções. Sem isso, esta
+    // leitura viria da versão em cache, sem a tradução recém-gravada, por até
+    // 5 minutos.
+    const r = await supertest(server.server)
+      .get("/api/exercises")
+      .set("Authorization", `Bearer ${adminToken}`)
+      .set("x-locale", "en");
+    expect(r.status).toBe(200);
+    const ex = r.body.exercises.find((e: any) => e.id === exercicioId);
+    expect(ex.name).toBe("Updated EN");
+  });
+
+  it("exercício inexistente devolve 404", async () => {
+    const r = await supertest(server.server)
+      .get("/api/admin/exercises/00000000-0000-0000-0000-000000000000/translations")
+      .set("Authorization", `Bearer ${adminToken}`);
+    expect(r.status).toBe(404);
+  });
+});

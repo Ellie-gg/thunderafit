@@ -647,6 +647,90 @@ describe("Auditoria 2026-08-06, A4 — /complete é idempotente dentro da janela
   });
 });
 
+// Fase 121 (levantamento do roadmap): antes só o NOME da sessão era editável
+// (Fase 111). Mover um treino de "B" pra "C", ou de Segunda pra Quarta, exigia
+// excluir e recriar — perdendo exercícios prescritos e histórico de séries.
+describe("Fase 121 — PATCH /api/workouts/:id/letter (trocar letra/dia da sessão)", () => {
+  let sessaoA: string;
+  let sessaoB: string;
+  let programaId: string;
+
+  beforeEach(async () => {
+    const a = await supertest(server.server)
+      .post("/api/workouts")
+      .set("Authorization", `Bearer ${accessToken}`)
+      .send({ alunoId: vinculadoAlunoId, name: "F121 sessão A", letter: "A" });
+    sessaoA = a.body.workout.id;
+    programaId = (await prisma.workout.findUnique({ where: { id: sessaoA } }))!.programId;
+
+    // Irmã no MESMO programa, pra testar colisão de chave.
+    const b = await prisma.workout.create({
+      data: { programId: programaId, personalId: a.body.workout.personalId, alunoId: vinculadoAlunoId, name: "F121 sessão B", letter: "B" },
+    });
+    sessaoB = b.id;
+  });
+
+  afterEach(async () => {
+    await prisma.workout.deleteMany({ where: { id: { in: [sessaoA, sessaoB] } } });
+  });
+
+  it("Personal troca a letra de A para C", async () => {
+    const r = await supertest(server.server)
+      .patch(`/api/workouts/${sessaoA}/letter`)
+      .set("Authorization", `Bearer ${accessToken}`)
+      .send({ letter: "C" });
+    expect(r.status).toBe(200);
+    expect(r.body.workout.letter).toBe("C");
+    // O nome NÃO muda — os dois atributos são independentes.
+    expect(r.body.workout.name).toBe("F121 sessão A");
+  });
+
+  it("recusa com 409 se a chave já existe no programa (mesma regra de addSession)", async () => {
+    const r = await supertest(server.server)
+      .patch(`/api/workouts/${sessaoA}/letter`)
+      .set("Authorization", `Bearer ${accessToken}`)
+      .send({ letter: "B" });
+    expect(r.status).toBe(409);
+    // Nada mudou nas duas sessões.
+    expect((await prisma.workout.findUnique({ where: { id: sessaoA } }))!.letter).toBe("A");
+    expect((await prisma.workout.findUnique({ where: { id: sessaoB } }))!.letter).toBe("B");
+  });
+
+  it("trocar pela MESMA chave é no-op (200), não erro", async () => {
+    const r = await supertest(server.server)
+      .patch(`/api/workouts/${sessaoA}/letter`)
+      .set("Authorization", `Bearer ${accessToken}`)
+      .send({ letter: "A" });
+    expect(r.status).toBe(200);
+    expect(r.body.workout.letter).toBe("A");
+  });
+
+  it("recusa chave fora do esquema do programa (LETTER não aceita dia da semana)", async () => {
+    const r = await supertest(server.server)
+      .patch(`/api/workouts/${sessaoA}/letter`)
+      .set("Authorization", `Bearer ${accessToken}`)
+      .send({ letter: "SEGUNDA" });
+    expect(r.status).toBe(400);
+  });
+
+  it("recusa corpo vazio com 400 (não 500)", async () => {
+    const r = await supertest(server.server)
+      .patch(`/api/workouts/${sessaoA}/letter`)
+      .set("Authorization", `Bearer ${accessToken}`)
+      .send({});
+    expect(r.status).toBe(400);
+  });
+
+  it("o ALUNO da sessão prescrita não pode trocar a letra (404, sem enumerar)", async () => {
+    const r = await supertest(server.server)
+      .patch(`/api/workouts/${sessaoA}/letter`)
+      .set("Authorization", `Bearer ${alunoAccessToken}`)
+      .send({ letter: "D" });
+    expect(r.status).toBe(404);
+    expect((await prisma.workout.findUnique({ where: { id: sessaoA } }))!.letter).toBe("A");
+  });
+});
+
 // Fase 120 (pedido do fundador): "quando o Personal edita um treino do aluno ou
 // template, ele não consegue excluir o treino do programa ou o dia da semana".
 // Confirmado: existia excluir EXERCÍCIO da sessão e excluir o PROGRAMA inteiro,

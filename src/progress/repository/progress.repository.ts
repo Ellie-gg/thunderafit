@@ -82,6 +82,50 @@ export const progressRepository = {
     });
   },
 
+  /**
+   * Fase 121 ("meus recordes"): maior peso já registrado por exercício, com a
+   * data em que caiu e as repetições daquela série.
+   *
+   * **Derivado, não armazenado, de propósito.** Criar uma tabela de PR
+   * introduziria um segundo estado que dessincroniza (excluir uma série, ou uma
+   * sessão inteira via Fase 120, deixaria o PR obsoleto apontando pra dado que
+   * não existe mais). É a mesma decisão já documentada em
+   * `aluno-premium.service.ts` e `progress.service.ts`: computar a verdade na
+   * leitura em vez de manter cópia. O custo é 1 query agregada, não N.
+   *
+   * `DISTINCT ON` do Postgres resolve "a linha inteira do máximo" numa passada
+   * — `MAX(weightKg)` sozinho daria o peso mas não a data/reps daquela série, e
+   * `GROUP BY` + subquery pra recuperar o resto seria mais caro e mais frágil.
+   * Empate no peso (bateu o mesmo PR de novo) resolve pela série MAIS ANTIGA:
+   * o recorde é de quando foi atingido pela primeira vez.
+   */
+  async findPersonalRecordsForAluno(alunoId: string) {
+    return prisma.$queryRaw<
+      Array<{
+        exerciseId: string;
+        exerciseName: string;
+        muscleGroup: string;
+        weightKg: number;
+        repsDone: number;
+        achievedAt: Date;
+      }>
+    >`
+      SELECT DISTINCT ON (we."exerciseId")
+             we."exerciseId"        AS "exerciseId",
+             e.name                 AS "exerciseName",
+             e."muscleGroup"        AS "muscleGroup",
+             sl."weightKg"          AS "weightKg",
+             sl."repsDone"          AS "repsDone",
+             sl."loggedAt"          AS "achievedAt"
+      FROM "SetLog" sl
+      JOIN "WorkoutExercise" we ON sl."workoutExerciseId" = we.id
+      JOIN "Workout" w ON we."workoutId" = w.id
+      JOIN "Exercise" e ON we."exerciseId" = e.id
+      WHERE w."alunoId" = ${alunoId}
+      ORDER BY we."exerciseId", sl."weightKg" DESC, sl."loggedAt" ASC
+    `;
+  },
+
   async findLoggedExercisesForAluno(alunoId: string) {
     return prisma.workoutExercise.findMany({
       where: {

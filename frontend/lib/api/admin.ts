@@ -230,3 +230,36 @@ export function deleteAdminSelfTemplate(programId: string) {
     method: "DELETE",
   });
 }
+
+// Fase 121: traduções EN/ES de um exercício, editáveis pela UI de admin. Antes
+// `ExerciseTranslation` só era populada por script de seed rodado à mão.
+export interface ExerciseTranslationFields {
+  name: string;
+  muscleGroup: string;
+  description: string;
+}
+
+export interface ExerciseTranslationsResponse {
+  /** PT canônico (vive no próprio Exercise, nunca como linha de tradução). */
+  pt: ExerciseTranslationFields;
+  EN: ExerciseTranslationFields | null;
+  ES: ExerciseTranslationFields | null;
+}
+
+export function getExerciseTranslations(exerciseId: string) {
+  return apiFetch<ExerciseTranslationsResponse>(`/api/admin/exercises/${exerciseId}/translations`);
+}
+
+/**
+ * Locale ausente (ou com os 3 campos vazios) = "não mandei": o backend preserva
+ * a tradução já salva em vez de apagar.
+ */
+export function updateExerciseTranslations(
+  exerciseId: string,
+  input: { EN?: Partial<ExerciseTranslationFields>; ES?: Partial<ExerciseTranslationFields> }
+) {
+  return apiFetch<ExerciseTranslationsResponse>(`/api/admin/exercises/${exerciseId}/translations`, {
+    method: "PUT",
+    body: input,
+  });
+}

@@ -8,6 +8,7 @@ import {
   deleteExerciseHandler,
   renameWorkoutHandler,
   deleteWorkoutHandler,
+  changeWorkoutLetterHandler,
   getWorkoutHandler,
   completeWorkoutHandler,
   setSessionRpeHandler,
@@ -74,6 +75,18 @@ export async function workoutsRoutes(fastify: FastifyInstance) {
       preHandler: [(fastify as any).authenticate],
     },
     renameWorkoutHandler
+  );
+
+  // Fase 121 (levantamento do roadmap): trocar a letra (A-E) ou o dia da semana
+  // da sessão. Antes só o NOME era editável, então mover um treino de "B" pra
+  // "C" — ou de Segunda pra Quarta — exigia excluir e recriar, perdendo os
+  // exercícios prescritos e o histórico de séries.
+  fastify.patch(
+    "/api/workouts/:id/letter",
+    {
+      preHandler: [(fastify as any).authenticate],
+    },
+    changeWorkoutLetterHandler
   );
 
   // Fase 120 (pedido do fundador): excluir a SESSÃO inteira do programa — o

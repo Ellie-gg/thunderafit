@@ -8,7 +8,7 @@ import { getWorkoutProgram, addSelfProgramSession, renameWorkoutProgram } from "
 import { getAlunoPremiumStatus } from "@/lib/api/billing";
 import { ApiError } from "@/lib/api/client";
 import type { WorkoutProgram } from "@/lib/types";
-import { sortByScheme, labelFor, firstMissingKey, maxSessionsFor } from "@/lib/session-scheme";
+import { sortByScheme, labelFor, firstMissingKey, maxSessionsFor, orderFor } from "@/lib/session-scheme";
 import { AuthGuard } from "@/components/auth-guard";
 import { AppHeader } from "@/components/app-header";
 import { Card } from "@/components/ui/card";
@@ -17,6 +17,7 @@ import { QueryError } from "@/components/query-error";
 import { DeleteProgramButton } from "@/components/delete-program-button";
 import { InlineRename } from "@/components/inline-rename";
 import { DeleteSessionButton } from "@/components/delete-session-button";
+import { SessionKeyPicker } from "@/components/session-key-picker";
 import { useActiveIntlLocale } from "@/i18n/use-active-locale";
 
 function formatDate(iso: string | null, intlLocale: string, neverCompletedLabel: string): string {
@@ -74,6 +75,10 @@ function ProgramaContent() {
   const isSelfProgram = program?.origin === "SELF";
   const canEdit = isSelfProgram && !!premiumStatusQuery.data?.hasAccess;
   const nextKey = firstMissingKey(scheme, sessions.map((s) => s.letter));
+  // Fase 121: chaves LIVRES do programa, pra o seletor de letra/dia oferecer só
+  // o que não colide (mesmo cálculo que a tela do Personal já fazia).
+  const usedKeys = new Set(sessions.map((s) => s.letter));
+  const availableKeys = orderFor(scheme).filter((k) => !usedKeys.has(k));
   const canAddSession = canEdit && sessions.length < maxSessionsFor(scheme) && !!nextKey;
 
   const renameProgramMutation = useMutation({
@@ -194,6 +199,20 @@ function ProgramaContent() {
                       acima — só treino `origin: SELF` do próprio aluno, e o
                       backend exige Premium (402 se faltar), igual às outras
                       edições do treino próprio. Irmão do card, não aninhado. */}
+                  {canEdit && (
+                    <div className="shrink-0">
+                      <SessionKeyPicker
+                        workoutId={s.id}
+                        currentKey={s.letter}
+                        availableKeys={availableKeys}
+                        scheme={scheme}
+                        onChanged={() => {
+                          queryClient.invalidateQueries({ queryKey: ["workout-program", programId] });
+                          queryClient.invalidateQueries({ queryKey: ["workout-programs", "aluno"] });
+                        }}
+                      />
+                    </div>
+                  )}
                   {canEdit && (
                     <div className="shrink-0">
                       <DeleteSessionButton

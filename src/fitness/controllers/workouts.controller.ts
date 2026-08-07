@@ -222,6 +222,39 @@ export async function renameWorkoutHandler(
 }
 
 /**
+ * Fase 121: trocar a letra/dia da sessão. Rota separada do `PATCH .../name`
+ * (Fase 111) de propósito: são dois atributos independentes — nome é texto
+ * livre, chave é a posição na sequência — e juntar os dois num só endpoint
+ * obrigaria o cliente a reenviar um campo que não quis mudar.
+ */
+export async function changeWorkoutLetterHandler(
+  request: FastifyRequest<{ Params: { id: string }; Body: { letter: string } }>,
+  reply: FastifyReply
+) {
+  const userId = (request as any).user.sub;
+  const role = (request as any).user.role;
+  const { id } = request.params;
+  // B3 (auditoria 2026-08-06): `?.` — PATCH sem corpo deixa `body` undefined.
+  const { letter } = request.body ?? {};
+
+  try {
+    if (typeof letter !== "string" || !letter.trim()) {
+      return reply.status(400).send({ error: "letter é obrigatório." });
+    }
+    const workout =
+      role === "ALUNO"
+        ? await workoutsService.changeSelfWorkoutLetter(id, userId, letter)
+        : await workoutsService.changeWorkoutLetter(id, userId, letter);
+    return reply.status(200).send({ workout });
+  } catch (err: any) {
+    if (err.code === "PREMIUM_REQUIRED") {
+      return reply.status(402).send({ error: err.message, code: err.code });
+    }
+    return reply.status(errStatus(err)).send({ error: err.message, code: err.code });
+  }
+}
+
+/**
  * Fase 120: excluir a SESSÃO inteira do programa. Ramifica por role no
  * controller, mesmo padrão de `renameWorkoutHandler` acima e de
  * `deleteProgramHandler` (desde a Fase 85) — o ALUNO só mexe no próprio treino

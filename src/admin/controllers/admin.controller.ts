@@ -138,6 +138,42 @@ export async function updateExerciseHandler(
   }
 }
 
+/**
+ * Fase 121: traduções EN/ES de um exercício, editáveis pelo admin. Antes só
+ * script de seed populava `ExerciseTranslation`.
+ */
+export async function getExerciseTranslationsHandler(
+  request: FastifyRequest<{ Params: { id: string } }>,
+  reply: FastifyReply
+) {
+  try {
+    assertAdmin(request);
+    const result = await adminService.getExerciseTranslations(request.params.id);
+    return reply.status(200).send(result);
+  } catch (err: any) {
+    return handleError(err, reply);
+  }
+}
+
+export async function updateExerciseTranslationsHandler(
+  request: FastifyRequest<{
+    Params: { id: string };
+    Body: {
+      EN?: { name?: string; muscleGroup?: string; description?: string } | null;
+      ES?: { name?: string; muscleGroup?: string; description?: string } | null;
+    };
+  }>,
+  reply: FastifyReply
+) {
+  try {
+    assertAdmin(request);
+    const result = await adminService.updateExerciseTranslations(request.params.id, request.body ?? {});
+    return reply.status(200).send(result);
+  } catch (err: any) {
+    return handleError(err, reply);
+  }
+}
+
 export async function deleteExerciseHandler(
   request: FastifyRequest<{ Params: { id: string } }>,
   reply: FastifyReply

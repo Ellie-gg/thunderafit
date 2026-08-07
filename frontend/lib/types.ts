@@ -238,6 +238,21 @@ export interface SessionHistoryResponse {
   effortDistribution: EffortDistribution;
 }
 
+// Fase 121 ("meus recordes"): maior carga por exercício, derivada do SetLog.
+export interface PersonalRecord {
+  exerciseId: string;
+  exerciseName: string;
+  muscleGroup: string;
+  weightKg: number;
+  /** Repetições DAQUELA série (a que bateu o recorde), não o máximo de reps. */
+  repsDone: number;
+  achievedAt: string;
+}
+
+export interface PersonalRecordsResponse {
+  records: PersonalRecord[];
+}
+
 export interface Anamnesis {
   alunoId: string;
   fullName: string | null;

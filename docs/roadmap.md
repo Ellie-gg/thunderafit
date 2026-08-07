@@ -19,6 +19,18 @@ psql "$DATABASE_URL" -c "SELECT name FROM \"ExerciseTranslation\" WHERE locale =
 
 # Levantamento de funcionalidades ausentes (2026-08-07)
 
+> **Atualizado na Fase 121: 4 itens deste levantamento foram implementados** —
+> **1** (trocar letra/dia da sessão), **4** (UI de admin para traduções),
+> **5** (histórico corporal) e **7** (PRs / "meus recordes"). Ficam marcados
+> abaixo com ✅ e o que mudou na decisão de desenho. Os demais seguem abertos.
+>
+> Duas notas de desenho que valem registro: o item **7** foi entregue **sem
+> tabela nova** (PR é derivado do `SetLog` na leitura — uma tabela
+> dessincronizaria se uma série ou sessão fosse excluída, e o projeto já tem essa
+> filosofia documentada), e o item **5** virou domínio próprio (`src/body/`) em
+> vez de esticar `anamnesis`, porque cardinalidade e permissão de escrita são
+> diferentes.
+
 Levantamento pedido junto com a Fase 120. **Método**: comparei o que o schema e as rotas
 realmente oferecem hoje (26 models, ~113 rotas em 11 domínios) contra o que as próprias
 features existentes implicam. Cada item abaixo cita a evidência no código — não é lista
@@ -39,7 +51,7 @@ São casos em que a operação existe para um lado e não para o outro. A Fase 1
 exatamente assim ("consigo adicionar sessão, não consigo excluir"), então este grupo tem
 a maior chance de virar reclamação.
 
-1. **Trocar a letra / o dia da semana de uma sessão.** Hoje `letter` é fixado na criação
+1. ✅ **FEITO (Fase 121) — Trocar a letra / o dia da semana de uma sessão.** `PATCH /api/workouts/:id/letter`, pros dois lados (Personal e aluno Premium), com a MESMA validação de `addSession` (chave pertence ao esquema, não colide) — mover uma sessão nunca deixa o programa num estado que criar não teria permitido. Trocar pela mesma chave é no-op, não erro. Descrição original: Hoje `letter` é fixado na criação
    e só o `name` é editável (`PATCH /api/workouts/:id/name`, Fase 111). Não há como mover
    um treino de "B" para "C", nem de Segunda para Quarta — a única saída é excluir e
    recriar, perdendo os exercícios prescritos. É o vizinho mais próximo do que você acabou
@@ -50,7 +62,7 @@ a maior chance de virar reclamação.
    programa inteiro, não a sessão.
 3. **Duplicar um programa.** Só existe "salvar instância como template". Um Personal que
    quer dois programas parecidos para alunos diferentes não tem atalho.
-4. **UI de admin para traduções de exercício.** `ExerciseTranslation` só é populada por
+4. ✅ **FEITO (Fase 121) — UI de admin para traduções de exercício.** `GET`/`PUT /api/admin/exercises/:id/translations` + editor no painel de edição de `/nimbus/exercicios`, mostrando o PT como referência. Locale deixado em branco = "não mandei" (não apaga tradução salva), mesmo contrato da Fase 55.2; tradução parcial dá 400 porque as 3 colunas são não-nulas. Usa o `upsert` que invalida o cache (corrigido na Fase 119), então o catálogo público reflete na hora — há teste cobrindo isso. Descrição original: `ExerciseTranslation` só é populada por
    **script de seed rodado à mão** — `frontend/app/nimbus/exercicios/page.tsx` não tem
    nenhum campo de tradução. Toda curadoria nova exige um dev. Como o catálogo agora está
    100% traduzido (Fase 119), o custo aparece no próximo exercício que você cadastrar
@@ -58,7 +70,7 @@ a maior chance de virar reclamação.
 
 ## Nível 2 — Dados que o app quase tem (destravam telas que já existem)
 
-5. **Histórico de peso e medidas corporais.** `Anamnesis.alunoId` é `@unique`: é **um
+5. ✅ **FEITO (Fase 121) — Histórico de peso e medidas corporais.** Domínio novo `src/body/` + model `BodyMeasurement` (peso obrigatório, cintura e % de gordura opcionais). Aluno E Personal registram (a avaliação presencial é do profissional), com `recordedByRole` distinguindo a origem. Card em `/evolucao` e na tela do Personal. Descrição original: `Anamnesis.alunoId` é `@unique`: é **um
    snapshot só**, sobrescrito. O app acompanha a progressão de *carga* com riqueza
    (`/evolucao`, `SetLog`, PRs) mas não a progressão *corporal* — que é justamente o que
    o aluno olha no espelho. Uma tabela de medições com data alimentaria o `/evolucao` já
@@ -67,7 +79,7 @@ a maior chance de virar reclamação.
    `streakDays`, mas não existe nenhum campo de *meta* para comparar. O plano da Fase 112
    já identificou isso ("barra de progresso vs. meta — precisa de 1 campo"): é um campo
    novo e uma barra, com o cálculo já pronto.
-7. **PRs persistidos.** Recordes são calculados na hora, dentro do resumo pós-treino
+7. ✅ **FEITO (Fase 121) — "Meus recordes", SEM tabela nova.** `GET /api/progress/personal-records` deriva o PR do `SetLog` (`DISTINCT ON` por exercício; empate resolve pela série mais antiga, porque o recorde é de quando caiu). Optei por derivar em vez de persistir: uma tabela de PR ficaria obsoleta ao excluir uma série ou uma sessão (Fase 120), e o projeto já documenta "computar a verdade na leitura em vez de manter um segundo estado que dessincroniza". Descrição original: Recordes são calculados na hora, dentro do resumo pós-treino
    (`workout-summary.service.ts#buildPersonalRecords`). Não há tabela de PR, então não
    existe "meus recordes" nem histórico de quando cada um caiu — a informação é exibida e
    descartada.
