@@ -441,20 +441,58 @@ describe("Fase 112 — WorkoutSessionLog (duração real + RPE opcional)", () =>
     await prisma.workout.deleteMany({ where: { id: noDurationWorkoutId } });
   });
 
-  it("durationSeconds negativo recebe 400", async () => {
+  // M5 (auditoria 2026-08-06): ANTES este teste asseverava 400 pra duração
+  // negativa. Isso contradizia a intenção declarada da feature ("nunca 400 sem
+  // ela") e criava um beco sem saída real: com o relógio do aparelho atrasado,
+  // o cliente manda duração negativa, o backend recusava, e o aluno NÃO
+  // conseguia concluir o treino — o `startedAt` fica no `localStorage`, então o
+  // retry falhava idêntico. Duração é telemetria opcional; agora valor inválido
+  // é descartado e a conclusão prossegue sem duração.
+  it.each([
+    ["negativa (relógio do aparelho atrasou)", -5],
+    ["acima do teto de 24h", 24 * 60 * 60 + 1],
+    ["absurda o suficiente pra estourar Int4", 3_000_000_000],
+  ])("durationSeconds %s conclui o treino sem duração, não 400", async (_caso, duration) => {
     const w = await supertest(server.server)
       .post("/api/workouts")
       .set("Authorization", `Bearer ${accessToken}`)
-      .send({ alunoId: vinculadoAlunoId, name: "Sessão fase 112 negativa", letter: "D" });
+      .send({ alunoId: vinculadoAlunoId, name: `Sessão M5 ${duration}`, letter: "D" });
     const badWorkoutId = w.body.workout.id;
 
     const r = await supertest(server.server)
       .post(`/api/workouts/${badWorkoutId}/complete`)
       .set("Authorization", `Bearer ${alunoAccessToken}`)
-      .send({ durationSeconds: -5 });
-    expect(r.status).toBe(400);
+      .send({ durationSeconds: duration });
+    expect(r.status).toBe(200);
 
+    // A conclusão valeu, e a duração inválida não foi persistida.
+    const log = await prisma.workoutSessionLog.findFirst({ where: { workoutId: badWorkoutId } });
+    expect(log).not.toBeNull();
+    expect(log?.durationSeconds).toBeNull();
+    expect(log?.startedAt).toBeNull();
+
+    await prisma.workoutSessionLog.deleteMany({ where: { workoutId: badWorkoutId } });
     await prisma.workout.deleteMany({ where: { id: badWorkoutId } });
+  });
+
+  it("durationSeconds no teto exato (24h) é aceito e persistido", async () => {
+    const w = await supertest(server.server)
+      .post("/api/workouts")
+      .set("Authorization", `Bearer ${accessToken}`)
+      .send({ alunoId: vinculadoAlunoId, name: "Sessão M5 teto", letter: "E" });
+    const workoutId = w.body.workout.id;
+
+    const r = await supertest(server.server)
+      .post(`/api/workouts/${workoutId}/complete`)
+      .set("Authorization", `Bearer ${alunoAccessToken}`)
+      .send({ durationSeconds: 24 * 60 * 60 });
+    expect(r.status).toBe(200);
+
+    const log = await prisma.workoutSessionLog.findFirst({ where: { workoutId } });
+    expect(log?.durationSeconds).toBe(24 * 60 * 60);
+
+    await prisma.workoutSessionLog.deleteMany({ where: { workoutId } });
+    await prisma.workout.deleteMany({ where: { id: workoutId } });
   });
 
   it("PATCH /api/workout-sessions/:sessionLogId/rpe grava o RPE do dono", async () => {

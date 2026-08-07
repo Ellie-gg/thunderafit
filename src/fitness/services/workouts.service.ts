@@ -7,6 +7,7 @@ import { workoutSessionLogRepository } from "../repository/workout-session-log.r
 import { exerciseTranslationService } from "./exercise-translation.service";
 import { alunoPremiumService } from "../../billing/services/aluno-premium.service";
 import { assertPersonalCanPrescribe, assertAlunoWorkoutAccessible } from "../../lib/plan-expiry";
+import { assertValidName } from "../../lib/validate-name";
 
 // Fase 112: RPE (Percepção Subjetiva de Esforço), escala Borg 0-10 —
 // pergunta única e opcional depois do resumo pós-treino (ver
@@ -16,6 +17,37 @@ const RPE_MAX = 10;
 
 // Fase 27: observação do Personal sobre a prescrição de um exercício.
 const MAX_NOTES_LENGTH = 500;
+
+// M5 (auditoria 2026-08-06): teto de sanidade pra duração de sessão. Uma
+// sessão de mais de 24h não existe na prática, e o limite também protege a
+// coluna `Int4` do `WorkoutSessionLog` (sem ele, um valor acima de 2^31-1
+// estourava no INSERT — verificado contra o Postgres real — DEPOIS de
+// `markCompleted` já ter rodado, deixando o treino concluído sem session log,
+// com 500 e sem resumo pós-treino).
+const MAX_DURATION_SECONDS = 24 * 60 * 60;
+
+/**
+ * M5 (auditoria 2026-08-06): `durationSeconds` é telemetria OPCIONAL e por
+ * isso NUNCA pode derrubar a conclusão do treino — que é a ação central do
+ * produto. Antes, um valor negativo respondia 400: se o relógio do aparelho
+ * recuasse durante a sessão, o cliente calculava duração negativa, o backend
+ * recusava, e o aluno ficava SEM conseguir concluir o treino — o `startedAt`
+ * persiste no `localStorage`, então o retry falhava igual, sem fallback pra
+ * reenviar sem duração. Isso contradizia a intenção declarada em
+ * `completeWorkout` ("Continua opcional (nunca 400 sem ele)... ainda consegue
+ * concluir normalmente, só sem duração real registrada").
+ *
+ * Agora valor inválido é descartado (a conclusão prossegue sem duração) e o
+ * anômalo fica observável no log, em vez de virar erro pro usuário.
+ */
+function sanitizeDurationSeconds(raw: number | null | undefined): number | null {
+  if (raw === undefined || raw === null) return null;
+  if (typeof raw !== "number" || !Number.isFinite(raw) || raw < 0 || raw > MAX_DURATION_SECONDS) {
+    console.warn(`durationSeconds descartado por estar fora da faixa aceitável: ${String(raw)}`);
+    return null;
+  }
+  return Math.round(raw);
+}
 
 function httpError(message: string, statusCode: number) {
   const err = new Error(message) as Error & { statusCode: number };
@@ -219,14 +251,14 @@ export const workoutsService = {
    * não expande a prescrição).
    */
   async renameWorkout(workoutId: string, personalId: string, name: string) {
-    if (!name?.trim()) throw httpError("Nome da sessão é obrigatório.", 400);
+    const cleanName = assertValidName(name, "Nome da sessão");
     const workout = await workoutsRepository.findById(workoutId);
     if (!workout || workout.personalId !== personalId) {
       const err = new Error("Treino não encontrado.");
       (err as any).statusCode = 404;
       throw err;
     }
-    return workoutsRepository.updateName(workoutId, name.trim());
+    return workoutsRepository.updateName(workoutId, cleanName);
   },
 
   // --- Fase 85: Aluno Premium edita o próprio treino (origin: SELF) ---
@@ -294,11 +326,11 @@ export const workoutsService = {
   },
 
   async renameSelfWorkout(workoutId: string, alunoId: string, name: string) {
-    if (!name?.trim()) throw httpError("Nome da sessão é obrigatório.", 400);
+    const cleanName = assertValidName(name, "Nome da sessão");
     const workout = await workoutsRepository.findById(workoutId);
     assertOwnSelfWorkout(workout, alunoId);
     await assertAlunoPremiumAccess(alunoId);
-    return workoutsRepository.updateName(workoutId, name.trim());
+    return workoutsRepository.updateName(workoutId, cleanName);
   },
 
   async getWorkout(workoutId: string, userId: string, role: string | undefined, locale: Locale) {
@@ -346,13 +378,27 @@ export const workoutsService = {
 
   // Fase 16: o aluno marca a sessão como concluída. Só o próprio aluno dono da
   // sessão pode concluir (nem Personal, nem admin — concluir é um ato de
-  // execução do aluno). Idempotente: só atualiza lastCompletedAt.
+  // execução do aluno).
+  //
+  // ⚠️ NÃO é idempotente (A4, auditoria 2026-08-06 — corrigir numa fase
+  // própria). O comentário aqui afirmava "Idempotente: só atualiza
+  // lastCompletedAt", verdadeiro até a Fase 111 e FALSO desde a 112: cada
+  // chamada cria uma linha nova em `WorkoutSessionLog` (abaixo), sem guard de
+  // reentrega e sem unique constraint. Numa 2ª chamada,
+  // `previousLastCompletedAt` já é o instante da 1ª conclusão, então a janela
+  // do resumo exclui TODAS as séries reais e grava uma sessão fantasma com
+  // `volumeKg: 0`/`setsCompleted: 0` — que entra nos gráficos de /evolucao.
+  // Alcançável por 2 abas no mesmo treino ou por retry após resposta perdida
+  // (a sessão é preservada de propósito em erro de rede, fix do Fr1/Fr4).
   //
   // Fase 35: além de concluir, monta o resumo pós-treino (volume, comparação
   // com a sessão anterior, PRs) — precisa capturar o `lastCompletedAt` ANTIGO
-  // antes de sobrescrevê-lo, já que ele é a única fronteira disponível pra
-  // separar "séries desta sessão" das de sessões passadas (não existe uma
-  // entidade de sessão/conclusão própria no banco).
+  // antes de sobrescrevê-lo, já que ele é a fronteira usada pra separar
+  // "séries desta sessão" das de sessões passadas. (A Fase 112 acrescentou o
+  // `WorkoutSessionLog` como registro durável de conclusão, mas
+  // `workout-summary.service.ts` continua inferindo a janela pelo
+  // `lastCompletedAt` + `SESSION_WINDOW_MS` de 6h — a substituição anunciada
+  // no schema ainda não aconteceu.)
   // Fase 112: `durationSeconds` opcional — já era calculado 100% no cliente
   // (cronômetro real desde a Fase 89) e nunca chegava aqui; agora é
   // persistido em WorkoutSessionLog junto do resto do resumo, fundação de
@@ -376,11 +422,8 @@ export const workoutsService = {
     // repetir a condição `workout.alunoId === userId`.
     await assertAlunoWorkoutAccessible(workout.personalId, userId);
 
-    if (durationSeconds !== undefined && durationSeconds !== null) {
-      if (!Number.isFinite(durationSeconds) || durationSeconds < 0) {
-        throw httpError("durationSeconds deve ser um número maior ou igual a 0.", 400);
-      }
-    }
+    // M5: sanitiza em vez de rejeitar — ver `sanitizeDurationSeconds`.
+    const normalizedDuration = sanitizeDurationSeconds(durationSeconds);
 
     const previousLastCompletedAt = workout.lastCompletedAt;
     const completedAt = new Date();
@@ -392,8 +435,6 @@ export const workoutsService = {
     );
     const updatedWorkout = await workoutsRepository.markCompleted(workoutId, completedAt);
 
-    const normalizedDuration =
-      durationSeconds !== undefined && durationSeconds !== null ? Math.round(durationSeconds) : null;
     const sessionLog = await workoutSessionLogRepository.create({
       workoutId,
       alunoId: userId,

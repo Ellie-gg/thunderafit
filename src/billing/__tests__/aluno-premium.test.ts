@@ -27,6 +27,12 @@ beforeAll(async () => {
       },
     },
   });
+  // A2 (auditoria 2026-08-06): o template do fixture agora tem sessão (exigida
+  // pra ser aplicável), e `Workout.programId` NÃO tem cascade — apagar o
+  // programa direto viola a FK. Apaga as sessões primeiro.
+  await prisma.workout.deleteMany({
+    where: { program: { name: { startsWith: "Template Premium Teste" } } },
+  });
   await prisma.workoutProgram.deleteMany({
     where: { name: { startsWith: "Template Premium Teste" } },
   });
@@ -65,6 +71,12 @@ beforeAll(async () => {
 });
 
 afterAll(async () => {
+  // A2 (auditoria 2026-08-06): o template do fixture agora tem sessão (exigida
+  // pra ser aplicável), e `Workout.programId` NÃO tem cascade — apagar o
+  // programa direto viola a FK. Apaga as sessões primeiro.
+  await prisma.workout.deleteMany({
+    where: { program: { name: { startsWith: "Template Premium Teste" } } },
+  });
   await prisma.workoutProgram.deleteMany({
     where: { name: { startsWith: "Template Premium Teste" } },
   });
@@ -138,6 +150,17 @@ describe("Fase 56 — gate real de PREMIUM ao aplicar um template SELF", () => {
       .set("Authorization", `Bearer ${adminToken}`)
       .send({ name: "Template Premium Teste Gate", sessionScheme: "LETTER", category: "PREMIUM" });
     premiumTemplateId = created.body.program.id;
+
+    // A2 (auditoria 2026-08-06): o template precisa ter ao menos 1 sessão pra
+    // ser aplicável — `applySelfTemplate` agora recusa template vazio com 409
+    // (um template sem sessão substituiria o treino real do aluno por um
+    // programa vazio, apagando o histórico de séries). Antes desta linha o
+    // fixture criava um template sem sessão nenhuma, o que não representa um
+    // template curado de verdade.
+    await supertest(server.server)
+      .post(`/api/admin/self-templates/${premiumTemplateId}/sessions`)
+      .set("Authorization", `Bearer ${adminToken}`)
+      .send({ name: "Sessão A", letter: "A" });
   });
 
   it("ALUNO sem acesso Premium não consegue aplicar um template PREMIUM (402, code PREMIUM_REQUIRED)", async () => {

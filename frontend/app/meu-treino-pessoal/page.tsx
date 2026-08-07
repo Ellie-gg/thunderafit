@@ -48,9 +48,15 @@ const PREMIUM_LEVEL_FILTERS: Array<WorkoutTag | "TODOS"> = [
  * Fase 52: além da lista plana (categoria GERAL, comportamento inalterado),
  * carrosséis novos agrupados por `category` — "Treino em Casa" (HOME,
  * funcional: aplica de verdade, com fluxo de confirmação de troca via 409
- * SELF_PROGRAM_EXISTS) e "Treinos Premium" (PREMIUM, decorativo: todo slide
- * tem cadeado e o clique só mostra "em breve", sem chamar a API — não existe
- * conceito de aluno pagante ainda).
+ * SELF_PROGRAM_EXISTS) e "Treinos Premium" (PREMIUM).
+ *
+ * Correção de comentário (auditoria 2026-08-06): o texto aqui descrevia o
+ * carrossel PREMIUM como "decorativo: cadeado e clique só mostra em breve, sem
+ * chamar a API — não existe conceito de aluno pagante ainda". Isso valeu até a
+ * Fase 56, e é FALSO desde então: existe entitlement de verdade
+ * (`alunoPremiumService`), o clique aplica quando `hasAccess`, e o backend
+ * recusa com 402 `PREMIUM_REQUIRED` quando não. Quem lesse só este comentário
+ * poderia abrir um bypass do paywall achando que não havia nada a respeitar.
  *
  * Fase 54: "Crie seu treino do zero" (placeholder inerte, "em breve") foi
  * REMOVIDO — no lugar dele entra "Treinos Prontos" (PRONTOS), mesmo

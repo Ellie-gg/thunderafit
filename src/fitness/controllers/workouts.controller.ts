@@ -200,7 +200,12 @@ export async function renameWorkoutHandler(
   const userId = (request as any).user.sub;
   const role = (request as any).user.role;
   const { id } = request.params;
-  const { name } = request.body;
+  // B3 (auditoria 2026-08-06): `?.` porque um PATCH sem corpo (ou sem
+  // `content-type: application/json`) deixa `request.body` undefined —
+  // desestruturar direto virava TypeError FORA do try, respondendo 500 com
+  // "Cannot destructure property" em vez do 400 do domínio. Mesmo cuidado que
+  // `completeWorkoutHandler` já tomava.
+  const { name } = request.body ?? {};
 
   try {
     const workout =
@@ -264,7 +269,8 @@ export async function setSessionRpeHandler(
 ) {
   const userId = (request as any).user.sub;
   const { sessionLogId } = request.params;
-  const { rpe } = request.body;
+  // B3 (auditoria 2026-08-06): ver o comentário no handler de rename acima.
+  const { rpe } = request.body ?? {};
 
   try {
     const sessionLog = await workoutsService.setSessionRpe(sessionLogId, userId, rpe);

@@ -66,9 +66,15 @@ function RoleEditor({ user, onChanged }: { user: AdminUser; onChanged: () => voi
         onChange={(e) => setPendingRole(e.target.value as Role)}
         className="h-8 rounded-md border border-border bg-surface px-2 text-xs text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
       >
+        {/* I1 (auditoria 2026-08-06): antes renderizava o enum cru
+            (`PERSONAL`, `ALUNO`) em caixa alta — sem tradução em nenhum
+            idioma, e logo ao lado do filtro de papéis, que aparece
+            traduzido. Rótulos próprios (singulares) em vez de reusar
+            `roleFilter.*`, que são plurais de filtro ("Alunos") e leriam
+            errado ao atribuir o papel de UMA pessoa. */}
         {EDITABLE_ROLES.map((r) => (
           <option key={r} value={r}>
-            {r}
+            {t(`roleEditor.roleLabels.${r}`)}
           </option>
         ))}
       </select>
@@ -83,7 +89,21 @@ function RoleEditor({ user, onChanged }: { user: AdminUser; onChanged: () => voi
         </p>
       )}
       <div className="flex flex-wrap gap-2">
-        <Button type="button" size="sm" className="h-8 px-2.5 text-xs" onClick={() => setEditing(false)}>
+        {/* B8 (auditoria 2026-08-06): cancelar precisa DESCARTAR a seleção
+            pendente. Sem o reset, escolher ADMIN, cancelar e reabrir o editor
+            deixava o select já em ADMIN, o texto de confirmação já visível e o
+            botão de confirmar já habilitado — a promoção a ADMIN ficava a um
+            clique, anulando o passo de confirmação deliberado desta tela.
+            `InlineRename` já fazia o correto (ressincroniza ao abrir). */}
+        <Button
+          type="button"
+          size="sm"
+          className="h-8 px-2.5 text-xs"
+          onClick={() => {
+            setPendingRole(user.role);
+            setEditing(false);
+          }}
+        >
           {tCommon("cancel")}
         </Button>
         <Button
@@ -217,7 +237,20 @@ function PremiumEditor({ user, onChanged }: { user: AdminUser; onChanged: () => 
         </p>
       )}
       <div className="flex flex-wrap gap-2">
-        <Button type="button" size="sm" className="h-8 px-2.5 text-xs" onClick={() => setConfirming(false)}>
+        {/* B8 (auditoria 2026-08-06): mesma correção do RoleEditor — cancelar
+            descarta tier e prazo pendentes, senão reabrir o editor traz de
+            volta o que foi digitado e abandonado. Os outros dois editores
+            desta tela só têm `confirming`, sem estado pendente pra limpar. */}
+        <Button
+          type="button"
+          size="sm"
+          className="h-8 px-2.5 text-xs"
+          onClick={() => {
+            setPendingTier("PLUS");
+            setPendingDays("");
+            setConfirming(false);
+          }}
+        >
           {tCommon("cancel")}
         </Button>
         <Button

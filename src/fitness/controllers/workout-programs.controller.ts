@@ -142,7 +142,9 @@ export async function renameProgramHandler(
 ) {
   try {
     const { sub, role } = (request as any).user;
-    const { name } = request.body;
+    // B3 (auditoria 2026-08-06): PATCH sem corpo deixa `request.body`
+    // undefined; sem o `?.` era TypeError em vez do 400 do domínio.
+    const { name } = request.body ?? {};
     if (role === "ALUNO") {
       const program = await workoutProgramsService.renameSelfProgram(request.params.id, sub, name);
       return reply.status(200).send({ program });

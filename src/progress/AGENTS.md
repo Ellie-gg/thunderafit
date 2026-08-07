@@ -10,7 +10,7 @@ No writes happen in this domain — it only queries and reshapes data owned by
 
 ## Main entities / data it reads
 
-This domain **owns no Prisma models**. `prisma/schema.prisma` documents it
+This domain **owns no Prisma models** (it reads `SetLog`, `WorkoutExercise`, `Workout`, `Exercise`, `ClientRelation` and — since Fase 112 — `WorkoutSessionLog`, owned by `fitness`). `prisma/schema.prisma` documents it
 explicitly: "domain: progress — Agregação sobre SetLog, sem tabela própria."
 
 It reads, via its own repository (`progress.repository.ts`), models owned by
@@ -29,7 +29,7 @@ The repository deliberately queries Prisma directly instead of importing
 ## Key rules / authorization
 
 `assertAluno()` in `progress.controller.ts` resolves whose progress is being
-requested, per role, and is shared by all four handlers:
+requested, per role, and is shared by all five handlers:
 - **ADMIN**: must pass `?alunoId=` explicitly (400 if missing); no bond check.
 - **PERSONAL / NUTRICIONISTA**: must pass `?alunoId=`; then a `ClientRelation`
   lookup is required (403 if not bonded to that aluno — this is the IDOR
@@ -74,9 +74,9 @@ two domains that both gate professional access via `ClientRelation`.
 
 ## Current state
 
-Implemented (Fase 8, extended through Fase 33.4/39): 4 endpoints, all under
+Implemented (Fase 8, extended through Fase 33.4/39/112): 5 endpoints, all under
 `/api/progress`, all `GET`, all authenticated — `load-history`, `frequency`,
-`exercises` (logged-exercise list), `weekly-summary`. No mutation endpoints
+`exercises` (logged-exercise list), `weekly-summary`, and `session-history` (Fase 112 — session trend + effort distribution, reads `WorkoutSessionLog`). No mutation endpoints
 exist in this domain. Tests in `__tests__/progress.test.ts` cover day-level
 aggregation, percent-change math, per-role authorization (including the
 PERSONAL-not-bonded 403 and ADMIN-missing-alunoId 400 cases), empty-history

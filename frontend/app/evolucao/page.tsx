@@ -152,7 +152,10 @@ function EvolucaoContent() {
                         {loadHistoryQuery.data.history.map((p) => (
                           <tr key={p.date} className="border-b border-border/50">
                             <td className="py-1 pr-4">{p.date}</td>
-                            <td className="py-1">{p.maxWeightKg}kg</td>
+                            {/* I2 (auditoria 2026-08-06): unidade vem da
+                                mensagem, não concatenada no JSX — convenção do
+                                projeto (ex: `"{reps} reps × {weight}kg"`). */}
+                            <td className="py-1">{t("maxLoadValue", { weight: p.maxWeightKg })}</td>
                           </tr>
                         ))}
                       </tbody>
@@ -208,7 +211,16 @@ function EvolucaoContent() {
               <p className="text-xs text-muted">{t("durationTrendLabel")}</p>
               <SessionTrendChart sessions={sessionHistoryQuery.data.sessions} metric="durationMinutes" />
               <p className="text-xs text-muted">{t("trainingLoadTrendLabel")}</p>
-              <SessionTrendChart sessions={sessionHistoryQuery.data.sessions} metric="trainingLoad" />
+              {/* B2 (auditoria 2026-08-06): `trainingLoad` é null sempre que a
+                  sessão não tem RPE (a pergunta pós-treino é opcional), então
+                  um aluno que nunca respondeu via este rótulo sobre uma área
+                  de plotagem VAZIA, sem linha e sem explicação. O
+                  EffortDistributionBar já tratava esse caso; aqui faltava. */}
+              {sessionHistoryQuery.data.sessions.some((s) => s.trainingLoad !== null) ? (
+                <SessionTrendChart sessions={sessionHistoryQuery.data.sessions} metric="trainingLoad" />
+              ) : (
+                <p className="text-sm text-muted">{t("noTrainingLoadYet")}</p>
+              )}
             </>
           )}
         </Card>

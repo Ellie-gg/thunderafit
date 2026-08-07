@@ -59,6 +59,8 @@ export function PostWorkoutSummaryModal({
   const canShare = isNative || canWebShare;
   const [isExporting, setIsExporting] = React.useState(false);
   const [shareError, setShareError] = React.useState(false);
+  // B5: erro do download precisa ser visível — antes falhava em silêncio.
+  const [downloadError, setDownloadError] = React.useState(false);
 
   async function captureImageDataUrl(): Promise<string> {
     if (!cardRef.current) throw new Error("Card não encontrado.");
@@ -66,8 +68,18 @@ export function PostWorkoutSummaryModal({
     return toPng(cardRef.current, { pixelRatio: 3 });
   }
 
-  async function handleDownload() {
+  /**
+   * B5 (auditoria 2026-08-06): devolve `boolean` e trata o próprio erro em vez
+   * de propagar. Antes era `try/finally` SEM `catch`: se a captura (`toPng`,
+   * `pixelRatio: 3`) falhasse, o botão piscava desabilitado e voltava ao
+   * normal — sem download e sem nenhuma mensagem. Pior, o `catch` de
+   * `handleShare` chama esta função como plano B; a rejeição escapava do
+   * `finally` como unhandled rejection e o aluno via "não foi possível
+   * compartilhar" sem receber o download prometido.
+   */
+  async function handleDownload(): Promise<boolean> {
     setIsExporting(true);
+    setDownloadError(false);
     try {
       const dataUrl = await captureImageDataUrl();
       const blob = await (await fetch(dataUrl)).blob();
@@ -76,6 +88,10 @@ export function PostWorkoutSummaryModal({
       a.download = `thunderafit-treino-${summary.workoutLetter}.png`;
       a.click();
       URL.revokeObjectURL(a.href);
+      return true;
+    } catch {
+      setDownloadError(true);
+      return false;
     } finally {
       setIsExporting(false);
     }
@@ -116,16 +132,33 @@ export function PostWorkoutSummaryModal({
       // simples cancelamento do share sheet pelo usuário. Oferece o download
       // como alternativa amigável, igual já acontecia quando não havia
       // nenhum mecanismo de share disponível.
-      setShareError(true);
-      await handleDownload();
+      //
+      // B5 (auditoria 2026-08-06): `handleDownload` agora trata o próprio erro
+      // e devolve boolean, então a rejeição não escapa mais como unhandled —
+      // e só afirmamos "baixamos a imagem pra você" (`shareErrorMessage`)
+      // quando o download REALMENTE aconteceu. Se ele também falhar, o
+      // `downloadErrorMessage` aparece em vez de uma promessa falsa.
+      const baixou = await handleDownload();
+      setShareError(baixou);
     } finally {
       setIsExporting(false);
     }
   }
 
+  // A1 (auditoria 2026-08-06): no overlay abaixo, `overflow-y-auto` +
+  // `items-start` são load-bearing, não cosmética. O card é `aspect-[9/16]`
+  // (altura FIXA, ~569px num `max-w-xs`) e a Fase 112 inseriu o
+  // RpeQuickPicker (~168px) entre ele e os botões — o conteúdo passou de
+  // 880px. Sem rolagem, em iPhone SE (375×667), 360×640 e 320×568 os botões
+  // "Compartilhar", "Baixar imagem" e "Fechar" caíam FORA da viewport, num
+  // overlay `fixed` que não rolava: não havia como fechar, compartilhar nem
+  // baixar (só recarregar a página, perdendo o resumo). `items-center`
+  // centraliza mas também impede alcançar o que transborda pra cima, por isso
+  // virou `items-start` com `my-auto` no filho — continua centrado quando
+  // cabe, e rola quando não cabe.
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
-      <div className="flex w-full max-w-xs flex-col gap-4">
+    <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto overscroll-contain bg-black/70 p-4">
+      <div className="my-auto flex w-full max-w-xs flex-col gap-4">
         <PostWorkoutSummaryCard
           ref={cardRef}
           summary={summary}
@@ -140,6 +173,12 @@ export function PostWorkoutSummaryModal({
         {shareError && (
           <p className="text-sm text-danger">
             {t("shareErrorMessage")}
+          </p>
+        )}
+        {/* B5: sem isto o "Baixar imagem" falhava sem dizer nada. */}
+        {downloadError && (
+          <p className="text-sm text-danger">
+            {t("downloadErrorMessage")}
           </p>
         )}
         {/* Fr9 (auditoria 2026-07-31): 3 botões numa linha só (`whitespace-nowrap`
